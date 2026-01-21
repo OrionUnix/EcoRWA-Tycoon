@@ -2,12 +2,16 @@
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Card } from '@/components/ui/card';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Badge } from '@/components/ui/badge';
+import BuildingPurchaseDialog from '@/components/BuildingPurchaseDialog';
+import { useBuildingInfo } from '@/hooks/useBuildingInfo';
+import { useHolderStats } from '@/hooks/useHolderStats';
+import { useClaimYield } from '@/hooks/useClaimYield';
+import { useAccount } from 'wagmi';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
-// Import dynamique pour éviter les erreurs SSR avec Three.js
 const ParseCity3D = dynamic(() => import('@/components/ParseCity3D'), {
   ssr: false,
   loading: () => (
@@ -18,7 +22,49 @@ const ParseCity3D = dynamic(() => import('@/components/ParseCity3D'), {
 });
 
 export default function Home() {
-  const [selectedBuilding, setSelectedBuilding] = useState<any>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const { address } = useAccount();
+
+  // Charger les infos des 3 bâtiments
+  const { building: building1, refetch: refetch1 } = useBuildingInfo(1);
+  const { building: building2, refetch: refetch2 } = useBuildingInfo(2);
+  const { building: building3, refetch: refetch3 } = useBuildingInfo(3);
+
+  // Stats du holder pour chaque bâtiment
+  const { stats: stats1 } = useHolderStats(1);
+  const { stats: stats2 } = useHolderStats(2);
+  const { stats: stats3 } = useHolderStats(3);
+
+  // Claim yields
+  const { handleClaim, isClaiming } = useClaimYield();
+
+  // Calculer les totaux
+  const totalParts = (stats1?.balance || 0) + (stats2?.balance || 0) + (stats3?.balance || 0);
+  const totalInvested = (stats1?.investedAmount || 0) + (stats2?.investedAmount || 0) + (stats3?.investedAmount || 0);
+  const totalPendingYield = (stats1?.pendingYield || 0) + (stats2?.pendingYield || 0) + (stats3?.pendingYield || 0);
+  const totalAnnualYield = (stats1?.annualYield || 0) + (stats2?.annualYield || 0) + (stats3?.annualYield || 0);
+  const avgYieldPercentage = totalInvested > 0 ? (totalAnnualYield / totalInvested) * 100 : 0;
+
+  const handleBuildingClick = (buildingData: any) => {
+    if (buildingData.id) {
+      setSelectedBuildingId(buildingData.id);
+      setShowPurchaseDialog(true);
+    }
+  };
+
+  const handleSuccess = () => {
+    // Rafraîchir les données après un achat réussi
+    refetch1();
+    refetch2();
+    refetch3();
+  };
+
+  const buildings3D = [
+    { id: 1, name: building1?.name, ...building1 },
+    { id: 2, name: building2?.name, ...building2 },
+    { id: 3, name: building3?.name, ...building3 },
+  ];
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
@@ -38,58 +84,84 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
             <p className="text-slate-400 text-sm mb-1">💼 Mes Parts</p>
-            <p className="text-3xl font-bold text-white">0</p>
+            <p className="text-3xl font-bold text-white">{totalParts}</p>
           </Card>
           <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
             <p className="text-slate-400 text-sm mb-1">💰 Total Investi</p>
-            <p className="text-3xl font-bold text-white">$0.00</p>
+            <p className="text-3xl font-bold text-white">${totalInvested.toFixed(2)}</p>
           </Card>
           <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
             <p className="text-slate-400 text-sm mb-1">📈 Rendement Annuel</p>
-            <p className="text-3xl font-bold text-green-400">0.00%</p>
+            <p className="text-3xl font-bold text-green-400">{avgYieldPercentage.toFixed(2)}%</p>
           </Card>
           <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
             <p className="text-slate-400 text-sm mb-1">💸 Yields à Claim</p>
-            <p className="text-3xl font-bold text-yellow-400">$0.00</p>
+            <p className="text-3xl font-bold text-yellow-400">${totalPendingYield.toFixed(2)}</p>
           </Card>
         </div>
 
-        {/* Ville 3D */}
-        <div className="relative">
-          <ParseCity3D onBuildingClick={setSelectedBuilding} />
-
-          {/* Panel d'info */}
-          {selectedBuilding && (
-            <div className="absolute bottom-4 left-4 right-4">
-              <Card className="p-6 bg-slate-900/95 backdrop-blur-xl border-slate-700">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-2xl font-bold text-white mb-2">
-                      {selectedBuilding.name || 'Bâtiment décoratif'}
-                    </h3>
-                    {selectedBuilding.name && (
-                      <div className="flex gap-2">
-                        <Badge>Yield: 4-8%</Badge>
-                        <Badge variant="outline">150-250 USDC</Badge>
+        {/* Mes investissements détaillés */}
+        {address && totalParts > 0 && (
+          <Card className="p-6 bg-slate-900/50 border-slate-800 mb-8">
+            <h2 className="text-xl font-bold text-white mb-4">📊 Mes Investissements</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { building: building1, stats: stats1, id: 1 },
+                { building: building2, stats: stats2, id: 2 },
+                { building: building3, stats: stats3, id: 3 },
+              ].map(({ building, stats, id }) => 
+                stats && stats.balance > 0 ? (
+                  <Card key={id} className="p-4 bg-slate-800/50 border-slate-700">
+                    <h3 className="font-semibold text-white mb-2">{building?.name}</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Parts détenues</span>
+                        <span className="text-white font-semibold">{stats.balance}</span>
                       </div>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedBuilding(null)}
-                  >
-                    ✕
-                  </Button>
-                </div>
-                {selectedBuilding.name && (
-                  <Button className="w-full">🏗️ Acheter des parts</Button>
-                )}
-              </Card>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Investi</span>
+                        <span className="text-white">${stats.investedAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Yield disponible</span>
+                        <span className="text-yellow-400 font-semibold">${stats.pendingYield.toFixed(2)}</span>
+                      </div>
+                      {stats.pendingYield > 0 && (
+                        <Button 
+                          size="sm" 
+                          className="w-full mt-2"
+                          onClick={() => handleClaim(id)}
+                          disabled={isClaiming}
+                        >
+                          {isClaiming ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Claim...
+                            </>
+                          ) : (
+                            <>💸 Claim {stats.pendingYield.toFixed(2)} USDC</>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ) : null
+              )}
             </div>
-          )}
-        </div>
+          </Card>
+        )}
+
+        {/* Ville 3D */}
+        <ParseCity3D onBuildingClick={handleBuildingClick} />
       </div>
+
+      {/* Dialog d'achat */}
+      <BuildingPurchaseDialog
+        buildingId={selectedBuildingId}
+        isOpen={showPurchaseDialog}
+        onClose={() => setShowPurchaseDialog(false)}
+        onSuccess={handleSuccess}
+      />
     </main>
   );
 }

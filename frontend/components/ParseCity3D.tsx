@@ -1,10 +1,60 @@
 'use client';
 
+import { useBuildingInfo } from '@/hooks/useBuildingInfo';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+
+
+// Puis utiliser les hooks pour chaque bâtiment
+export default function ParseCity3D({ onBuildingClick }: any) {
+  const { building: building1 } = useBuildingInfo(1);
+  const { building: building2 } = useBuildingInfo(2);
+  const { building: building3 } = useBuildingInfo(3);
+
+  const buildings: BuildingData[] = useMemo(() => [
+    {
+      id: 1,
+      name: building1?.name || 'Loft Saint-Germain',
+      type: 'loft',
+      position: [-6, 3, -6],
+      color: '#8B5CF6',
+      owned: false,
+      yield: building1 ? `${building1.yieldPercentage}%` : '4%',
+      price: building1 ? `${building1.pricePerToken} USDC` : '150 USDC',
+      pluAlert: building1?.pluAlert || 'Chargement...',
+      forSale: building1?.isActive ?? true,
+    },
+    {
+      id: 2,
+      name: building2?.name || 'Le Bistrot Central',
+      type: 'bistrot',
+      position: [0, 1.5, 0],
+      color: '#F59E0B',
+      owned: false,
+      yield: building2 ? `${building2.yieldPercentage}%` : '8%',
+      price: building2 ? `${building2.pricePerToken} USDC` : '100 USDC',
+      pluAlert: building2?.pluAlert || 'Chargement...',
+      forSale: building2?.isActive ?? true,
+    },
+    {
+      id: 3,
+      name: building3?.name || 'Eco-Tower 2030',
+      type: 'tower',
+      position: [6, 4, 6],
+      color: '#10B981',
+      owned: false,
+      yield: building3 ? `${building3.yieldPercentage}%` : '6%',
+      price: building3 ? `${building3.pricePerToken} USDC` : '250 USDC',
+      pluAlert: building3?.pluAlert || 'Chargement...',
+      forSale: building3?.isActive ?? true,
+    },
+  ], [building1, building2, building3]);
+
+
+
 
 // Composant Bâtiment individuel
 function Building({ 
