@@ -1,49 +1,36 @@
+'use client';
+
 import { useReadContract } from 'wagmi';
-
-// 👇 REMPLACE PAR L'ADRESSE DE TON CONTRAT DÉPLOYÉ
-const CONTRACT_ADDRESS = "0xYOUR_CONTRACT_ADDRESS_HERE"; 
-
-const ABI = [
-  {
-    inputs: [{ internalType: "uint256", name: "buildingId", type: "uint256" }],
-    name: "getBuildingInfo",
-    outputs: [
-      { internalType: "string", name: "name", type: "string" },
-      { internalType: "uint256", name: "pricePerToken", type: "uint256" },
-      { internalType: "uint256", name: "yieldPercentage", type: "uint256" },
-      { internalType: "uint256", name: "totalSupply", type: "uint256" },
-      { internalType: "uint256", name: "mintedSupply", type: "uint256" },
-      { internalType: "string", name: "pluAlert", type: "string" },
-      { internalType: "bool", name: "isActive", type: "bool" }
-    ],
-    stateMutability: "view",
-    type: "function"
-  }
-] as const;
+import { useVaultContract } from './useContract';
 
 export function useBuildingInfo(buildingId: number) {
-  const { data, isError, isLoading } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: ABI,
+  const contract = useVaultContract();
+
+  const { data, isLoading, error, refetch } = useReadContract({
+    ...contract,
     functionName: 'getBuildingInfo',
     args: [BigInt(buildingId)],
   });
 
-  // On formate les données brutes (tableau) en objet facile à utiliser
-  // Le retour de Solidity est un tableau : [name, price, yield, total, minted, alert, active]
-  const formattedBuilding = data ? {
-    name: data[0],
-    pricePerToken: data[1],
-    yieldPercentage: data[2],
-    totalSupply: data[3],
-    mintedSupply: data[4],
-    pluAlert: data[5],
-    isActive: data[6]
-  } : null;
+  if (!data) {
+    return { building: null, isLoading, error, refetch };
+  }
+
+  const [name, pricePerToken, yieldPercentage, totalSupply, mintedSupply, pluAlert, isActive] = data as any[];
 
   return {
-    building: formattedBuilding,
+    building: {
+      id: buildingId,
+      name,
+      pricePerToken: Number(pricePerToken) / 1e6, // USDC decimals
+      yieldPercentage: Number(yieldPercentage) / 100, // basis points to %
+      totalSupply: Number(totalSupply),
+      mintedSupply: Number(mintedSupply),
+      pluAlert,
+      isActive,
+    },
     isLoading,
-    isError
+    error,
+    refetch,
   };
 }

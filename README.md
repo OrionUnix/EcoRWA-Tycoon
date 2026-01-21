@@ -42,8 +42,8 @@ We tackle the three biggest barriers to entry in real estate:
 
 | Contract | Address | Description |
 | :--- | :--- | :--- |
-| **EcoRWATycoon** | `0x...` (Paste your address here) | Main logic: Minting, Yield, Whitelist |
-| **MockUSDC** | `0x...` (Paste your address here) | Faucet token for testing investment |
+| **EcoRWATycoon** | `0x3eb8fe6dB6F6cbD4038ddAB73E05D57C8c70C11A`  | Main logic: Minting, Yield, Whitelist |
+| **MockUSDC** | `0x91d5F6B2458ea9f060EDAD50794cc79E7Ec30cE0`  | Faucet token for testing investment |
 
 ---
 
