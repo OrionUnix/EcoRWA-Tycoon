@@ -19,6 +19,7 @@ cache/
 artifacts/
 broadcast/
 out/
+deploy.log
 
 # Système
-.DS_Store
+.DS_Store.env

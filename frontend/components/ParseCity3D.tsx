@@ -135,6 +135,56 @@ function Cloud({ position, speed }: any) {
   );
 }
 
+{/* Arbres décoratifs */}
+{Array.from({ length: 15 }).map((_, i) => {
+  const x = (Math.random() - 0.5) * 30;
+  const z = (Math.random() - 0.5) * 30;
+  // Éviter les routes
+  if (Math.abs(x) % 8 < 2 || Math.abs(z) % 8 < 2) return null;
+  
+  return (
+    <group key={`tree-${i}`} position={[x, 0, z]}>
+      {/* Tronc */}
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[0.1, 0.15, 1, 8]} />
+        <meshStandardMaterial color="#78350f" />
+      </mesh>
+      {/* Feuillage */}
+      <mesh position={[0, 1.2, 0]}>
+        <sphereGeometry args={[0.6, 8, 8]} />
+        <meshStandardMaterial color="#10b981" />
+      </mesh>
+    </group>
+  );
+})}
+function Bird({ index }: { index: number }) {
+  const birdRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (birdRef.current) {
+      const t = state.clock.elapsedTime * 0.3 + index;
+      birdRef.current.position.x = Math.sin(t) * 15;
+      birdRef.current.position.z = Math.cos(t) * 15;
+      birdRef.current.position.y = 10 + Math.sin(t * 2) * 2;
+      birdRef.current.rotation.y = t;
+    }
+  });
+
+  return (
+    <group ref={birdRef}>
+      <mesh>
+        <sphereGeometry args={[0.15, 8, 8]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+    </group>
+  );
+}
+
+// Dans la scène, ajoute :
+{[0, 1, 2].map((i) => (
+  <Bird key={`bird-${i}`} index={i} />
+))}
+
 // Sol de la ville
 function CityGround() {
   return (
@@ -159,6 +209,28 @@ function CityGround() {
         </mesh>
       ))}
     </group>
+  );
+}
+
+function DayNightCycle() {
+  const lightRef = useRef<THREE.DirectionalLight>(null);
+
+  useFrame((state) => {
+    if (lightRef.current) {
+      const time = (state.clock.elapsedTime * 0.1) % (Math.PI * 2);
+      const intensity = 0.5 + Math.sin(time) * 0.5;
+      lightRef.current.intensity = intensity;
+    }
+  });
+
+  return (
+    <directionalLight
+      ref={lightRef}
+      position={[10, 20, 10]}
+      castShadow
+      shadow-mapSize-width={2048}
+      shadow-mapSize-height={2048}
+    />
   );
 }
 
