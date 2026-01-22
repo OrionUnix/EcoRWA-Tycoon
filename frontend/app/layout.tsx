@@ -16,7 +16,7 @@ export default function RootLayout({
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body className="antialiased">
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>

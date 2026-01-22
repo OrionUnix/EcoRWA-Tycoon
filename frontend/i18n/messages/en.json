@@ -1,0 +1,94 @@
+{
+  "common": {
+    "appName": "Parse City",
+    "tagline": "Tokenized Real Estate Investment RWA",
+    "connectWallet": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "portfolio": "My Portfolio",
+    "marketplace": "Marketplace",
+    "about": "About"
+  },
+  "hero": {
+    "title": "Invest in real estate",
+    "subtitle": "in a fractional and transparent way",
+    "description": "Parse City transforms real estate into blockchain tokens. Buy building shares, generate passive income, and trade your assets freely.",
+    "cta": "Get Started",
+    "learnMore": "Learn More",
+    "stats": {
+      "buildings": "Available Buildings",
+      "investors": "Active Investors",
+      "volume": "Total Volume Invested",
+      "yield": "Average Yield"
+    }
+  },
+  "howItWorks": {
+    "title": "How It Works?",
+    "step1": {
+      "title": "1. Get USDC",
+      "description": "Click the Faucet button to receive 1000 test USDC for free"
+    },
+    "step2": {
+      "title": "2. Explore the city",
+      "description": "Click on a building in the 3D view to see details and performance"
+    },
+    "step3": {
+      "title": "3. Buy shares",
+      "description": "Approve USDC then buy as many shares as you want"
+    },
+    "step4": {
+      "title": "4. Generate income",
+      "description": "Automatically receive yields based on your investments"
+    }
+  },
+  "features": {
+    "title": "Why Parse City?",
+    "fractional": {
+      "title": "Fractional Ownership",
+      "description": "Invest from 100 USDC instead of hundreds of thousands of euros"
+    },
+    "passive": {
+      "title": "Passive Income",
+      "description": "Generate 4% to 8% annual returns automatically"
+    },
+    "transparent": {
+      "title": "100% Transparent",
+      "description": "All transactions are verifiable on Avalanche blockchain"
+    },
+    "ai": {
+      "title": "AI Analysis",
+      "description": "Receive PLU alerts and real-time risk analysis"
+    }
+  },
+  "dashboard": {
+    "myParts": "My Parts",
+    "totalInvested": "Total Invested",
+    "annualYield": "Annual Yield",
+    "yieldsToClaim": "Yields to Claim",
+    "myInvestments": "My Investments",
+    "balance": "USDC Balance",
+    "faucet": "Faucet (1000 USDC)",
+    "noInvestments": "You don't have any investments yet",
+    "getStarted": "Get Started"
+  },
+  "building": {
+    "yield": "Yield",
+    "price": "Unit Price",
+    "available": "Available",
+    "tokensLeft": "tokens left",
+    "buy": "Buy",
+    "claim": "Claim",
+    "approve": "Approve USDC",
+    "confirmPurchase": "Confirm Purchase",
+    "aiAlert": "AI Analysis",
+    "quantity": "Quantity",
+    "totalCost": "Total Cost",
+    "needFaucet": "Need MockUSDC?",
+    "alreadyOwned": "Already Invested"
+  }
+}

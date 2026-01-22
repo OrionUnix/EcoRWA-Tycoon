@@ -1,0 +1,94 @@
+{
+  "common": {
+    "appName": "Parse City",
+    "tagline": "Investissement immobilier tokenisé RWA",
+    "connectWallet": "Connecter le portefeuille",
+    "disconnect": "Déconnecter",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "portfolio": "Mon Portfolio",
+    "marketplace": "Marché",
+    "about": "À propos"
+  },
+  "hero": {
+    "title": "Investissez dans l'immobilier",
+    "subtitle": "de manière fractionnée et transparente",
+    "description": "Parse City transforme l'immobilier en tokens sur la blockchain. Achetez des parts de bâtiments, générez des rendements passifs, et tradez vos actifs en toute liberté.",
+    "cta": "Commencer maintenant",
+    "learnMore": "En savoir plus",
+    "stats": {
+      "buildings": "Bâtiments disponibles",
+      "investors": "Investisseurs actifs",
+      "volume": "Volume total investi",
+      "yield": "Rendement moyen"
+    }
+  },
+  "howItWorks": {
+    "title": "Comment ça marche ?",
+    "step1": {
+      "title": "1. Obtenez des USDC",
+      "description": "Cliquez sur le bouton Faucet pour recevoir 1000 USDC de test gratuitement"
+    },
+    "step2": {
+      "title": "2. Explorez la ville",
+      "description": "Cliquez sur un bâtiment dans la vue 3D pour voir ses détails et performances"
+    },
+    "step3": {
+      "title": "3. Achetez des parts",
+      "description": "Approuvez USDC puis achetez autant de parts que vous souhaitez"
+    },
+    "step4": {
+      "title": "4. Générez des revenus",
+      "description": "Recevez automatiquement des rendements basés sur vos investissements"
+    }
+  },
+  "features": {
+    "title": "Pourquoi Parse City ?",
+    "fractional": {
+      "title": "Propriété Fractionnée",
+      "description": "Investissez à partir de 100 USDC au lieu de centaines de milliers d'euros"
+    },
+    "passive": {
+      "title": "Revenus Passifs",
+      "description": "Générez des rendements de 4% à 8% par an automatiquement"
+    },
+    "transparent": {
+      "title": "100% Transparent",
+      "description": "Toutes les transactions sont vérifiables sur la blockchain Avalanche"
+    },
+    "ai": {
+      "title": "Analyse IA",
+      "description": "Recevez des alertes PLU et analyses de risque en temps réel"
+    }
+  },
+  "dashboard": {
+    "myParts": "Mes Parts",
+    "totalInvested": "Total Investi",
+    "annualYield": "Rendement Annuel",
+    "yieldsToClaim": "Yields à Claim",
+    "myInvestments": "Mes Investissements",
+    "balance": "Balance USDC",
+    "faucet": "Faucet (1000 USDC)",
+    "noInvestments": "Vous n'avez pas encore d'investissements",
+    "getStarted": "Premiers pas"
+  },
+  "building": {
+    "yield": "Rendement",
+    "price": "Prix unitaire",
+    "available": "Disponible",
+    "tokensLeft": "tokens restants",
+    "buy": "Acheter",
+    "claim": "Claim",
+    "approve": "Approuver USDC",
+    "confirmPurchase": "Confirmer l'Achat",
+    "aiAlert": "Analyse IA",
+    "quantity": "Quantité",
+    "totalCost": "Total à payer",
+    "needFaucet": "Besoin de MockUSDC ?",
+    "alreadyOwned": "Déjà investi"
+  }
+}

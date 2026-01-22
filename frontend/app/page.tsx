@@ -1,167 +1,211 @@
 'use client';
-
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Card } from '@/components/ui/card';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import BuildingPurchaseDialog from '@/components/BuildingPurchaseDialog';
-import { useBuildingInfo } from '@/hooks/useBuildingInfo';
-import { useHolderStats } from '@/hooks/useHolderStats';
-import { useClaimYield } from '@/hooks/useClaimYield';
 import { useAccount } from 'wagmi';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
 
-const ParseCity3D = dynamic(() => import('@/components/ParseCity3D'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[600px] bg-slate-800 rounded-xl flex items-center justify-center">
-      <p className="text-white">Chargement de la ville 3D...</p>
-    </div>
-  ),
-});
+// Components
+import Navbar from '@/components/layout/Navbar';
+import Dashboard from '@/components/dashboard/Dashboard';
+import PropertiesView from '@/components/dashboard/PropertiesView';
+import LandingPage from '@/components/LandingPage';
+import BuildingPurchaseDialog from '@/components/BuildingPurchaseDialog';
+import Footer from '@/components/Footer';
+
+// Hooks
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { useFaucet } from '@/hooks/useFaucet';
+
+// Dynamic imports
+const ParseCity3D = dynamic(() => import('@/components/ParseCity3D'), { ssr: false });
+
+type ViewType = 'city' | 'dashboard' | 'properties' | 'analytics';
 
 export default function Home() {
+  const [locale, setLocale] = useState('fr');
+  const [showLanding, setShowLanding] = useState(true);
+  const [currentView, setCurrentView] = useState<ViewType>('city');
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
-  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  
   const { address } = useAccount();
+  const { usdcBalance, buildings } = useDashboardData();
+  const { claimUSDC, isLoading: isFaucetLoading } = useFaucet();
 
-  // Charger les infos des 3 bâtiments
-  const { building: building1, refetch: refetch1 } = useBuildingInfo(1);
-  const { building: building2, refetch: refetch2 } = useBuildingInfo(2);
-  const { building: building3, refetch: refetch3 } = useBuildingInfo(3);
-
-  // Stats du holder pour chaque bâtiment
-  const { stats: stats1 } = useHolderStats(1);
-  const { stats: stats2 } = useHolderStats(2);
-  const { stats: stats3 } = useHolderStats(3);
-
-  // Claim yields
-  const { handleClaim, isClaiming } = useClaimYield();
-
-  // Calculer les totaux
-  const totalParts = (stats1?.balance || 0) + (stats2?.balance || 0) + (stats3?.balance || 0);
-  const totalInvested = (stats1?.investedAmount || 0) + (stats2?.investedAmount || 0) + (stats3?.investedAmount || 0);
-  const totalPendingYield = (stats1?.pendingYield || 0) + (stats2?.pendingYield || 0) + (stats3?.pendingYield || 0);
-  const totalAnnualYield = (stats1?.annualYield || 0) + (stats2?.annualYield || 0) + (stats3?.annualYield || 0);
-  const avgYieldPercentage = totalInvested > 0 ? (totalAnnualYield / totalInvested) * 100 : 0;
-
-  const handleBuildingClick = (buildingData: any) => {
-    if (buildingData.id) {
-      setSelectedBuildingId(buildingData.id);
-      setShowPurchaseDialog(true);
-    }
+  // Translation function
+  const t = (key: string) => {
+    const translations: Record<string, Record<string, string>> = {
+      fr: {
+        'navbar.balance': 'Solde',
+        'navbar.faucet': 'Faucet USDC',
+        'appName': 'EcoRWA',
+        'tagline': 'Gamifying Real Estate',
+        'balance': 'Solde',
+        'faucet': 'Faucet',
+      },
+      en: {
+        'navbar.balance': 'Balance',
+        'navbar.faucet': 'USDC Faucet',
+        'appName': 'EcoRWA',
+        'tagline': 'Gamifying Real Estate',
+        'balance': 'Balance',
+        'faucet': 'Faucet',
+      }
+    };
+    return translations[locale]?.[key] || key;
   };
 
-  const handleSuccess = () => {
-    // Rafraîchir les données après un achat réussi
-    refetch1();
-    refetch2();
-    refetch3();
-  };
-
-  const buildings3D = [
-    { id: 1, name: building1?.name, ...building1 },
-    { id: 2, name: building2?.name, ...building2 },
-    { id: 3, name: building3?.name, ...building3 },
-  ];
+  // Show landing page for non-connected users
+  if (showLanding && !address) {
+    return (
+      <LandingPage 
+        onGetStarted={() => setShowLanding(false)} 
+        locale={locale as 'fr' | 'en'} 
+      />
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
-      {/* Header */}
-      <header className="p-6 flex flex-col md:flex-row justify-between items-center border-b border-slate-800 gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-white mb-1">
-            🏙️ Parse City
-          </h1>
-          <p className="text-slate-400">Investissement immobilier tokenisé RWA</p>
-        </div>
-        <ConnectButton />
-      </header>
-
-      {/* Stats Dashboard */}
-      <div className="container mx-auto p-6 max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
-            <p className="text-slate-400 text-sm mb-1">💼 Mes Parts</p>
-            <p className="text-3xl font-bold text-white">{totalParts}</p>
-          </Card>
-          <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
-            <p className="text-slate-400 text-sm mb-1">💰 Total Investi</p>
-            <p className="text-3xl font-bold text-white">${totalInvested.toFixed(2)}</p>
-          </Card>
-          <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
-            <p className="text-slate-400 text-sm mb-1">📈 Rendement Annuel</p>
-            <p className="text-3xl font-bold text-green-400">{avgYieldPercentage.toFixed(2)}%</p>
-          </Card>
-          <Card className="p-6 bg-slate-900/50 border-slate-800 hover:bg-slate-900/70 transition-colors">
-            <p className="text-slate-400 text-sm mb-1">💸 Yields à Claim</p>
-            <p className="text-3xl font-bold text-yellow-400">${totalPendingYield.toFixed(2)}</p>
-          </Card>
-        </div>
-
-        {/* Mes investissements détaillés */}
-        {address && totalParts > 0 && (
-          <Card className="p-6 bg-slate-900/50 border-slate-800 mb-8">
-            <h2 className="text-xl font-bold text-white mb-4">📊 Mes Investissements</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { building: building1, stats: stats1, id: 1 },
-                { building: building2, stats: stats2, id: 2 },
-                { building: building3, stats: stats3, id: 3 },
-              ].map(({ building, stats, id }) => 
-                stats && stats.balance > 0 ? (
-                  <Card key={id} className="p-4 bg-slate-800/50 border-slate-700">
-                    <h3 className="font-semibold text-white mb-2">{building?.name}</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Parts détenues</span>
-                        <span className="text-white font-semibold">{stats.balance}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Investi</span>
-                        <span className="text-white">${stats.investedAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Yield disponible</span>
-                        <span className="text-yellow-400 font-semibold">${stats.pendingYield.toFixed(2)}</span>
-                      </div>
-                      {stats.pendingYield > 0 && (
-                        <Button 
-                          size="sm" 
-                          className="w-full mt-2"
-                          onClick={() => handleClaim(id)}
-                          disabled={isClaiming}
-                        >
-                          {isClaiming ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Claim...
-                            </>
-                          ) : (
-                            <>💸 Claim {stats.pendingYield.toFixed(2)} USDC</>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                ) : null
-              )}
-            </div>
-          </Card>
-        )}
-
-        {/* Ville 3D */}
-        <ParseCity3D onBuildingClick={handleBuildingClick} />
+    <main className="min-h-screen bg-slate-950 relative overflow-hidden">
+      {/* Animated background gradients */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* Dialog d'achat */}
-      <BuildingPurchaseDialog
-        buildingId={selectedBuildingId}
-        isOpen={showPurchaseDialog}
-        onClose={() => setShowPurchaseDialog(false)}
-        onSuccess={handleSuccess}
+      {/* Navbar */}
+      <Navbar 
+        address={address} 
+        usdcBalance={usdcBalance}
+        isFaucetLoading={isFaucetLoading}
+        onClaimUSDC={claimUSDC}
+        currentView={currentView}
+        onNavigate={setCurrentView}
+        t={t}
+      />
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* City View - 3D immersive experience */}
+        {currentView === 'city' && (
+          <div className="relative">
+            <div className="h-screen w-full">
+              <ParseCity3D 
+                onBuildingClick={(data: any) => setSelectedBuildingId(data.id)} 
+              />
+            </div>
+            
+            {/* Compact Floating Properties List */}
+            <div className="fixed bottom-6 left-6 right-6 z-20 max-w-6xl mx-auto">
+              <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95 rounded-2xl p-6 border border-white/10 backdrop-blur-xl shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Available Properties
+                  </h3>
+                  <button
+                    onClick={() => setCurrentView('properties')}
+                    className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    View All →
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {buildings.slice(0, 3).map((building) => (
+                    <CompactPropertyCard
+                      key={building.id}
+                      building={building}
+                      onClick={() => setSelectedBuildingId(building.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dashboard View */}
+        {currentView === 'dashboard' && (
+          <div className="container mx-auto px-6 max-w-7xl">
+            <Dashboard 
+              onBuildingSelect={(id) => setSelectedBuildingId(id)}
+              t={t}
+            />
+          </div>
+        )}
+
+        {/* Properties View - Only available properties */}
+        {currentView === 'properties' && (
+          <div className="container mx-auto px-6 max-w-7xl">
+            <PropertiesView onBuildingSelect={setSelectedBuildingId} />
+          </div>
+        )}
+
+        {/* Analytics View */}
+        {currentView === 'analytics' && (
+          <div className="container mx-auto px-6 max-w-7xl pt-20">
+            <div className="bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 rounded-3xl p-8 border border-white/10 backdrop-blur-xl">
+              <h2 className="text-3xl font-bold text-white mb-6">Analytics</h2>
+              <p className="text-slate-400">Coming soon...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Footer - Only show on non-city views */}
+        {currentView !== 'city' && <Footer />}
+      </div>
+
+      {/* Purchase Dialog */}
+      <BuildingPurchaseDialog 
+        buildingId={selectedBuildingId} 
+        isOpen={!!selectedBuildingId} 
+        onClose={() => setSelectedBuildingId(null)} 
       />
     </main>
+  );
+}
+
+// Compact Property Card for City View
+interface CompactPropertyCardProps {
+  building: any;
+  onClick: () => void;
+}
+
+function CompactPropertyCard({ building, onClick }: CompactPropertyCardProps) {
+  const name = building.name || `Building ${building.id}`;
+  const partPrice = building.partPrice || 0;
+  const annualYield = building.annualYield || 0;
+  const totalParts = building.totalParts || 0;
+
+  return (
+    <button
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-xl p-4 text-left transition-all duration-300 hover:scale-105"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border border-white/10 group-hover:border-emerald-500/30 transition-all duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 to-blue-500/0 group-hover:from-emerald-500/10 group-hover:to-blue-500/10 transition-all duration-300" />
+      
+      <div className="relative space-y-3">
+        <h4 className="text-base font-bold text-white">{name}</h4>
+        
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="text-xs text-slate-400">Price</p>
+            <p className="font-bold text-white">${partPrice.toFixed(2)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">Yield</p>
+            <p className="font-bold text-emerald-400">{annualYield.toFixed(2)}%</p>
+          </div>
+        </div>
+        
+        <div className="pt-2">
+          <div className="w-full bg-slate-700/50 rounded-full h-1.5">
+            <div className="bg-gradient-to-r from-emerald-500 to-blue-500 h-1.5 rounded-full w-2/3" />
+          </div>
+          <p className="text-xs text-slate-400 mt-1">{totalParts} parts available</p>
+        </div>
+      </div>
+    </button>
   );
 }

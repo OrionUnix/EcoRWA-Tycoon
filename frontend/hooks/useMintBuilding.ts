@@ -3,77 +3,60 @@
 import { useWriteContract, useWaitForTransactionReceipt, useAccount, useReadContract } from 'wagmi';
 import { useVaultContract, useUSDCContract } from './useContract';
 import { parseUnits } from 'viem';
+import { useEffect } from 'react';
 
-export function useMintBuilding() {
+export function useMintBuilding(onSuccess?: () => void) {
   const { address } = useAccount();
   const vault = useVaultContract();
   const usdc = useUSDCContract();
 
-  // Vérifier l'allowance USDC
-  const { data: allowance } = useReadContract({
+  // 1. Lecture de l'allowance avec "refetch" manuel possible
+  const { data: allowance, refetch: refreshAllowance } = useReadContract({
     ...usdc,
     functionName: 'allowance',
     args: [address!, vault.address],
     query: { enabled: !!address },
   });
 
-  // Approve USDC
-  const {
-    writeContract: approveUSDC,
-    data: approveHash,
-    isPending: isApproving,
-  } = useWriteContract();
+  const { writeContract, data: hash, isPending: isWritePending } = useWriteContract();
 
-  const { isLoading: isApproveTxLoading } = useWaitForTransactionReceipt({
-    hash: approveHash,
-  });
+  const { isLoading: isTxLoading, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Mint Building
-  const {
-    writeContract: mintBuilding,
-    data: mintHash,
-    isPending: isMinting,
-  } = useWriteContract();
-
-  const { isLoading: isMintTxLoading, isSuccess: isMintSuccess } = useWaitForTransactionReceipt({
-    hash: mintHash,
-  });
+  // 2. Gestion automatique du rafraîchissement après succès
+  useEffect(() => {
+    if (isSuccess) {
+      refreshAllowance(); // Met à jour l'allowance dans le cache
+      onSuccess?.();      // Déclenche le rafraîchissement des stats dans l'UI
+    }
+  }, [isSuccess, refreshAllowance, onSuccess]);
 
   const handleMint = async (buildingId: number, amount: number, pricePerToken: number) => {
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
+    if (!address) return;
 
     const totalCost = parseUnits((pricePerToken * amount).toString(), 6);
     const currentAllowance = (allowance as bigint) || 0n;
 
-    // Si allowance insuffisante, approve d'abord
     if (currentAllowance < totalCost) {
-      approveUSDC({
+      // ÉTAPE A : APPROVE (Si nécessaire)
+      writeContract({
         ...usdc,
         functionName: 'approve',
-        args: [vault.address, totalCost],
+        args: [vault.address, totalCost * 10n], // On approuve 10x plus pour éviter de redemander
       });
-      return; // Attendre que l'approve soit confirmé
+    } else {
+      // ÉTAPE B : MINT DIRECT
+      writeContract({
+        ...vault,
+        functionName: 'mintBuilding',
+        args: [BigInt(buildingId), BigInt(amount)],
+      });
     }
-
-    // Sinon, mint directement
-    mintBuilding({
-      ...vault,
-      functionName: 'mintBuilding',
-      args: [BigInt(buildingId), BigInt(amount)],
-    });
   };
 
   return {
     handleMint,
-    isApproving: isApproving || isApproveTxLoading,
-    isMinting: isMinting || isMintTxLoading,
-    isMintSuccess,
-    needsApproval: (amount: number, pricePerToken: number) => {
-      const totalCost = parseUnits((pricePerToken * amount).toString(), 6);
-      const currentAllowance = (allowance as bigint) || 0n;
-      return currentAllowance < totalCost;
-    },
+    isLoading: isWritePending || isTxLoading,
+    isSuccess,
+    allowance: (allowance as bigint) || 0n,
   };
 }
