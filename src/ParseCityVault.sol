@@ -36,7 +36,7 @@ contract ParseCityVault is ERC1155, Ownable, ReentrancyGuard {
 
     constructor(address _usdc) 
         ERC1155("https://api.parsecity.io/metadata/{id}.json") 
-        Ownable(msg.sender) 
+        Ownable(msg.sender)
     {
         usdc = IERC20(_usdc);
         
@@ -68,7 +68,6 @@ contract ParseCityVault is ERC1155, Ownable, ReentrancyGuard {
         emit BuildingCreated(buildingId, _name, _pricePerToken, _totalSupply);
     }
 
-    // Changé PLU -> Plu pour le Linter
     function updatePluAlert(uint256 buildingId, string calldata newAlert) external onlyOwner {
         buildings[buildingId].pluAlert = newAlert;
         emit PluAlertUpdated(buildingId, newAlert);
