@@ -121,8 +121,8 @@ function AnimatedCitySVG() {
 
       // 2. ANIMATION DES FENÊTRES DES BÂTIMENTS
       const buildingGroups = [
-        'house_02',
-        'tower'
+        'house_02'
+        
             ];
 
       buildingGroups.forEach((buildingId, buildingIndex) => {

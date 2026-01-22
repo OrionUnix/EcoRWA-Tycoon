@@ -80,7 +80,7 @@ function PropertyRow({ building, onClick }: PropertyRowProps) {
                 <h3 className="text-lg font-bold text-white mb-1">{name}</h3>
                 <div className="flex items-center gap-2 text-sm text-slate-400">
                   <MapPin className="w-3 h-3" />
-                  <span>Paris, France</span>
+                  <span>Parse, Europe</span>
                 </div>
               </div>
             </div>
