@@ -9,14 +9,14 @@ export default function AnimatedCity() {
       try {
         const response = await fetch('/assets/isometric_city.svg');
         const svgText = await response.text();
-        
+
         if (svgRef.current) {
           svgRef.current.innerHTML = svgText;
           setIsLoaded(true);
-          
+
           // Attendre que le SVG soit dans le DOM
           setTimeout(() => {
-            const car = document.getElementById('car_01');
+            const car = document.getElementById('car_01') as SVGElement | null;
             if (car) {
               animateCar(car);
             }
@@ -34,7 +34,7 @@ export default function AnimatedCity() {
     // Position initiale de la voiture (extraite du SVG)
     const initialX = 53.63;
     const initialY = -37.22;
-    
+
     // Trajectoire : avancer puis tourner à droite
     const path = [
       { x: 53.63, y: -37.22, rotation: 0 },     // Départ
@@ -98,7 +98,7 @@ export default function AnimatedCity() {
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      <div 
+      <div
         ref={svgRef}
         className="w-full h-full"
         style={{
