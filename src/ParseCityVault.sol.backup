@@ -1,0 +1,361 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "forge-std/Test.sol";
+import "../src/ParseCityVault.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract MockUSDC is ERC20 {
+    constructor() ERC20("USD Coin", "USDC") {
+        _mint(msg.sender, 1000000 * 1e6);
+    }
+    
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+}
+
+contract ParseCityVaultTest is Test {
+    ParseCityVault public vault;
+    MockUSDC public usdc;
+    
+    address owner;
+    address alice = address(0x1);
+    address bob = address(0x2);
+    
+    // Constants from contract
+    uint256 constant LOFT_SAINT_GERMAIN = 1;
+    uint256 constant LE_BISTROT_CENTRAL = 2;
+    uint256 constant ECO_TOWER_2030 = 3;
+    
+    function setUp() public {
+        owner = address(this);
+        usdc = new MockUSDC();
+        vault = new ParseCityVault(address(usdc));
+        
+        // Distribue USDC aux testeurs avec vérification
+        require(usdc.transfer(alice, 10000 * 1e6), "Transfer to alice failed");
+        require(usdc.transfer(bob, 10000 * 1e6), "Transfer to bob failed");
+        
+        // Fund yield pool
+        usdc.approve(address(vault), 100000 * 1e6);
+        vault.fundYieldPool(100000 * 1e6);
+    }
+    
+    // ========== TESTS DE MINT ==========
+    
+    function testMintLoftSaintGermain() public {
+        vm.startPrank(alice);
+        
+        usdc.approve(address(vault), 1500 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 10); // 10 tokens à 150 USDC
+        
+        assertEq(vault.balanceOf(alice, LOFT_SAINT_GERMAIN), 10);
+        
+        // Vérifie que mintedSupply a augmenté
+        (,,, uint256 totalSupply, uint256 mintedSupply,,) = vault.getBuildingInfo(LOFT_SAINT_GERMAIN);
+        assertEq(mintedSupply, 10);
+        
+        vm.stopPrank();
+    }
+    
+    function testMintMultipleBuildings() public {
+        vm.startPrank(alice);
+        
+        // Mint Loft Saint-Germain
+        usdc.approve(address(vault), 150 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        // Mint Le Bistrot Central
+        usdc.approve(address(vault), 100 * 1e6);
+        vault.mintBuilding(LE_BISTROT_CENTRAL, 1);
+        
+        assertEq(vault.balanceOf(alice, LOFT_SAINT_GERMAIN), 1);
+        assertEq(vault.balanceOf(alice, LE_BISTROT_CENTRAL), 1);
+        
+        vm.stopPrank();
+    }
+    
+    function testCannotMintWithoutApproval() public {
+        vm.startPrank(alice);
+        
+        // Ne pas approuver d'USDC
+        vm.expectRevert();
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        vm.stopPrank();
+    }
+    
+    function testCannotMintMoreThanSupply() public {
+        vm.startPrank(alice);
+        
+        // Essayer de mint plus que totalSupply (1000 pour Loft)
+        usdc.approve(address(vault), 150000 * 1e6);
+        vm.expectRevert("Plus de stock");
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1001);
+        
+        vm.stopPrank();
+    }
+    
+    function testCannotMintInactiveBuilding() public {
+        // Désactiver le bâtiment
+        vault.toggleBuildingActive(LOFT_SAINT_GERMAIN);
+        
+        vm.startPrank(alice);
+        
+        usdc.approve(address(vault), 150 * 1e6);
+        vm.expectRevert("Batiment non disponible");
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        vm.stopPrank();
+    }
+    
+    // ========== TESTS DE YIELD ==========
+    
+    function testYieldCalculationLoft() public {
+        vm.startPrank(alice);
+        
+        // Mint 1 token à 150 USDC avec 4% (400 basis points) de yield
+        usdc.approve(address(vault), 150 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        // Avance de 1 an
+        vm.warp(block.timestamp + 365 days);
+        
+        // Yield = 150 USDC * 4% = 6 USDC
+        uint256 expectedYield = 6 * 1e6;
+        uint256 actualYield = vault.calculateYield(LOFT_SAINT_GERMAIN, alice);
+        
+        assertEq(actualYield, expectedYield);
+        
+        vm.stopPrank();
+    }
+    
+    function testYieldCalculationBistrot() public {
+        vm.startPrank(alice);
+        
+        // Mint 1 token à 100 USDC avec 8% (800 basis points) de yield
+        usdc.approve(address(vault), 100 * 1e6);
+        vault.mintBuilding(LE_BISTROT_CENTRAL, 1);
+        
+        // Avance de 1 an
+        vm.warp(block.timestamp + 365 days);
+        
+        // Yield = 100 USDC * 8% = 8 USDC
+        uint256 expectedYield = 8 * 1e6;
+        uint256 actualYield = vault.calculateYield(LE_BISTROT_CENTRAL, alice);
+        
+        assertEq(actualYield, expectedYield);
+        
+        vm.stopPrank();
+    }
+    
+    function testYieldCalculationHalfYear() public {
+        vm.startPrank(alice);
+        
+        usdc.approve(address(vault), 150 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        // Avance de 6 mois (182.5 jours)
+        vm.warp(block.timestamp + 182.5 days);
+        
+        // Yield = 150 USDC * 4% * 0.5 = 3 USDC
+        uint256 actualYield = vault.calculateYield(LOFT_SAINT_GERMAIN, alice);
+        
+        // Tolérance de 0.01 USDC pour les arrondis
+        assertApproxEqAbs(actualYield, 3 * 1e6, 0.01 * 1e6);
+        
+        vm.stopPrank();
+    }
+    
+    function testClaimYield() public {
+        vm.startPrank(alice);
+        
+        uint256 initialBalance = usdc.balanceOf(alice);
+        
+        usdc.approve(address(vault), 150 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        // Avance de 1 an
+        vm.warp(block.timestamp + 365 days);
+        
+        // Claim yield
+        vault.claimYield(LOFT_SAINT_GERMAIN);
+        
+        uint256 finalBalance = usdc.balanceOf(alice);
+        
+        // Alice devrait avoir récupéré 6 USDC de yield (4% de 150)
+        assertEq(finalBalance - (initialBalance - 150 * 1e6), 6 * 1e6);
+        
+        vm.stopPrank();
+    }
+    
+    function testCannotClaimYieldTwiceImmediately() public {
+        vm.startPrank(alice);
+        
+        usdc.approve(address(vault), 150 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        vm.warp(block.timestamp + 365 days);
+        
+        // Premier claim réussit
+        vault.claimYield(LOFT_SAINT_GERMAIN);
+        
+        // Deuxième claim échoue (pas de yield accumulé)
+        vm.expectRevert("Rien a collecter");
+        vault.claimYield(LOFT_SAINT_GERMAIN);
+        
+        vm.stopPrank();
+    }
+    
+    function testYieldAccumulatesAfterClaim() public {
+        vm.startPrank(alice);
+        
+        usdc.approve(address(vault), 150 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 1);
+        
+        // Premier claim après 1 an
+        vm.warp(block.timestamp + 365 days);
+        vault.claimYield(LOFT_SAINT_GERMAIN);
+        
+        // Deuxième claim après encore 1 an
+        vm.warp(block.timestamp + 365 days);
+        uint256 newYield = vault.calculateYield(LOFT_SAINT_GERMAIN, alice);
+        
+        assertEq(newYield, 6 * 1e6); // Encore 6 USDC
+        
+        vm.stopPrank();
+    }
+    
+    // ========== TESTS OWNER FUNCTIONS ==========
+    
+    function testCreateNewBuilding() public {
+        uint256 newBuildingId = 10;
+        
+        vault.createBuilding(
+            newBuildingId,
+            "Test Building",
+            200 * 1e6,  // 200 USDC price
+            500,        // 5% yield
+            100,        // 100 supply
+            "Test alert"
+        );
+        
+        (string memory name, uint256 price,,,,,) = vault.getBuildingInfo(newBuildingId);
+        
+        assertEq(name, "Test Building");
+        assertEq(price, 200 * 1e6);
+    }
+    
+    function testCannotCreateDuplicateBuilding() public {
+        vm.expectRevert("ID deja utilise");
+        vault.createBuilding(
+            LOFT_SAINT_GERMAIN, // ID déjà utilisé
+            "Duplicate",
+            100 * 1e6,
+            400,
+            100,
+            "Alert"
+        );
+    }
+    
+    function testUpdatePluAlert() public {
+        string memory newAlert = "Nouvelle alerte PLU";
+        vault.updatePluAlert(LOFT_SAINT_GERMAIN, newAlert);
+        
+        (,,,,,string memory plu,) = vault.getBuildingInfo(LOFT_SAINT_GERMAIN);
+        assertEq(plu, newAlert);
+    }
+    
+    function testToggleBuildingActive() public {
+        // Désactiver
+        vault.toggleBuildingActive(LOFT_SAINT_GERMAIN);
+        (,,,,,, bool active) = vault.getBuildingInfo(LOFT_SAINT_GERMAIN);
+        assertEq(active, false);
+        
+        // Réactiver
+        vault.toggleBuildingActive(LOFT_SAINT_GERMAIN);
+        (,,,,,, bool activeAgain) = vault.getBuildingInfo(LOFT_SAINT_GERMAIN);
+        assertEq(activeAgain, true);
+    }
+    
+    function testFundYieldPool() public {
+        uint256 initialBalance = usdc.balanceOf(address(vault));
+        
+        usdc.approve(address(vault), 1000 * 1e6);
+        vault.fundYieldPool(1000 * 1e6);
+        
+        uint256 finalBalance = usdc.balanceOf(address(vault));
+        assertEq(finalBalance - initialBalance, 1000 * 1e6);
+    }
+    
+    function testEmergencyWithdraw() public {
+        uint256 ownerBalanceBefore = usdc.balanceOf(owner);
+        uint256 vaultBalance = usdc.balanceOf(address(vault));
+        
+        vault.emergencyWithdraw();
+        
+        uint256 ownerBalanceAfter = usdc.balanceOf(owner);
+        assertEq(ownerBalanceAfter - ownerBalanceBefore, vaultBalance);
+        assertEq(usdc.balanceOf(address(vault)), 0);
+    }
+    
+    function testNonOwnerCannotCreateBuilding() public {
+        vm.startPrank(alice);
+        
+        vm.expectRevert();
+        vault.createBuilding(10, "Test", 100 * 1e6, 400, 100, "Alert");
+        
+        vm.stopPrank();
+    }
+    
+    // ========== TESTS D'INTÉGRATION ==========
+    
+    function testMultipleUsersScenario() public {
+        // Alice mint 5 tokens
+        vm.startPrank(alice);
+        usdc.approve(address(vault), 750 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 5);
+        vm.stopPrank();
+        
+        // Bob mint 3 tokens
+        vm.startPrank(bob);
+        usdc.approve(address(vault), 450 * 1e6);
+        vault.mintBuilding(LOFT_SAINT_GERMAIN, 3);
+        vm.stopPrank();
+        
+        // Vérifie les balances
+        assertEq(vault.balanceOf(alice, LOFT_SAINT_GERMAIN), 5);
+        assertEq(vault.balanceOf(bob, LOFT_SAINT_GERMAIN), 3);
+        
+        // Avance dans le temps
+        vm.warp(block.timestamp + 365 days);
+        
+        // Alice devrait recevoir 5 * 6 = 30 USDC
+        uint256 aliceYield = vault.calculateYield(LOFT_SAINT_GERMAIN, alice);
+        assertEq(aliceYield, 30 * 1e6);
+        
+        // Bob devrait recevoir 3 * 6 = 18 USDC
+        uint256 bobYield = vault.calculateYield(LOFT_SAINT_GERMAIN, bob);
+        assertEq(bobYield, 18 * 1e6);
+    }
+    
+    function testGetBuildingInfo() public {
+        (
+            string memory name,
+            uint256 price,
+            uint256 yieldPct,
+            uint256 totalSupply,
+            uint256 mintedSupply,
+            string memory plu,
+            bool active
+        ) = vault.getBuildingInfo(LOFT_SAINT_GERMAIN);
+        
+        assertEq(name, "Loft Saint-Germain");
+        assertEq(price, 150 * 1e6);
+        assertEq(yieldPct, 400); // 4%
+        assertEq(totalSupply, 1000);
+        assertEq(mintedSupply, 0);
+        assertEq(active, true);
+    }
+}

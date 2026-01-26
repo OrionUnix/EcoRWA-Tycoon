@@ -2,7 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Globe, ShieldCheck, Cpu, TrendingUp, Languages, Building2, Wallet, LineChart } from 'lucide-react';
-
+import React from 'react';
+import { Building2, Zap, TrendingUp, Users, ArrowRight, Sparkles } from 'lucide-react';
 const LOGO_PATH = "/logo.svg";
 
 interface LandingPageProps {
@@ -320,6 +321,231 @@ export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr'
           }}
         />
       </div>
+
+interface LandingCitySectionProps {
+  onGetStarted: () => void;
+}
+
+export default function LandingCitySection({ onGetStarted }: LandingCitySectionProps) {
+  return (
+    <section className="relative py-20 overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-purple-900/20 to-slate-900" />
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500/30 rounded-full px-6 py-2 mb-6">
+            <Sparkles className="w-5 h-5 text-green-400" />
+            <span className="text-green-300 font-semibold">Nouvelle Fonctionnalité</span>
+          </div>
+          
+          <h2 className="text-5xl md:text-6xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
+              Créez Votre Empire
+            </span>
+          </h2>
+          
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Pas assez de fonds pour investir dans l'immobilier ? Commencez par créer votre ville, 
+            extrayez des ressources précieuses, et construisez votre capital pour ensuite investir dans 
+            des <span className="text-purple-400 font-semibold">Real World Assets tokenisés</span>.
+          </p>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+          {/* Left: Features */}
+          <div className="space-y-8">
+            <div className="flex gap-6 group">
+              <div className="flex-shrink-0">
+                <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Building2 className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  Génération Procédurale
+                </h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Chaque ville est <span className="text-yellow-400 font-semibold">unique</span> avec une 
+                  carte générée aléatoirement. Découvrez des gisements d'or, diamant, pétrole, 
+                  eau, argent et charbon cachés dans votre territoire.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-6 group">
+              <div className="flex-shrink-0">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Zap className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  Extraction & Production
+                </h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Construisez des <span className="text-blue-400 font-semibold">mines et raffineries</span> pour 
+                  extraire automatiquement les ressources. Plus vous explorez, plus vous découvrez 
+                  de richesses enfouies dans votre territoire.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-6 group">
+              <div className="flex-shrink-0">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <TrendingUp className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  Marketplace P2P
+                </h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Vendez vos ressources à d'autres joueurs sur le <span className="text-purple-400 font-semibold">marketplace décentralisé</span>. 
+                  Échangez vos tokens $ECOR contre MockUSDC pour investir dans l'immobilier tokenisé.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-6 group">
+              <div className="flex-shrink-0">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  Économie Connectée
+                </h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Votre ville n'est pas isolée ! Connectée à l'écosystème EcoRWA, elle vous permet de 
+                  <span className="text-green-400 font-semibold"> générer du capital</span> pour acheter des 
+                  parts de biens immobiliers réels et recevoir des revenus locatifs.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Visual Demo / Stats */}
+          <div className="space-y-6">
+            {/* Main Card */}
+            <div className="bg-gradient-to-br from-green-900/60 to-emerald-900/60 backdrop-blur-xl rounded-3xl p-8 border-2 border-green-500/30 shadow-2xl">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-4 rounded-2xl">
+                  <Building2 className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-2xl font-bold text-white">Créer une Ville</h4>
+                  <p className="text-green-300">Votre premier pas vers l'empire</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div className="bg-black/30 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-300">Coût de création</span>
+                    <span className="text-2xl font-bold text-white">0.1 AVAX</span>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500 w-full" />
+                  </div>
+                </div>
+
+                <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-green-300">Récompense initiale</span>
+                    <span className="text-2xl font-bold text-green-400">1000 $ECOR</span>
+                  </div>
+                  <p className="text-sm text-gray-300">
+                    + Ressources aléatoires d'une valeur estimée entre 500-5000 $ECOR
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={onGetStarted}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-5 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/30 flex items-center justify-center gap-3 group"
+              >
+                <span className="text-lg">Commencer Maintenant</span>
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+              </button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <div className="text-3xl font-bold text-white mb-1">156</div>
+                <div className="text-gray-300 text-sm">Villes créées</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <div className="text-3xl font-bold text-white mb-1">12.4K</div>
+                <div className="text-gray-300 text-sm">$ECOR générés/jour</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Flow Diagram */}
+        <div className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 border border-white/10">
+          <h3 className="text-2xl font-bold text-white text-center mb-8">
+            🔄 De la Ville aux Parts Immobilières
+          </h3>
+          
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <div className="flex flex-col items-center gap-2">
+              <div className="bg-green-500/20 border border-green-500/30 rounded-xl px-6 py-4">
+                <Building2 className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                <div className="text-white font-semibold">Créer Ville</div>
+                <div className="text-green-300 text-sm">0.1 AVAX</div>
+              </div>
+            </div>
+
+            <ArrowRight className="w-8 h-8 text-gray-500 hidden sm:block" />
+
+            <div className="flex flex-col items-center gap-2">
+              <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-xl px-6 py-4">
+                <Zap className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                <div className="text-white font-semibold">Extraire</div>
+                <div className="text-yellow-300 text-sm">Ressources</div>
+              </div>
+            </div>
+
+            <ArrowRight className="w-8 h-8 text-gray-500 hidden sm:block" />
+
+            <div className="flex flex-col items-center gap-2">
+              <div className="bg-purple-500/20 border border-purple-500/30 rounded-xl px-6 py-4">
+                <TrendingUp className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <div className="text-white font-semibold">Vendre</div>
+                <div className="text-purple-300 text-sm">Marketplace</div>
+              </div>
+            </div>
+
+            <ArrowRight className="w-8 h-8 text-gray-500 hidden sm:block" />
+
+            <div className="flex flex-col items-center gap-2">
+              <div className="bg-blue-500/20 border border-blue-500/30 rounded-xl px-6 py-4">
+                <Building2 className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                <div className="text-white font-semibold">Investir</div>
+                <div className="text-blue-300 text-sm">Parts RWA</div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-center text-gray-400 mt-6 text-sm">
+            Ou utilisez vos ressources directement pour construire plus et augmenter votre production !
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
       {/* Navbar Sticky */}
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-white/10 transition-all">
