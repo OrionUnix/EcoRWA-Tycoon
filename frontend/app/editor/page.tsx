@@ -3,9 +3,10 @@
 import React, { Suspense, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Sky, Environment } from '@react-three/drei';
+import * as THREE from 'three';
+import Toolbar from '@/components/editor/Toolbar';
 
-// Désactivation stricte du SSR pour le composant Three.js
 const CityEditor = dynamic(() => import('@/components/zones/cityeditor'), {
     ssr: false,
     loading: () => null
@@ -14,78 +15,61 @@ const CityEditor = dynamic(() => import('@/components/zones/cityeditor'), {
 export default function EditorPage() {
     const [selectedTool, setSelectedTool] = useState<string | null>(null);
 
-    const btnStyle = (active: boolean, del = false) => ({
-        width: '100%',
-        padding: '12px',
-        marginBottom: '8px',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        border: 'none',
-        fontWeight: 'bold' as const,
-        backgroundColor: active ? (del ? '#ef4444' : '#3b82f6') : '#1e293b',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        transition: 'all 0.2s'
-    });
-
     return (
         <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#020617' }}>
-            {/* UI Layer */}
-            <div style={{
-                position: 'absolute',
-                top: 20,
-                left: 20,
-                zIndex: 10,
-                width: '200px',
-                padding: '15px',
-                background: 'rgba(15,23,42,0.9)',
-                borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
-            }}>
-                <button onClick={() => setSelectedTool('ROAD')} style={btnStyle(selectedTool === 'ROAD')}>
-                    🛣️ Route
-                </button>
-                <button onClick={() => setSelectedTool('DELETE')} style={btnStyle(selectedTool === 'DELETE', true)}>
-                    🚜 Bulldozer
-                </button>
+            <Toolbar selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
 
-                <hr style={{ border: '0.5px solid #334155', margin: '15px 0' }} />
+            <Canvas 
+               shadows 
+    gl={{ 
+antialias: true, 
+        toneMapping: THREE.AgXToneMapping, // AgX est souvent meilleur pour les couleurs saturées que ACES
+        toneMappingExposure: 0.7 // Réduit l'éblouissement "tout blanc"
+    }}
+>
+                <OrbitControls makeDefault />
 
-                <div style={{ color: '#94a3b8', fontSize: '11px', lineHeight: '1.6' }}>
-                    <p><strong>Contrôles :</strong></p>
-                    <p>⌨️ ZQSD : Déplacement</p>
-                    <p>⌨️ A / E : Rotation</p>
-                    <p>🖱️ Molette : Zoom</p>
-                    <p style={{ marginTop: '10px', color: '#3b82f6' }}>Mode actuel : {selectedTool || 'Aucun'}</p>
-                </div>
-            </div>
+              {/* Lumière ambiante très douce pour ne pas "brûler" les blancs */}
+    <ambientLight intensity={0.3} /> 
 
-            {/* 3D Layer */}
-            <Canvas shadows camera={{ position: [30, 30, 30], fov: 45 }}>
-                {/* CONFIG ORBITCONTROLS :
-                    On désactive la rotation et le déplacement (Pan) à la souris
-                    car ils sont maintenant gérés par le clavier (CameraRig).
-                    On garde uniquement le Zoom.
-                */}
-                <OrbitControls
-                    makeDefault
-                    enableRotate={false}
-                    enablePan={false}
-                    enableZoom={true}
-                    minDistance={5}
-                    maxDistance={150}
+    <directionalLight 
+        position={[40, 60, 40]}
+        intensity={1.2} // On baisse l'intensité
+        castShadow 
+        
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0002} // SUPPRIME LES ARTEFACTS SUR LES FAÇADES
+        shadow-camera-left={-100}
+        shadow-camera-right={100}
+        shadow-camera-top={100}
+        shadow-camera-bottom={-100}
+        />
+
+                {/* 2. Le Soleil : on baisse l'intensité pour ne pas brûler les blancs */}
+                <directionalLight 
+                    position={[50, 80, 50]} 
+                    intensity={0.8} 
+                    castShadow 
+                    shadow-mapSize={[2048, 2048]}
+                    shadow-camera-left={-60}
+                    shadow-camera-right={60}
+                    shadow-camera-top={60}
+                    shadow-camera-bottom={-60}
+                    shadow-bias={-0.0005} 
                 />
 
-                <ambientLight intensity={1.5} />
-                <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow />
+                {/* 3. Lumière d'appoint pour adoucir sans surexposer */}
+                <hemisphereLight intensity={0.3} color="#ffffff" groundColor="#444444" />
+
+                {/* 4. Pour les reflets (très important pour le look "maquette") */}
+                <Environment preset="apartment" />
 
                 <Suspense fallback={null}>
                     <CityEditor mode={selectedTool} />
                 </Suspense>
+                
+                {/* 5. Contact Shadows pour l'ancrage au sol */}
+                <ContactShadows position={[0, 0.01, 0]} opacity={0.4} scale={100} blur={2} />
             </Canvas>
         </div>
     );

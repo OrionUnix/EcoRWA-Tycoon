@@ -1,0 +1,114 @@
+'use client';
+
+import React from 'react';
+import GLBModel from '@/components/zones/GLBModel';
+
+// Définition des chemins d'assets pour la maintenance facile
+const ASSETS = {
+  STRAIGHT: "/assets/models/roads/road-straight.glb",
+  BEND: "/assets/models/roads/road-bend.glb",
+  T_JUNCTION: "/assets/models/roads/road-intersection.glb",
+  CROSSROAD: "/assets/models/roads/road-crossroad.glb",
+  END: "/assets/models/roads/road-end-round.glb",
+  CROSSING: "/assets/models/roads/road-crossing.glb",
+  LIGHT: "/assets/models/roads/light-curved.glb",
+  CONE: "/assets/models/roads/construction-cone.glb"
+};
+
+interface RoadsProps {
+  roadNetwork: Map<string, { x: number, z: number }>;
+  previewPoints: { x: number, z: number }[];
+  mode: string | null;
+  gridSize: number;
+}
+
+export default function Roads({ roadNetwork, previewPoints, mode, gridSize }: RoadsProps) {
+  
+  // LOGIQUE DE SÉLECTION DES MODÈLES (Extraite de ton code)
+  const getRoadConfig = (x: number, z: number) => {
+    const n = roadNetwork.has(`${x},${z - gridSize}`);
+    const s = roadNetwork.has(`${x},${z + gridSize}`);
+    const e = roadNetwork.has(`${x + gridSize},${z}`);
+    const w = roadNetwork.has(`${x - gridSize},${z}`);
+
+    const neighborsCount = [n, s, e, w].filter(Boolean).length;
+    let path = ASSETS.STRAIGHT;
+    let rot = 0;
+    let deco: 'LIGHT' | 'CONE' | null = null;
+
+    if (neighborsCount === 1) {
+      path = ASSETS.END;
+      if (n) rot = Math.PI / 2;
+      if (w) rot = Math.PI;
+      if (s) rot = -Math.PI / 2;
+      if (e) rot = 0;
+      deco = 'CONE';
+    } else if (n && s && e && w) {
+      path = ASSETS.CROSSROAD;
+    } else if (w && e && s) { path = ASSETS.T_JUNCTION; rot = 0; }
+    else if (w && e && n) { path = ASSETS.T_JUNCTION; rot = Math.PI; }
+    else if (n && s && e) { path = ASSETS.T_JUNCTION; rot = Math.PI / 2; }
+    else if (n && s && w) { path = ASSETS.T_JUNCTION; rot = -Math.PI / 2; }
+    else if (s && e) { path = ASSETS.BEND; rot = Math.PI / 2; }
+    else if (s && w) { path = ASSETS.BEND; rot = 0; }
+    else if (n && w) { path = ASSETS.BEND; rot = -Math.PI / 2; }
+    else if (n && e) { path = ASSETS.BEND; rot = Math.PI; }
+    else {
+      const isCrossing = Math.abs((x + z) / gridSize) % 6 === 0;
+      path = isCrossing ? ASSETS.CROSSING : ASSETS.STRAIGHT;
+      rot = (e || w) ? 0 : Math.PI / 2;
+      if (!isCrossing && Math.abs(x + z) % 10 === 0) deco = 'LIGHT';
+    }
+
+    return { path, rot, deco };
+  };
+
+  return (
+    <group>
+      {/* 1. RENDU DES ROUTES EXISTANTES */}
+      {Array.from(roadNetwork.values()).map((r) => {
+        const config = getRoadConfig(r.x, r.z);
+        const isHorizontal = config.rot === 0 || config.rot === Math.PI;
+
+        return (
+          <group key={`${r.x},${r.z}`}>
+            <GLBModel path={config.path} position={[r.x, 0, r.z]} rotation={[0, config.rot, 0]} scale={[2, 2, 2]} />
+            
+            {config.deco === 'LIGHT' && (
+              <GLBModel 
+                path={ASSETS.LIGHT} 
+                position={[isHorizontal ? r.x : r.x + 0.75, 0, isHorizontal ? r.z + 0.75 : r.z]} 
+                rotation={[0, isHorizontal ? 0 : Math.PI / 2, 0]} 
+                scale={[2, 2, 2]} 
+              />
+            )}
+
+            {config.deco === 'CONE' && (
+              <GLBModel path={ASSETS.CONE} position={[r.x, 0, r.z]} scale={[2, 2, 2]} />
+            )}
+          </group>
+        );
+      })}
+
+      {/* 2. PREVIEW LORS DU DRAG */}
+      {previewPoints.map((p, i) => (
+        <group key={`preview-${i}`}>
+          {mode === 'ROAD' ? (
+            <GLBModel 
+              path={ASSETS.STRAIGHT} 
+              position={[p.x, 0.05, p.z]} 
+              rotation={[0, previewPoints.length > 1 && previewPoints[0].x !== previewPoints[1].x ? 0 : Math.PI / 2, 0]} 
+              scale={[2, 2, 2]} 
+              opacity={0.5} 
+            />
+          ) : (
+            <mesh position={[p.x, 0.1, p.z]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[1.9, 1.9]} />
+              <meshStandardMaterial color="#ff4444" transparent opacity={0.6} />
+            </mesh>
+          )}
+        </group>
+      ))}
+    </group>
+  );
+}
