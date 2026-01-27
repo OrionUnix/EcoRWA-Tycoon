@@ -5,13 +5,18 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import GLBModel from '@/components/zones/GLBModel';
 
+import { ZONE_TYPES } from '../config/zoneAssets';
+
+const vehiclePath = ZONE_TYPES.VEHICLES.path;
+const vehicleModels = ZONE_TYPES.VEHICLES.models;
+
 interface Vehicle {
     id: number;
-    type: 'SUV' | 'DELIVERY' | 'TAXI' | 'TRUCK';
+    type: 'SUV' | 'DELIVERY' | 'TAXI' | 'TRUCK' | 'LUXURY';
     model: string;
     position: THREE.Vector3;
     target: THREE.Vector3 | null;
-    lastPosKey: string; // Pour éviter de bégayer sur la même case
+    lastPosKey: string;
     status: 'MOVING' | 'WAITING' | 'IDLE';
     hasBox: boolean;
     waitTimer: number;
@@ -25,18 +30,20 @@ export default function TrafficManager({ roads, zones, props, isNight }: any) {
     useEffect(() => {
         if (roads.size === 0 || isInitialized.current) return;
 
-        const types: Vehicle['type'][] = ['SUV', 'SUV', 'DELIVERY', 'TAXI', 'TRUCK', 'TRUCK', 'SUV', 'DELIVERY', 'TAXI', 'TRUCK'];
-        const roadKeys = Array.from(roads.keys());
+        const types: Vehicle['type'][] = ['SUV', 'LUXURY', 'DELIVERY', 'TAXI', 'TRUCK', 'TRUCK', 'SUV', 'DELIVERY', 'TAXI', 'TRUCK'];
+        const roadKeys = Array.from(roads.keys()) as string[];
+        if (roadKeys.length === 0) return;
 
         const initialVehicles = types.map((type, i) => {
             const startRoadKey = roadKeys[Math.floor(Math.random() * roadKeys.length)];
             const [sx, sz] = startRoadKey.split(',').map(Number);
 
-            let modelFile = 'vehicle.glb';
-            if (type === 'SUV') modelFile = Math.random() > 0.5 ? 'suv.glb' : 'suv-luxury.glb';
-            else if (type === 'DELIVERY') modelFile = 'delivery.glb';
-            else if (type === 'TAXI') modelFile = 'taxi.glb';
-            else if (type === 'TRUCK') modelFile = 'truck.glb';
+            let modelFile = vehicleModels.generic;
+            if (type === 'SUV') modelFile = vehicleModels.suv;
+            else if (type === 'LUXURY') modelFile = vehicleModels.luxury;
+            else if (type === 'DELIVERY') modelFile = vehicleModels.delivery;
+            else if (type === 'TAXI') modelFile = vehicleModels.taxi;
+            else if (type === 'TRUCK') modelFile = vehicleModels.truck;
 
             return {
                 id: i,
@@ -75,15 +82,13 @@ export default function TrafficManager({ roads, zones, props, isNight }: any) {
                     { x: currentX, z: currentZ - 2 }
                 ];
 
-                // Filtrer les routes valides
                 const validRoads = neighbors.filter(n => roads.has(`${n.x},${n.z}`));
 
                 if (validRoads.length > 0) {
-                    // Priorité : Ne pas retourner sur la case précédente (évite le blocage local)
                     const forwardOptions = validRoads.filter(n => `${n.x},${n.z}` !== newV.lastPosKey);
-                    const nextStep = forwardOptions.length > 0 
+                    const nextStep = forwardOptions.length > 0
                         ? forwardOptions[Math.floor(Math.random() * forwardOptions.length)]
-                        : validRoads[0]; // Demi-tour forcé si cul-de-sac
+                        : validRoads[0];
 
                     newV.target = new THREE.Vector3(nextStep.x, 0, nextStep.z);
                     newV.lastPosKey = currentKey;
@@ -94,15 +99,15 @@ export default function TrafficManager({ roads, zones, props, isNight }: any) {
             // 2. MOUVEMENT
             if (newV.status === 'MOVING' && newV.target) {
                 const dist = newV.position.distanceTo(newV.target);
-                
+
                 if (dist > 0.1) {
                     const dir = newV.target.clone().sub(newV.position).normalize();
-                    newV.position.add(dir.multiplyScalar(delta * 4));
+                    newV.position = newV.position.clone().add(dir.multiplyScalar(delta * 4));
                     newV.rotationY = Math.atan2(dir.x, dir.z);
                 } else {
                     newV.status = 'WAITING';
-                    newV.waitTimer = 0.2; // Pause très courte pour fluidifier
-                    
+                    newV.waitTimer = 0.2;
+
                     if (newV.type === 'TRUCK' && Math.random() > 0.9) {
                         newV.hasBox = !newV.hasBox;
                         newV.waitTimer = 1.5;
@@ -122,15 +127,15 @@ export default function TrafficManager({ roads, zones, props, isNight }: any) {
     return (
         <group>
             {vehicles.map((v) => (
-                <group 
-                    key={v.id} 
-                    position={[v.position.x, 0, v.position.z]} 
+                <group
+                    key={v.id}
+                    position={[v.position.x, 0, v.position.z]}
                     rotation={[0, v.rotationY, 0]}
                 >
-                    <GLBModel path={`/assets/models/vehicles/${v.model}`} scale={[0.6, 0.6, 0.6]} />
+                    <GLBModel path={`${vehiclePath}${v.model}`} scale={[0.6, 0.6, 0.6]} />
                     {v.type === 'TRUCK' && v.hasBox && (
                         <group position={[0, 0.4, 0]}>
-                            <GLBModel path="/assets/models/vehicles/box.glb" scale={[0.4, 0.4, 0.4]} />
+                            <GLBModel path={`${vehiclePath}${vehicleModels.box}`} scale={[0.4, 0.4, 0.4]} />
                         </group>
                     )}
                     {isNight && (

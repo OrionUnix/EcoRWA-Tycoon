@@ -4,7 +4,28 @@
 import React, { useState } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { Building2, Coins, Sparkles, X, AlertCircle, Wallet } from 'lucide-react';
-import { useTranslation } from '@/lib/i18n/LanguageContext';
+// import { useTranslation } from '@/lib/i18n/LanguageContext';
+
+// Mock hook since LanguageContext is missing
+const useTranslation = () => ({
+  t: {
+    cityBuilderModal: {
+      title: "Nouvelle Ville",
+      subtitle: "Construisez votre empire",
+      description: "Créez votre propre ville RWA.",
+      reward: "Récompense",
+      rewardAmount: "ECOR",
+      cost: "Coût",
+      walletRequired: "Connexion requise",
+      insufficientFunds: "Fonds insuffisants",
+      cancelButton: "Annuler",
+      createButton: "Créer",
+    },
+    nav: { connectWallet: "Connecter Wallet" },
+    cityBuilder: { wallet: { avax: "AVAX" } },
+    common: { success: "Succès", loading: "Chargement" }
+  }
+});
 import { useRouter } from 'next/navigation';
 
 interface CityBuilderModalProps {
@@ -45,7 +66,7 @@ export default function CityBuilderModal({ isOpen, onClose }: CityBuilderModalPr
     try {
       // Simuler la transaction (à remplacer par l'appel au smart contract)
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Rediriger vers le City Builder
       router.push('/city-builder');
       onClose();
@@ -68,7 +89,7 @@ export default function CityBuilderModal({ isOpen, onClose }: CityBuilderModalPr
           >
             <X className="w-6 h-6" />
           </button>
-          
+
           <div className="flex items-center gap-4 mb-4">
             <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-4 rounded-2xl shadow-lg">
               <Building2 className="w-10 h-10 text-white" />

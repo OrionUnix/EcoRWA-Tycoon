@@ -68,7 +68,7 @@ export default function Dashboard({ onBuildingSelect, t }: DashboardProps) {
         <div className="relative group">
           {/* Glow effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
+
           <div className="relative bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 rounded-3xl p-8 border border-white/10 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -77,19 +77,7 @@ export default function Dashboard({ onBuildingSelect, t }: DashboardProps) {
                 </h2>
                 <p className="text-slate-400">Manage your real estate investments</p>
               </div>
-              {totals.pending > 0 && (
-                <button
-                  onClick={() => handleClaim()}
-                  disabled={isClaiming}
-                  className="group relative px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-2xl font-semibold overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                  <span className="relative flex items-center gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    {isClaiming ? 'Claiming...' : `Claim ${totals.pending.toFixed(2)}`}
-                  </span>
-                </button>
-              )}
+              {/* Global claim button removed temporarily */}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -135,14 +123,14 @@ function StatCard({ icon, label, value, gradient, highlight, pulse, delay = 0 }:
     >
       {/* Glassmorphism background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10" />
-      
+
       {/* Gradient overlay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-500`} />
-      
+
       {pulse && (
         <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-20 animate-pulse`} />
       )}
-      
+
       <div className="relative z-10 p-6">
         <div className={`inline-flex p-3 rounded-2xl bg-gradient-to-br ${gradient} mb-4 shadow-lg`}>
           <div className="text-white">{icon}</div>
@@ -152,7 +140,7 @@ function StatCard({ icon, label, value, gradient, highlight, pulse, delay = 0 }:
           {value}
         </p>
       </div>
-      
+
       {/* Shine effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
     </div>
@@ -187,12 +175,12 @@ function BuildingCard({ building, isHovered, onHover, onLeave, onClick, onClaim,
     >
       {/* Glassmorphism background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl border border-white/10" />
-      
+
       {/* Glow effect on hover */}
       {isHovered && (
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 blur-xl" />
       )}
-      
+
       <div className="relative z-10 p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -262,10 +250,10 @@ function PropertyCard({ building, onClick, delay = 0 }: PropertyCardProps) {
     >
       {/* Glassmorphism background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10" />
-      
+
       {/* Gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/20 group-hover:to-purple-500/20 transition-all duration-500" />
-      
+
       <div className="relative z-10 p-6">
         <div className="flex items-start justify-between mb-6">
           <h3 className="text-xl font-bold text-white">{name}</h3>
@@ -291,7 +279,7 @@ function PropertyCard({ building, onClick, delay = 0 }: PropertyCardProps) {
           Invest Now
         </button>
       </div>
-      
+
       {/* Shine effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
     </div>

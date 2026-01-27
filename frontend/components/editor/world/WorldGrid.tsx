@@ -11,8 +11,8 @@ export function WorldGrid({ mapData, onTileClick }: any) {
                 const isWater = tile.type.startsWith('river');
 
                 return (
-                    <group 
-                        key={`${tile.x}-${tile.z}-${index}`} 
+                    <group
+                        key={`${tile.x}-${tile.z}-${index}`}
                         position={[tile.x, 0, tile.z]}
                     >
                         {/* 1. SOL DE BASE : On met de l'herbe partout pour le clic, 
@@ -26,16 +26,16 @@ export function WorldGrid({ mapData, onTileClick }: any) {
                             </group>
                         ) : (
                             /* 2. RIVIÈRE : On appelle le composant dédié */
-                            <WaterTile 
-                                x={0} z={0} 
-                                type={tile.type} 
-                                rotation={tile.rotation || 0} 
+                            <WaterTile
+                                x={0} z={0}
+                                type={tile.type}
+                                rotation={tile.rotation || 0}
                             />
                         )}
 
                         {/* 3. DÉCORS (Arbres, etc.) posés SUR l'herbe */}
                         {tile.type === 'tree' && (
-                            <group scale={0.6} position={[0, 0, 0]} pointerEvents="none">
+                            <group scale={0.6} position={[0, 0, 0]}>
                                 <GLBModel path="/assets/models/nature/tree_oak_dark.glb" />
                             </group>
                         )}

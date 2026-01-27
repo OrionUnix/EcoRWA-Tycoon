@@ -1,178 +1,195 @@
 'use client';
 
 /**
- * ParseCity3D - Composant principal de la ville 3D
- * Intègre toutes les zones modulaires et gère l'interaction
+ * ParseCity3D - Unified 3D City View
+ * Uses the Editor's rendering engine for a consistent and dynamic city experience.
  */
 
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
-import { useState, Suspense, useEffect, useCallback } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Environment, ContactShadows, OrbitControls } from '@react-three/drei';
+import { useState, Suspense, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Building3D } from '@/types/cityTypes';
+import * as THREE from 'three';
 
-// Import des zones modulaires
-import DowntownZone from '@/components/city3d/zones/DowntownZone';
-import ResidentialZone from '@/components/city3d/zones/ResidentialZone';
-import CommercialZone from '@/components/city3d/zones/CommercialZone';
-import IndustrialZone from '@/components/city3d/zones/IndustrialZone';
-import RoadNetwork from '@/components/city3d/RoadNetwork';
-import CityDecorations from '@/components/city3d/CityDecorations';
-import VehicleSystem from '@/components/city3d/VehicleSystem';
+// Editor Components (Unified Rendering)
+import Roads from '@/components/editor/Roads';
+import Rivers from '@/components/editor/world/Rivers';
+import NatureProps from '@/components/editor/world/NatureProps';
+import BuildingTile from '@/components/editor/BuildingTile';
+import TrafficManager from '@/components/editor/world/TrafficManager';
+import CameraRig from '@/components/zones/CameraRig';
+
+// Data
+import { INITIAL_CITY_LAYOUT } from '@/data/initialCityLayout';
+import { BUILDINGS_DATA, BuildingData } from '@/data/buildings';
 import BuildingPurchaseDialog from '@/components/BuildingPurchaseDialog';
 
-// Position des zones dans la ville
-const ZONE_POSITIONS = {
-  downtown: [-4, 0, -6] as [number, number, number],
-  residential: [-10, 0, 2] as [number, number, number],
-  commercial: [4, 0, 2] as [number, number, number],
-  industrial: [8, 0, -6] as [number, number, number],
-} as const;
-
-// Composant de chargement
-function LoadingFallback() {
-  return (
-    <mesh position={[0, 1, 0]}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="#3b82f6" wireframe />
-    </mesh>
-  );
-}
-
-// Sol de la ville
-function CityGround() {
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-      <planeGeometry args={[50, 50]} />
-      <meshStandardMaterial color="#1e293b" />
-    </mesh>
-  );
-}
-
-// Props du composant principal
 interface ParseCity3DProps {
-  onBuildingClick?: (building: Building3D) => void;
+  onBuildingClick?: (data: { id: number }) => void;
 }
 
-// Composant principal
+// Sub-component to manage the Day/Night Cycle logic
+function DayNightCycle({ onCycleUpdate }: { onCycleUpdate: (data: { time: number, isNight: boolean, sunIntensity: number }) => void }) {
+  const timeRef = useRef(0);
+
+  useFrame((state, delta) => {
+    // Very slow cycle: 1 full cycle every 120 seconds
+    timeRef.current += delta * 0.05;
+    const time = (Math.sin(timeRef.current) + 1) / 2; // 0 to 1
+    const isNight = time < 0.3;
+    const sunIntensity = Math.max(0, Math.sin(timeRef.current) * 1.5);
+
+    onCycleUpdate({ time, isNight, sunIntensity });
+
+    // Smoothly transition background color if needed
+    // state.scene.background = new THREE.Color(isNight ? '#020617' : '#0f172a');
+  });
+
+  return null;
+}
+
 export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }: ParseCity3DProps) {
-  const [selected, setSelected] = useState<Building3D | null>(null);
+  const [selected, setSelected] = useState<BuildingData | null>(null);
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
   const [locale, setLocale] = useState<'fr' | 'en'>('fr');
 
-  // Récupérer la locale depuis les cookies
+  // Day/Night State
+  const [cycle, setCycle] = useState({ time: 0.5, isNight: false, sunIntensity: 1 });
+
+  // Load locale
   useEffect(() => {
     const savedLocale = document.cookie
       .split('; ')
       .find(row => row.startsWith('NEXT_LOCALE='))
       ?.split('=')[1] as 'fr' | 'en';
-
-    if (savedLocale === 'en' || savedLocale === 'fr') {
-      setLocale(savedLocale);
-    }
+    if (savedLocale) setLocale(savedLocale);
   }, []);
 
-  // Handler pour la sélection de bâtiment
-  const handleBuildingClick = useCallback((building: Building3D) => {
-    setSelected(building);
-    // Appeler le callback externe si fourni
-    externalOnBuildingClick?.(building);
+  const l = locale;
+
+  // Handle click
+  const handleBuildingClick = useCallback((id: number) => {
+    console.log("Building clicked:", id);
+    const building = BUILDINGS_DATA.find(b => b.id === id);
+    if (building) {
+      setSelected(building);
+      externalOnBuildingClick?.({ id: building.id });
+    } else {
+      console.warn("Building data not found for ID:", id);
+    }
   }, [externalOnBuildingClick]);
 
-  const l = locale; // Raccourci pour la locale
-
   return (
-    <div className="relative w-full h-[750px] bg-gradient-to-b from-slate-900 via-slate-950 to-black rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
-      {/* Canvas 3D */}
-      <Canvas shadows camera={{ position: [20, 15, 20], fov: 45 }}>
-        {/* Éclairage */}
-        <ambientLight intensity={0.4} />
+    <div className="relative w-full h-[750px] bg-slate-950 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
+
+      {/* Cycle Indicator Badge */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <Badge variant="outline" className="bg-slate-900/40 backdrop-blur-md border-white/5 text-[10px] uppercase tracking-widest px-3 py-1">
+          {cycle.isNight ? '🌙 Night Cycle' : '☀️ Day Cycle'}
+        </Badge>
+      </div>
+
+      <Canvas shadows camera={{ position: [30, 30, 30], fov: 45 }}>
+        {/* OrbitControls are required for the CameraRig to work correctly */}
+        <OrbitControls makeDefault enableDamping={false} />
+        {/* Day/Night Cycle Logic */}
+        <DayNightCycle onCycleUpdate={setCycle} />
+
+        {/* Dynamic Lighting */}
+        <ambientLight intensity={cycle.isNight ? 0.1 : 0.4} />
         <directionalLight
-          position={[10, 20, 10]}
-          intensity={1}
+          position={[20, 40, 20]}
+          intensity={cycle.sunIntensity}
           castShadow
           shadow-mapSize={[2048, 2048]}
-        />
-        <directionalLight position={[-10, 10, -10]} intensity={0.3} />
-
-        {/* Contrôles de caméra */}
-        <OrbitControls
-          enableRotate={true}
-          enablePan={true}
-          enableZoom={true}
-          minDistance={10}
-          maxDistance={50}
-          maxPolarAngle={Math.PI / 2.2}
+          shadow-camera-left={-40}
+          shadow-camera-right={40}
+          shadow-camera-top={40}
+          shadow-camera-bottom={-40}
         />
 
-        <Suspense fallback={<LoadingFallback />}>
-          {/* Sol */}
-          <CityGround />
+        {cycle.isNight && (
+          <>
+            <pointLight position={[0, 15, 0]} intensity={0.8} color="#4f46e5" distance={50} />
+            <pointLight position={[-15, 10, 15]} intensity={0.5} color="#818cf8" distance={30} />
+            <pointLight position={[15, 10, -15]} intensity={0.5} color="#818cf8" distance={30} />
+          </>
+        )}
 
-          {/* Grille d'aide */}
-          <gridHelper args={[40, 20, 0x334155, 0x1e293b]} position={[0, 0.01, 0]} />
+        {/* Centralized Camera Rig */}
+        <CameraRig />
 
-          {/* Routes */}
-          <RoadNetwork position={[0, 0, 0]} showLights={true} />
+        <Suspense fallback={null}>
+          {/* Ground - Better visual quality */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+            <planeGeometry args={[50, 50]} />
+            <meshStandardMaterial
+              color={cycle.isNight ? "#020617" : "#0f172a"}
+              roughness={0.8}
+              metalness={0.2}
+            />
+          </mesh>
 
-          {/* Zone Centre-ville (Downtown) */}
-          <DowntownZone
-            position={ZONE_POSITIONS.downtown}
-            onBuildingClick={handleBuildingClick}
-            selectedBuildingId={selected?.id}
-          />
-
-          {/* Zone Résidentielle */}
-          <ResidentialZone
-            position={ZONE_POSITIONS.residential}
-            onBuildingClick={handleBuildingClick}
-            selectedBuildingId={selected?.id}
-          />
-
-          {/* Zone Commerciale */}
-          <CommercialZone
-            position={ZONE_POSITIONS.commercial}
-            onBuildingClick={handleBuildingClick}
-            selectedBuildingId={selected?.id}
-          />
-
-          {/* Zone Industrielle */}
-          <IndustrialZone
-            position={ZONE_POSITIONS.industrial}
-            onBuildingClick={handleBuildingClick}
-            selectedBuildingId={selected?.id}
-          />
-
-          {/* Décorations globales */}
-          <CityDecorations />
-
-          {/* Véhicules animés */}
-          <VehicleSystem enabled={true} />
-
-          {/* Ombres de contact */}
-          <ContactShadows
+          {/* Grid Helper - Refined size/opacity */}
+          <gridHelper
+            args={[25, 25, 0x1e293b, 0x0f172a]}
             position={[0, 0, 0]}
-            opacity={0.4}
-            scale={50}
-            blur={2}
-            far={10}
           />
 
-          {/* Environnement HDR pour les reflets */}
-          <Environment preset="city" />
+          {/* Render Components from Editor System */}
+          <Rivers
+            riverNetwork={INITIAL_CITY_LAYOUT.riverNetwork}
+            previewPoints={[]}
+            gridSize={1}
+          />
+
+          <Roads
+            roadNetwork={INITIAL_CITY_LAYOUT.roadNetwork}
+            previewPoints={[]}
+            mode={null}
+            gridSize={2}
+            isNight={cycle.isNight}
+          />
+
+          <TrafficManager
+            roads={INITIAL_CITY_LAYOUT.roadNetwork}
+            zones={INITIAL_CITY_LAYOUT.zones as any}
+            props={INITIAL_CITY_LAYOUT.props}
+            isNight={cycle.isNight}
+          />
+
+          <NatureProps props={INITIAL_CITY_LAYOUT.props} />
+
+          {/* Buildings */}
+          {Array.from(INITIAL_CITY_LAYOUT.zones.values()).map((z) => (
+            <BuildingTile
+              key={`${z.x},${z.z}`}
+              x={z.x}
+              z={z.z}
+              type={z.type}
+              roadNetwork={INITIAL_CITY_LAYOUT.roadNetwork}
+              isBeingDestroyed={false}
+              isPreview={false}
+              id={z.id}
+              onClick={handleBuildingClick}
+            />
+          ))}
+
+          <ContactShadows opacity={0.4} scale={60} blur={2.5} far={20} />
+          <Environment preset={cycle.isNight ? "night" : "city"} />
         </Suspense>
       </Canvas>
 
-      {/* Dialog d'achat */}
+      {/* Building Dialog */}
       <BuildingPurchaseDialog
-        buildingId={selected?.id ? parseInt(selected.id.split('-').pop() || '0') : null}
+        buildingId={selected?.id || null}
         isOpen={isPurchaseOpen}
         onClose={() => setIsPurchaseOpen(false)}
       />
 
-      {/* Panel d'information du bâtiment sélectionné */}
+      {/* Info Panel */}
       <AnimatePresence>
         {selected && (
           <motion.div
@@ -188,120 +205,110 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
                   {selected.type[l]}
                 </Badge>
                 <h2 className="text-2xl font-bold tracking-tight">{selected.name}</h2>
-                <p className="text-xs text-slate-400 uppercase">{selected.zone}</p>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${selected.typeColor === 'blue' ? 'bg-blue-500' : selected.typeColor === 'orange' ? 'bg-orange-500' : 'bg-green-500'}`}></div>
+                  <p className="text-xs text-slate-400 uppercase">{selected.coord}</p>
+                </div>
               </div>
-              <button onClick={() => setSelected(null)} className="p-2 hover:bg-white/10 rounded-full text-slate-400">✕</button>
+              <button
+                onClick={() => setSelected(null)}
+                className="p-2 hover:bg-white/10 rounded-full text-slate-400 transition-colors"
+              >
+                ✕
+              </button>
             </div>
 
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto px-6 space-y-6 py-4">
-              {/* 3D Model Preview Placeholder */}
-              <div className="relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 rounded-2xl p-4 border border-white/5 flex items-center justify-center min-h-[140px]">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">🏢</div>
-                  <p className="text-xs text-slate-400">{l === 'fr' ? 'Modèle 3D' : '3D Model'}</p>
+              {/* Image Preview */}
+              <div className="relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 rounded-2xl p-4 border border-white/5 flex items-center justify-center min-h-[140px] overflow-hidden group">
+                <div className="text-center group-hover:scale-105 transition-transform duration-500">
+                  <div className="text-5xl mb-2">🏢</div>
+                  <p className="text-xs text-slate-400 font-medium tracking-tight">{l === 'fr' ? 'Vue du Domaine' : 'Estate View'}</p>
                 </div>
               </div>
 
-              {/* AI Report (si disponible) */}
-              {selected.aiReport && (
-                <div className="p-4 bg-slate-800/60 rounded-2xl border border-white/5 space-y-4">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                    <p className="text-[10px] font-black text-blue-400 flex items-center gap-2 uppercase">AI Urban Advisor</p>
-                    <Badge className={selected.aiReport.riskLevel === 'LOW' ? "bg-green-500/20 text-green-400" : selected.aiReport.riskLevel === 'MEDIUM' ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}>
-                      {selected.aiReport.riskLevel}
-                    </Badge>
-                  </div>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Yield</p>
+                  <p className="text-green-400 font-bold text-lg">{selected.yield}</p>
+                </div>
+                <div className="p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Size</p>
+                  <p className="text-blue-400 font-bold text-lg">{selected.size} units</p>
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-1 gap-4 text-xs">
-                    <div>
-                      <p className="text-green-400 font-bold mb-1 uppercase tracking-wider">↗ {l === 'fr' ? 'Opportunités' : 'Opportunities'}</p>
-                      <ul className="text-slate-300 space-y-1 list-disc pl-4">
-                        {selected.aiReport.opportunities[l].map((opt: string, i: number) => <li key={i}>{opt}</li>)}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-red-400 font-bold mb-1 uppercase tracking-wider">↘ Risks</p>
-                      <ul className="text-slate-300 space-y-1 list-disc pl-4">
-                        {selected.aiReport.risks[l].map((risk: string, i: number) => <li key={i}>{risk}</li>)}
-                      </ul>
-                    </div>
+              {/* AI Report */}
+              <div className="p-4 bg-slate-800/60 rounded-2xl border border-white/5 space-y-4">
+                <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                  <p className="text-[10px] font-black text-blue-400 flex items-center gap-2 uppercase tracking-tighter">AI Urban Analyst</p>
+                  <Badge className={selected.aiReport.riskLevel === 'LOW' ? "bg-green-500/20 text-green-400" : selected.aiReport.riskLevel === 'MEDIUM' ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}>
+                    {selected.aiReport.riskLevel} Risk
+                  </Badge>
+                </div>
+                <div className="space-y-3 text-xs leading-relaxed">
+                  <div>
+                    <p className="text-green-400 font-bold mb-1 uppercase tracking-wider">↗ {l === 'fr' ? 'Opportunités' : 'Opportunities'}</p>
+                    <ul className="text-slate-300 space-y-1 list-disc pl-4">
+                      {selected.aiReport.opportunities[l].map((opt, i) => <li key={i}>{opt}</li>)}
+                    </ul>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* PLU Alert (si disponible) */}
-              {selected.pluAlert && (
-                <div className="p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
-                  <p className="text-[10px] uppercase text-blue-400 font-black mb-1 italic">Analyse PLU</p>
-                  <p className="text-sm text-slate-200 italic">"{selected.pluAlert[l]}"</p>
-                </div>
-              )}
+              {/* PLU Alert */}
+              <div className="p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
+                <p className="text-[10px] uppercase text-blue-400 font-black mb-1 italic">Regulatory Insights</p>
+                <p className="text-sm text-slate-200 italic leading-snug">"{selected.pluAlert[l]}"</p>
+              </div>
             </div>
 
-            {/* Footer DYNAMIQUE */}
-            <div className="p-6 bg-slate-900/60 backdrop-blur-md border-t border-white/10">
+            {/* Footer */}
+            <div className="p-6 bg-slate-900/80 backdrop-blur-md border-t border-white/10">
               {selected.isMintable ? (
                 <>
                   <div className="flex justify-between items-end mb-4">
                     <div className="flex flex-col">
-                      <span className="text-slate-400 text-xs">Yield</span>
-                      <span className="text-green-400 font-bold">{selected.yield || 'N/A'}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-slate-400 text-xs">{l === 'fr' ? "Prix d'entrée" : "Entry Price"}</span>
-                      <p className="text-2xl font-bold text-white tracking-tighter">{selected.price || 'N/A'}</p>
+                      <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">{l === 'fr' ? "Prix d'entrée" : "Entry Price"}</span>
+                      <p className="text-2xl font-bold text-white tracking-tighter">{selected.price}</p>
                     </div>
                   </div>
                   <Button
                     onClick={() => setIsPurchaseOpen(true)}
-                    className="w-full bg-blue-600 hover:bg-blue-500 h-12 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+                    className="w-full bg-blue-600 hover:bg-blue-500 h-12 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all hover:scale-[1.02] font-bold"
                   >
                     {l === 'fr' ? 'Investir maintenant' : 'Invest now'}
                   </Button>
                 </>
               ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-center gap-2 p-3 bg-slate-800/50 rounded-xl border border-white/5">
-                    <span className="animate-pulse h-2 w-2 rounded-full bg-amber-500"></span>
-                    <span className="text-sm text-slate-300 font-medium">{l === 'fr' ? 'Bientôt disponible' : 'Coming soon'}</span>
-                  </div>
-                  <Button disabled className="w-full bg-slate-800 text-slate-500 h-12 rounded-xl cursor-not-allowed border border-white/5">
-                    {l === 'fr' ? 'Ventes fermées' : 'Sales closed'}
-                  </Button>
-                </div>
+                <Button disabled className="w-full bg-slate-800 text-slate-500 h-12 rounded-xl cursor-not-allowed border border-white/5 uppercase text-xs font-black tracking-widest">
+                  {l === 'fr' ? 'Epuisé' : 'Sold Out'}
+                </Button>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Légende des zones */}
-      <div className="absolute left-6 bottom-6 flex flex-col gap-2 bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-white/10">
-        <p className="text-xs text-slate-400 uppercase font-bold mb-1">{l === 'fr' ? 'Zones' : 'Zones'}</p>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
-          <span className="text-xs text-white">Downtown</span>
+      {/* Navigation Controls Help (Floating) */}
+      <div className="absolute left-6 bottom-6 flex flex-col gap-2 z-20 pointer-events-none opacity-60 hover:opacity-100 transition-opacity">
+        <div className="bg-slate-900/60 backdrop-blur px-3 py-2 rounded-lg border border-white/5 flex items-center gap-3">
+          <div className="flex flex-col gap-1 items-center">
+            <div className="w-6 h-6 flex items-center justify-center border border-white/20 rounded text-[10px]">W</div>
+            <div className="flex gap-1">
+              <div className="w-6 h-6 flex items-center justify-center border border-white/20 rounded text-[10px]">A</div>
+              <div className="w-6 h-6 flex items-center justify-center border border-white/20 rounded text-[10px]">S</div>
+              <div className="w-6 h-6 flex items-center justify-center border border-white/20 rounded text-[10px]">D</div>
+            </div>
+          </div>
+          <span className="text-[10px] text-slate-300 uppercase tracking-tighter">{l === 'fr' ? 'Déplacer' : 'Move'}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-          <span className="text-xs text-white">{l === 'fr' ? 'Résidentiel' : 'Residential'}</span>
+        <div className="bg-slate-900/60 backdrop-blur px-3 py-2 rounded-lg border border-white/5 flex items-center gap-2">
+          <span className="text-xs">🖱️</span>
+          <span className="text-[10px] text-slate-300 uppercase tracking-tighter">Click & Drag {l === 'fr' ? 'Rotation' : 'Rotate'}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-          <span className="text-xs text-white">Commercial</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-slate-500"></div>
-          <span className="text-xs text-white">{l === 'fr' ? 'Industriel' : 'Industrial'}</span>
-        </div>
-      </div>
-
-      {/* Instructions */}
-      <div className="absolute left-6 top-6 bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10">
-        <p className="text-xs text-slate-400">
-          {l === 'fr' ? '🖱️ Cliquez sur un bâtiment pour voir les détails' : '🖱️ Click on a building to see details'}
-        </p>
       </div>
     </div>
   );

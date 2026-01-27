@@ -52,7 +52,7 @@ function AnimatedCitySVG() {
       ];
 
       streetlightGroups.forEach((groupId, index) => {
-        const group = document.getElementById(groupId);
+        const group = document.getElementById(groupId) as any;
         if (!group) return;
 
         let aura = group.querySelector('.streetlight-aura') as SVGElement;

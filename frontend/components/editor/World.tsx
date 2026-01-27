@@ -18,7 +18,7 @@ export function World({ seed = "0x123...", size = 50 }) {
     }, [size, seed]);
 
     // 2. On charge le modèle de base pour l'herbe
-    const { nodes, materials } = useGLTF('/assets/models/nature/ground_grass.glb');
+    const { nodes, materials } = useGLTF('/assets/models/nature/grass.glb');
 
     return (
         <group>

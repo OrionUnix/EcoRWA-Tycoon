@@ -4,16 +4,17 @@ import { useGLTF } from '@react-three/drei';
 import { useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
-export default function GLBModel({ 
-    path, 
-    position = [0, 0, 0], 
-    rotation = [0, 0, 0], 
-    scale = [1, 1, 1], 
-    opacity = 1, 
+export default function GLBModel({
+    path,
+    position = [0, 0, 0],
+    rotation = [0, 0, 0],
+    scale = [1, 1, 1],
+    opacity = 1,
     transparent = false,
-    isPreview = false 
+    isPreview = false,
+    ...props
 }: any) {
-    const { scene } = useGLTF(path);
+    const { scene } = useGLTF(path) as any;
 
     // 1. Clone unique pour chaque instance
     const clonedScene = useMemo(() => scene.clone(true), [scene]);
@@ -30,12 +31,12 @@ export default function GLBModel({
     useEffect(() => {
         const materialsToDispose: THREE.Material[] = [];
 
-        clonedScene.traverse((child) => {
+        clonedScene.traverse((child: any) => {
             if (child instanceof THREE.Mesh) {
                 // On clone le matériau
                 child.material = child.material.clone();
                 materialsToDispose.push(child.material);
-                
+
                 // --- LOGIQUE POUR LES BÂTIMENTS (NON-ROUTES) ---
                 if (!isRoad) {
                     // Application du décalage de couleur (UV)
@@ -50,7 +51,7 @@ export default function GLBModel({
                 } else {
                     // --- LOGIQUE SPÉCIFIQUE AUX ROUTES ---
                     // On veut que les routes soient bien mates et sombres
-                    child.material.roughness = 1; 
+                    child.material.roughness = 1;
                     child.material.metalness = 0;
                     // On ne touche pas à l'UV offset pour que le bitume reste gris
                 }
@@ -68,7 +69,7 @@ export default function GLBModel({
         return () => {
             materialsToDispose.forEach(m => m.dispose());
         };
-    }, [clonedScene, opacity, transparent, isPreview, uvOffset, isRoad]); 
+    }, [clonedScene, opacity, transparent, isPreview, uvOffset, isRoad]);
 
     return (
         <primitive
@@ -76,6 +77,7 @@ export default function GLBModel({
             position={position}
             rotation={rotation}
             scale={scale}
+            {...props}
         />
     );
 }

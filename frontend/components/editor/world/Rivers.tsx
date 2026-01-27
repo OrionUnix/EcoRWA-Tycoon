@@ -3,17 +3,22 @@
 import React from 'react';
 import GLBModel from '@/components/zones/GLBModel';
 
+import { ZONE_TYPES } from '../config/zoneAssets';
+
+const riverConfig = ZONE_TYPES.INFRASTRUCTURE.rivers;
+const riverPath = riverConfig.path;
+
 const ASSETS = {
-    STRAIGHT: "/assets/models/nature/ground_riverStraight.glb",
-    BEND: "/assets/models/nature/ground_riverBend.glb",
-    T_JUNCTION: "/assets/models/nature/ground_riverSplit.glb",
-    CROSSROAD: "/assets/models/nature/ground_riverCross.glb",
-    END: "/assets/models/nature/ground_riverEndClosed.glb",
-    TILE: "/assets/models/nature/ground_riverTile.glb"
+    STRAIGHT: `${riverPath}${riverConfig.models.straight}`,
+    BEND: `${riverPath}${riverConfig.models.bend}`,
+    T_JUNCTION: `${riverPath}${riverConfig.models.split}`,
+    CROSSROAD: `${riverPath}${riverConfig.models.cross}`,
+    END: `${riverPath}${riverConfig.models.end}`,
+    TILE: `${riverPath}ground_riverTile.glb`
 };
 
 export default function Rivers({ riverNetwork, previewPoints, mode, gridSize = 1 }: any) {
-    
+
     const getRiverConfig = (x: number, z: number) => {
         // On utilise gridSize pour vérifier les voisins exacts
         const n = riverNetwork.has(`${x},${z - gridSize}`);
@@ -47,7 +52,7 @@ export default function Rivers({ riverNetwork, previewPoints, mode, gridSize = 1
         if (count === 2) {
             if (n && s) return { path: ASSETS.STRAIGHT, rot: 0 };
             if (e && w) return { path: ASSETS.STRAIGHT, rot: Math.PI / 2 };
-            
+
             if (s && e) return { path: ASSETS.BEND, rot: 0 };
             if (s && w) return { path: ASSETS.BEND, rot: -Math.PI / 2 };
             if (n && w) return { path: ASSETS.BEND, rot: Math.PI };

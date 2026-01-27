@@ -12,7 +12,7 @@ export default function Environment({ isNight }: EnvironmentProps) {
     // useMemo permet de ne pas recalculer ces valeurs à chaque micro-mouvement de souris
     const config = useMemo(() => ({
         sunIntensity: isNight ? 0.05 : 3.5, // Un tout petit peu de lune la nuit
-        sunColor: isNight ? '#2e4482' : '#fff5e6',
+        sunColor: isNight ? '#6594B1' : '#6594B1',
         ambientIntensity: isNight ? 0.02 : 0.15, 
         skyColor: isNight ? '#020617' : '#cbd5e1'
     }), [isNight]); // On ne recalcule QUE si isNight change

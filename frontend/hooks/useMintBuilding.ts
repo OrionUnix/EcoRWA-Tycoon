@@ -34,14 +34,14 @@ export function useMintBuilding(onSuccess?: () => void) {
     if (!address) return;
 
     const totalCost = parseUnits((pricePerToken * amount).toString(), 6);
-    const currentAllowance = (allowance as bigint) || 0n;
+    const currentAllowance = (allowance as bigint) || BigInt(0);
 
     if (currentAllowance < totalCost) {
       // ÉTAPE A : APPROVE (Si nécessaire)
       writeContract({
         ...usdc,
         functionName: 'approve',
-        args: [vault.address, totalCost * 10n], // On approuve 10x plus pour éviter de redemander
+        args: [vault.address, totalCost * BigInt(10)], // On approuve 10x plus pour éviter de redemander
       });
     } else {
       // ÉTAPE B : MINT DIRECT
@@ -57,6 +57,6 @@ export function useMintBuilding(onSuccess?: () => void) {
     handleMint,
     isLoading: isWritePending || isTxLoading,
     isSuccess,
-    allowance: (allowance as bigint) || 0n,
+    allowance: (allowance as bigint) || BigInt(0),
   };
 }

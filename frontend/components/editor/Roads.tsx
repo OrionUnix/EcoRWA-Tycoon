@@ -1,17 +1,19 @@
-'use client';
-
 import React from 'react';
 import GLBModel from '@/components/zones/GLBModel';
+import { ZONE_TYPES } from './config/zoneAssets';
+
+const roadConfig = ZONE_TYPES.INFRASTRUCTURE.roads;
+const roadPath = roadConfig.path;
 
 const ASSETS = {
-  STRAIGHT: "/assets/models/roads/road-straight.glb",
-  BEND: "/assets/models/roads/road-bend.glb",
-  T_JUNCTION: "/assets/models/roads/road-intersection.glb",
-  CROSSROAD: "/assets/models/roads/road-crossroad.glb",
-  END: "/assets/models/roads/road-end-round.glb",
-  CROSSING: "/assets/models/roads/road-crossing.glb",
-  LIGHT: "/assets/models/roads/light-curved.glb",
-  CONE: "/assets/models/roads/construction-cone.glb"
+  STRAIGHT: `${roadPath}${roadConfig.models.straight}`,
+  BEND: `${roadPath}${roadConfig.models.bend}`,
+  T_JUNCTION: `${roadPath}${roadConfig.models.t_junction}`,
+  CROSSROAD: `${roadPath}${roadConfig.models.cross}`,
+  END: `${roadPath}${roadConfig.models.end}`,
+  CROSSING: `${roadPath}${roadConfig.models.crossing}`,
+  LIGHT: `${roadPath}${roadConfig.models.light}`,
+  CONE: `${roadPath}${roadConfig.models.cone}`
 };
 
 interface RoadsProps {
@@ -23,7 +25,7 @@ interface RoadsProps {
 }
 
 export default function Roads({ roadNetwork, previewPoints, mode, gridSize, isNight }: RoadsProps) {
-  
+
   const getRoadConfig = (x: number, z: number) => {
     const n = roadNetwork.has(`${x},${z - gridSize}`);
     const s = roadNetwork.has(`${x},${z + gridSize}`);
@@ -72,29 +74,29 @@ export default function Roads({ roadNetwork, previewPoints, mode, gridSize, isNi
         return (
           <group key={`${r.x},${r.z}`}>
             <GLBModel path={config.path} position={[r.x, 0, r.z]} rotation={[0, config.rot, 0]} scale={[2, 2, 2]} />
-            
+
             {config.deco === 'LIGHT' && (
               <group>
-                <GLBModel 
-                  path={ASSETS.LIGHT} 
-                  position={[isHorizontal ? r.x : r.x + 0.75, 0, isHorizontal ? r.z + 0.75 : r.z]} 
-                  rotation={[0, isHorizontal ? 0 : Math.PI / 2, 0]} 
-                  scale={[2, 2, 2]} 
+                <GLBModel
+                  path={ASSETS.LIGHT}
+                  position={[isHorizontal ? r.x : r.x + 0.75, 0, isHorizontal ? r.z + 0.75 : r.z]}
+                  rotation={[0, isHorizontal ? 0 : Math.PI / 2, 0]}
+                  scale={[2, 2, 2]}
                 />
-{isNight && (
-  <pointLight 
-    position={[
-      // Si horizontal, on décale sur l'axe Z, sinon sur l'axe X
-      isHorizontal ? r.x : r.x + 0.0, 
-      1.1, // On baisse un peu la hauteur pour être SOUS la lanterne
-      isHorizontal ? r.z + 0.1 : r.z
-    ]} 
-    intensity={10} 
-    distance={5} 
-    color="#ff9933" 
-    decay={2}
-  />
-)}
+                {isNight && (
+                  <pointLight
+                    position={[
+                      // Si horizontal, on décale sur l'axe Z, sinon sur l'axe X
+                      isHorizontal ? r.x : r.x + 0.0,
+                      1.1, // On baisse un peu la hauteur pour être SOUS la lanterne
+                      isHorizontal ? r.z + 0.1 : r.z
+                    ]}
+                    intensity={10}
+                    distance={5}
+                    color="#ff9933"
+                    decay={2}
+                  />
+                )}
               </group>
             )}
 
@@ -109,12 +111,12 @@ export default function Roads({ roadNetwork, previewPoints, mode, gridSize, isNi
       {previewPoints.map((p, i) => (
         <group key={`preview-${i}`}>
           {mode === 'ROAD' ? (
-            <GLBModel 
-              path={ASSETS.STRAIGHT} 
-              position={[p.x, 0.05, p.z]} 
-              rotation={[0, previewPoints.length > 1 && previewPoints[0].x !== previewPoints[1].x ? 0 : Math.PI / 2, 0]} 
-              scale={[2, 2, 2]} 
-              opacity={0.5} 
+            <GLBModel
+              path={ASSETS.STRAIGHT}
+              position={[p.x, 0.05, p.z]}
+              rotation={[0, previewPoints.length > 1 && previewPoints[0].x !== previewPoints[1].x ? 0 : Math.PI / 2, 0]}
+              scale={[2, 2, 2]}
+              opacity={0.5}
             />
           ) : mode === 'REMOVE' ? (
             <mesh position={[p.x, 0.1, p.z]} rotation={[-Math.PI / 2, 0, 0]}>
