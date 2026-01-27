@@ -56,51 +56,40 @@ const initLayout = () => {
     });
 
     // 2. Place Buildings (Mapped to BUILDINGS_DATA IDs)
+    // Using 4x4 increment to avoid overlaps for scale 1.5-1.6 buildings
 
-    // Downtown (Center)
-    addZone(-2, -2, 'COM', 3); // Eco-Tower (Mixed)
-    addZone(2, -2, 'COM', 4);  // Skyline Hub (Office)
-    addZone(-2, 2, 'COM', 5);  // Hotel Riviera
-    addZone(2, 2, 'COM', 2);   // Bistrot Central
+    // Downtown (Center Blocks) - At x=4/-4 and z=4/-4 they are well away from roads at 0/8/-8 and 0/10/-10
+    addZone(-4, -4, 'COM', 3); // Eco-Tower
+    addZone(4, -4, 'COM', 4);  // Skyline Hub
+    addZone(-4, 4, 'COM', 5);  // Hotel Riviera
+    addZone(4, 4, 'COM', 2);   // Bistrot Central
 
-    // Downtown Filler
-    addZone(0, -2, 'COM', 105);
-    addZone(0, 2, 'COM', 106);
-    addZone(2, 0, 'COM', 107);
-    addZone(-2, 0, 'COM', 108);
+    // Spread out fillers
+    addZone(-4, -8, 'COM', 105);
+    addZone(4, -8, 'COM', 106);
+    addZone(-8, -4, 'COM', 107);
+    addZone(8, -4, 'COM', 108);
 
     // Residential (West Loop)
-    addZone(-10, -2, 'RES', 1); // Loft St Germain
-    addZone(-10, 2, 'RES', 6);  // Residence Pixel
-    addZone(-12, -4, 'RES', 101);
-    addZone(-12, 4, 'RES', 102);
-    addZone(-14, -2, 'RES', 109);
-    addZone(-14, 2, 'RES', 110);
-    addZone(-6, -2, 'RES', 111);
-    addZone(-6, 2, 'RES', 112);
+    addZone(-12, -4, 'RES', 1);
+    addZone(-12, 4, 'RES', 6);
+    addZone(-12, -8, 'RES', 101);
+    addZone(-12, 8, 'RES', 102);
 
     // Industrial (East Loop)
-    addZone(10, -2, 'IND', 7);  // Warehouse
-    addZone(10, 2, 'IND', 8);   // Data Center
-    addZone(12, -4, 'IND', 103);
-    addZone(12, 4, 'IND', 104);
-    addZone(14, -2, 'IND', 113);
-    addZone(14, 2, 'IND', 114);
-    addZone(6, -2, 'IND', 115);
-    addZone(6, 2, 'IND', 116);
+    addZone(12, -4, 'IND', 7);
+    addZone(12, 4, 'IND', 8);
+    addZone(12, -8, 'IND', 103);
+    addZone(12, 8, 'IND', 104);
 
-    // South Commercial / Tech Park
-    addZone(0, 12, 'COM', 9);   // Mall
-    addZone(4, 12, 'COM', 11);  // Creative Studio
-    addZone(-4, 12, 'IND', 10); // Agrictulture (Greenhouse)
-    addZone(8, 12, 'COM', 117);
-    addZone(-8, 12, 'COM', 118);
-    addZone(12, 12, 'IND', 119);
-    addZone(-12, 12, 'IND', 120);
+    // Tech Park
+    addZone(0, 14, 'COM', 9);
+    addZone(8, 14, 'COM', 11);
+    addZone(-8, 14, 'IND', 10);
 
-    // North Residential
-    for (let x = -16; x <= 16; x += 4) {
-        addZone(x, -12, 'RES', 200 + x);
+    // North Residential - Very spaced
+    for (let x = -18; x <= 18; x += 6) {
+        addZone(x, -14, 'RES', 200 + Math.abs(x));
     }
 
     // 3. Add River (Far North)
@@ -110,24 +99,29 @@ const initLayout = () => {
     }
 
     // 4. Add Nature
-    // Central Park Area
-    addProp(-4, 4, 'tree_oak_dark');
-    addProp(4, 4, 'tree_blocks_fall');
-    addProp(-4, -4, 'tree_palm');
-    addProp(4, -4, 'tree_pineRoundC');
-    addProp(0, 4, 'flower_yellowC');
-    addProp(0, -4, 'plant_bush');
+    // Parks in spaces NOT on roads
+    addProp(-8, -6, 'tree_oak_dark');
+    addProp(8, -6, 'tree_blocks_fall');
+    addProp(-8, 6, 'tree_palm');
+    addProp(8, 6, 'tree_pineRoundC');
+    addProp(0, -7, 'flower_yellowC');
+    addProp(0, 7, 'plant_bush');
+    addProp(-6, 0, 'stone_small');
+    addProp(6, 0, 'stone_small');
 
-    // Forest around river
-    for (let x = -24; x <= 24; x += 3) {
-        addProp(x, -16, 'tree_pineRoundC');
-        addProp(x + 1, -21, 'tree_blocks_fall');
+    // Forest around river (spacing 4)
+    for (let x = -24; x <= 24; x += 4) {
+        addProp(x, -15, 'tree_pineRoundC');
+        addProp(x + 2, -22, 'tree_blocks_fall');
     }
 
-    // Scattered trees
-    [-18, -4, 4, 18].forEach(x => {
-        [-8, 8].forEach(z => {
-            addProp(x, z, 'tree_oak_dark');
+    // Safety scattered props (middle of blocks)
+    [-4, 4, -12, 12].forEach(x => {
+        [-2, 2, -12, 8].forEach(z => {
+            // Check if there is already a zone there
+            if (!INITIAL_CITY_LAYOUT.zones.has(`${x},${z}`)) {
+                addProp(x, z, 'plant_bush');
+            }
         });
     });
 };

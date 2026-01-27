@@ -8,18 +8,22 @@ export default function NatureProps({ props }: { props: Map<string, any> }) {
     return (
         <group>
             {Array.from(props.values()).map((prop) => {
-                // Utilisation des coordonnées pour générer une rotation unique
-                const rotation = (prop.x * 0.7 + prop.z * 0.3) * Math.PI;
+                // Utilisation des coordonnées pour générer des variations uniques
+                const seed = Math.abs(Math.sin(prop.x * 12.9898 + prop.z * 78.233) * 43758.5453);
+                const rotation = seed * Math.PI;
+                const jitterX = (seed % 1 - 0.5) * 0.8;
+                const jitterZ = ((seed * 1.5) % 1 - 0.5) * 0.8;
+                const scale = 0.8 + (seed % 0.4);
 
                 return (
                     <group
                         key={`${prop.x}-${prop.z}`}
-                        position={[prop.x, 0, prop.z]}
+                        position={[prop.x + jitterX, 0, prop.z + jitterZ]}
                         rotation={[0, rotation, 0]}
                     >
                         <GLBModel
                             path={prop.model.endsWith('.glb') ? `${naturePath}${prop.model}` : `${naturePath}${prop.model}.glb`}
-                            scale={[1, 1, 1]}
+                            scale={[scale, scale, scale]}
                         />
                     </group>
                 );

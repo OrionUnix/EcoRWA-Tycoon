@@ -24,7 +24,7 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
         // On définit une marge plus grande pour les bâtiments de taille 2
         // car ils ont souvent des éléments qui dépassent (tuyaux jaunes, etc.)
         const isLarge = modelData.size === 2;
-        const margin = isLarge ? 0.35 : 0.2;
+        const margin = isLarge ? 0.4 : 0.25;
 
         if (roadNetwork?.has(`${x + 2},${z}`)) {
             rot = Math.PI / 2;
@@ -48,8 +48,8 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
         return {
             fullPath: `${zoneAny.path}${modelData.file}`,
             rotation: rot + FRONT_OFFSET,
-            // Échelle réduite drastiquement pour les industriels de taille 2
-            scale: isLarge ? 1.8 : 1.7,
+            // Échelle réduite pour éviter les collisions
+            scale: isLarge ? 1.6 : 1.5,
             color: zoneColor,
             offset: [offsetX, 0, offsetZ]
         };
