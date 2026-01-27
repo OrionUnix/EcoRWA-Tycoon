@@ -3,7 +3,6 @@
 import React from 'react';
 import GLBModel from '@/components/zones/GLBModel';
 
-// Définition des chemins d'assets pour la maintenance facile
 const ASSETS = {
   STRAIGHT: "/assets/models/roads/road-straight.glb",
   BEND: "/assets/models/roads/road-bend.glb",
@@ -20,11 +19,11 @@ interface RoadsProps {
   previewPoints: { x: number, z: number }[];
   mode: string | null;
   gridSize: number;
+  isNight: boolean;
 }
 
-export default function Roads({ roadNetwork, previewPoints, mode, gridSize }: RoadsProps) {
+export default function Roads({ roadNetwork, previewPoints, mode, gridSize, isNight }: RoadsProps) {
   
-  // LOGIQUE DE SÉLECTION DES MODÈLES (Extraite de ton code)
   const getRoadConfig = (x: number, z: number) => {
     const n = roadNetwork.has(`${x},${z - gridSize}`);
     const s = roadNetwork.has(`${x},${z + gridSize}`);
@@ -75,12 +74,28 @@ export default function Roads({ roadNetwork, previewPoints, mode, gridSize }: Ro
             <GLBModel path={config.path} position={[r.x, 0, r.z]} rotation={[0, config.rot, 0]} scale={[2, 2, 2]} />
             
             {config.deco === 'LIGHT' && (
-              <GLBModel 
-                path={ASSETS.LIGHT} 
-                position={[isHorizontal ? r.x : r.x + 0.75, 0, isHorizontal ? r.z + 0.75 : r.z]} 
-                rotation={[0, isHorizontal ? 0 : Math.PI / 2, 0]} 
-                scale={[2, 2, 2]} 
-              />
+              <group>
+                <GLBModel 
+                  path={ASSETS.LIGHT} 
+                  position={[isHorizontal ? r.x : r.x + 0.75, 0, isHorizontal ? r.z + 0.75 : r.z]} 
+                  rotation={[0, isHorizontal ? 0 : Math.PI / 2, 0]} 
+                  scale={[2, 2, 2]} 
+                />
+{isNight && (
+  <pointLight 
+    position={[
+      // Si horizontal, on décale sur l'axe Z, sinon sur l'axe X
+      isHorizontal ? r.x : r.x + 0.0, 
+      1.1, // On baisse un peu la hauteur pour être SOUS la lanterne
+      isHorizontal ? r.z + 0.1 : r.z
+    ]} 
+    intensity={10} 
+    distance={5} 
+    color="#ff9933" 
+    decay={2}
+  />
+)}
+              </group>
             )}
 
             {config.deco === 'CONE' && (
@@ -90,7 +105,7 @@ export default function Roads({ roadNetwork, previewPoints, mode, gridSize }: Ro
         );
       })}
 
-      {/* 2. PREVIEW LORS DU DRAG */}
+      {/* 2. PREVIEW LORS DU DRAG (Nécessaire pour construire) */}
       {previewPoints.map((p, i) => (
         <group key={`preview-${i}`}>
           {mode === 'ROAD' ? (
@@ -101,12 +116,12 @@ export default function Roads({ roadNetwork, previewPoints, mode, gridSize }: Ro
               scale={[2, 2, 2]} 
               opacity={0.5} 
             />
-          ) : (
+          ) : mode === 'REMOVE' ? (
             <mesh position={[p.x, 0.1, p.z]} rotation={[-Math.PI / 2, 0, 0]}>
               <planeGeometry args={[1.9, 1.9]} />
               <meshStandardMaterial color="#ff4444" transparent opacity={0.6} />
             </mesh>
-          )}
+          ) : null}
         </group>
       ))}
     </group>

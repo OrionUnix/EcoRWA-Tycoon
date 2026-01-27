@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react'; // Ajoutez memo
 import GLBModel from '@/components/zones/GLBModel';
 import { ZONE_TYPES } from '@/components/editor/config/zoneAssets';
 

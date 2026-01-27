@@ -1,74 +1,74 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useRef } from 'react'; // Ajout de useRef ici
 import dynamic from 'next/dynamic';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Sky, Environment } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Environment as DreiEnvironment } from '@react-three/drei';
 import * as THREE from 'three';
 import Toolbar from '@/components/editor/Toolbar';
+import CustomEnvironment from '@/components/editor/world/Environment';
 
-const CityEditor = dynamic(() => import('@/components/zones/cityeditor'), {
-    ssr: false,
-    loading: () => null
-});
+const CityEditor = dynamic(() => import('@/components/zones/cityeditor'), { ssr: false });
 
 export default function EditorPage() {
     const [selectedTool, setSelectedTool] = useState<string | null>(null);
+    const [isNight, setIsNight] = useState(false);
+    
+    // Le useRef doit être à l'intérieur du composant
+    const controlsRef = useRef<any>(null);
+
+    // La fonction de reset aussi
+    const resetCamera = () => {
+        if (controlsRef.current) {
+            controlsRef.current.reset();
+        }
+    };
 
     return (
         <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#020617' }}>
-            <Toolbar selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
+            <Toolbar 
+                selectedTool={selectedTool} 
+                setSelectedTool={setSelectedTool} 
+                isNight={isNight} 
+                setIsNight={setIsNight} 
+            />
 
             <Canvas 
-               shadows 
-    gl={{ 
-antialias: true, 
-        toneMapping: THREE.AgXToneMapping, // AgX est souvent meilleur pour les couleurs saturées que ACES
-        toneMappingExposure: 0.7 // Réduit l'éblouissement "tout blanc"
-    }}
->
-                <OrbitControls makeDefault />
-
-              {/* Lumière ambiante très douce pour ne pas "brûler" les blancs */}
-    <ambientLight intensity={0.3} /> 
-
-    <directionalLight 
-        position={[40, 60, 40]}
-        intensity={1.2} // On baisse l'intensité
-        castShadow 
-        
-        shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.0002} // SUPPRIME LES ARTEFACTS SUR LES FAÇADES
-        shadow-camera-left={-100}
-        shadow-camera-right={100}
-        shadow-camera-top={100}
-        shadow-camera-bottom={-100}
-        />
-
-                {/* 2. Le Soleil : on baisse l'intensité pour ne pas brûler les blancs */}
-                <directionalLight 
-                    position={[50, 80, 50]} 
-                    intensity={0.8} 
-                    castShadow 
-                    shadow-mapSize={[2048, 2048]}
-                    shadow-camera-left={-60}
-                    shadow-camera-right={60}
-                    shadow-camera-top={60}
-                    shadow-camera-bottom={-60}
-                    shadow-bias={-0.0005} 
+shadows 
+  gl={{ 
+    powerPreference: "high-performance", // Force l'usage de la carte graphique
+    antialias: false, // Désactiver l'antialias gagne bcp de FPS sur les petits écrans
+    stencil: false,
+    depth: true
+  }}
+            >
+                {/* Effet de brouillard pour masquer les bords */}
+                <fog attach="fog" args={[isNight ? '#020617' : '#87ceeb', 30, 150]} />
+                
+                <OrbitControls 
+                    makeDefault 
+                    ref={controlsRef}
+                    maxDistance={120} 
+                    minDistance={10} 
+                    maxPolarAngle={Math.PI / 2.1} 
+                    target={[0, 0, 0]}
                 />
+                
+                <CustomEnvironment isNight={isNight} />
 
-                {/* 3. Lumière d'appoint pour adoucir sans surexposer */}
-                <hemisphereLight intensity={0.3} color="#ffffff" groundColor="#444444" />
-
-                {/* 4. Pour les reflets (très important pour le look "maquette") */}
-                <Environment preset="apartment" />
+                <group position={[0, 0.01, 0]}>
+                    <gridHelper 
+                        args={[100, 50, "#334155", "#1e293b"]} 
+                        transparent 
+                        opacity={0.4}
+                    />
+                </group>
 
                 <Suspense fallback={null}>
-                    <CityEditor mode={selectedTool} />
+                    <DreiEnvironment preset={isNight ? "night" : "city"} />
+                    <CityEditor mode={selectedTool} isNight={isNight} />
                 </Suspense>
                 
-                {/* 5. Contact Shadows pour l'ancrage au sol */}
                 <ContactShadows position={[0, 0.01, 0]} opacity={0.4} scale={100} blur={2} />
             </Canvas>
         </div>
