@@ -15,6 +15,10 @@ export default function NatureProps({ props }: { props: Map<string, any> }) {
                 const jitterZ = ((seed * 1.5) % 1 - 0.5) * 0.8;
                 const scale = 0.8 + (seed % 0.4);
 
+                // Recherche du modèle dans la configuration centralisée
+                const modelConfig = (ZONE_TYPES.NATURE.models as any[]).find(m => m.id === prop.model);
+                const fileName = modelConfig ? modelConfig.file : (prop.model.endsWith('.glb') ? prop.model : `${prop.model}.glb`);
+
                 return (
                     <group
                         key={`${prop.x}-${prop.z}`}
@@ -22,7 +26,7 @@ export default function NatureProps({ props }: { props: Map<string, any> }) {
                         rotation={[0, rotation, 0]}
                     >
                         <GLBModel
-                            path={prop.model.endsWith('.glb') ? `${naturePath}${prop.model}` : `${naturePath}${prop.model}.glb`}
+                            path={`${naturePath}${fileName}`}
                             scale={[scale, scale, scale]}
                         />
                     </group>
