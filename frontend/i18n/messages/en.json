@@ -90,5 +90,12 @@
     "totalCost": "Total Cost",
     "needFaucet": "Need MockUSDC?",
     "alreadyOwned": "Already Invested"
+  },
+  "editor": {
+    "controls_title": "Controls:",
+    "move": "WASD / Arrows: Move",
+    "rotate": "Q / E: Rotate",
+    "zoom": "Scroll: Zoom",
+    "pitch": "Right Click: Tilt"
   }
 }

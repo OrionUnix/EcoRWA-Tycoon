@@ -90,5 +90,13 @@
     "totalCost": "Total à payer",
     "needFaucet": "Besoin de MockUSDC ?",
     "alreadyOwned": "Déjà investi"
+  },
+  "editor": {
+    "controls_title": "Contrôles :",
+    "move": "ZQSD / Flèches : Déplacement",
+    "rotate": "A / E : Rotation",
+    "zoom": "Molette : Zoom",
+    "pitch": "Clic Droit : Inclinaison"
   }
+}
 }
