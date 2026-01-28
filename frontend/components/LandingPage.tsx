@@ -124,22 +124,14 @@ export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr'
           </div>
 
           {/* Zone 3D - Aura bleue fusionnée */}
-          <div className="relative order-1 lg:order-2 h-[500px] lg:h-[700px] w-full flex items-center justify-center">
+         <div className="relative order-1 lg:order-2 h-[600px] w-full flex items-end justify-center">
             {/* Halo de lumière qui brille à travers le Canvas transparent */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[80%] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
             
             {/* Appel du composant dynamique sans SSR */}
             <BuildingHero />
 
-            {/* Badge flottant */}
-            <div className="absolute top-[20%] right-0 md:right-8 bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl z-20">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-[10px] font-black uppercase text-blue-400 tracking-tighter">Disponible</span>
-              </div>
-              <div className="font-bold text-sm text-white">Résidence Loft-O</div>
-              <div className="text-[10px] text-slate-400 font-medium">Yield: 7.2% | Parse City 11e</div>
-            </div>
+
           </div>
         </div>
 
