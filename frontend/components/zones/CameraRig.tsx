@@ -10,7 +10,7 @@ export default function CameraRig() {
     const isRightMouseDown = useRef(false);
 
     const target = useRef(new THREE.Vector3(0, 0, 0));
-    const offset = useRef(new THREE.Vector3(40, 40, 40));
+    const offset = useRef(new THREE.Vector3(22, 22, 22));
 
     const moveSpeed = 0.6;
     const rotateSpeed = 0.05;

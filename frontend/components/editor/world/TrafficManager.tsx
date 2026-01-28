@@ -30,7 +30,7 @@ export default function TrafficManager({ roads, zones, props, isNight }: any) {
     useEffect(() => {
         if (roads.size === 0 || isInitialized.current) return;
 
-        const types: Vehicle['type'][] = ['SUV', 'LUXURY', 'DELIVERY', 'TAXI', 'TRUCK', 'TRUCK', 'SUV', 'DELIVERY', 'TAXI', 'TRUCK'];
+        const types: Vehicle['type'][] = ['SUV', 'DELIVERY', 'TAXI', 'LUXURY'];
         const roadKeys = Array.from(roads.keys()) as string[];
         if (roadKeys.length === 0) return;
 

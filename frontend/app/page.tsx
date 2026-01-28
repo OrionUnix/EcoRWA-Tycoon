@@ -153,10 +153,10 @@ export default function Home() {
         {currentView !== 'city' && <Footer />}
       </div>
 
-      {/* Purchase Dialog */}
+      {/* Purchase Dialog - Only shown directly in non-city views. City view has its own. */}
       <BuildingPurchaseDialog
         buildingId={selectedBuildingId}
-        isOpen={!!selectedBuildingId}
+        isOpen={!!selectedBuildingId && currentView !== 'city'}
         onClose={() => setSelectedBuildingId(null)}
       />
     </main>

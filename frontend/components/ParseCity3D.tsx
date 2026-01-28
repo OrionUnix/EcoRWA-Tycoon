@@ -180,19 +180,24 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
           <NatureProps props={INITIAL_CITY_LAYOUT.props} />
 
           {/* Buildings */}
-          {Array.from(INITIAL_CITY_LAYOUT.zones.values()).map((z) => (
-            <BuildingTile
-              key={`${z.x},${z.z}`}
-              x={z.x}
-              z={z.z}
-              type={z.type}
-              roadNetwork={INITIAL_CITY_LAYOUT.roadNetwork}
-              isBeingDestroyed={false}
-              isPreview={false}
-              id={z.id}
-              onClick={handleBuildingClick}
-            />
-          ))}
+          {Array.from(INITIAL_CITY_LAYOUT.zones.values()).map((z) => {
+            const buildingData = BUILDINGS_DATA.find(b => b.id === z.id);
+            return (
+              <BuildingTile
+                key={`${z.x},${z.z}`}
+                x={z.x}
+                z={z.z}
+                type={z.type}
+                roadNetwork={INITIAL_CITY_LAYOUT.roadNetwork}
+                isBeingDestroyed={false}
+                isPreview={false}
+                id={z.id}
+                isMintable={buildingData?.isMintable || false}
+                isOwned={buildingData?.owned || false}
+                onClick={handleBuildingClick}
+              />
+            );
+          })}
 
           <ContactShadows opacity={0.4} scale={50} blur={2} far={15} resolution={256} />
           <Environment preset={cycle.isNight ? "night" : "city"} />

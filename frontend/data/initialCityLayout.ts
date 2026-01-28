@@ -24,73 +24,72 @@ const addZone = (x: number, z: number, type: string, id: number) => {
 };
 
 const addProp = (x: number, z: number, model: string) => {
-    INITIAL_CITY_LAYOUT.props.set(`${x},${z}`, { x, z, type: 'NATURE', model });
+    const key = `${x},${z}`;
+    if (!INITIAL_CITY_LAYOUT.props.has(key)) {
+        INITIAL_CITY_LAYOUT.props.set(key, { x, z, type: 'NATURE', model });
+    }
 };
 
 const initLayout = () => {
-    const GRID_STEP = 4; // Road every 4 units
+    // 1. FIXED ROAD GRID (Matching User ASCII step)
+    const roadX = [-10, -5, 0, 5, 10];
+    const roadZ = [-10, -6, -2, 2, 6, 10];
 
-    // 1. COMPACT ROAD GRID (-8 to 8)
-    const coords = [-8, -4, 0, 4, 8];
-
-    // Vertical Roads
-    coords.forEach(x => {
-        for (let z = -10; z <= 10; z += 2) {
-            addRoad(x, z);
-        }
+    roadX.forEach(x => {
+        for (let z = -12; z <= 12; z += 2) addRoad(x, z);
+    });
+    roadZ.forEach(z => {
+        for (let x = -12; x <= 12; x += 2) addRoad(x, z);
     });
 
-    // Horizontal Roads
-    coords.forEach(z => {
-        for (let x = -8; x <= 8; x += 2) {
-            addRoad(x, z);
-        }
-    });
+    // 2. BUILDINGS (Step-aware to hug nearest road)
+    const zCenters = [-8, -4, 0, 4, 8];
+    const xCenters = [-8, -3, 2, 7];
 
-    // 2. PRECISE BUILDING PLACEMENT (Distance 2 from road center)
-    // Between road 0 and road 4 -> Place at 2.
-    // Between road 0 and road -4 -> Place at -2.
+    // Specific mapping to ensure types match BUILDINGS_DATA
+    // Central row (z=0) must contain COM or MIXED buildings
+    // Row -8: 1, 6, 10, 3 (Mixed)
+    // Row -4: 5, 4, 8, 7
+    // Row 0: 2 (Bistrot), 9 (Galerie), 11 (Studio), 12 (Empty/Loop)
+    // Row 4: ...
 
-    const blockCenters = [-6, -2, 2, 6];
+    let currentId = 1;
 
-    // Downtown (COM)
-    addZone(2, 2, 'COM', 1);
-    addZone(2, 6, 'COM', 2);
-    addZone(6, 2, 'COM', 3);
-    addZone(6, 6, 'COM', 4);
+    zCenters.forEach(z => {
+        xCenters.forEach(x => {
+            let type = 'RES';
+            let id = currentId;
 
-    // Residential (RES)
-    addZone(-2, 2, 'RES', 5);
-    addZone(-2, 6, 'RES', 6);
-    addZone(-6, 2, 'RES', 101);
-    addZone(-6, 6, 'RES', 102);
+            if (z === 0) {
+                type = 'COM';
+                // Pick specific IDs for the COM row
+                const comIds = [2, 9, 11, 3];
+                const index = xCenters.indexOf(x);
+                id = comIds[index] || currentId + 20;
+            } else {
+                type = 'RES';
+                // Ensure IDs 2, 9, 11, 3 are not repeated in residential rows
+                id = currentId;
+                if (id === 2 || id === 3 || id === 9 || id === 11) {
+                    id += 15; // Move to a unique range
+                }
+            }
 
-    // Industrial (IND)
-    addZone(2, -2, 'IND', 7);
-    addZone(2, -6, 'IND', 8);
-    addZone(6, -2, 'IND', 103);
-    addZone(6, -6, 'IND', 104);
+            addZone(x, z, type, id);
+            currentId++;
 
-    // Mix/Tech
-    addZone(-2, -2, 'COM', 9);
-    addZone(-2, -6, 'IND', 10);
-    addZone(-6, -2, 'RES', 11);
-    addZone(-6, -6, 'COM', 117);
-
-    // 3. NATURE (Far corners only to avoid roads)
-    addProp(10, 10, 'tree_oak_dark');
-    addProp(-10, 10, 'tree_blocks_fall');
-    addProp(10, -10, 'tree_palm');
-    addProp(-10, -10, 'tree_pineRoundC');
-
-    // Some small bushes at intersections but far from path
-    coords.forEach(x => {
-        coords.forEach(z => {
-            if (Math.abs(x) > 6 || Math.abs(z) > 6) {
-                addProp(x + 1.2, z + 1.2, 'plant_bush');
+            // Nature & Props density
+            if (type === 'COM') {
+                addProp(x + 1, z, 'stone_smallH');
+            } else {
+                addProp(x - 1, z - 1, 'tree_oak_dark');
             }
         });
     });
+
+    // Decorative boundaries
+    addProp(-12, 0, 'tree_blocks_fall');
+    addProp(12, 0, 'tree_palm');
 };
 
 initLayout();

@@ -1,10 +1,9 @@
-'use client';
-
-import React, { useMemo, memo } from 'react'; // Ajoutez memo
+import React, { useMemo, memo } from 'react';
+import { Html } from '@react-three/drei';
 import GLBModel from '@/components/zones/GLBModel';
 import { ZONE_TYPES } from '@/components/editor/config/zoneAssets';
 
-export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBeingDestroyed, id, onClick }: any) {
+export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBeingDestroyed, id, isMintable, isOwned, onClick }: any) {
     const zone = useMemo(() =>
         Object.values(ZONE_TYPES).find((zType: any) => zType.id === type),
         [type]);
@@ -21,9 +20,6 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
         let offsetX = 0;
         let offsetZ = 0;
 
-        // On définit une marge plus grande pour les bâtiments de taille 2
-        // car ils ont souvent des éléments qui dépassent (tuyaux jaunes, etc.)
-        // Ajustement des échelles et marges pour un aspect "accolé"
         const isLarge = modelData.size === 2;
         const margin = 0;
 
@@ -40,7 +36,6 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
             rot = Math.PI;
             offsetZ = -margin;
         } else {
-            // Si pas de route, on centre mais on réduit quand même
             rot = (Math.floor(seed * 10) % 4) * (Math.PI / 2);
         }
 
@@ -49,10 +44,10 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
         return {
             fullPath: `${zoneAny.path}${modelData.file}`,
             rotation: rot + FRONT_OFFSET,
-            // Échelles pour que les bâtiments ne débordent pas sur la route
             scale: 0.95,
             color: zoneColor,
-            offset: [offsetX, 0, offsetZ]
+            offset: [offsetX, 0, offsetZ],
+            height: isLarge ? 2.2 : 1.3
         };
     }, [x, z, zone, roadNetwork, type]);
 
@@ -62,7 +57,25 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
 
     return (
         <group position={[x + visualProps.offset[0], 0, z + visualProps.offset[2]]}>
-            {/* Carré au sol : on le garde petit pour ne jamais toucher le trottoir */}
+            {/* Tokenized Marker */}
+            {isMintable && !isOwned && !isPreview && (
+                <Html position={[0, visualProps.height, 0]} center distanceFactor={10}>
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500/90 text-white font-bold shadow-[0_0_15px_rgba(16,185,129,0.6)] animate-bounce select-none border-2 border-white/20 text-lg">
+                        $
+                    </div>
+                </Html>
+            )}
+
+            {/* Owned Marker */}
+            {isOwned && !isPreview && (
+                <Html position={[0, visualProps.height, 0]} center distanceFactor={10}>
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500/90 text-white font-bold shadow-[0_0_15px_rgba(59,130,246,0.6)] animate-pulse select-none border-2 border-white/20 text-lg">
+                        🏠
+                    </div>
+                </Html>
+            )}
+
+            {/* Carré au sol */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
                 <planeGeometry args={[1.7, 1.7]} />
                 <meshStandardMaterial
