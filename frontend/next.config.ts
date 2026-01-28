@@ -1,11 +1,6 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
 
-console.log('--- Next Config ---');
-console.log('Environment:', process.env.NODE_ENV);
-console.log('isProd:', isProd);
-console.log('-------------------');
-
 const nextConfig = {
   output: isProd ? 'export' : undefined,
   images: {
@@ -14,6 +9,10 @@ const nextConfig = {
   basePath: isProd ? '/EcoRWA-Tycoon' : '',
   assetPrefix: isProd ? '/EcoRWA-Tycoon/' : '',
   trailingSlash: true,
+  
+  // Suppression de la clé experimental.turbo qui cause l'erreur
+  // Turbopack gère désormais nativement les imports de fichiers statiques dans le dossier public
+  
   async headers() {
     if (!isProd) {
       return [
