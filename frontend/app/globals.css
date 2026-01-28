@@ -123,3 +123,22 @@
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  .glass-morphism {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+  }
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+} 
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}

@@ -1,562 +1,152 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Globe, ShieldCheck, Cpu, TrendingUp, Languages, Building2, Wallet, LineChart, Zap, Users, Sparkles } from 'lucide-react';
-import React from 'react';
-const isProd = process.env.NODE_ENV === 'production';
-const BASE_PATH = isProd ? "/EcoRWA-Tycoon" : "";
-const LOGO_PATH = `${BASE_PATH}/logo.svg`;
+import { ArrowRight, ShieldCheck, Cpu, ChevronDown, Sparkles } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-interface LandingPageProps {
-  onGetStarted: () => void;
-  locale?: 'fr' | 'en';
-}
+// 1. On déplace l'import dynamique HORS du composant
+// Cela règle le problème de performance et de définition
+const BuildingHero = dynamic(() => import('./landing/BuildingHero'), { 
+  ssr: false,
+  loading: () => (
+    <div className="h-[500px] w-full flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+    </div>
+  )
+});
 
-// Composant pour la ville SVG animée
-function AnimatedCitySVG() {
-  const svgRef = useRef<HTMLDivElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isNight, setIsNight] = useState(false);
-
-  useEffect(() => {
-    const loadAndAnimateSVG = async () => {
-      try {
-        const response = await fetch(`${BASE_PATH}/assets/isometric_city.svg`);
-        const svgText = await response.text();
-
-        if (svgRef.current) {
-          svgRef.current.innerHTML = svgText;
-          setIsLoaded(true);
-        }
-      } catch (error) {
-        console.error('Erreur SVG:', error);
-      }
-    };
-
-    loadAndAnimateSVG();
-  }, []);
-
-  return (
-    <div
-      ref={svgRef}
-      className="w-full h-full drop-shadow-2xl transition-all duration-2000"
-    />
-  );
-}
-
-// Particules avec positions fixes (pas de Math.random)
-function FloatingParticles() {
-  return null; // Removed for performance
-}
-
-export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr' }: LandingPageProps) {
-  const [locale, setLocale] = useState<'fr' | 'en'>(initialLocale);
-  const [scrollY, setScrollY] = useState(0);
-  const [activeSection, setActiveSection] = useState('hero');
-  const cityRef = useRef<HTMLDivElement>(null);
+export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr' }: any) {
+  // 2. On renomme la prop en 'initialLocale' pour pouvoir utiliser 'locale' dans le state
+  const [locale, setLocale] = useState(initialLocale);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-
-      const sections = ['hero', 'stats', 'how-it-works', 'buildings', 'cta'];
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 100 && rect.bottom >= 100) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    setMounted(true);
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const translations = {
+  const t = {
     fr: {
-      tag: "L'immobilier 3.0 sur Avalanche",
-      title: "EcoRWA Tycoon :",
-      subtitle: "L'immobilier réel, version Gamifiée.",
-      desc: "Pourquoi l'investissement immobilier est-il réservé aux élites ? EcoRWA Tycoon brise les barrières en transformant la finance complexe en une simulation urbaine intuitive. Ne lisez pas des contrats de 50 pages, construisez votre avenir financier dans Parse City.",
+      tag: "Avalanche Fuji Testnet",
+      title: "L'immobilier réel,",
+      subtitle: "version Gamifiée.",
+      desc: "Ne vous contentez pas d'investir. Gérez votre empire immobilier en 3D sur la blockchain. Simple, sécurisé, et accessible dès 50$.",
       cta: "Lancer l'App",
-      stats: ["Valeur Totale", "Rendement", "Immeubles", "Réseau"],
-      howItWorks: "Comment ça marche",
-      step1Title: "Connectez votre Wallet",
-      step1Desc: "Investissez dès 50$ grâce à la fragmentation ERC-1155.",
-      step2Title: "IA Urbaine",
-      step2Desc: "Notre agent IA vulgarise les documents d'urbanisme complexes (PLU) en conseils de jeu simples.",
-      step3Title: "Rendement Réel",
-      step3Desc: "Visualisez vos dividendes tomber en temps réel dans une ville 3D interactive.",
-      featuredBuildings: "Immeubles Disponibles",
-      ctaTitle: "Prêt à investir dans le futur ?",
-      ctaDesc: "Rejoignez la révolution RWA et commencez à percevoir des revenus passifs dès aujourd'hui.",
-      navStats: "Stats",
-      navHow: "Concept",
-      navBuildings: "Immeubles",
-      complianceTitle: "Conformité & Sécurité",
-      complianceSub: "Standards institutionnels pour la DeFi RWA",
-      compliance1: "Subnet Avalanche dédié pour la gestion KYC (Know Your Customer).",
-      compliance2: "Smart Contracts audités et standard ERC-1155 pour la fragmentation.",
-      compliance3: "Stabilité garantie par MockUSDC (transition vers USDC réel prévue)."
+      nav: ["Marché", "Concept", "Sécurité"]
     },
     en: {
-      tag: "Real Estate 3.0 on Avalanche",
-      title: "EcoRWA Tycoon:",
-      subtitle: "Gamifying Real-World Real Estate.",
-      desc: "Why is real estate investment reserved for the elite? EcoRWA Tycoon breaks barriers by transforming complex finance into an intuitive urban simulation. Don't read 50-page contracts, build your financial future in Parse City.",
+      tag: "Avalanche Fuji Testnet",
+      title: "Real Estate,",
+      subtitle: "Gamified.",
+      desc: "Don't just invest. Manage your real estate empire in 3D on the blockchain. Simple, secure, and accessible from $50.",
       cta: "Launch App",
-      stats: ["Total Value", "Avg Yield", "Buildings", "Network"],
-      howItWorks: "How It Works",
-      step1Title: "Connect Your Wallet",
-      step1Desc: "Invest from $50 using ERC-1155 fractionalization.",
-      step2Title: "AI Urban Advisor",
-      step2Desc: "Our AI agent simplifies complex zoning laws (PLU) into actionable game tips.",
-      step3Title: "Live Yield",
-      step3Desc: "Watch your rental income accrue in real-time within an interactive 3D city.",
-      featuredBuildings: "Available Buildings",
-      ctaTitle: "Ready to invest in the future?",
-      ctaDesc: "Join the RWA revolution and start earning passive income today.",
-      navStats: "Stats",
-      navHow: "Concept",
-      navBuildings: "Buildings",
-      complianceTitle: "Compliance & Security",
-      complianceSub: "Institutional standards for RWA DeFi",
-      compliance1: "Dedicated Avalanche Subnet for KYC (Know Your Customer) management.",
-      compliance2: "Audited Smart Contracts and ERC-1155 standard for fractionalization.",
-      compliance3: "Stability guaranteed by MockUSDC (planned transition to real USDC)."
+      nav: ["Market", "Concept", "Security"]
     }
+  }[locale as 'fr' | 'en'] || {
+    // Fallback de sécurité
+    tag: "", title: "", subtitle: "", desc: "", cta: "", nav: []
   };
 
-  const t = translations[locale];
-
-  const buildings = [
-    { name: "Loft Saint-Germain", img: `${BASE_PATH}/assets/buildings/Loft_Saint-Germain.svg`, yield: "7.2%", price: "$250K" },
-    { name: "Bistro", img: `${BASE_PATH}/assets/buildings/bistro.svg`, yield: "6.8%", price: "$180K" },
-    { name: "EcoTower 2030", img: `${BASE_PATH}/assets/buildings/EcoTower_2030.svg`, yield: "8.1%", price: "$420K" }
-  ];
+  // On attend que le composant soit monté pour éviter les erreurs d'hydratation (SSR)
+  if (!mounted) return null;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white overflow-hidden">
-      {/* Background Pattern Removed for Performance */}
-
-      {/* Navbar Sticky */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-white/10 transition-all">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 relative flex items-center justify-center bg-white/10 rounded-lg backdrop-blur-md border border-white/20">
-              <img
-                src={LOGO_PATH}
-                alt="EcoRWA Logo"
-                className="w-6 h-6 object-contain brightness-0 invert"
-              />
+    <div className="min-h-screen bg-[#020617] text-white selection:bg-blue-500/30 overflow-x-hidden">
+      {/* Navbar */}
+      <nav className="fixed top-6 inset-x-0 z-50 flex justify-center px-6">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-full px-6 py-2 flex items-center gap-8 max-w-5xl w-full justify-between shadow-2xl">
+          <div className="flex items-center gap-2 font-black text-xl tracking-tighter">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Cpu className="w-5 h-5 text-white" />
             </div>
-            <div className="text-2xl font-black tracking-tighter">
-              Eco<span className="text-blue-400">RWA</span>
-            </div>
+            <span>Eco<span className="text-blue-400">RWA</span></span>
           </div>
-
-          <div className="hidden md:flex items-center gap-8">
-            <button
-              onClick={() => scrollToSection('stats')}
-              className={`text-sm font-medium transition-colors ${activeSection === 'stats' ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
-            >
-              {t.navStats}
-            </button>
-            <button
-              onClick={() => scrollToSection('how-it-works')}
-              className={`text-sm font-medium transition-colors ${activeSection === 'how-it-works' ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
-            >
-              {t.navHow}
-            </button>
-            <button
-              onClick={() => scrollToSection('buildings')}
-              className={`text-sm font-medium transition-colors ${activeSection === 'buildings' ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
-            >
-              {t.navBuildings}
-            </button>
+          
+          <div className="hidden md:flex gap-8 text-sm font-bold text-slate-400 uppercase tracking-widest">
+             {t.nav.map(item => <button key={item} className="hover:text-white transition-colors">{item}</button>)}
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocale(locale === 'fr' ? 'en' : 'fr')}
-              className="gap-2 border border-white/20 bg-white/5 backdrop-blur-md text-white hover:bg-white/10 rounded-full px-4"
+            <button 
+              onClick={() => setLocale(locale === 'fr' ? 'en' : 'fr')} 
+              className="text-xs font-black px-3 py-1 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
             >
-              <Languages className="w-4 h-4" />
               {locale.toUpperCase()}
+            </button>
+            <Button onClick={onGetStarted} className="rounded-full bg-blue-600 hover:bg-blue-700 font-bold px-6 shadow-lg shadow-blue-600/20">
+              {t.cta}
             </Button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section id="hero" className="relative min-h-screen flex items-center pt-20">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div
-              className="flex flex-col items-start text-left space-y-8"
-              style={{
-                transform: `translateY(${scrollY * 0.1}px)`,
-                opacity: Math.max(0, 1 - scrollY / 500)
-              }}
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-400/30 text-blue-400 text-xs font-bold tracking-widest uppercase backdrop-blur-md">
-                <Cpu className="w-3 h-3" /> {t.tag}
-              </div>
+      <section className="relative pt-40 pb-20 px-6 min-h-screen flex flex-col items-center justify-center">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 blur-[120px] rounded-full -z-10" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full -z-10" />
 
-              {/* Bandeau Testnet */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-400/30 text-orange-400 text-xs font-bold">
-                <ShieldCheck className="w-3 h-3" />
-                Avalanche Fuji Testnet
-              </div>
-
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9]">
-                {t.title} <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
-                  {t.subtitle}
-                </span>
-              </h1>
-
-              <p className="text-xl text-slate-300 max-w-xl leading-relaxed">
-                {t.desc}
-              </p>
-
-              <div className="flex gap-4 pt-4">
-                <Button
-                  size="lg"
-                  onClick={onGetStarted}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-10 h-16 rounded-full shadow-2xl shadow-blue-500/30 transition-all hover:scale-105 hover:shadow-blue-500/50"
-                >
-                  {t.cta} <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </div>
+        <div className="container max-w-7xl grid lg:grid-cols-2 gap-16 items-center">
+          <div className="flex flex-col items-start space-y-10 order-2 lg:order-1">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-black tracking-widest uppercase">
+              <ShieldCheck className="w-4 h-4" /> {t.tag}
             </div>
 
-            {/* Image Ville Isométrique avec Lampadaires Animés */}
-            <div
-              ref={cityRef}
-              className="relative"
-              style={{
-                transform: `translateY(${scrollY * -0.15}px) rotateX(${Math.min(scrollY * 0.02, 15)}deg)`,
-                perspective: '1000px'
-              }}
-            >
-              <div className="relative w-full h-[600px] flex items-center justify-center">
-                <AnimatedCitySVG />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            <h1 className="text-6xl md:text-8xl font-black leading-[0.85] tracking-tighter">
+              {t.title} <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                {t.subtitle}
+              </span>
+            </h1>
 
-      {/* Stats Cards */}
-      <section
-        id="stats"
-        className="relative py-32 px-6"
-        style={{
-          transform: `translateY(${(scrollY - 500) * -0.1}px)`
-        }}
-      >
-        <div className="container mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { label: t.stats[0], val: '$24.5M', icon: <Globe className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-              { label: t.stats[1], val: '7.2%', icon: <TrendingUp className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-              { label: t.stats[2], val: '12', icon: <Building2 className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-              { label: t.stats[3], val: 'AVAX', icon: <Cpu className="w-6 h-6" />, color: "from-orange-500 to-red-500" },
-            ].map((s, i) => (
-              <div
-                key={i}
-                className="relative bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-all cursor-default overflow-hidden"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${s.color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-                <div className="relative">
-                  <div className="text-blue-400 mb-4 opacity-70 group-hover:opacity-100 transition-opacity">
-                    {s.icon}
-                  </div>
-                  <div className="text-3xl font-bold mb-1">{s.val}</div>
-                  <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">{s.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section
-        id="how-it-works"
-        className="relative py-32 px-6"
-        style={{
-          transform: `translateY(${(scrollY - 1000) * -0.05}px)`
-        }}
-      >
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="text-5xl font-black text-center mb-20 tracking-tight">
-            {t.howItWorks}
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              { icon: <Wallet className="w-12 h-12" />, title: t.step1Title, desc: t.step1Desc, num: "01" },
-              { icon: <Building2 className="w-12 h-12" />, title: t.step2Title, desc: t.step2Desc, num: "02" },
-              { icon: <LineChart className="w-12 h-12" />, title: t.step3Title, desc: t.step3Desc, num: "03" }
-            ].map((step, i) => (
-              <div key={i} className="relative group">
-                <div className="absolute -top-6 -left-6 text-8xl font-black text-white/5 group-hover:text-white/10 transition-colors">
-                  {step.num}
-                </div>
-                <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-all">
-                  <div className="text-blue-400 mb-6">
-                    {step.icon}
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
-                  <p className="text-slate-400 leading-relaxed">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Buildings Section */}
-      <section
-        id="buildings"
-        className="relative py-32 px-6"
-        style={{
-          transform: `translateY(${(scrollY - 1500) * -0.05}px)`
-        }}
-      >
-        <div className="container mx-auto max-w-7xl">
-          <h2 className="text-5xl font-black text-center mb-20 tracking-tight">
-            {t.featuredBuildings}
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {buildings.map((building, i) => (
-              <div
-                key={i}
-                className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20"
-              >
-                <div className="h-64 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center p-8">
-                  <img
-                    src={building.img}
-                    alt={building.name}
-                    className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110 transform transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-3">{building.name}</h3>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-slate-400">Rendement</div>
-                      <div className="text-2xl font-bold text-green-400">{building.yield}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-slate-400">Valeur</div>
-                      <div className="text-2xl font-bold">{building.price}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Final */}
-      <section id="cta" className="relative py-32 px-6">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 rounded-3xl p-16">
-            <h2 className="text-5xl font-black mb-6">
-              {t.ctaTitle}
-            </h2>
-            <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-              {t.ctaDesc}
+            <p className="text-xl text-slate-400 max-w-md leading-relaxed font-medium">
+              {t.desc}
             </p>
-            <Button
-              size="lg"
-              onClick={onGetStarted}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-12 h-16 rounded-full shadow-2xl shadow-blue-500/30 transition-all hover:scale-105"
-            >
-              {t.cta} <ArrowRight className="ml-2 w-6 h-6" />
-            </Button>
+
+            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
+              <Button 
+                onClick={onGetStarted}
+                className="h-16 px-12 rounded-3xl bg-white text-black hover:bg-blue-50 text-xl font-black transition-all hover:scale-105 hover:rotate-1 active:scale-95 shadow-xl shadow-white/10"
+              >
+                {t.cta} <ArrowRight className="ml-2 w-6 h-6" />
+              </Button>
+              
+              <div className="flex items-center gap-4 px-6 py-4 bg-white/5 border border-white/10 backdrop-blur-md rounded-3xl group transition-all hover:bg-white/10">
+                <div className="p-3 bg-blue-500/20 rounded-2xl text-blue-400">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-black uppercase text-slate-500 tracking-tighter">
+                    {locale === 'fr' ? 'Rendement Moyen' : 'Avg Yield'}
+                  </div>
+                  <div className="text-xl font-black text-white">+7.42%</div>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* Zone 3D - Aura bleue fusionnée */}
+          <div className="relative order-1 lg:order-2 h-[500px] lg:h-[700px] w-full flex items-center justify-center">
+            {/* Halo de lumière qui brille à travers le Canvas transparent */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[80%] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
+            
+            {/* Appel du composant dynamique sans SSR */}
+            <BuildingHero />
+
+            {/* Badge flottant */}
+            <div className="absolute top-[20%] right-0 md:right-8 bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl z-20">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-[10px] font-black uppercase text-blue-400 tracking-tighter">Disponible</span>
+              </div>
+              <div className="font-bold text-sm text-white">Résidence Loft-O</div>
+              <div className="text-[10px] text-slate-400 font-medium">Yield: 7.2% | Parse City 11e</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-20 animate-bounce opacity-20">
+          <ChevronDown className="w-10 h-10" />
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="relative bg-slate-950 border-t border-white/10">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-950/20 to-purple-950/20 pointer-events-none" />
-
-        <div className="relative container mx-auto px-6 py-16 max-w-7xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            {/* Logo et Description */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 relative flex items-center justify-center bg-blue-500/10 rounded-lg border border-blue-400/30">
-                  <img
-                    src={LOGO_PATH}
-                    alt="EcoRWA Logo"
-                    className="w-6 h-6 object-contain brightness-0 invert"
-                  />
-                </div>
-                <div className="text-2xl font-black tracking-tighter">
-                  Eco<span className="text-blue-400">RWA</span>
-                </div>
-              </div>
-              <p className="text-slate-400 leading-relaxed mb-6 max-w-md">
-                {locale === 'fr'
-                  ? "Plateforme de tokenisation immobilière sur Avalanche Fuji Testnet"
-                  : "Real Estate Tokenization Platform on Avalanche Fuji Testnet"}
-              </p>
-
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-400/30 text-orange-400 text-xs font-bold">
-                <ShieldCheck className="w-3 h-3" />
-                {locale === 'fr' ? 'Testnet Uniquement' : 'Testnet Only'}
-              </div>
-            </div>
-
-            {/* Projet */}
-            <div>
-              <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-wider">
-                {locale === 'fr' ? 'Projet' : 'Project'}
-              </h3>
-              <ul className="space-y-3">
-                <li>
-                  <a
-                    href="https://github.com/OrionUnix/EcoRWA-Tycoon"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group"
-                  >
-                    <Globe className="w-5 h-5" />
-                    <span className="group-hover:translate-x-1 transition-transform">
-                      {locale === 'fr' ? 'Code Source' : 'Source Code'}
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://build.avax.network/build-games"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group"
-                  >
-                    <ArrowRight className="w-5 h-5" />
-                    <span className="group-hover:translate-x-1 transition-transform">
-                      {locale === 'fr' ? 'Hackathon Avalanche' : 'Avalanche Hackathon'}
-                    </span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Réseaux Sociaux */}
-            <div>
-              <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-wider">
-                {locale === 'fr' ? 'Réseaux Sociaux' : 'Social Media'}
-              </h3>
-              <ul className="space-y-3">
-                <li>
-                  <a
-                    href="https://x.com/OrionDeimos"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group"
-                  >
-                    <Languages className="w-5 h-5" />
-                    <span className="group-hover:translate-x-1 transition-transform">
-                      X (Twitter)
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://github.com/OrionUnix"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group"
-                  >
-                    <Globe className="w-5 h-5" />
-                    <span className="group-hover:translate-x-1 transition-transform">
-                      GitHub
-                    </span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Informations légales */}
-          <div className="pt-8 border-t border-white/10">
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-blue-400" />
-                  {locale === 'fr' ? 'Testnet Uniquement' : 'Testnet Only'}
-                </h4>
-                <p className="text-slate-400 text-sm">
-                  {locale === 'fr'
-                    ? "Ce projet est déployé sur Avalanche Fuji Testnet à des fins de démonstration"
-                    : "This project is deployed on Avalanche Fuji Testnet for demonstration purposes"}
-                </p>
-              </div>
-
-              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                  <ArrowRight className="w-4 h-4 text-purple-400" />
-                  {locale === 'fr' ? 'Hackathon Avalanche' : 'Avalanche Hackathon'}
-                </h4>
-                <p className="text-slate-400 text-sm">
-                  {locale === 'fr'
-                    ? "Projet développé pour le Build Games Hackathon d'Avalanche"
-                    : "Project developed for Avalanche Build Games Hackathon"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-              <div className="text-slate-400">
-                © 2025 EcoRWA. {locale === 'fr' ? 'Tous droits réservés' : 'All rights reserved'}
-              </div>
-
-              <div className="flex items-center gap-6">
-                <span className="text-slate-400">
-                  {locale === 'fr' ? 'Licence Gratuite' : 'Free License'}
-                </span>
-                <span className="text-slate-600">•</span>
-                <a
-                  href="#terms"
-                  className="text-slate-400 hover:text-blue-400 transition-colors"
-                >
-                  {locale === 'fr' ? "Conditions d'utilisation" : 'Terms of Use'}
-                </a>
-                <span className="text-slate-600">•</span>
-                <div className="text-slate-400">
-                  {locale === 'fr' ? 'Fait avec' : 'Made with'} <span className="text-red-400">❤️</span> {locale === 'fr' ? 'par OrionUnix' : 'by OrionUnix'}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      <style>{`
-        /* Minimalist landing page styles */
-      `}</style>
     </div>
   );
 }
