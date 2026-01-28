@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Globe, ShieldCheck, Cpu, TrendingUp, Languages, Building2, Wallet, LineChart, Zap, Users, Sparkles } from 'lucide-react';
 import React from 'react';
-const BASE_PATH = "/EcoRWA-Tycoon";
+const isProd = process.env.NODE_ENV === 'production';
+const BASE_PATH = isProd ? "/EcoRWA-Tycoon" : "";
 const LOGO_PATH = `${BASE_PATH}/logo.svg`;
 
 interface LandingPageProps {

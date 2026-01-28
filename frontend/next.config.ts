@@ -1,12 +1,35 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production';
+
+console.log('--- Next Config ---');
+console.log('Environment:', process.env.NODE_ENV);
+console.log('isProd:', isProd);
+console.log('-------------------');
+
 const nextConfig = {
-  output: 'export',
+  output: isProd ? 'export' : undefined,
   images: {
     unoptimized: true,
   },
-  basePath: '/EcoRWA-Tycoon',
-  assetPrefix: '/EcoRWA-Tycoon/',
+  basePath: isProd ? '/EcoRWA-Tycoon' : '',
+  assetPrefix: isProd ? '/EcoRWA-Tycoon/' : '',
   trailingSlash: true,
+  async headers() {
+    if (!isProd) {
+      return [
+        {
+          source: '/(.*)',
+          headers: [
+            {
+              key: 'Cross-Origin-Opener-Policy',
+              value: 'same-origin-allow-popups',
+            },
+          ],
+        },
+      ];
+    }
+    return [];
+  },
 };
 
 export default nextConfig;
