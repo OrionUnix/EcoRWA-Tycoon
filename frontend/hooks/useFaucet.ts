@@ -9,34 +9,29 @@ export function useFaucet() {
   const { address } = useAccount();
   const usdc = useUSDCContract();
 
-  const { 
-    writeContract, 
-    data: hash, 
+  const {
+    writeContract,
+    data: hash,
     isPending,
-    error: writeError 
+    error: writeError
   } = useWriteContract();
 
-  const { 
-    isLoading: isWaiting, 
+  const {
+    isLoading: isWaiting,
     isSuccess,
-    error: txError 
-  } = useWaitForTransactionReceipt({ 
-    hash 
+    error: txError
+  } = useWaitForTransactionReceipt({
+    hash
   });
 
   // Log des erreurs
   useEffect(() => {
     if (writeError) {
-      console.error('Erreur writeContract:', writeError);
       alert(`Erreur Faucet: ${writeError.message}`);
     }
   }, [writeError]);
 
-  useEffect(() => {
-    if (txError) {
-      console.error('Erreur transaction:', txError);
-    }
-  }, [txError]);
+
 
   const claimUSDC = async () => {
     if (!address) {
@@ -45,16 +40,14 @@ export function useFaucet() {
     }
 
     try {
-      console.log('Appel du faucet pour:', address);
-      console.log('Contrat USDC:', usdc.address);
-      
+
+
       writeContract({
         ...usdc,
         functionName: 'mint',
         args: [address, parseUnits('1000', 6)],
       });
     } catch (error) {
-      console.error('Erreur lors de l\'appel mint:', error);
       alert(`Erreur: ${error}`);
     }
   };

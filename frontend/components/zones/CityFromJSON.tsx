@@ -39,7 +39,6 @@ export default function CityFromJSON({
             setObjects(jsonData);
             setLoading(false);
             onLoad?.(jsonData);
-            console.log('✓ Ville chargée (données directes):', jsonData.length, 'objets');
             return;
         }
 
@@ -57,14 +56,8 @@ export default function CityFromJSON({
                     setObjects(data);
                     setLoading(false);
                     onLoad?.(data);
-                    console.log('✓ Ville chargée depuis:', jsonPath);
-                    console.log('  - Routes:', data.filter((o: PlacedObject) => o.type === 'road').length);
-                    console.log('  - Bâtiments:', data.filter((o: PlacedObject) => o.type === 'building').length);
-                    console.log('  - Décorations:', data.filter((o: PlacedObject) => o.type === 'decoration').length);
-                    console.log('  - Total:', data.length, 'objets');
                 })
                 .catch(err => {
-                    console.error('✗ Erreur de chargement:', err);
                     setError(err.message);
                     setLoading(false);
                 });
@@ -83,7 +76,6 @@ export default function CityFromJSON({
         const path = allModels[obj.modelKey];
 
         if (!path) {
-            console.warn(`⚠️ Modèle non trouvé: ${obj.modelKey}`);
             // Fallback vers un modèle par défaut
             if (obj.type === 'road') return ROAD_MODELS['straight'];
             if (obj.type === 'building') return COMMERCIAL_MODELS['building-a'];
@@ -98,7 +90,6 @@ export default function CityFromJSON({
     }
 
     if (error) {
-        console.error('Erreur CityFromJSON:', error);
         return null;
     }
 

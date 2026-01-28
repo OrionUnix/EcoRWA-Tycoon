@@ -44,17 +44,14 @@ export function useDashboardData(): DashboardData {
   // Fetch building data
   const { building: b1Info, isLoading: b1Loading } = useBuildingInfo(1);
   const { stats: b1Stats } = useHolderStats(1);
-  
+
   const { building: b2Info, isLoading: b2Loading } = useBuildingInfo(2);
   const { stats: b2Stats } = useHolderStats(2);
-  
+
   const { building: b3Info, isLoading: b3Loading } = useBuildingInfo(3);
   const { stats: b3Stats } = useHolderStats(3);
 
-  // DEBUG: Log pour voir ce qui est récupéré
-  console.log('🏢 Building 1:', { info: b1Info, stats: b1Stats });
-  console.log('🏢 Building 2:', { info: b2Info, stats: b2Stats });
-  console.log('🏢 Building 3:', { info: b3Info, stats: b3Stats });
+
 
   // Fetch USDC balance
   const { data: usdcBal, isLoading: isLoadingUsdc } = useReadContract({
@@ -111,7 +108,7 @@ export function useDashboardData(): DashboardData {
     const annual = buildings.reduce((acc, b) => acc + (b.stats?.annualYield || 0), 0);
     const avgYield = invested > 0 ? (annual / invested) * 100 : 0;
 
-    console.log('📊 Totals:', { invested, parts, pending, annual, avgYield });
+
 
     return { invested, parts, pending, annual, avgYield };
   }, [buildings]);

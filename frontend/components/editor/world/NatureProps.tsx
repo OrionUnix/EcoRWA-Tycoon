@@ -7,8 +7,8 @@ const naturePath = ZONE_TYPES.NATURE.path;
 const PropInstance = memo(({ prop, modelPath }: any) => {
     const seed = Math.abs(Math.sin(prop.x * 12.9898 + prop.z * 78.233) * 43758.5453);
     const rotation = seed * Math.PI;
-    const jitterX = (seed % 1 - 0.5) * 0.8;
-    const jitterZ = ((seed * 1.5) % 1 - 0.5) * 0.8;
+    const jitterX = (seed % 1 - 0.5) * 0.2;
+    const jitterZ = ((seed * 1.5) % 1 - 0.5) * 0.2;
     const scale = 0.8 + (seed % 0.4);
 
     return (

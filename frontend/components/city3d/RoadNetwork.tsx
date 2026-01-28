@@ -27,8 +27,7 @@ export default function RoadNetwork({
         const elements: any[] = [];
         const cellSize = 2; // Taille d'une cellule
 
-        console.log('🛣️ Génération grille simple');
-        console.log(`Taille: ${gridSize}x${gridSize}, Espacement: ${blockSize}`);
+
 
         const halfGrid = gridSize / 2;
         const minCoord = -halfGrid;
@@ -39,8 +38,6 @@ export default function RoadNetwork({
             const path = (ROAD_MODELS as any)[modelKey];
             if (path) {
                 elements.push({ id, path, pos, rot, scale: 1 });
-            } else {
-                console.warn(`Modèle manquant: ${modelKey}`);
             }
         };
 
@@ -68,7 +65,7 @@ export default function RoadNetwork({
             }
         }
 
-        console.log(`✅ ${elements.length} segments générés`);
+
         return elements;
     }, [gridSize, blockSize]);
 

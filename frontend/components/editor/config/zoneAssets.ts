@@ -80,7 +80,7 @@ export const ZONE_TYPES = {
             { id: 'tree_pineRoundC', file: 'tree_pineRoundC.glb' },
             { id: 'rock_tallA', file: 'rock_tallA.glb' },
             { id: 'grass', file: 'grass.glb' },
-            { id: 'stone_small', file: 'stone_smallH.glb' },
+            { id: 'stone_small', file: 'stone_smallTopB.glb' },
             { id: 'flower_yellowC', file: 'flower_yellowC.glb' },
             { id: 'plant_bush', file: 'plant_bush.glb' }
         ]

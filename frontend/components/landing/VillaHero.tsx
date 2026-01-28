@@ -4,8 +4,7 @@ import { Float, ContactShadows } from '@react-three/drei';
 export default function VillaHero() {
   return (
     <group scale={0.8} rotation={[0, -Math.PI / 4, 0]}>
-      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-        
+      <group>
         {/* NIVEAU 1 : SOCLE */}
         <mesh position={[0, 0, 0]} castShadow receiveShadow>
           <boxGeometry args={[10, 0.5, 8]} />
@@ -24,7 +23,7 @@ export default function VillaHero() {
             <boxGeometry args={[5, 3, 6]} />
             <meshStandardMaterial color="#ffffff" />
           </mesh>
-          
+
           {/* Fenêtre simplifiée */}
           <mesh position={[0, 0, 3.01]}>
             <planeGeometry args={[4.5, 2.5]} />
@@ -39,8 +38,7 @@ export default function VillaHero() {
             <meshStandardMaterial color="#1e293b" />
           </mesh>
         </group>
-
-      </Float>
+      </group>
 
       <ContactShadows position={[0, -0.3, 0]} opacity={0.4} scale={20} blur={2.5} far={4} />
     </group>

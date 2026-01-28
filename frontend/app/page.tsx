@@ -3,20 +3,18 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useAccount } from 'wagmi';
 
-// Components
-import Navbar from '@/components/layout/Navbar';
-import Dashboard from '@/components/dashboard/Dashboard';
-import PropertiesView from '@/components/dashboard/PropertiesView';
-import LandingPage from '@/components/LandingPage';
-import BuildingPurchaseDialog from '@/components/BuildingPurchaseDialog';
-import Footer from '@/components/Footer';
+// Dynamic imports
+const Navbar = dynamic(() => import('@/components/layout/Navbar'), { ssr: false });
+const Dashboard = dynamic(() => import('@/components/dashboard/Dashboard'), { ssr: false });
+const PropertiesView = dynamic(() => import('@/components/dashboard/PropertiesView'), { ssr: false });
+const LandingPage = dynamic(() => import('@/components/LandingPage'), { ssr: false });
+const BuildingPurchaseDialog = dynamic(() => import('@/components/BuildingPurchaseDialog'), { ssr: false });
+const Footer = dynamic(() => import('@/components/Footer'), { ssr: false });
+const ParseCity3D = dynamic(() => import('@/components/ParseCity3D'), { ssr: false });
 
 // Hooks
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useFaucet } from '@/hooks/useFaucet';
-
-// Dynamic imports
-const ParseCity3D = dynamic(() => import('@/components/ParseCity3D'), { ssr: false });
 
 type ViewType = 'city' | 'dashboard' | 'properties' | 'analytics';
 
@@ -25,7 +23,7 @@ export default function Home() {
   const [showLanding, setShowLanding] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('city');
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
-  
+
   const { address } = useAccount();
   const { usdcBalance, buildings } = useDashboardData();
   const { claimUSDC, isLoading: isFaucetLoading } = useFaucet();
@@ -56,9 +54,9 @@ export default function Home() {
   // Show landing page for non-connected users
   if (showLanding && !address) {
     return (
-      <LandingPage 
-        onGetStarted={() => setShowLanding(false)} 
-        locale={locale as 'fr' | 'en'} 
+      <LandingPage
+        onGetStarted={() => setShowLanding(false)}
+        locale={locale as 'fr' | 'en'}
       />
     );
   }
@@ -73,8 +71,8 @@ export default function Home() {
       </div>
 
       {/* Navbar */}
-      <Navbar 
-        address={address} 
+      <Navbar
+        address={address}
         usdcBalance={usdcBalance}
         isFaucetLoading={isFaucetLoading}
         onClaimUSDC={claimUSDC}
@@ -89,11 +87,11 @@ export default function Home() {
         {currentView === 'city' && (
           <div className="relative">
             <div className="h-screen w-full">
-              <ParseCity3D 
-                onBuildingClick={(data: any) => setSelectedBuildingId(data.id)} 
+              <ParseCity3D
+                onBuildingClick={(data: any) => setSelectedBuildingId(data.id)}
               />
             </div>
-            
+
             {/* Compact Floating Properties List */}
             <div className="fixed bottom-6 left-6 right-6 z-20 max-w-6xl mx-auto">
               <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95 rounded-2xl p-6 border border-white/10 backdrop-blur-xl shadow-2xl">
@@ -109,7 +107,7 @@ export default function Home() {
                     View All →
                   </button>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {buildings.slice(0, 3).map((building) => (
                     <CompactPropertyCard
@@ -127,7 +125,7 @@ export default function Home() {
         {/* Dashboard View */}
         {currentView === 'dashboard' && (
           <div className="container mx-auto px-6 max-w-7xl">
-            <Dashboard 
+            <Dashboard
               onBuildingSelect={(id) => setSelectedBuildingId(id)}
               t={t}
             />
@@ -156,10 +154,10 @@ export default function Home() {
       </div>
 
       {/* Purchase Dialog */}
-      <BuildingPurchaseDialog 
-        buildingId={selectedBuildingId} 
-        isOpen={!!selectedBuildingId} 
-        onClose={() => setSelectedBuildingId(null)} 
+      <BuildingPurchaseDialog
+        buildingId={selectedBuildingId}
+        isOpen={!!selectedBuildingId}
+        onClose={() => setSelectedBuildingId(null)}
       />
     </main>
   );
@@ -171,7 +169,7 @@ interface CompactPropertyCardProps {
   onClick: () => void;
 }
 
-function CompactPropertyCard({ building, onClick }: CompactPropertyCardProps) {
+function CompactPropertyCard({ building, onClick }: { building: any, onClick: () => void }) {
   const name = building.name || `Building ${building.id}`;
   const partPrice = building.partPrice || 0;
   const annualYield = building.annualYield || 0;
@@ -184,10 +182,10 @@ function CompactPropertyCard({ building, onClick }: CompactPropertyCardProps) {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border border-white/10 group-hover:border-emerald-500/30 transition-all duration-300" />
       <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 to-blue-500/0 group-hover:from-emerald-500/10 group-hover:to-blue-500/10 transition-all duration-300" />
-      
+
       <div className="relative space-y-3">
         <h4 className="text-base font-bold text-white">{name}</h4>
-        
+
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
             <p className="text-xs text-slate-400">Price</p>
@@ -198,7 +196,7 @@ function CompactPropertyCard({ building, onClick }: CompactPropertyCardProps) {
             <p className="font-bold text-emerald-400">{annualYield.toFixed(2)}%</p>
           </div>
         </div>
-        
+
         <div className="pt-2">
           <div className="w-full bg-slate-700/50 rounded-full h-1.5">
             <div className="bg-gradient-to-r from-emerald-500 to-blue-500 h-1.5 rounded-full w-2/3" />

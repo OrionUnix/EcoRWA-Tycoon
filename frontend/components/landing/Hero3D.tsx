@@ -9,22 +9,21 @@ export default function Hero3D() {
     // On force la taille avec h-screen et w-full
     <div className="fixed inset-0 -z-10 w-full h-screen bg-[#020617]">
       <Suspense fallback={<div className="text-white p-10">Chargement 3D...</div>}>
-        <Canvas 
-          shadows 
+        <Canvas
+          shadows
           dpr={[1, 1.5]} // Limite la résolution pour la performance
           camera={{ position: [12, 10, 12], fov: 35 }}
         >
           <color attach="background" args={['#020617']} />
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={1} />
-          
+
           <VillaHero />
 
-          <OrbitControls 
-            enableZoom={false} 
-            enablePan={false} 
-            autoRotate 
-            autoRotateSpeed={0.5}
+          <OrbitControls
+            enableZoom={false}
+            enablePan={false}
+            autoRotate={false}
           />
         </Canvas>
       </Suspense>

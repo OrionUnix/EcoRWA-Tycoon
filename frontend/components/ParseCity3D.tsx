@@ -98,13 +98,10 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
 
   // Handle click
   const handleBuildingClick = useCallback((id: number) => {
-    console.log("Building clicked:", id);
     const building = BUILDINGS_DATA.find(b => b.id === id);
     if (building) {
       setSelected(building);
       externalOnBuildingClick?.({ id: building.id });
-    } else {
-      console.warn("Building data not found for ID:", id);
     }
   }, [externalOnBuildingClick]);
 
@@ -118,7 +115,7 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
         </Badge>
       </div>
 
-      <Canvas shadows camera={{ position: [30, 30, 30], fov: 45 }} dpr={[1, 1.5]}>
+      <Canvas camera={{ position: [30, 30, 30], fov: 45 }} dpr={[1, 1.2]}>
         {/* OrbitControls are required for the CameraRig to work correctly */}
         <OrbitControls makeDefault enableDamping={false} />
         {/* Day/Night Cycle Logic */}
@@ -129,12 +126,6 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
         <directionalLight
           position={[20, 40, 20]}
           intensity={cycle.sunIntensity}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-          shadow-camera-left={-30}
-          shadow-camera-right={30}
-          shadow-camera-top={30}
-          shadow-camera-bottom={-30}
         />
 
         {cycle.isNight && (
@@ -150,8 +141,8 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
 
         <Suspense fallback={null}>
           {/* Ground - Better visual quality */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
-            <planeGeometry args={[50, 50]} />
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
+            <planeGeometry args={[20, 20]} />
             <meshStandardMaterial
               color={cycle.isNight ? "#020617" : "#0f172a"}
               roughness={0.8}
@@ -159,7 +150,6 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
             />
           </mesh>
 
-          {/* Grid Helper - Refined size/opacity */}
           <gridHelper
             args={[25, 25, 0x1e293b, 0x0f172a]}
             position={[0, 0, 0]}
