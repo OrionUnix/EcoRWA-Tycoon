@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./frontend
+        working-directory: ./frontend # 👈 On travaille ici
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci # Utilise 'npm install' si 'npm ci' échoue
 
       - name: Build with Next.js
         run: npx next build
@@ -43,7 +43,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./frontend/out
+          path: ./frontend/out # 👈 On récupère le résultat ici
 
   deploy:
     environment:
