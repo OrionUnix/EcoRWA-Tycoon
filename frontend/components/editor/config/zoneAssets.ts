@@ -1,10 +1,16 @@
+// On définit le préfixe pour GitHub Pages
+const BASE_PATH = '/EcoRWA-Tycoon'; 
+
+// Cette fonction ajoute le préfixe à tes chemins sans que tu aies à tout réécrire
+const fixPath = (path: string) => `${BASE_PATH}${path}`;
+
 export const ZONE_TYPES = {
     RESIDENTIAL: {
         id: 'RES',
         color: '#22c55e',
-        icon: '/assets/models/UI/PNG/home.png',
-        path: '/assets/models/suburban/',
-        texture: '/assets/models/suburban/Textures/colormap.png',
+        icon: fixPath('/assets/models/UI/PNG/home.png'),
+        path: fixPath('/assets/models/suburban/'),
+        texture: fixPath('/assets/models/suburban/Textures/colormap.png'),
         models: [
             { file: 'building-type-c.glb', size: 1 },
             { file: 'building-type-h.glb', size: 2 },
@@ -23,9 +29,9 @@ export const ZONE_TYPES = {
     COMMERCIAL: {
         id: 'COM',
         color: '#3b82f6',
-        icon: '/assets/models/UI/PNG/shoppingCart.png',
-        path: '/assets/models/commercial/',
-        texture: '/assets/models/commercial/Textures/colormap.png',
+        icon: fixPath('/assets/models/UI/PNG/shoppingCart.png'),
+        path: fixPath('/assets/models/commercial/'),
+        texture: fixPath('/assets/models/commercial/Textures/colormap.png'),
         models: [
             { file: 'building-a.glb', size: 1 },
             { file: 'building-e.glb', size: 1 },
@@ -47,9 +53,9 @@ export const ZONE_TYPES = {
     INDUSTRIAL: {
         id: 'IND',
         color: '#eab308',
-        icon: '/assets/models/UI/PNG/industrial.png',
-        path: '/assets/models/industrial/',
-        texture: '/assets/models/industrial/Textures/colormap.png',
+        icon: fixPath('/assets/models/UI/PNG/industrial.png'),
+        path: fixPath('/assets/models/industrial/'),
+        texture: fixPath('/assets/models/industrial/Textures/colormap.png'),
         models: [
             { file: 'building-a.glb', size: 1 },
             { file: 'building-h.glb', size: 1 },
@@ -72,7 +78,7 @@ export const ZONE_TYPES = {
         ]
     },
     NATURE: {
-        path: '/assets/models/nature/',
+        path: fixPath('/assets/models/nature/'),
         models: [
             { id: 'tree_oak_dark', file: 'tree_oak_dark.glb' },
             { id: 'tree_palm', file: 'tree_palm.glb' },
@@ -87,7 +93,7 @@ export const ZONE_TYPES = {
     },
     INFRASTRUCTURE: {
         roads: {
-            path: '/assets/models/roads/',
+            path: fixPath('/assets/models/roads/'),
             models: {
                 straight: 'road-straight.glb',
                 bend: 'road-bend.glb',
@@ -101,7 +107,7 @@ export const ZONE_TYPES = {
             }
         },
         rivers: {
-            path: '/assets/models/nature/',
+            path: fixPath('/assets/models/nature/'),
             models: {
                 straight: 'ground_riverStraight.glb',
                 bend: 'ground_riverBend.glb',
@@ -113,7 +119,7 @@ export const ZONE_TYPES = {
         }
     },
     VEHICLES: {
-        path: '/assets/models/vehicles/',
+        path: fixPath('/assets/models/vehicles/'),
         models: {
             suv: 'suv.glb',
             luxury: 'suv-luxury.glb',
