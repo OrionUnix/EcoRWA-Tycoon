@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Globe, ShieldCheck, Cpu, TrendingUp, Languages, Building2, Wallet, LineChart, Zap, Users, Sparkles } from 'lucide-react';
 import React from 'react';
-const LOGO_PATH = "/logo.svg";
+const BASE_PATH = "/EcoRWA-Tycoon";
+const LOGO_PATH = `${BASE_PATH}/logo.svg`;
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -19,16 +20,12 @@ function AnimatedCitySVG() {
   useEffect(() => {
     const loadAndAnimateSVG = async () => {
       try {
-        const response = await fetch('/assets/isometric_city.svg');
+        const response = await fetch(`${BASE_PATH}/assets/isometric_city.svg`);
         const svgText = await response.text();
 
         if (svgRef.current) {
           svgRef.current.innerHTML = svgText;
           setIsLoaded(true);
-
-          setTimeout(() => {
-            startDayNightCycle();
-          }, 100);
         }
       } catch (error) {
         console.error('Erreur SVG:', error);
@@ -38,186 +35,17 @@ function AnimatedCitySVG() {
     loadAndAnimateSVG();
   }, []);
 
-  const startDayNightCycle = () => {
-    // Cycle jour/nuit toutes les 10 secondes
-    setInterval(() => {
-      setIsNight(prev => !prev);
-
-      const newIsNight = !isNight;
-
-      // 1. ANIMATION DES LAMPADAIRES
-      const streetlightGroups = [
-        'streetlight_group_02',
-        'streetlight_group_1'
-      ];
-
-      streetlightGroups.forEach((groupId, index) => {
-        const group = document.getElementById(groupId) as any;
-        if (!group) return;
-
-        let aura = group.querySelector('.streetlight-aura') as SVGElement;
-
-        if (!aura && newIsNight) {
-          aura = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          aura.classList.add('streetlight-aura');
-          aura.setAttribute('r', '80');
-          aura.setAttribute('fill', 'url(#streetlight-gradient-' + index + ')');
-          aura.setAttribute('opacity', '0');
-
-          const bbox = group.getBBox();
-          aura.setAttribute('cx', (bbox.x + bbox.width / 2).toString());
-          aura.setAttribute('cy', (bbox.y + bbox.height / 2).toString());
-
-          const defs = document.querySelector('defs') || document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-          if (!document.querySelector('defs')) {
-            svgRef.current?.querySelector('svg')?.appendChild(defs);
-          }
-
-          const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
-          gradient.id = 'streetlight-gradient-' + index;
-          gradient.innerHTML = `
-            <stop offset="0%" style="stop-color:#ffb347;stop-opacity:0.8" />
-            <stop offset="30%" style="stop-color:#ffa500;stop-opacity:0.5" />
-            <stop offset="60%" style="stop-color:#ff8c00;stop-opacity:0.2" />
-            <stop offset="100%" style="stop-color:#ff6b00;stop-opacity:0" />
-          `;
-          defs.appendChild(gradient);
-
-          group.insertBefore(aura, group.firstChild);
-        }
-
-        const lights = group.querySelectorAll('path, polygon, circle:not(.streetlight-aura)');
-
-        if (newIsNight) {
-          setTimeout(() => {
-            if (aura) {
-              aura.style.transition = 'opacity 2s ease-in-out';
-              aura.setAttribute('opacity', '0.7');
-            }
-
-            lights.forEach((light: Element) => {
-              const svgLight = light as SVGElement;
-              svgLight.style.transition = 'all 2s ease-in-out';
-              svgLight.style.filter = 'drop-shadow(0 0 25px #ffb347) drop-shadow(0 0 40px #ffa500) brightness(3)';
-              svgLight.style.opacity = '1';
-            });
-          }, index * 400);
-        } else {
-          setTimeout(() => {
-            if (aura) {
-              aura.style.transition = 'opacity 2s ease-in-out';
-              aura.setAttribute('opacity', '0');
-            }
-
-            lights.forEach((light: Element) => {
-              const svgLight = light as SVGElement;
-              svgLight.style.transition = 'all 2s ease-in-out';
-              svgLight.style.filter = 'none';
-              svgLight.style.opacity = '1';
-            });
-          }, index * 400);
-        }
-      });
-
-      // 2. ANIMATION DES FENÊTRES DES BÂTIMENTS
-      const buildingGroups = [
-        'house_02'
-
-      ];
-
-      buildingGroups.forEach((buildingId, buildingIndex) => {
-        const building = document.getElementById(buildingId);
-        if (!building) return;
-
-        // Sélectionner les fenêtres (polygons et rectangles qui ressemblent à des fenêtres)
-        const windows = building.querySelectorAll('polygon[class*="st"], rect[class*="st"]');
-
-        if (newIsNight) {
-          // NUIT : Allumer aléatoirement 30-50% des fenêtres
-          setTimeout(() => {
-            windows.forEach((window: Element, windowIndex: number) => {
-              const svgWindow = window as SVGElement;
-
-              // Allumer aléatoirement environ 40% des fenêtres
-              if (Math.random() < 0.4) {
-                const delay = Math.random() * 3000; // Délai aléatoire jusqu'à 3 secondes
-
-                setTimeout(() => {
-                  svgWindow.style.transition = 'all 1.5s ease-in-out';
-                  svgWindow.style.fill = '#fff3b0'; // Couleur jaune chaud pour la lumière
-                  svgWindow.style.filter = 'drop-shadow(0 0 8px #fff3b0) brightness(1.5)';
-                  svgWindow.style.opacity = '0.9';
-                }, delay);
-              }
-            });
-          }, buildingIndex * 500);
-        } else {
-          // JOUR : Éteindre toutes les fenêtres
-          setTimeout(() => {
-            windows.forEach((window: Element) => {
-              const svgWindow = window as SVGElement;
-              svgWindow.style.transition = 'all 2s ease-in-out';
-              svgWindow.style.fill = ''; // Retour à la couleur d'origine
-              svgWindow.style.filter = 'none';
-              svgWindow.style.opacity = '1';
-            });
-          }, buildingIndex * 500);
-        }
-      });
-    }, 10000); // 10 secondes par cycle
-  };
-
   return (
     <div
       ref={svgRef}
       className="w-full h-full drop-shadow-2xl transition-all duration-2000"
-      style={{
-        animation: isLoaded ? 'float 6s ease-in-out infinite' : 'none',
-        filter: isNight ? 'brightness(60%) hue-rotate(200deg)' : 'brightness(110%)'
-      }}
     />
   );
 }
 
 // Particules avec positions fixes (pas de Math.random)
 function FloatingParticles() {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return null;
-
-  const particles = [
-    { left: 4.68, top: 15.26, duration: 5.39, delay: 1.06 },
-    { left: 17.98, top: 92.28, duration: 5.68, delay: 0.24 },
-    { left: 0.18, top: 50.50, duration: 3.12, delay: 0.49 },
-    { left: 97.69, top: 20.34, duration: 4.14, delay: 0.88 },
-    { left: 13.14, top: 41.72, duration: 3.70, delay: 1.19 },
-    { left: 49.57, top: 12.03, duration: 5.90, delay: 0.33 },
-    { left: 42.30, top: 79.82, duration: 5.39, delay: 0.62 },
-    { left: 50.87, top: 58.57, duration: 3.59, delay: 1.76 },
-    { left: 39.20, top: 45.42, duration: 4.78, delay: 1.57 },
-    { left: 97.34, top: 62.07, duration: 3.42, delay: 0.24 }
-  ];
-
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      {particles.map((p, i) => (
-        <div
-          key={i}
-          className="absolute w-2 h-2 bg-blue-400 rounded-full opacity-30"
-          style={{
-            left: `${p.left}%`,
-            top: `${p.top}%`,
-            animation: `particle ${p.duration}s ease-in-out infinite`,
-            animationDelay: `${p.delay}s`
-          }}
-        />
-      ))}
-    </div>
-  );
+  return null; // Removed for performance
 }
 
 export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr' }: LandingPageProps) {
@@ -257,69 +85,69 @@ export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr'
   const translations = {
     fr: {
       tag: "L'immobilier 3.0 sur Avalanche",
-      title: "INVESTISSEZ DANS",
-      subtitle: "L'AVENIR RWA.",
-      desc: "EcoRWA transforme les actifs immobiliers en tokens fractionnés. Gérez votre portefeuille via notre interface 3D immersive.",
+      title: "EcoRWA Tycoon :",
+      subtitle: "L'immobilier réel, version Gamifiée.",
+      desc: "Pourquoi l'investissement immobilier est-il réservé aux élites ? EcoRWA Tycoon brise les barrières en transformant la finance complexe en une simulation urbaine intuitive. Ne lisez pas des contrats de 50 pages, construisez votre avenir financier dans Parse City.",
       cta: "Lancer l'App",
       stats: ["Valeur Totale", "Rendement", "Immeubles", "Réseau"],
       howItWorks: "Comment ça marche",
       step1Title: "Connectez votre Wallet",
-      step1Desc: "Connectez votre wallet Metamask à Avalanche Fuji Testnet",
-      step2Title: "Choisissez un Immeuble",
-      step2Desc: "Parcourez notre carte 3D et sélectionnez l'immeuble qui vous intéresse",
-      step3Title: "Investissez en Tokens",
-      step3Desc: "Achetez des parts fractionnées et percevez des revenus locatifs automatiques",
+      step1Desc: "Investissez dès 50$ grâce à la fragmentation ERC-1155.",
+      step2Title: "IA Urbaine",
+      step2Desc: "Notre agent IA vulgarise les documents d'urbanisme complexes (PLU) en conseils de jeu simples.",
+      step3Title: "Rendement Réel",
+      step3Desc: "Visualisez vos dividendes tomber en temps réel dans une ville 3D interactive.",
       featuredBuildings: "Immeubles Disponibles",
       ctaTitle: "Prêt à investir dans le futur ?",
       ctaDesc: "Rejoignez la révolution RWA et commencez à percevoir des revenus passifs dès aujourd'hui.",
       navStats: "Stats",
-      navHow: "Comment",
-      navBuildings: "Immeubles"
+      navHow: "Concept",
+      navBuildings: "Immeubles",
+      complianceTitle: "Conformité & Sécurité",
+      complianceSub: "Standards institutionnels pour la DeFi RWA",
+      compliance1: "Subnet Avalanche dédié pour la gestion KYC (Know Your Customer).",
+      compliance2: "Smart Contracts audités et standard ERC-1155 pour la fragmentation.",
+      compliance3: "Stabilité garantie par MockUSDC (transition vers USDC réel prévue)."
     },
     en: {
       tag: "Real Estate 3.0 on Avalanche",
-      title: "INVEST IN THE",
-      subtitle: "RWA FUTURE.",
-      desc: "EcoRWA transforms real estate assets into fractional tokens. Manage your portfolio through our immersive 3D interface.",
+      title: "EcoRWA Tycoon:",
+      subtitle: "Gamifying Real-World Real Estate.",
+      desc: "Why is real estate investment reserved for the elite? EcoRWA Tycoon breaks barriers by transforming complex finance into an intuitive urban simulation. Don't read 50-page contracts, build your financial future in Parse City.",
       cta: "Launch App",
       stats: ["Total Value", "Avg Yield", "Buildings", "Network"],
       howItWorks: "How It Works",
       step1Title: "Connect Your Wallet",
-      step1Desc: "Connect your Metamask wallet to Avalanche Fuji Testnet",
-      step2Title: "Choose a Building",
-      step2Desc: "Browse our 3D map and select the building that interests you",
-      step3Title: "Invest in Tokens",
-      step3Desc: "Buy fractional shares and receive automatic rental income",
+      step1Desc: "Invest from $50 using ERC-1155 fractionalization.",
+      step2Title: "AI Urban Advisor",
+      step2Desc: "Our AI agent simplifies complex zoning laws (PLU) into actionable game tips.",
+      step3Title: "Live Yield",
+      step3Desc: "Watch your rental income accrue in real-time within an interactive 3D city.",
       featuredBuildings: "Available Buildings",
       ctaTitle: "Ready to invest in the future?",
       ctaDesc: "Join the RWA revolution and start earning passive income today.",
       navStats: "Stats",
-      navHow: "How",
-      navBuildings: "Buildings"
+      navHow: "Concept",
+      navBuildings: "Buildings",
+      complianceTitle: "Compliance & Security",
+      complianceSub: "Institutional standards for RWA DeFi",
+      compliance1: "Dedicated Avalanche Subnet for KYC (Know Your Customer) management.",
+      compliance2: "Audited Smart Contracts and ERC-1155 standard for fractionalization.",
+      compliance3: "Stability guaranteed by MockUSDC (planned transition to real USDC)."
     }
   };
 
   const t = translations[locale];
 
   const buildings = [
-    { name: "Loft Saint-Germain", img: "/assets/buildings/Loft_Saint-Germain.svg", yield: "7.2%", price: "$250K" },
-    { name: "Bistro", img: "/assets/buildings/bistro.svg", yield: "6.8%", price: "$180K" },
-    { name: "EcoTower 2030", img: "/assets/buildings/EcoTower_2030.svg", yield: "8.1%", price: "$420K" }
+    { name: "Loft Saint-Germain", img: `${BASE_PATH}/assets/buildings/Loft_Saint-Germain.svg`, yield: "7.2%", price: "$250K" },
+    { name: "Bistro", img: `${BASE_PATH}/assets/buildings/bistro.svg`, yield: "6.8%", price: "$180K" },
+    { name: "EcoTower 2030", img: `${BASE_PATH}/assets/buildings/EcoTower_2030.svg`, yield: "8.1%", price: "$420K" }
   ];
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white overflow-hidden">
-      {/* Animated Background Pattern */}
-      <div className="fixed inset-0 opacity-20 pointer-events-none">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 2px 2px, rgb(59, 130, 246) 1px, transparent 0)',
-            backgroundSize: '50px 50px',
-            transform: `translateY(${scrollY * 0.1}px)`
-          }}
-        />
-      </div>
+      {/* Background Pattern Removed for Performance */}
 
       {/* Navbar Sticky */}
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-white/10 transition-all">
@@ -425,11 +253,7 @@ export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr'
               }}
             >
               <div className="relative w-full h-[600px] flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent animate-shimmer" />
-
                 <AnimatedCitySVG />
-
-                <FloatingParticles />
               </div>
             </div>
           </div>
@@ -730,21 +554,7 @@ export default function LandingPage({ onGetStarted, locale: initialLocale = 'fr'
       </footer>
 
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotateY(0deg); }
-          50% { transform: translateY(-20px) rotateY(5deg); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes particle {
-          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.3; }
-          50% { transform: translateY(-30px) scale(1.5); opacity: 0.6; }
-        }
-        .animate-shimmer {
-          animation: shimmer 3s ease-in-out infinite;
-        }
+        /* Minimalist landing page styles */
       `}</style>
     </div>
   );

@@ -24,6 +24,19 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<ViewType>('city');
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
 
+  // Sync with NEXT_LOCALE cookie on mount
+  useState(() => {
+    if (typeof document !== 'undefined') {
+      const savedLocale = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('NEXT_LOCALE='))
+        ?.split('=')[1];
+      if (savedLocale && (savedLocale === 'fr' || savedLocale === 'en')) {
+        setLocale(savedLocale);
+      }
+    }
+  });
+
   const { address } = useAccount();
   const { usdcBalance, buildings } = useDashboardData();
   const { claimUSDC, isLoading: isFaucetLoading } = useFaucet();
@@ -63,12 +76,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 relative overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+      {/* Background Gradients Removed for Performance */}
 
       {/* Navbar */}
       <Navbar
