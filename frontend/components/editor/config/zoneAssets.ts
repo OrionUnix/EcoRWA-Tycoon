@@ -1,7 +1,12 @@
 // On définit le préfixe pour GitHub Pages
-const BASE_PATH = '/EcoRWA-Tycoon'; 
 
-// Cette fonction ajoute le préfixe à tes chemins sans que tu aies à tout réécrire
+
+const isGithubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
+
+// Si c'est GitHub, on met le préfixe. Si c'est ton PC (localhost), on laisse vide.
+const BASE_PATH = isGithubPages ? '/EcoRWA-Tycoon' : ''; 
+
+// La fonction reste la même, elle s'adaptera toute seule
 const fixPath = (path: string) => `${BASE_PATH}${path}`;
 
 export const ZONE_TYPES = {
