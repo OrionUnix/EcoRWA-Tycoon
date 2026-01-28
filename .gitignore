@@ -1,25 +1,21 @@
-# Dépendances (ne jamais envoyer ça)
+# Dépendances
 node_modules/
-lib/
+
+# On ignore le contenu de lib mais pas le dossier lui-même
+lib/**/*
+# On force Git à suivre le sous-module
+!lib/openzeppelin-contracts
 
 # Next.js build
 .next/
 out/
 build/
 
-# Environnement & Sécurité (très important pour les clés API)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Environnement & Sécurité
+.env*
 
-# Foundry / Hardhat (fichiers compilés)
+# Foundry / Hardhat
 cache/
 artifacts/
 broadcast/
-out/
 deploy.log
-
-# Système
-.DS_Store.env
