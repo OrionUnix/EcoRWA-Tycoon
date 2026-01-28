@@ -23,21 +23,22 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
 
         // On définit une marge plus grande pour les bâtiments de taille 2
         // car ils ont souvent des éléments qui dépassent (tuyaux jaunes, etc.)
+        // Ajustement des échelles et marges pour un aspect "accolé"
         const isLarge = modelData.size === 2;
-        const margin = isLarge ? 0.4 : 0.25;
+        const margin = isLarge ? -0.4 : 0.15;
 
         if (roadNetwork?.has(`${x + 2},${z}`)) {
             rot = Math.PI / 2;
-            offsetX = -margin;
+            offsetX = margin;
         } else if (roadNetwork?.has(`${x - 2},${z}`)) {
             rot = -Math.PI / 2;
-            offsetX = margin;
+            offsetX = -margin;
         } else if (roadNetwork?.has(`${x},${z + 2}`)) {
             rot = 0;
-            offsetZ = -margin;
+            offsetZ = margin;
         } else if (roadNetwork?.has(`${x},${z - 2}`)) {
             rot = Math.PI;
-            offsetZ = margin;
+            offsetZ = -margin;
         } else {
             // Si pas de route, on centre mais on réduit quand même
             rot = (Math.floor(seed * 10) % 4) * (Math.PI / 2);
@@ -48,8 +49,8 @@ export default function BuildingTile({ x, z, type, roadNetwork, isPreview, isBei
         return {
             fullPath: `${zoneAny.path}${modelData.file}`,
             rotation: rot + FRONT_OFFSET,
-            // Échelle réduite pour éviter les collisions
-            scale: isLarge ? 1.6 : 1.5,
+            // Échelles pour que les bâtiments ne débordent pas sur la route
+            scale: isLarge ? 1.4 : 1.7,
             color: zoneColor,
             offset: [offsetX, 0, offsetZ]
         };

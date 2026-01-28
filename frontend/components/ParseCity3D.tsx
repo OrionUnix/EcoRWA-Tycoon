@@ -6,12 +6,15 @@
  */
 
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, ContactShadows, OrbitControls } from '@react-three/drei';
+import { Environment, ContactShadows, OrbitControls, useGLTF } from '@react-three/drei';
 import { useState, Suspense, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
+
+// Config
+import { ZONE_TYPES } from '@/components/editor/config/zoneAssets';
 
 // Editor Components (Unified Rendering)
 import Roads from '@/components/editor/Roads';
@@ -29,6 +32,30 @@ import BuildingPurchaseDialog from '@/components/BuildingPurchaseDialog';
 interface ParseCity3DProps {
   onBuildingClick?: (data: { id: number }) => void;
 }
+
+// Preload all assets
+const preloadAllAssets = () => {
+  // Buildings
+  [ZONE_TYPES.RESIDENTIAL, ZONE_TYPES.COMMERCIAL, ZONE_TYPES.INDUSTRIAL].forEach((zone: any) => {
+    zone.models.forEach((m: any) => useGLTF.preload(`${zone.path}${m.file}`));
+  });
+
+  // Nature
+  ZONE_TYPES.NATURE.models.forEach((m: any) => useGLTF.preload(`${ZONE_TYPES.NATURE.path}${m.file}`));
+
+  // Infrastructure
+  Object.values(ZONE_TYPES.INFRASTRUCTURE.roads.models).forEach((file: any) =>
+    useGLTF.preload(`${ZONE_TYPES.INFRASTRUCTURE.roads.path}${file}`));
+  Object.values(ZONE_TYPES.INFRASTRUCTURE.rivers.models).forEach((file: any) =>
+    useGLTF.preload(`${ZONE_TYPES.INFRASTRUCTURE.rivers.path}${file}`));
+
+  // Vehicles
+  Object.values(ZONE_TYPES.VEHICLES.models).forEach((file: any) =>
+    useGLTF.preload(`${ZONE_TYPES.VEHICLES.path}${file}`));
+};
+
+// Initial preload
+preloadAllAssets();
 
 // Sub-component to manage the Day/Night Cycle logic
 function DayNightCycle({ onCycleUpdate }: { onCycleUpdate: (data: { time: number, isNight: boolean, sunIntensity: number }) => void }) {
@@ -91,7 +118,7 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
         </Badge>
       </div>
 
-      <Canvas shadows camera={{ position: [30, 30, 30], fov: 45 }}>
+      <Canvas shadows camera={{ position: [30, 30, 30], fov: 45 }} dpr={[1, 1.5]}>
         {/* OrbitControls are required for the CameraRig to work correctly */}
         <OrbitControls makeDefault enableDamping={false} />
         {/* Day/Night Cycle Logic */}
@@ -103,11 +130,11 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
           position={[20, 40, 20]}
           intensity={cycle.sunIntensity}
           castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-40}
-          shadow-camera-right={40}
-          shadow-camera-top={40}
-          shadow-camera-bottom={-40}
+          shadow-mapSize={[1024, 1024]}
+          shadow-camera-left={-30}
+          shadow-camera-right={30}
+          shadow-camera-top={30}
+          shadow-camera-bottom={-30}
         />
 
         {cycle.isNight && (
@@ -177,7 +204,7 @@ export default function ParseCity3D({ onBuildingClick: externalOnBuildingClick }
             />
           ))}
 
-          <ContactShadows opacity={0.4} scale={60} blur={2.5} far={20} />
+          <ContactShadows opacity={0.4} scale={50} blur={2} far={15} resolution={256} />
           <Environment preset={cycle.isNight ? "night" : "city"} />
         </Suspense>
       </Canvas>

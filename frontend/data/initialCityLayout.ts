@@ -40,88 +40,90 @@ const initLayout = () => {
     const GRID_SIZE = 2; // Road grid size
     const RIVER_GRID = 1;
 
-    // 1. Create Roads
-    // Main Avenue (Horizontal)
-    for (let x = -20; x <= 20; x += GRID_SIZE) {
-        addRoad(x, 0);
-        addRoad(x, -10);
-        addRoad(x, 10);
-    }
+    // 1. Create a logical grid of 8x8 blocks
+    const roadCoordinates = [-16, -8, 0, 8, 16];
 
-    // Cross streets (Vertical)
-    [-16, -8, 0, 8, 16].forEach(x => {
-        for (let z = -10; z <= 10; z += GRID_SIZE) {
+    // Vertical Roads
+    roadCoordinates.forEach(x => {
+        for (let z = -24; z <= 24; z += GRID_SIZE) {
             addRoad(x, z);
         }
     });
 
-    // 2. Place Buildings (Mapped to BUILDINGS_DATA IDs)
-    // Using 4x4 increment to avoid overlaps for scale 1.5-1.6 buildings
+    // Horizontal Roads
+    roadCoordinates.forEach(z => {
+        for (let x = -16; x <= 16; x += GRID_SIZE) {
+            addRoad(x, z);
+        }
+    });
 
-    // Downtown (Center Blocks) - At x=4/-4 and z=4/-4 they are well away from roads at 0/8/-8 and 0/10/-10
-    addZone(-4, -4, 'COM', 3); // Eco-Tower
-    addZone(4, -4, 'COM', 4);  // Skyline Hub
-    addZone(-4, 4, 'COM', 5);  // Hotel Riviera
-    addZone(4, 4, 'COM', 2);   // Bistrot Central
+    // 2. Place Buildings strictly adjacent to roads
+    // Block [0 to 8] means centers at 2 and 6 hug roads at 0 and 8.
 
-    // Spread out fillers
-    addZone(-4, -8, 'COM', 105);
-    addZone(4, -8, 'COM', 106);
-    addZone(-8, -4, 'COM', 107);
-    addZone(8, -4, 'COM', 108);
+    // Downtown (Block [0,8] x [0,8])
+    addZone(2, 2, 'COM', 3); // Hugs road at X=0, Z=0
+    addZone(6, 2, 'COM', 4); // Hugs road at X=8, Z=0
+    addZone(2, 6, 'COM', 5); // Hugs road at X=0, Z=8
+    addZone(6, 6, 'COM', 2); // Hugs road at X=8, Z=8
 
-    // Residential (West Loop)
-    addZone(-12, -4, 'RES', 1);
-    addZone(-12, 4, 'RES', 6);
-    addZone(-12, -8, 'RES', 101);
-    addZone(-12, 8, 'RES', 102);
+    // Downtown Fillers (in the same block)
+    addZone(4, 2, 'COM', 105);
+    addZone(4, 6, 'COM', 106);
+    addZone(2, 4, 'COM', 107);
+    addZone(6, 4, 'COM', 108);
 
-    // Industrial (East Loop)
-    addZone(12, -4, 'IND', 7);
-    addZone(12, 4, 'IND', 8);
-    addZone(12, -8, 'IND', 103);
-    addZone(12, 8, 'IND', 104);
+    // Residential (Block [-8, 0] x [0, 8])
+    addZone(-2, 2, 'RES', 1);
+    addZone(-6, 2, 'RES', 6);
+    addZone(-2, 6, 'RES', 101);
+    addZone(-6, 6, 'RES', 102);
+    addZone(-4, 4, 'RES', 109);
+    addZone(-4, 2, 'RES', 110);
 
-    // Tech Park
-    addZone(0, 14, 'COM', 9);
-    addZone(8, 14, 'COM', 11);
-    addZone(-8, 14, 'IND', 10);
+    // Industrial (Block [0, 8] x [-8, 0])
+    addZone(2, -2, 'IND', 7);
+    addZone(6, -2, 'IND', 8);
+    addZone(2, -6, 'IND', 103);
+    addZone(6, -6, 'IND', 104);
+    addZone(4, -4, 'IND', 113);
+    addZone(2, -4, 'IND', 114);
 
-    // North Residential - Very spaced
-    for (let x = -18; x <= 18; x += 6) {
-        addZone(x, -14, 'RES', 200 + Math.abs(x));
+    // Tech Park (Block [-8, 0] x [-8, 0])
+    addZone(-2, -2, 'COM', 9);
+    addZone(-6, -2, 'COM', 11);
+    addZone(-2, -6, 'IND', 10);
+    addZone(-6, -6, 'COM', 117);
+
+    // North Residential (Block [-16, 16] x [-16, -8])
+    for (let x = -14; x <= 14; x += 4) {
+        addZone(x, -10, 'RES', 200 + Math.abs(x));
+        addZone(x, -14, 'RES', 300 + Math.abs(x));
     }
 
-    // 3. Add River (Far North)
+    // 3. Add River (Far South for balance)
     for (let x = -24; x <= 24; x += RIVER_GRID) {
-        addRiver(x, -18);
-        addRiver(x, -19);
+        addRiver(x, 20);
+        addRiver(x, 21);
     }
 
-    // 4. Add Nature
-    // Parks in spaces NOT on roads
-    addProp(-8, -6, 'tree_oak_dark');
-    addProp(8, -6, 'tree_blocks_fall');
-    addProp(-8, 6, 'tree_palm');
-    addProp(8, 6, 'tree_pineRoundC');
-    addProp(0, -7, 'flower_yellowC');
-    addProp(0, 7, 'plant_bush');
-    addProp(-6, 0, 'stone_small');
-    addProp(6, 0, 'stone_small');
+    // 4. Add Nature (In the middle of larger blocks or empty areas)
+    // Central Parks
+    addProp(0, 0, 'tree_oak_dark');
+    addProp(8, 0, 'tree_blocks_fall');
+    addProp(-8, 0, 'tree_palm');
+    addProp(0, 8, 'tree_pineRoundC');
 
     // Forest around river (spacing 4)
     for (let x = -24; x <= 24; x += 4) {
-        addProp(x, -15, 'tree_pineRoundC');
-        addProp(x + 2, -22, 'tree_blocks_fall');
+        addProp(x, 18, 'tree_pineRoundC');
+        addProp(x + 2, 23, 'tree_blocks_fall');
     }
 
-    // Safety scattered props (middle of blocks)
-    [-4, 4, -12, 12].forEach(x => {
-        [-2, 2, -12, 8].forEach(z => {
-            // Check if there is already a zone there
-            if (!INITIAL_CITY_LAYOUT.zones.has(`${x},${z}`)) {
-                addProp(x, z, 'plant_bush');
-            }
+    // Block corners decorations
+    roadCoordinates.forEach(x => {
+        roadCoordinates.forEach(z => {
+            if (x === 0 && z === 0) return;
+            addProp(x + 1, z + 1, 'plant_bush');
         });
     });
 };
