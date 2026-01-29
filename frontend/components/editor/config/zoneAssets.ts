@@ -1,7 +1,10 @@
+// Détection propre du mode production ou GitHub Pages
+const isProd = process.env.NODE_ENV === 'production';
 const isGithubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
 
-const isProd = process.env.NODE_ENV === 'production';
-const BASE_PATH = isProd ? '/EcoRWA-Tycoon' : ''; 
+// Une seule déclaration de BASE_PATH
+const BASE_PATH = (isProd || isGithubPages) ? '/EcoRWA-Tycoon' : ''; 
+
 const fixPath = (path: string) => `${BASE_PATH}${path}`;
 
 export const ZONE_TYPES = {
