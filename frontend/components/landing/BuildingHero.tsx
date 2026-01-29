@@ -68,7 +68,7 @@ export default function BuildingHero() {
         
         <ambientLight intensity={0.4} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={3} />
-        <pointLight position={[-10, 5, -5]} color="#3b82f6" intensity={5} />
+        <pointLight position={[-10, 5, -5]} color="#E84142" intensity={5} />
         <Environment preset="city" /> 
 
         <Suspense fallback={null}>

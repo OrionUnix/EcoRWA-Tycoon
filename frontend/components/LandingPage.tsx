@@ -4,36 +4,46 @@ import NavbarLanding from '@/components/landing/NavbarLanding';
 import HowItWorks from '@/components/landing/HowItWorks';
 import HeroSection from '@/components/landing/HeroSection';
 
-// 1. Définir le type des props
 interface LandingPageProps {
-  onGetStarted: () => void;
+  // On change () => void en () => Promise<void> pour matcher la Navbar
+  onGetStarted: () => Promise<void>; 
   locale: 'fr' | 'en';
+  address?: `0x${string}`;
+  usdcBalance?: string;
+  isFaucetLoading?: boolean;
 }
 
-// 2. Appliquer le type au composant
-export default function LandingPage({ onGetStarted, locale }: LandingPageProps) {
+export default function LandingPage({ 
+  onGetStarted, 
+  locale, 
+  address, 
+  usdcBalance, 
+  isFaucetLoading 
+}: LandingPageProps) {
   const { scrollYProgress } = useScroll();
   
-  const opacityHero = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
-  const yHero = useTransform(scrollYProgress, [0, 0.3], [0, -50]);
+  const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const scaleHero = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
 
   return (
-    <main className="relative bg-[#020617] overflow-x-hidden">
-      <div className="fixed top-0 left-0 w-full z-50">
-        <NavbarLanding />
-      </div>
+    <main className="relative bg-[#020617] min-h-screen">
+      <NavbarLanding 
+        address={address}
+        usdcBalance={usdcBalance}
+        isFaucetLoading={isFaucetLoading}
+        onClaimUSDC={onGetStarted} 
+      />
 
-      <section className="relative h-screen">
+      <section className="relative h-screen overflow-hidden">
         <motion.div 
-          style={{ opacity: opacityHero, y: yHero }}
-          className="fixed top-0 left-0 h-screen w-full"
+          style={{ opacity: opacityHero, scale: scaleHero }}
+          className="h-full w-full"
         >
-          {/* Tu peux maintenant utiliser locale ou onGetStarted ici si besoin */}
           <HeroSection />
         </motion.div>
       </section>
 
-      <section className="relative z-30 bg-[#020617] mt-[-10vh]">
+      <section className="relative z-30 bg-[#020617]">
         <HowItWorks />
       </section>
     </main>
