@@ -3,16 +3,21 @@
 import { useReadContract } from 'wagmi';
 import { useVaultContract } from './useContract';
 
-export function useBuildingInfo(buildingId: number) {
+export function useBuildingInfo(buildingId: number | null) {
   const contract = useVaultContract();
 
   const { data, isLoading, error, refetch } = useReadContract({
     ...contract,
     functionName: 'getBuildingInfo',
-    args: [BigInt(buildingId)],
+    args: buildingId ? [BigInt(buildingId)] : undefined,
+    query: { 
+      
+      enabled: !!buildingId && buildingId > 0,
+      refetchInterval: 30000, 
+    },
   });
 
-  if (!data) {
+  if (!data || !buildingId) {
     return { building: null, isLoading, error, refetch };
   }
 

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Parse City",
+    "appName": "EcoRWA Tycoon",
     "tagline": "Tokenized Real Estate Investment RWA",
     "connectWallet": "Connect Wallet",
     "disconnect": "Disconnect",
@@ -11,7 +11,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "portfolio": "My Portfolio",
-    "marketplace": "Marketplace",
+    "marketplace": "RWA Listings",
     "about": "About"
   },
   "Hero": {
@@ -24,9 +24,9 @@
   },
   "Navbar": {
     "howItWorks": "How It Works",
-    "market": "Marché",
+    "market": "RWA Listings",
     "dao": "DAO",
-    "tryNow": "Essayer"
+    "tryNow": "Try Now"
   },
   "howItWorks": {
     "title": "How It Works?",
@@ -48,7 +48,7 @@
     }
   },
   "features": {
-    "title": "Why Parse City?",
+    "title": "Why EcoRWA?",
     "fractional": {
       "title": "Fractional Ownership",
       "description": "Invest from 100 USDC instead of hundreds of thousands of euros"
@@ -77,12 +77,27 @@
     "noInvestments": "You don't have any investments yet",
     "getStarted": "Get Started"
   },
+  "properties": {
+    "title": "RWA LISTINGS",
+    "subtitle": "Discover the first tokenized assets available for fractional investment on Avalanche.",
+    "noPropertiesYet": "No properties available yet. Check back soon!"
+  },
   "building": {
+    "type": {
+      "résidentiel": "Residential",
+      "commercial": "Commercial",
+      "mixte": "Mixed",
+      "bureaux": "Offices",
+      "hôtellerie": "Hospitality",
+      "logistique": "Logistics",
+      "infrastructure": "Infrastructure",
+      "agricole": "Agricultural"
+    },
     "yield": "Yield",
     "price": "Unit Price",
     "available": "Available",
     "tokensLeft": "tokens left",
-    "buy": "Buy",
+    "buy": "Buy Shares",
     "claim": "Claim",
     "approve": "Approve USDC",
     "confirmPurchase": "Confirm Purchase",
@@ -90,7 +105,30 @@
     "quantity": "Quantity",
     "totalCost": "Total Cost",
     "needFaucet": "Need MockUSDC?",
-    "alreadyOwned": "Already Invested"
+    "alreadyOwned": "Already Invested",
+    "risk": {
+      "low": "LOW Risk",
+      "medium": "MEDIUM Risk",
+      "high": "HIGH Risk"
+    }
+  },
+  "PurchaseDialog": {
+    "loading": "Syncing asset data...",
+    "connectWallet": "Connect Wallet",
+    "wrongNetwork": "Switch to Avalanche Fuji",
+    "verifiedAsset": "Verified Asset",
+    "yield": "Yield",
+    "price": "Unit Price",
+    "total": "Total",
+    "investAmount": "Investment Amount",
+    "availability": "Market Availability",
+    "sold": "Sold Out",
+    "approve": "1. Approve USDC",
+    "confirm": "2. Confirm Investment",
+    "processing": "Processing transaction...",
+    "faucet": "Need test USDC on Fuji?",
+    "riskScore": "AI Risk Score",
+    "fujiWarning": "Avalanche Fuji Testnet"
   },
   "editor": {
     "controls_title": "Controls:",

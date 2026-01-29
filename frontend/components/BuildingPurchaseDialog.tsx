@@ -1,366 +1,209 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
+import { useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
+import { useAccount, useChainId, useSwitchChain } from 'wagmi';
+import { avalancheFuji } from 'wagmi/chains';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogTitle, 
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { useAccount } from 'wagmi';
-import { Loader2, Coins, TrendingUp, AlertTriangle } from 'lucide-react';
+import { 
+  Loader2, ShieldCheck, Wallet, AlertCircle 
+} from 'lucide-react';
 
-// Import des données statiques
+import ModelViewer from '@/components/3D/ModelViewer';
 import { BUILDINGS_DATA } from '@/data/buildings';
-
-// Hook pour la langue
-function useLocale() {
-  const [locale, setLocale] = useState<'fr' | 'en'>('fr');
-  
-  useEffect(() => {
-    const savedLocale = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('NEXT_LOCALE='))
-      ?.split('=')[1] || 'fr';
-    setLocale(savedLocale as 'fr' | 'en');
-  }, []);
-  
-  return locale;
-}
-
-// Import de tes hooks
+import { fixPath } from '@/lib/pathUtils';
 import { useMintBuilding } from '@/hooks/useMintBuilding';
 import { useBuildingInfo } from '@/hooks/useBuildingInfo';
-import { useHolderStats } from '@/hooks/useHolderStats';
 import { useFaucet } from '@/hooks/useFaucet';
 
-interface BuildingPurchaseDialogProps {
-  buildingId: number | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
+const MODEL_CONFIGS: Record<string, { path: string; scale: number }> = {
+  'Résidentiel': { path: '/assets/models/suburban/loft-saint-germain.glb', scale: 0.055 },
+  'Commercial':  { path: '/assets/models/commercial/building-a.glb', scale: 0.7 },
+  'Mixte':       { path: '/assets/models/suburban/building-type-o.glb', scale: 0.7 },
+};
 
-export default function BuildingPurchaseDialog({
-  buildingId,
-  isOpen,
-  onClose,
-}: BuildingPurchaseDialogProps) {
-  const [amount, setAmount] = useState(1);
-  const language = useLocale(); // Utilise le hook de locale
-  const { address } = useAccount();
+export default function BuildingPurchaseDialog({ 
+  buildingId, 
+  isOpen, 
+  onClose 
+}: { 
+  buildingId: number | null, 
+  isOpen: boolean, 
+  onClose: () => void 
+}) {
+  if (!isOpen || buildingId === null) return null;
 
-  // 1. Données du smart contract
-  const { building: contractData, isLoading: isBuildingLoading, refetch: refreshBuilding } = useBuildingInfo(buildingId || 1);
-  const { stats, refetch: refreshStats } = useHolderStats(buildingId || 1);
-  
-  // 2. Données statiques du fichier
   const staticData = BUILDINGS_DATA.find(b => b.id === buildingId);
-  
-  // 3. Hook pour le Faucet
-  const { claimUSDC, isLoading: isFaucetLoading } = useFaucet();
-
-  // 4. Hook pour l'achat (Mint)
-  const { handleMint, isLoading: isMinting, allowance } = useMintBuilding(() => {
-    refreshBuilding();
-    refreshStats();
-  });
-
-  // Reset de la quantité quand on change de bâtiment
-  useEffect(() => {
-    setAmount(1);
-  }, [buildingId]);
-
-  if (!buildingId || !contractData || !staticData) return null;
-
-  // Calculs financiers
-  const totalCostRaw = BigInt(Math.floor(contractData.pricePerToken * amount * 1e6));
-  const needsApproval = allowance < totalCostRaw;
-
-  const handleAction = async () => {
-    try {
-      await handleMint(buildingId, amount, contractData.pricePerToken);
-    } catch (error) {
-      console.error("Erreur lors de l'action:", error);
-    }
-  };
-
-  // Couleur du badge de risque
-  const riskColors = {
-    LOW: 'bg-green-500/20 text-green-400 border-green-500/50',
-    MEDIUM: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-    HIGH: 'bg-red-500/20 text-red-400 border-red-500/50'
-  };
-
-  const riskLabels = {
-    LOW: { fr: 'Risque Faible', en: 'Low Risk' },
-    MEDIUM: { fr: 'Risque Modéré', en: 'Medium Risk' },
-    HIGH: { fr: 'Risque Élevé', en: 'High Risk' }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl bg-slate-900 border-slate-700 text-white max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center gap-2">
-            {staticData.name}
-            {stats && stats.balance > 0 && (
-              <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/50">
-                {language === 'fr' ? 'Déjà investi' : 'Already invested'}: {stats.balance} tokens
-              </Badge>
-            )}
-          </DialogTitle>
-          
-          <DialogDescription className="text-slate-400">
-            ID: #{buildingId} • {staticData.coord}, Parse, Europe • {staticData.type[language]}
-          </DialogDescription>
+      <DialogContent className="max-w-4xl bg-black/60 backdrop-blur-xl border-white/10 text-white p-0 overflow-hidden shadow-2xl ring-1 ring-white/20">
+        <DialogHeader className="sr-only">
+          <DialogTitle>{staticData?.name || "Asset Details"}</DialogTitle>
+          <DialogDescription>RWA Investment Interface</DialogDescription>
         </DialogHeader>
+        
+        <PurchaseContent buildingId={buildingId} />
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-4">
-          {/* Section Gauche: Visuel & Info */}
-          <div className="space-y-4">
-            {/* Image du bâtiment */}
-            <div className="relative h-48 bg-slate-800 rounded-xl flex items-center justify-center overflow-hidden border border-slate-700">
-              <img 
-                src={staticData.img} 
-                alt={staticData.name}
-                className="h-40 w-auto object-contain drop-shadow-2xl"
-              />
-              <Badge className="absolute top-2 right-2 bg-blue-600 text-white">
-                {language === 'fr' ? 'Immobilier RWA' : 'RWA Real Estate'}
-              </Badge>
-              
-              {/* Badge de type */}
-              <Badge 
-                className={`absolute top-2 left-2 bg-${staticData.typeColor}-600 text-white`}
-              >
-                {staticData.type[language]}
-              </Badge>
-            </div>
+function PurchaseContent({ buildingId }: { buildingId: number }) {
+  const t = useTranslations('PurchaseDialog');
+  const tBuilding = useTranslations('building');
+  const locale = useLocale() as 'en' | 'fr';
+  
+  const [amount, setAmount] = useState(1);
+  const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const { openConnectModal } = useConnectModal();
+  
+  const { building: contractData, isLoading: isDataLoading } = useBuildingInfo(buildingId);
+  const staticData = BUILDINGS_DATA.find(b => b.id === buildingId);
+  const { handleMint, isLoading: isMinting, allowance } = useMintBuilding();
+  const { claimUSDC, isLoading: isFaucetLoading } = useFaucet();
 
-            {/* Performances */}
-            <Card className="p-4 bg-slate-800/50 border-slate-700">
-              <p className="text-xs text-slate-300 uppercase font-bold mb-3">
-                {language === 'fr' ? 'Performances' : 'Performance'}
-              </p>
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm text-slate-300 mb-1">
-                    {language === 'fr' ? 'Rendement' : 'Yield'}
-                  </p>
-                  <p className="text-xl font-bold text-green-400">
-                    {contractData.yieldPercentage}% 
-                    <span className="text-xs text-green-300 ml-1">
-                      {language === 'fr' ? '/an' : '/year'}
-                    </span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-slate-300 mb-1">
-                    {language === 'fr' ? 'Prix Unitaire' : 'Unit Price'}
-                  </p>
-                  <p className="text-xl font-bold text-white">
-                    {contractData.pricePerToken}
-                    <span className="text-sm text-slate-400 ml-1">USDC</span>
-                  </p>
-                </div>
-              </div>
-            </Card>
+  const isWrongNetwork = isConnected && chainId !== avalancheFuji.id;
+  const price = contractData?.pricePerToken || 0;
+  const needsApproval = (Number(allowance) / 1e6) < (price * amount);
 
-            {/* Niveau de risque IA + Analyse PLU */}
-            <Card className="p-4 bg-slate-800/50 border-slate-700 space-y-4">
-              {/* Évaluation IA */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs text-slate-300 uppercase font-bold">
-                    {language === 'fr' ? 'Évaluation IA' : 'AI Assessment'}
-                  </p>
-                  <Badge className={riskColors[staticData.aiReport.riskLevel]}>
-                    {riskLabels[staticData.aiReport.riskLevel][language]}
-                  </Badge>
-                </div>
-                
-                {/* Opportunités */}
-                <div className="mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-green-400" />
-                    <p className="text-xs font-bold text-green-400">
-                      {language === 'fr' ? 'Opportunités' : 'Opportunities'}
-                    </p>
-                  </div>
-                  <ul className="space-y-1">
-                    {staticData.aiReport.opportunities[language].map((opp, idx) => (
-                      <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                        <span className="text-green-400 mt-0.5">•</span>
-                        <span>{opp}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+  const currentModel = staticData ? (MODEL_CONFIGS[staticData.type.fr] || MODEL_CONFIGS['Résidentiel']) : null;
 
-                {/* Risques */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-400" />
-                    <p className="text-xs font-bold text-amber-400">
-                      {language === 'fr' ? 'Risques' : 'Risks'}
-                    </p>
-                  </div>
-                  <ul className="space-y-1">
-                    {staticData.aiReport.risks[language].map((risk, idx) => (
-                      <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                        <span className="text-amber-400 mt-0.5">•</span>
-                        <span>{risk}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+  if (isDataLoading || !staticData || !contractData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[500px] w-full gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-[#E84142]" />
+        <p className="text-sm font-bold animate-pulse text-white/50 tracking-widest uppercase">
+            {t('loading')}
+        </p>
+      </div>
+    );
+  }
 
-              {/* Séparateur */}
-              <div className="border-t border-slate-700"></div>
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-5 h-full min-h-[550px]">
+      
+      {/* GAUCHE : VISUEL 3D */}
+      <div className="md:col-span-2 relative bg-gradient-to-b from-black/40 to-transparent flex flex-col items-center justify-center border-r border-white/5 p-6">
+        <Badge className="absolute top-6 left-6 bg-[#E84142] text-[8px] font-black italic px-3 py-1 uppercase tracking-widest rounded-full shadow-lg">
+          {tBuilding(`type.${staticData.type.fr.toLowerCase()}`)}
+        </Badge>
+        
+        <div className="w-full h-[480px]">
+          {currentModel && (
+            <ModelViewer url={fixPath(currentModel.path)} scale={currentModel.scale} />
+          )}
+        </div>
+      </div>
 
-              {/* Analyse PLU */}
-              <div className="bg-amber-950/20 border border-amber-900/30 p-3 rounded-lg flex gap-3 items-start">
-                <span className="text-xl">🤖</span>
-                <p className="text-xs text-amber-200 leading-relaxed">
-                  <span className="font-bold text-amber-300">
-                    {language === 'fr' ? 'Analyse PLU :' : 'Zoning Analysis:'}
-                  </span> {staticData.pluAlert[language]}
-                </p>
-              </div>
-            </Card>
+      {/* DROITE : INFOS & ACTIONS */}
+      <div className="md:col-span-3 p-10 bg-white/5 backdrop-blur-md space-y-5 flex flex-col justify-between relative">
+        
+        <div className="absolute top-6 right-8 flex items-center gap-2 px-3 py-1.5 border border-[#E84142]/40 bg-[#E84142]/10 rounded-full">
+          <div className="w-2 h-2 bg-[#E84142] rounded-full animate-pulse" />
+          <span className="text-[8px] font-black uppercase text-white/90">{t('fujiWarning')}</span>
+        </div>
+
+        <header>
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-1">{staticData.name}</h2>
+          <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest">
+            <ShieldCheck className="h-3 w-3 text-[#E84142]" />
+            {t('verifiedAsset')} #00{buildingId}
           </div>
+        </header>
 
-          {/* Section Droite: Formulaire d'achat */}
-          <div className="space-y-4">
-            {/* Disponibilité */}
-            <Card className="p-4 bg-blue-950/20 border-blue-900/50">
-              <p className="text-xs text-blue-300 font-bold mb-2 tracking-widest">
-                {language === 'fr' ? 'DISPONIBILITÉ' : 'AVAILABILITY'}
-              </p>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-200">
-                  {language === 'fr' ? 'Tokens vendus' : 'Tokens sold'}
-                </span>
-                <span className="text-white font-semibold">
-                  {contractData.mintedSupply} / {contractData.totalSupply}
-                </span>
-              </div>
-              <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                <div 
-                  className="bg-blue-500 h-full transition-all duration-1000"
-                  style={{ width: `${(contractData.mintedSupply / contractData.totalSupply) * 100}%` }}
-                />
-              </div>
-            </Card>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+            <p className="text-[9px] text-white/40 font-bold uppercase mb-1 tracking-wider">{t('yield')}</p>
+            <p className="text-2xl font-black text-emerald-400">{contractData.yieldPercentage}% <span className="text-xs opacity-50">APY</span></p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+            <p className="text-[9px] text-white/40 font-bold uppercase mb-1 tracking-wider">{t('riskScore')}</p>
+            <p className={`text-xl font-black uppercase ${staticData.aiReport.riskLevel === 'LOW' ? 'text-blue-400' : 'text-orange-400'}`}>
+              {tBuilding(`risk.${staticData.aiReport.riskLevel.toLowerCase()}`)}
+            </p>
+          </div>
+        </div>
 
-            {/* Quantité */}
-            <div className="space-y-2">
-              <label className="text-xs text-slate-300 font-bold uppercase">
-                {language === 'fr' ? 'Quantité à acquérir' : 'Quantity to purchase'}
-              </label>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="border-slate-600 bg-slate-800 hover:bg-slate-700 text-white"
-                  onClick={() => setAmount(Math.max(1, amount - 1))}
-                >
-                  -
-                </Button>
-                <Input 
-                  type="number" 
-                  value={amount}
-                  onChange={(e) => setAmount(Math.max(1, Number(e.target.value)))}
-                  className="bg-slate-800 border-slate-600 text-center text-lg font-bold text-white"
-                />
-                <Button 
-                  variant="outline" 
-                  className="border-slate-600 bg-slate-800 hover:bg-slate-700 text-white"
-                  onClick={() => setAmount(amount + 1)}
-                >
-                  +
-                </Button>
-              </div>
+        <div className="bg-gradient-to-r from-white/10 to-transparent border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+          <div>
+            <p className="text-[9px] text-white/40 font-bold uppercase mb-1">{t('price')}</p>
+            <p className="text-xl font-black">{contractData.pricePerToken} <span className="text-xs text-white/40">USDC</span></p>
+          </div>
+          <div className="text-right">
+            <p className="text-[9px] text-[#E84142] font-bold uppercase mb-1">{t('total')}</p>
+            <p className="text-lg font-black font-mono">{(price * amount).toLocaleString()} USDC</p>
+          </div>
+        </div>
+
+        <div className="bg-black/20 border border-white/5 p-4 rounded-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase text-white/50">{tBuilding('quantity')}</span>
+            <div className="flex items-center gap-4 bg-white/5 rounded-xl px-3 py-1 border border-white/10">
+              <button onClick={() => setAmount(Math.max(1, amount - 1))} className="hover:text-[#E84142] font-bold">-</button>
+              <span className="font-black w-6 text-center">{amount}</span>
+              <button onClick={() => setAmount(amount + 1)} className="hover:text-[#E84142] font-bold">+</button>
             </div>
-
-            {/* Total */}
-            <div className="p-4 bg-slate-800 rounded-lg border border-slate-600">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-300">
-                  {language === 'fr' ? 'Total à payer' : 'Total to pay'}
-                </span>
-                <span className="text-2xl font-black text-white">
-                  {(contractData.pricePerToken * amount).toFixed(2)}
-                  <span className="text-lg text-slate-400 ml-1">USDC</span>
-                </span>
-              </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-[8px] font-black uppercase text-white/30">
+              <span>{t('availability')}</span>
+              <span>{((contractData.mintedSupply / contractData.totalSupply) * 100).toFixed(1)}%</span>
+            </div>
+            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#E84142]" 
+                style={{ width: `${(contractData.mintedSupply / contractData.totalSupply) * 100}%` }} 
+              />
             </div>
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-4">
-          {/* Bouton Faucet */}
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={claimUSDC}
-            disabled={isFaucetLoading}
-            className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-          >
-            {isFaucetLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Coins className="h-4 w-4 mr-2" />
-            )}
-            {language === 'fr' ? 'Besoin de MockUSDC ?' : 'Need MockUSDC?'}
-          </Button>
-
-          <div className="flex-1 flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-              className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-800"
-            >
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+        <div className="space-y-3 pt-2">
+          {!isConnected ? (
+            <Button onClick={openConnectModal} className="w-full h-11 bg-white/10 border border-white/30 font-black uppercase text-xs">
+              <Wallet className="mr-2 h-4 w-4" /> {t('connectWallet')}
             </Button>
-            
+          ) : isWrongNetwork ? (
+            <Button onClick={() => switchChain?.({ chainId: avalancheFuji.id })} className="w-full h-12 bg-orange-600 font-black uppercase">
+              <AlertCircle className="mr-2 h-4 w-4" /> {t('wrongNetwork')}
+            </Button>
+          ) : (
             <Button 
-              onClick={handleAction}
-              disabled={isMinting || !address}
-              className={`flex-[2] font-bold text-white transition-all ${
-                needsApproval 
-                ? "bg-amber-600 hover:bg-amber-700 shadow-[0_0_15px_rgba(217,119,6,0.4)]" 
-                : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
+              onClick={() => handleMint(buildingId, amount, price)}
+              disabled={isMinting}
+              className={`w-full h-12 font-black uppercase transition-all ${
+                needsApproval ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-white text-black hover:bg-[#E84142] hover:text-white"
               }`}
             >
-              {isMinting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                  {language === 'fr' ? 'Transaction...' : 'Processing...'}
-                </>
-              ) : needsApproval ? (
-                language === 'fr' ? '1. Approuver USDC' : '1. Approve USDC'
-              ) : (
-                language === 'fr' ? '2. Confirmer l\'Achat' : '2. Confirm Purchase'
-              )}
+              {isMinting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isMinting ? t('processing') : needsApproval ? t('approve') : t('confirm')}
             </Button>
-          </div>
-        </DialogFooter>
-
-        {!address && (
-          <p className="text-center text-xs text-red-400 mt-2 uppercase tracking-wide">
-            ⚠️ {language === 'fr' 
-              ? 'Veuillez connecter votre wallet pour interagir avec la blockchain' 
-              : 'Please connect your wallet to interact with the blockchain'}
-          </p>
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+          
+          {isConnected && (
+            <button 
+              onClick={claimUSDC} 
+              disabled={isFaucetLoading}
+              className="w-full text-[9px] text-white/20 hover:text-[#E84142] font-bold uppercase tracking-widest transition-colors"
+            >
+              {isFaucetLoading ? "TX IN PROGRESS..." : t('faucet')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

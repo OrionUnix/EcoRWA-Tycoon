@@ -3,6 +3,7 @@ import { useScroll, useTransform, motion } from 'framer-motion';
 import NavbarLanding from '@/components/landing/NavbarLanding';
 import HowItWorks from '@/components/landing/HowItWorks';
 import HeroSection from '@/components/landing/HeroSection';
+import PropertiesSection from '@/components/landing/PropertiesSection';
 
 interface LandingPageProps {
   // On change () => void en () => Promise<void> pour matcher la Navbar
@@ -45,6 +46,10 @@ export default function LandingPage({
 
       <section className="relative z-30 bg-[#020617]">
         <HowItWorks />
+      </section>
+
+      <section className="relative z-30 bg-[#020617]" >
+      <PropertiesSection />
       </section>
     </main>
   );

@@ -5,7 +5,7 @@ const isGithubPages = typeof window !== 'undefined' && window.location.hostname.
 // Une seule déclaration de BASE_PATH
 const BASE_PATH = (isProd || isGithubPages) ? '/EcoRWA-Tycoon' : ''; 
 
-const fixPath = (path: string) => `${BASE_PATH}${path}`;
+export const fixPath = (path: string) => `${BASE_PATH}${path}`;
 
 export const ZONE_TYPES = {
     RESIDENTIAL: {
@@ -26,7 +26,9 @@ export const ZONE_TYPES = {
             { file: 'building-type-p.glb', size: 2 },
             { file: 'building-type-r.glb', size: 2 },
             { file: 'building-type-s.glb', size: 2 },
-            { file: 'building-type-u.glb', size: 2 }
+            { file: 'building-type-u.glb', size: 2 },
+            { file: 'loft-saint-germain.glb', size: 1 }
+            
         ]
     },
     COMMERCIAL: {

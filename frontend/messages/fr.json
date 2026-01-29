@@ -8,7 +8,13 @@
     "error": "Erreur",
     "success": "Succès"
   },
-"Hero": {
+  "nav": {
+    "dashboard": "Tableau de Bord",
+    "portfolio": "Mon Portfolio",
+    "marketplace": "RWA Listings",
+    "about": "À Propos"
+  },
+  "Hero": {
     "badge": "Nouveau : Tokenisation RWA",
     "titleLine1": "Bâtissez l'Avenir",
     "titleLine2": "de l'Immobilier RWA",
@@ -18,7 +24,7 @@
   },
   "Navbar": {
     "howItWorks": "Comment ça marche",
-    "market": "Marché",
+    "market": "RWA Listings",
     "dao": "DAO",
     "tryNow": "Essayer"
   },
@@ -71,12 +77,27 @@
     "noInvestments": "Vous n'avez pas encore d'investissements",
     "getStarted": "Premiers pas"
   },
+  "properties": {
+    "title": "RWA LISTINGS",
+    "subtitle": "Découvrez les premiers actifs tokenisés disponibles à l'investissement fractionné sur Avalanche.",
+    "noPropertiesYet": "Aucun bien disponible pour le moment. Revenez bientôt !"
+  },
   "building": {
+    "type": {
+      "résidentiel": "Résidentiel",
+      "commercial": "Commercial",
+      "mixte": "Mixte",
+      "bureaux": "Bureaux",
+      "hôtellerie": "Hôtellerie",
+      "logistique": "Logistique",
+      "infrastructure": "Infrastructure",
+      "agricole": "Agricole"
+    },
     "yield": "Rendement",
     "price": "Prix unitaire",
     "available": "Disponible",
     "tokensLeft": "tokens restants",
-    "buy": "Acheter",
+    "buy": "Acheter des parts",
     "claim": "Claim",
     "approve": "Approuver USDC",
     "confirmPurchase": "Confirmer l'Achat",
@@ -84,7 +105,30 @@
     "quantity": "Quantité",
     "totalCost": "Total à payer",
     "needFaucet": "Besoin de MockUSDC ?",
-    "alreadyOwned": "Déjà investi"
+    "alreadyOwned": "Déjà investi",
+    "risk": {
+      "low": "Risque FAIBLE",
+      "medium": "Risque MOYEN",
+      "high": "Risque ÉLEVÉ"
+    }
+  },
+  "PurchaseDialog": {
+    "loading": "Synchronisation de l'actif...",
+    "connectWallet": "Connecter le Wallet",
+    "wrongNetwork": "Passer sur Avalanche Fuji",
+    "verifiedAsset": "Actif Vérifié",
+    "yield": "Rendement",
+    "price": "Prix Unitaire",
+    "total": "Total",
+    "investAmount": "Montant de l'investissement",
+    "availability": "Disponibilité Marché",
+    "sold": "Vendu",
+    "approve": "1. Approuver l'USDC",
+    "confirm": "2. Confirmer l'Investissement",
+    "processing": "Transaction en cours...",
+    "faucet": "Besoin d'USDC de test sur Fuji ?",
+    "riskScore": "Score de Risque IA",
+    "fujiWarning": "Réseau Testnet Avalanche Fuji"
   },
   "editor": {
     "controls_title": "Contrôles :",
