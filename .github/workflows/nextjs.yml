@@ -39,7 +39,10 @@ jobs:
 
       - name: Build with Next.js
         run: npx next build
-
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_BASE_PATH: /EcoRWA-Tycoon
+          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
