@@ -4,8 +4,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, ContactShadows, Environment, Float } from '@react-three/drei';
 import { MapPin, TrendingUp } from 'lucide-react';
 import * as THREE from 'three';
-
-const MODEL_PATH = '/assets/models/suburban/building-type-o.glb';
+import { ZONE_TYPES } from '@/components/editor/config/zoneAssets';
+const MODEL_PATH = "/assets/models/suburban/building-type-o.glb";
 useGLTF.preload(MODEL_PATH);
 
 function Model() {

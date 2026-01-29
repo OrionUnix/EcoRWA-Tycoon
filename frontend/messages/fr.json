@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Parse City",
+    "appName": "EcoRWA Tycoon",
     "tagline": "Investissement immobilier tokenisé RWA",
     "connectWallet": "Connecter le portefeuille",
     "disconnect": "Déconnecter",
@@ -8,20 +8,19 @@
     "error": "Erreur",
     "success": "Succès"
   },
-  "nav": {
-    "dashboard": "Tableau de bord",
-    "portfolio": "Mon Portfolio",
-    "marketplace": "Marché",
-    "about": "À propos"
-  },
 "Hero": {
-    "badge": "Avalanche Fuji Testnet",
-    "titleLine1": "L'immobilier",
-    "titleLine2": "Gamifié.",
-    "description": "Ne vous contentez pas d'investir. Gérez votre empire immobilier en 3D sur la blockchain. Simple, sécurisé et accessible dès 50$.",
-    "buttonMain": "Lancer l'App",
+    "badge": "Nouveau : Tokenisation RWA",
+    "titleLine1": "Bâtissez l'Avenir",
+    "titleLine2": "de l'Immobilier RWA",
+    "description": "Devenez un magnat de l'immobilier fractionné. Investissez, construisez et gérez des actifs réels sur la blockchain avec EcoRWA Tycoon.",
+    "buttonMain": "Commencer à bâtir",
     "yieldLabel": "Rendement Moyen"
-  }
+  },
+  "Navbar": {
+    "howItWorks": "Comment ça marche",
+    "market": "Marché",
+    "dao": "DAO",
+    "tryNow": "Essayer"
   },
   "howItWorks": {
     "title": "Comment ça marche ?",
@@ -43,7 +42,7 @@
     }
   },
   "features": {
-    "title": "Pourquoi Parse City ?",
+    "title": "Pourquoi EcoRWA ?",
     "fractional": {
       "title": "Propriété Fractionnée",
       "description": "Investissez à partir de 100 USDC au lieu de centaines de milliers d'euros"
@@ -94,6 +93,4 @@
     "zoom": "Molette : Zoom",
     "pitch": "Clic Droit : Inclinaison"
   }
-
-
 }

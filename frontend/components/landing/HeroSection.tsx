@@ -2,14 +2,22 @@
 import BuildingHero from './BuildingHero';
 import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 
 export default function HeroSection() {
-  const t = useTranslations('Hero'); 
+  const [locale, setLocale] = useState('fr');
+  
+  // On récupère la langue depuis le cookie côté client
+  useEffect(() => {
+    const saved = document.cookie.split('; ').find(row => row.startsWith('NEXT_LOCALE='))?.split('=')[1];
+    if (saved) setLocale(saved);
+  }, []);
+
+  // Si locale est 'en', on cherche dans le namespace 'en.Hero', sinon 'Hero'
+  const t = useTranslations(locale === 'en' ? 'en.Hero' : 'Hero'); 
 
   return (
     <section className="relative min-h-[100dvh] w-full flex flex-col lg:flex-row items-center justify-between px-4 md:px-10 lg:px-20 pt-24 lg:pt-0 overflow-hidden bg-[#020617]">
-      
-      {/* TEXT CONTENT CONTAINER */}
       <div className="z-20 w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 md:space-y-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[10px] md:text-xs font-bold uppercase tracking-widest">
           <span className="relative flex h-2 w-2">
@@ -43,14 +51,11 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* 3D BUILDING CONTAINER */}
-<div className="relative w-full lg:w-1/2 h-[50vh] lg:h-screen flex items-center justify-center overflow-visible">
-  {/* On enlève scale-125 et translate-y qui déforment tout */}
-  <div className="absolute inset-0 w-full h-full overflow-visible">
-     <BuildingHero />
-  </div>
-</div>
-
+      <div className="relative w-full lg:w-1/2 h-[50vh] lg:h-screen flex items-center justify-center overflow-visible">
+        <div className="absolute inset-0 w-full h-full overflow-visible">
+           <BuildingHero />
+        </div>
+      </div>
     </section>
   );
 }

@@ -14,18 +14,19 @@
     "marketplace": "Marketplace",
     "about": "About"
   },
-  "hero": {
-    "title": "Invest in real estate",
-    "subtitle": "in a fractional and transparent way",
-    "description": "Parse City transforms real estate into blockchain tokens. Buy building shares, generate passive income, and trade your assets freely.",
-    "cta": "Get Started",
-    "learnMore": "Learn More",
-    "stats": {
-      "buildings": "Available Buildings",
-      "investors": "Active Investors",
-      "volume": "Total Volume Invested",
-      "yield": "Average Yield"
-    }
+  "Hero": {
+    "badge": "New: RWA Tokenization",
+    "titleLine1": "Build the Future",
+    "titleLine2": "of RWA Real Estate",
+    "description": "Become a fractional real estate tycoon. Invest, build, and manage real-world assets on the blockchain with EcoRWA Tycoon.",
+    "buttonMain": "Start Building",
+    "yieldLabel": "Average Yield"
+  },
+  "Navbar": {
+    "howItWorks": "How It Works",
+    "market": "Marché",
+    "dao": "DAO",
+    "tryNow": "Essayer"
   },
   "howItWorks": {
     "title": "How It Works?",
@@ -98,15 +99,4 @@
     "zoom": "Scroll: Zoom",
     "pitch": "Right Click: Tilt"
   }
-
-  {
-  "Hero": {
-    "badge": "Avalanche Fuji Testnet",
-    "titleLine1": "Real Estate",
-    "titleLine2": "Gamified.",
-    "description": "Don't just invest. Manage your real estate empire in 3D on the blockchain. Simple, secure, and accessible from $50.",
-    "buttonMain": "Launch App",
-    "yieldLabel": "Avg Yield"
-  }
-}
 }

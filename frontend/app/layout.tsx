@@ -5,30 +5,28 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Inter } from 'next/font/google';
 
-// Utilisation d'une police optimisée pour réduire le Layout Shift
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
+
+// ON SUPPRIME force-dynamic ICI car c'est interdit en export statique
 
 export const metadata = {
   title: 'EcoRWA Tycoon',
   description: 'Gamify Real Estate with RWA',
 };
 
-export default async function RootLayout({
-  children,
-  params: { locale }
-}: {
+interface RootLayoutProps {
   children: React.ReactNode;
-  params: { locale: string };
-}) {
-  // Récupération des messages i18n côté serveur
-  const messages = await getMessages();
+}
 
+export default async function RootLayout({ children }: RootLayoutProps) {
+  // On récupère le pack de messages (FR + EN fusionnés via request.ts)
+  const messages = await getMessages();
+  
   return (
-    <html lang={locale || "fr"} suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.className} antialiased bg-[#020617] selection:bg-blue-500/30`}>
-        {/* NextIntlClientProvider est léger car il ne fait que passer un contexte */}
-        <NextIntlClientProvider messages={messages} locale={locale}>
-          {/* Web3Providers contient la logique lourde, il doit être isolé */}
+        {/* On passe "fr" par défaut, mais le client pourra switcher sur le namespace "en" */}
+        <NextIntlClientProvider messages={messages} locale="fr">
           <Web3Providers>
             <main className="relative min-h-screen">
               {children}

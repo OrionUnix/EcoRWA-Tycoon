@@ -1,37 +1,22 @@
-/** @type {import('next').NextConfig} */
 import createNextIntlPlugin from 'next-intl/plugin';
+/** @type {import('next').NextConfig} */
 
 const withNextIntl = createNextIntlPlugin();
 const isProd = process.env.NODE_ENV === 'production';
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  output: 'export', // Toujours en export pour GitHub Pages
+  output: 'export', 
+  // GitHub Pages nécessite le nom du repo dans le path
+  basePath: isProd ? '/EcoRWA-Tycoon' : '',
+  assetPrefix: isProd ? '/EcoRWA-Tycoon/' : '', 
+  trailingSlash: true,
   images: {
     unoptimized: true,
   },
-  // On ne met le préfixe QUE si on est en prod
-  basePath: isProd ? '/EcoRWA-Tycoon' : '',
-  // AssetPrefix doit correspondre au basePath sans le slash final si possible
-  assetPrefix: isProd ? '/EcoRWA-Tycoon' : '', 
-  trailingSlash: true,
-
-  async headers() {
-    if (!isProd) {
-      return [
-        {
-          source: '/(.*)',
-          headers: [
-            {
-              key: 'Cross-Origin-Opener-Policy',
-              value: 'same-origin-allow-popups',
-            },
-          ],
-        },
-      ];
-    }
-    return [];
-  },
+  // Les headers personnalisés ne sont pas autorisés avec output: export
+  // GitHub Pages gère lui-même les politiques de sécurité de base
 };
 
 export default withNextIntl(nextConfig);
