@@ -1,22 +1,21 @@
 /** @type {import('next').NextConfig} */
 import createNextIntlPlugin from 'next-intl/plugin';
-const isProd = process.env.NODE_ENV === 'production';
+
 const withNextIntl = createNextIntlPlugin();
-/** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production';
 
 const nextConfig = {
   reactStrictMode: false,
-  output: isProd ? 'export' : undefined,
+  output: 'export', // Toujours en export pour GitHub Pages
   images: {
     unoptimized: true,
   },
+  // On ne met le préfixe QUE si on est en prod
   basePath: isProd ? '/EcoRWA-Tycoon' : '',
-  assetPrefix: isProd ? '/EcoRWA-Tycoon/' : '',
+  // AssetPrefix doit correspondre au basePath sans le slash final si possible
+  assetPrefix: isProd ? '/EcoRWA-Tycoon' : '', 
   trailingSlash: true,
-  
-  // Suppression de la clé experimental.turbo qui cause l'erreur
-  // Turbopack gère désormais nativement les imports de fichiers statiques dans le dossier public
-  
+
   async headers() {
     if (!isProd) {
       return [

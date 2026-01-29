@@ -1,7 +1,6 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { avalancheFuji } from 'wagmi/chains';
 
-// On récupère l'ID depuis le .env.local
 const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
 
 if (!projectId) {
