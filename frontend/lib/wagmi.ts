@@ -1,7 +1,7 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { avalancheFuji } from 'wagmi/chains';
 
-const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
+const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID || 'VALEUR_DE_TEST';
 
 if (!projectId) {
   throw new Error('Le Project ID WalletConnect est manquant dans .env.local');
