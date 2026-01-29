@@ -1,7 +1,4 @@
 'use client';
-
-import { Button } from '@/components/ui/button';
-import { Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function LanguageSwitcher() {
@@ -15,30 +12,30 @@ export default function LanguageSwitcher() {
     setLocale(savedLocale);
   }, []);
 
-  const switchLanguage = (newLocale: string) => {
-    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`;
-    setLocale(newLocale);
-    window.location.reload();
-  };
+const switchLanguage = (newLocale: string) => {
+  document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`;
+  setLocale(newLocale);
+  window.location.reload(); 
+};
 
   return (
-    <div className="flex items-center gap-2 bg-slate-900/50 border border-slate-800 rounded-lg p-1">
-      <Button
-        variant={locale === 'fr' ? 'default' : 'ghost'}
-        size="sm"
+    <div className="flex items-center bg-white/5 border border-white/10 rounded-full p-0.5">
+      <button
         onClick={() => switchLanguage('fr')}
-        className="h-8"
+        className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+          locale === 'fr' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'
+        }`}
       >
-        🇫🇷 FR
-      </Button>
-      <Button
-        variant={locale === 'en' ? 'default' : 'ghost'}
-        size="sm"
+        FR
+      </button>
+      <button
         onClick={() => switchLanguage('en')}
-        className="h-8"
+        className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+          locale === 'en' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'
+        }`}
       >
-        🇬🇧 EN
-      </Button>
+        EN
+      </button>
     </div>
   );
 }

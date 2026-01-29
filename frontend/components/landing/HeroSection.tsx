@@ -44,13 +44,12 @@ export default function HeroSection() {
       </div>
 
       {/* 3D BUILDING CONTAINER */}
-      <div className="relative w-full lg:w-1/2 h-[40vh] sm:h-[50vh] lg:h-screen flex items-center justify-center mt-4 lg:mt-0 overflow-hidden">
-        <div className="absolute inset-0 w-full h-full transform scale-[0.9] sm:scale-100 lg:scale-[1.1]">
-           <BuildingHero />
-        </div>
-        
-
-      </div>
+<div className="relative w-full lg:w-1/2 h-[50vh] lg:h-screen flex items-center justify-center overflow-visible">
+  {/* On enlève scale-125 et translate-y qui déforment tout */}
+  <div className="absolute inset-0 w-full h-full overflow-visible">
+     <BuildingHero />
+  </div>
+</div>
 
     </section>
   );
