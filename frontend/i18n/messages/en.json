@@ -98,4 +98,15 @@
     "zoom": "Scroll: Zoom",
     "pitch": "Right Click: Tilt"
   }
+
+  {
+  "Hero": {
+    "badge": "Avalanche Fuji Testnet",
+    "titleLine1": "Real Estate",
+    "titleLine2": "Gamified.",
+    "description": "Don't just invest. Manage your real estate empire in 3D on the blockchain. Simple, secure, and accessible from $50.",
+    "buttonMain": "Launch App",
+    "yieldLabel": "Avg Yield"
+  }
+}
 }

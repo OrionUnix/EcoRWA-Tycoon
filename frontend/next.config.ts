@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
+import createNextIntlPlugin from 'next-intl/plugin';
 const isProd = process.env.NODE_ENV === 'production';
+const withNextIntl = createNextIntlPlugin();
+/** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  reactStrictMode: false,
   output: isProd ? 'export' : undefined,
   images: {
     unoptimized: true,
@@ -31,4 +35,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

@@ -14,18 +14,14 @@
     "marketplace": "Marché",
     "about": "À propos"
   },
-  "hero": {
-    "title": "Investissez dans l'immobilier",
-    "subtitle": "de manière fractionnée et transparente",
-    "description": "Parse City transforme l'immobilier en tokens sur la blockchain. Achetez des parts de bâtiments, générez des rendements passifs, et tradez vos actifs en toute liberté.",
-    "cta": "Commencer maintenant",
-    "learnMore": "En savoir plus",
-    "stats": {
-      "buildings": "Bâtiments disponibles",
-      "investors": "Investisseurs actifs",
-      "volume": "Volume total investi",
-      "yield": "Rendement moyen"
-    }
+"Hero": {
+    "badge": "Avalanche Fuji Testnet",
+    "titleLine1": "L'immobilier",
+    "titleLine2": "Gamifié.",
+    "description": "Ne vous contentez pas d'investir. Gérez votre empire immobilier en 3D sur la blockchain. Simple, sécurisé et accessible dès 50$.",
+    "buttonMain": "Lancer l'App",
+    "yieldLabel": "Rendement Moyen"
+  }
   },
   "howItWorks": {
     "title": "Comment ça marche ?",
@@ -98,5 +94,6 @@
     "zoom": "Molette : Zoom",
     "pitch": "Clic Droit : Inclinaison"
   }
-}
+
+
 }
