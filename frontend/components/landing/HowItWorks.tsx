@@ -14,29 +14,40 @@ export default function HowItWorks() {
   const t = useTranslations(locale === 'en' ? 'en.howItWorks' : 'howItWorks');
 
   const steps = [
-    { icon: <Wallet className="w-6 h-6" />, key: 'step1' },
-    { icon: <Building2 className="w-6 h-6" />, key: 'step2' },
-    { icon: <ShoppingCart className="w-6 h-6" />, key: 'step3' },
-    { icon: <TrendingUp className="w-6 h-6" />, key: 'step4' },
+    { icon: <Wallet />, key: 'step1' },
+    { icon: <Building2 />, key: 'step2' },
+    { icon: <ShoppingCart />, key: 'step3' },
+    { icon: <TrendingUp />, key: 'step4' },
   ];
 
   return (
-    <section id="how-it-works" className="py-24 bg-[#020617] border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-3xl md:text-5xl font-black text-white text-center mb-16 tracking-tighter">
-          {t('title')}
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <section id="how-it-works" className="py-20 bg-[#020617] relative z-0">
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#020617] to-transparent pointer-events-none" />
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4">
+            {t('title')}
+          </h2>
+          <div className="w-24 h-1.5 bg-blue-500 mx-auto rounded-full" />
+        </div>
+              
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {steps.map((step, index) => (
-            <div key={index} className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-blue-500/50 transition-colors group">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+            <div key={index} className="relative p-8 rounded-3xl bg-white/[0.02] border border-white/10 hover:border-blue-500/50 hover:bg-white/[0.04] transition-all duration-300 group overflow-hidden">
+              {/* Numéro en arrière-plan pour le style */}
+              <span className="absolute -right-4 -bottom-4 text-9xl font-black text-white/[0.02] group-hover:text-blue-500/[0.05] transition-colors">
+                {index + 1}
+              </span>
+
+              <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 mb-8 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-500">
                 {step.icon}
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">
+              
+              <h3 className="text-xl font-bold text-white mb-4 relative z-10">
                 {t(`${step.key}.title`)}
               </h3>
-              <p className="text-slate-400 leading-relaxed">
+              
+              <p className="text-slate-400 leading-relaxed relative z-10 group-hover:text-slate-300 transition-colors">
                 {t(`${step.key}.description`)}
               </p>
             </div>

@@ -1,98 +1,100 @@
 'use client';
-import React, { Suspense, useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, ContactShadows, Environment, Float } from '@react-three/drei';
-import { MapPin, TrendingUp } from 'lucide-react';
+import { useGLTF, ContactShadows, Environment, Float, PerspectiveCamera } from '@react-three/drei';
+import { MapPin } from 'lucide-react';
 import * as THREE from 'three';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 
-// Configuration du chemin selon l'environnement
 const isProd = process.env.NODE_ENV === 'production';
 const basePath = isProd ? '/EcoRWA-Tycoon' : '';
-const MODEL_PATH = `${basePath}/assets/models/suburban/building-type-o.glb`;
+const MODEL_PATH = `${basePath}/assets/models/suburban/loft-saint-germain.glb`;
 
 function Model() {
-  // On utilise le chemin calculé dynamiquement
   const { scene } = useGLTF(MODEL_PATH);
   const groupRef = useRef<THREE.Group>(null);
   const { viewport } = useThree();
-  
-  const responsiveScale = Math.min(viewport.width * 0.85, 5.8);
-  const responsivePosY = -(responsiveScale * 0.5); // Ajusté pour centrer le building
+
+  // On calcule l'échelle ici, une seule fois
+  const responsiveScale = Math.min(viewport.width * 0.5, 0.05);
+
+  useMemo(() => {
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material) {
+          child.material.envMapIntensity = 2.5; 
+          child.material.roughness = 0.15;
+          child.material.metalness = 0.8; 
+          
+          if (child.name.toLowerCase().includes('window') || child.name.toLowerCase().includes('glass')) {
+            child.material.emissive = new THREE.Color('#ffffff'); 
+            child.material.emissiveIntensity = 20;
+          }
+        }
+      }
+    });
+  }, [scene]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
-    
-    // Animation douce de rotation + suivi de souris
-    const targetRotationY = (state.clock.elapsedTime * 0.1) + (state.mouse.x * 0.2);
-    
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(
-      groupRef.current.rotation.y, 
-      targetRotationY, 
-      0.05 
-    );
+    const targetRotationY = (state.clock.elapsedTime * 0.1) + (state.mouse.x * 0.15);
+    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotationY, 0.04);
   });
 
   return (
-    <group ref={groupRef}>
-      <primitive object={scene} scale={responsiveScale} position-y={responsivePosY} /> 
-      <ContactShadows 
-        position={[0, responsivePosY, 0]} 
-        opacity={0.4} 
-        scale={20} 
-        blur={2.5} 
-      />
+    <group ref={groupRef} position={[0, 0.5, 0]}> 
+      <primitive object={scene} scale={responsiveScale} />
+      <ContactShadows opacity={0.3} scale={20} blur={2.5} far={4.5} />
     </group>
   );
 }
 
 export default function BuildingHero() {
   const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => { 
-    setMounted(true); 
-  }, []);
-
-  if (!mounted) return <div className="w-full h-full bg-[#020617]" />;
+  if (!mounted) return null;
 
   return (
-    <div className="relative w-full h-full overflow-visible">
+    <div className="relative w-full h-full bg-transparent">
       <Canvas 
         shadows
-        dpr={[1, 2]} // Optimisation performance
-        gl={{ 
-          antialias: true, 
-          powerPreference: "high-performance",
-          alpha: true 
-        }}
-        camera={{ position: [0, 2, 12], fov: 35 }}
+        gl={{ preserveDrawingBuffer: true, alpha: true }}
+        className="overflow-visible"
       >
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-        <Environment preset="city" />
+        <PerspectiveCamera makeDefault position={[0, 2, 9]} fov={20} />
         
+        <ambientLight intensity={0.4} />
+        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={3} />
+        <pointLight position={[-10, 5, -5]} color="#3b82f6" intensity={5} />
+        <Environment preset="city" /> 
+
         <Suspense fallback={null}>
-          <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
-              <Model />
+          <Float speed={1.2} rotationIntensity={0.2} floatIntensity={0.5}>
+            <Model />
           </Float>
+          <EffectComposer enableNormalPass={false}>
+            <Bloom luminanceThreshold={1.0} mipmapBlur intensity={1.2} radius={0.3} />
+          </EffectComposer>
         </Suspense>
       </Canvas>
 
-      {/* Badge Info */}
-      <div className="absolute bottom-12 lg:bottom-20 left-0 w-full z-50 flex justify-center px-4 pointer-events-none">
-        <div className="flex flex-col md:flex-row items-center gap-3 px-6 py-4 bg-black/60 border border-white/10 backdrop-blur-xl rounded-3xl shadow-2xl">
-          <div className="flex items-center gap-2 pr-0 md:pr-5 md:border-r border-white/10">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-white font-bold tracking-tight">Résidence Loft-O</span>
+      {/* Badge repositionné à droite pour suivre le building */}
+      <div className="absolute bottom-75 left-1/2 -translate-x-1/2 lg:left-auto lg:right-10 z-50 pointer-events-none">
+        <div className="flex items-center gap-6 px-6 py-3 bg-white/[0.02] backdrop-blur-2xl rounded-full shadow-2xl border border-white/10 pointer-events-auto">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-white text-[11px] font-bold tracking-widest uppercase italic">Loft Saint-Germain</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-300 text-sm font-semibold">
-            <span className="flex items-center gap-1.5"><MapPin size={14} className="text-blue-400" /> Parse City</span>
-            <span className="flex items-center gap-1.5"><TrendingUp size={14} className="text-blue-400" /> Yield: 7.2%</span>
+          <div className="h-4 w-[1px] bg-white/10" />
+          <div className="flex items-center gap-3 text-white/50 text-[10px] font-medium">
+             <MapPin size={12} className="text-blue-400" />
+             <span className="text-emerald-400 font-bold">+4.0% APY</span>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-// Preload pour éviter le lag au montage
-useGLTF.preload(MODEL_PATH);

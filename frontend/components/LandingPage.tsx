@@ -1,25 +1,41 @@
 'use client';
+import { useScroll, useTransform, motion } from 'framer-motion';
 import NavbarLanding from '@/components/landing/NavbarLanding';
-import HeroSection from '@/components/landing/HeroSection';
 import HowItWorks from '@/components/landing/HowItWorks';
-// AJOUT DE L'IMPORT MANQUANT
-import { useTranslations } from 'next-intl'; 
+import HeroSection from '@/components/landing/HeroSection';
 
+// 1. Définir le type des props
 interface LandingPageProps {
   onGetStarted: () => void;
   locale: 'fr' | 'en';
 }
 
+// 2. Appliquer le type au composant
 export default function LandingPage({ onGetStarted, locale }: LandingPageProps) {
-  // Cette ligne fonctionne maintenant, mais assure-toi d'en avoir besoin ici
-  const t = useTranslations(locale === 'en' ? 'en.Hero' : 'Hero');
+  const { scrollYProgress } = useScroll();
   
+  const opacityHero = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
+  const yHero = useTransform(scrollYProgress, [0, 0.3], [0, -50]);
+
   return (
-    <main className="min-h-screen bg-[#020617]">
-      <NavbarLanding />
-      <HeroSection />
-      <HowItWorks />
-      {/* Si tu veux utiliser onGetStarted, tu peux le passer à un bouton ici ou plus bas */}
+    <main className="relative bg-[#020617] overflow-x-hidden">
+      <div className="fixed top-0 left-0 w-full z-50">
+        <NavbarLanding />
+      </div>
+
+      <section className="relative h-screen">
+        <motion.div 
+          style={{ opacity: opacityHero, y: yHero }}
+          className="fixed top-0 left-0 h-screen w-full"
+        >
+          {/* Tu peux maintenant utiliser locale ou onGetStarted ici si besoin */}
+          <HeroSection />
+        </motion.div>
+      </section>
+
+      <section className="relative z-30 bg-[#020617] mt-[-10vh]">
+        <HowItWorks />
+      </section>
     </main>
   );
 }
