@@ -1,5 +1,7 @@
 const isGithubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
 const BASE_PATH = isGithubPages ? '/EcoRWA-Tycoon' : ''; 
+const isProd = process.env.NODE_ENV === 'production';
+const BASE_PATH = isProd ? '/EcoRWA-Tycoon' : ''; 
 const fixPath = (path: string) => `${BASE_PATH}${path}`;
 
 export const ZONE_TYPES = {
