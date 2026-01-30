@@ -11,7 +11,7 @@ export default function HowItWorks() {
     if (saved) setLocale(saved);
   }, []);
 
-  const t = useTranslations(locale === 'en' ? 'en.howItWorks' : 'howItWorks');
+  const t = useTranslations('howItWorks');
 
   const contracts = [
     { 

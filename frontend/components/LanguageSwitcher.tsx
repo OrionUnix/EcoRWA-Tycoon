@@ -1,22 +1,24 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useLocale } from 'next-intl';
 
 export default function LanguageSwitcher() {
-  const [locale, setLocale] = useState('fr');
-
-  useEffect(() => {
-    const saved = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('NEXT_LOCALE='))
-      ?.split('=')[1] || 'fr';
-    setLocale(saved);
-  }, []);
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentLocale = useLocale();
 
   const switchLanguage = (newLocale: string) => {
-    if (newLocale === locale) return;
+    if (newLocale === currentLocale) return;
+
+    // On remplace le préfixe de la langue dans l'URL actuelle
+    // Exemple: /fr/marketplace -> /en/marketplace
+    const newPath = pathname.replace(`/${currentLocale}`, `/${newLocale}`);
+    
+    // On met à jour le cookie pour que next-intl s'en souvienne
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    setLocale(newLocale);
-    window.location.reload();
+    
+    // On navigue vers la nouvelle page
+    router.push(newPath);
   };
 
   return (
@@ -24,8 +26,8 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => switchLanguage('fr')}
         className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${
-          locale === 'fr'
-            ? 'bg-[#E84142]/80 text-white shadow-sm shadow-[#E84142]/40'
+          currentLocale === 'fr'
+            ? 'bg-[#E84142] text-white shadow-sm shadow-[#E84142]/40'
             : 'text-slate-400 hover:text-white hover:bg-white/5'
         }`}
       >
@@ -34,8 +36,8 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => switchLanguage('en')}
         className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${
-          locale === 'en'
-            ? 'bg-[#E84142]/80 text-white shadow-sm shadow-[#E84142]/40'
+          currentLocale === 'en'
+            ? 'bg-[#E84142] text-white shadow-sm shadow-[#E84142]/40'
             : 'text-slate-400 hover:text-white hover:bg-white/5'
         }`}
       >

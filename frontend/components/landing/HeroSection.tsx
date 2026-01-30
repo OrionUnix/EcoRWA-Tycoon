@@ -1,18 +1,13 @@
 'use client';
+
 import BuildingHero from './BuildingHero';
 import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
 
 export default function HeroSection() {
-  const [locale, setLocale] = useState('fr');
-
-  useEffect(() => {
-    const saved = document.cookie.split('; ').find(row => row.startsWith('NEXT_LOCALE='))?.split('=')[1];
-    if (saved) setLocale(saved);
-  }, []);
-
-  const t = useTranslations(locale === 'en' ? 'en.Hero' : 'Hero'); 
+  // On utilise uniquement le hook de traduction. 
+  // La détection de la langue se fait désormais au niveau du Layout.
+  const t = useTranslations('Hero');
 
   return (
     <section className="relative min-h-[90vh] lg:h-screen w-full flex items-center bg-[#020617] overflow-visible">
@@ -24,7 +19,7 @@ export default function HeroSection() {
         {/* TEXT CONTENT */}
         <div className="z-20 space-y-8 py-20 lg:py-0">
           
-          {/* BADGE AVALANCHE IMPÉRATIF */}
+          {/* BADGE AVALANCHE */}
           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md">
             <div className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E84142] opacity-75"></span>
@@ -36,7 +31,6 @@ export default function HeroSection() {
           </div>
 
           <div className="space-y-4">
-            {/* Nouveau titre : On remplace le bleu/violet par Blanc + Rouge Avalanche */}
             <h1 className="text-6xl lg:text-8xl font-black text-white leading-[0.85] tracking-tighter italic">
               {t('titleLine1')}<span className="text-[#E84142]">.</span><br />
               <span className="text-white/40 group-hover:text-white transition-colors duration-500">
@@ -50,15 +44,17 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-wrap items-center gap-6 pt-4">
-            {/* Bouton principal aux couleurs Avalanche */}
+            {/* Bouton principal */}
             <button className="px-8 py-4 bg-[#E84142] text-white rounded-2xl font-bold hover:bg-[#ff4d4d] hover:shadow-[0_0_30px_-5px_rgba(232,65,66,0.5)] transition-all flex items-center gap-2 group">
               {t('buttonMain')}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            {/* Yield Card en mode Glassmorphism */}
+            {/* Yield Card */}
             <div className="px-6 py-3 bg-white/[0.03] border border-white/10 backdrop-blur-xl rounded-2xl flex flex-col justify-center">
-              <span className="text-[10px] text-[#E84142] font-black uppercase tracking-widest">{t('yieldLabel')}</span>
+              <span className="text-[10px] text-[#E84142] font-black uppercase tracking-widest">
+                {t('yieldLabel')}
+              </span>
               <span className="text-2xl font-black text-white">+7.42%</span>
             </div>
           </div>

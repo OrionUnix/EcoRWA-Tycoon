@@ -1,40 +1,16 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { useState } from 'react';
-import { useAccount } from 'wagmi'; // Ou ta méthode de connexion
-import LandingPage from '@/components/LandingPage';
-
-export default function Page() {
-  const { address, isConnected } = useAccount();
-  const [isFaucetLoading, setIsFaucetLoading] = useState(false);
-  const [usdcBalance, setUsdcBalance] = useState('0.0');
-
-  const handleGetStarted = async () => {
-    if (!isConnected) {
-      alert("Veuillez connecter votre wallet");
-      return;
-    }
-    
-    setIsFaucetLoading(true);
-    try {
-      // Simule un appel contrat/faucet
-      console.log("Claiming USDC for", address);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setUsdcBalance('1000.0');
-    } catch (error) {
-      console.error("Erreur faucet:", error);
-    } finally {
-      setIsFaucetLoading(false);
-    }
-  };
+export default function RootPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/en');
+  }, [router]);
 
   return (
-    <LandingPage 
-      locale="fr"
-      onGetStarted={handleGetStarted}
-      address={address}
-      usdcBalance={usdcBalance}
-      isFaucetLoading={isFaucetLoading}
-    />
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+      <div className="text-slate-500 font-mono animate-pulse">Initializing...</div>
+    </div>
   );
 }
