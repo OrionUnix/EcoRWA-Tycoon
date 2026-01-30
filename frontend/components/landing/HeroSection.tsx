@@ -3,6 +3,8 @@
 import BuildingHero from './BuildingHero';
 import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from "@/components/ui/button";
+import Link from 'next/link';
 
 export default function HeroSection() {
   const t = useTranslations('Hero');
@@ -43,10 +45,14 @@ export default function HeroSection() {
 
           <div className="flex flex-wrap items-center gap-6 pt-4">
             {/* Bouton principal */}
-            <button className="px-8 py-4 bg-[#E84142] text-white rounded-2xl font-bold hover:bg-[#ff4d4d] hover:shadow-[0_0_30px_-5px_rgba(232,65,66,0.5)] transition-all flex items-center gap-2 group">
-              {t('buttonMain')}
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+            
+<Link 
+    href="user-terminal" 
+    className="px-8 py-4 bg-[#E84142] text-white rounded-2xl font-bold hover:bg-[#ff4d4d] hover:shadow-[0_0_30px_-5px_rgba(232,65,66,0.5)] transition-all flex items-center gap-2 group cursor-pointer"
+  >
+    {t('buttonMain')}
+    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+  </Link>
 
             {/* Yield Card */}
             <div className="px-6 py-3 bg-white/[0.03] border border-white/10 backdrop-blur-xl rounded-2xl flex flex-col justify-center">

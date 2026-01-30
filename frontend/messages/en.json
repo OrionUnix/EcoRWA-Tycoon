@@ -27,7 +27,6 @@
     "market": "RWA Listings",
     "market-analysis": "Analysis",
     "Info-analysis": "Key Figure"
-   
   },
   "howItWorks": {
     "title": "How It Works?",
@@ -68,15 +67,7 @@
     }
   },
   "dashboard": {
-    "myParts": "My Parts",
-    "totalInvested": "Total Invested",
-    "annualYield": "Annual Yield",
-    "yieldsToClaim": "Yields to Claim",
-    "myInvestments": "My Investments",
-    "balance": "USDC Balance",
-    "faucet": "Faucet (1000 USDC)",
-    "noInvestments": "You don't have any investments yet",
-    "getStarted": "Get Started"
+    "title": "Dashboard"
   },
   "properties": {
     "title": "RWA LISTINGS",
@@ -138,14 +129,12 @@
     "zoom": "Scroll: Zoom",
     "pitch": "Right Click: Tilt"
   },
-"footer": {
-  "tagline": "Real estate investment turned into a game. SimCity meets DeFi on Avalanche.",
-  "rights": "All rights reserved",
-  "privacy": "Privacy Policy",
-  "terms": "Terms of Service",
-  "madeWith": "Made with",
-  "by": "by"
-}
-
-  
+  "footer": {
+    "tagline": "Real estate investment turned into a game. SimCity meets DeFi on Avalanche.",
+    "rights": "All rights reserved",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "madeWith": "Made with",
+    "by": "by"
+  }
 }

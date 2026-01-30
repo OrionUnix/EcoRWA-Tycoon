@@ -68,15 +68,7 @@
     }
   },
   "dashboard": {
-    "myParts": "Mes Parts",
-    "totalInvested": "Total Investi",
-    "annualYield": "Rendement Annuel",
-    "yieldsToClaim": "Yields à Claim",
-    "myInvestments": "Mes Investissements",
-    "balance": "Balance USDC",
-    "faucet": "Faucet (1000 USDC)",
-    "noInvestments": "Vous n'avez pas encore d'investissements",
-    "getStarted": "Premiers pas"
+   "title": "Dashboard Utilisateur"
   },
   "properties": {
     "title": "RWA LISTINGS",
@@ -147,5 +139,9 @@
   "madeWith": "Fait avec",
   "by": "par"
 }
+
+
 }
+
+
   

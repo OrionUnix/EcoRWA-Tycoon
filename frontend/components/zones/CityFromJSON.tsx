@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * CHARGEUR DE VILLE DEPUIS JSON
- * Charge une ville créée avec l'éditeur
- */
-
 import { useState, useEffect } from 'react';
 import GLBModel from './GLBModel';
 import { ROAD_MODELS, COMMERCIAL_MODELS, SUBURBAN_MODELS, INDUSTRIAL_MODELS } from '@/lib/city3d/modelUtils';
