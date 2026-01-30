@@ -25,8 +25,9 @@
   "Navbar": {
     "howItWorks": "How It Works",
     "market": "RWA Listings",
-    "dao": "DAO",
-    "tryNow": "Try Now"
+    "market-analysis": "Analysis",
+    "Info-analysis": "Key Figure"
+   
   },
   "howItWorks": {
     "title": "How It Works?",
@@ -136,6 +137,15 @@
     "rotate": "Q / E: Rotate",
     "zoom": "Scroll: Zoom",
     "pitch": "Right Click: Tilt"
-  }
+  },
+"footer": {
+  "tagline": "Real estate investment turned into a game. SimCity meets DeFi on Avalanche.",
+  "rights": "All rights reserved",
+  "privacy": "Privacy Policy",
+  "terms": "Terms of Service",
+  "madeWith": "Made with",
+  "by": "by"
+}
+
   
 }

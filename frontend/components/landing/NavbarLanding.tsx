@@ -3,8 +3,6 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTranslations, useLocale } from 'next-intl';
-
-// 1. Définition de l'interface pour corriger l'erreur de build
 interface NavbarLandingProps {
   address?: string;
   usdcBalance?: string;
@@ -21,7 +19,7 @@ export default function NavbarLanding({
   const [scrolled, setScrolled] = useState(false);
   const [logoHovered, setLogoHovered] = useState(false);
   
-  // 2. On utilise le hook officiel pour la langue
+  // 2. LANGUE
   const locale = useLocale(); 
   const t = useTranslations('Navbar');
   const tHero = useTranslations('Hero');
@@ -85,8 +83,14 @@ export default function NavbarLanding({
               {t('howItWorks')}
             </a>
             <a href="#market" className="hover:text-white transition-colors uppercase tracking-widest">
-              {/* Utilisation de la clé de traduction pour Market */}
+              
               {t('market') || 'RWA Listings'}
+            </a>
+            <a href="#market-analysis" className="hover:text-white transition-colors uppercase tracking-widest">
+              {t('market-analysis') || 'Analysis'}
+            </a>
+            <a href="#Info-analysis" className="hover:text-white transition-colors uppercase tracking-widest">
+              {t('Info-analysis') || 'Key Figure'}
             </a>
           </div>
 

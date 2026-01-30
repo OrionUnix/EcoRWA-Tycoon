@@ -5,8 +5,6 @@ import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export default function HeroSection() {
-  // On utilise uniquement le hook de traduction. 
-  // La détection de la langue se fait désormais au niveau du Layout.
   const t = useTranslations('Hero');
 
   return (

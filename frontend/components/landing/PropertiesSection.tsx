@@ -48,9 +48,9 @@ export default function PropertiesSection() {
             const translatedType = tBuilding(`type.${typeKey}`);
 
             const modelConfigs: Record<string, { path: string; scale: number }> = {
-              'Résidentiel': { path: '/assets/models/suburban/loft-saint-germain.glb', scale: 0.065 },
-              'Commercial':  { path: '/assets/models/commercial/building-a.glb', scale: 1.2 },
-              'Mixte':       { path: '/assets/models/suburban/building-type-o.glb', scale: 0.8 },
+              'Résidentiel': { path: '/assets/models/suburban/loft-saint-germain.glb', scale: 0.025 },
+              'Commercial':  { path: '/assets/models/commercial/building-a.glb', scale: 1.1 },
+              'Mixte':       { path: '/assets/models/suburban/building-type-o.glb', scale: 0.9 },
             };
             const config = modelConfigs[building.type.fr] || { path: '/assets/models/suburban/building-type-c.glb', scale: 1.0 };
 

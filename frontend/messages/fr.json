@@ -24,9 +24,10 @@
   },
   "Navbar": {
     "howItWorks": "Comment ça marche",
-    "market": "RWA Listings",
-    "dao": "DAO",
-    "tryNow": "Essayer"
+    "market": "Listings",
+    "market-analysis": "Analyses",
+    "Info-analysis": "Chiffres & analyses"
+
   },
   "howItWorks": {
     "title": "Comment ça marche ?",
@@ -136,5 +137,15 @@
     "rotate": "A / E : Rotation",
     "zoom": "Molette : Zoom",
     "pitch": "Clic Droit : Inclinaison"
-  }
+  },
+
+"footer": {
+  "tagline": "L'investissement immobilier devient un jeu. SimCity rencontre la DeFi sur Avalanche.",
+  "rights": "Tous droits réservés",
+  "privacy": "Confidentialité",
+  "terms": "Conditions",
+  "madeWith": "Fait avec",
+  "by": "par"
 }
+}
+  
