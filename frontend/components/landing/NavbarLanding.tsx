@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation'
 interface NavbarLandingProps {
   address?: string;
   usdcBalance?: string;
@@ -16,6 +17,7 @@ export default function NavbarLanding({
   isFaucetLoading,
   onClaimUSDC,
 }: NavbarLandingProps) {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [logoHovered, setLogoHovered] = useState(false);
   
@@ -38,6 +40,15 @@ export default function NavbarLanding({
   const logoGlow = logoHovered
     ? 'drop-shadow-[0_0_10px_rgba(232,65,66,0.6)] brightness-125 scale-110'
     : 'drop-shadow-[0_0_4px_rgba(232,65,66,0.4)] brightness-110';
+
+  const handleAction = async () => {
+    // 1. On déclenche l'action de base (faucet) si elle existe
+    if (onClaimUSDC) {
+      await onClaimUSDC();
+    }
+    // On utilise le locale pour garder la bonne langue dans l'URL
+    router.push(`/${locale}/user-terminal`);
+  };  
 
   return (
     <nav
@@ -106,10 +117,11 @@ export default function NavbarLanding({
             </div>
 
             <button
-              onClick={onClaimUSDC}
+              onClick={handleAction}
               disabled={isFaucetLoading}
-              className="relative group/btn p-[1px] rounded-full overflow-hidden transition-transform active:scale-95 disabled:opacity-50"
+              className="relative group/btn p-[1px] rounded-full overflow-hidden transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
+              
               <div className="absolute inset-0 bg-gradient-to-r from-[#E84142] via-[#FF394A] to-[#E84142] opacity-60 group-hover/btn:opacity-100 animate-gradient-x transition-opacity duration-500" />
               <div className="relative px-4 py-1.5 md:px-5 md:py-2 bg-[#020617]/70 rounded-full backdrop-blur-lg">
                 <span className="text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.12em] whitespace-nowrap">

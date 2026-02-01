@@ -1,94 +1,54 @@
 'use client';
 
-/**
- * VERSION SIMPLE - GRILLE DE BASE
- * Génère une grille uniforme sur toute la carte
- */
-
 import { useMemo } from 'react';
 import GLBModel from './GLBModel';
 import { ROAD_MODELS } from '@/lib/city3d/modelUtils';
 
 interface RoadNetworkProps {
-    position?: [number, number, number];
     gridSize?: number;
-    blockSize?: number;
-    showDebug?: boolean;
+    isNight?: boolean;
 }
 
-export default function RoadNetwork({
-    position = [0, 0, 0],
-    gridSize = 30,      // Taille de la grille (30x30)
-    blockSize = 4,      // Une route tous les 4 unités
-    showDebug = false,
-}: RoadNetworkProps) {
-
+export default function RoadNetwork({ gridSize = 40, isNight = true }: RoadNetworkProps) {
     const roadElements = useMemo(() => {
         const elements: any[] = [];
-        const cellSize = 2; // Taille d'une cellule
-
-
-
+        const cellSize = 2;
         const halfGrid = gridSize / 2;
-        const minCoord = -halfGrid;
-        const maxCoord = halfGrid;
+        
+        // On définit 4 axes pour créer un grand carré central (comme ton image cible)
+        const axesPos = [-10, 10]; 
 
-        // Fonction pour ajouter une route
         const addRoad = (id: string, modelKey: string, pos: [number, number, number], rot: number = 0) => {
             const path = (ROAD_MODELS as any)[modelKey];
-            if (path) {
-                elements.push({ id, path, pos, rot, scale: 1 });
-            }
+            if (path) elements.push({ id, path, pos, rot });
         };
 
-        // ROUTES HORIZONTALES (tous les blockSize)
-        for (let z = minCoord; z <= maxCoord; z += blockSize) {
-            for (let x = minCoord; x <= maxCoord; x += cellSize) {
-                // Vérifier si c'est une intersection
-                const isIntersection = (x % blockSize === 0);
-
-                if (isIntersection) {
-                    addRoad(`cross-${x}-${z}`, 'crossroad-path', [x, 0, z], 0);
-                } else {
-                    addRoad(`h-${x}-${z}`, 'straight', [x, 0, z], Math.PI / 2);
+        axesPos.forEach(fixed => {
+            for (let i = -halfGrid; i <= halfGrid; i += cellSize) {
+                const isCross = axesPos.includes(i);
+                // Routes horizontales
+                addRoad(`h-${i}-${fixed}`, isCross ? 'crossroad-path' : 'straight', [i, 0, fixed], Math.PI / 2);
+                // Routes verticales (on évite de doubler les intersections)
+                if (!isCross) {
+                    addRoad(`v-${fixed}-${i}`, 'straight', [fixed, 0, i], 0);
                 }
             }
-        }
-
-        // ROUTES VERTICALES (tous les blockSize)
-        for (let x = minCoord; x <= maxCoord; x += blockSize) {
-            for (let z = minCoord; z <= maxCoord; z += cellSize) {
-                // Skip si déjà placé comme intersection
-                if (z % blockSize === 0) continue;
-
-                addRoad(`v-${x}-${z}`, 'straight', [x, 0, z], 0);
-            }
-        }
-
-
+        });
         return elements;
-    }, [gridSize, blockSize]);
+    }, [gridSize]);
 
     return (
-        <group position={position}>
-            {/* ROUTES */}
+        <group>
             {roadElements.map((el) => (
-                <GLBModel
-                    key={el.id}
-                    path={el.path}
-                    position={el.pos}
-                    rotation={[0, el.rot, 0]}
-                    scale={el.scale}
-                />
+                <group key={el.id}>
+                    <GLBModel path={el.path} position={el.pos} rotation={[0, el.rot, 0]} scale={[2, 2, 2]} />
+                    
+                    {/* RÉACTIVATION DU JOUR/NUIT : Lumières de ville */}
+                    {isNight && el.id.includes('h-') && Math.abs(el.pos[0]) % 6 === 0 && (
+                        <pointLight position={[el.pos[0], 1.5, el.pos[2]]} intensity={8} distance={6} color="#00f2ff" />
+                    )}
+                </group>
             ))}
-
-            {/* GRILLE DE DEBUG (optionnelle) */}
-            {showDebug && (
-                <gridHelper
-                    args={[gridSize * 2, gridSize, 0x444444, 0x222222]}
-                    position={[0, 0.01, 0]}
-                />
-            )}
         </group>
     );
 }

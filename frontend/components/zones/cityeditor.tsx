@@ -11,12 +11,10 @@ import BuildingTile from '@/components/editor/BuildingTile';
 import { useCityManager } from '@/components/editor/config/useCityManager';
 import TrafficManager from '@/components/editor/world/TrafficManager';
 
-// Ajout de isNight dans les props ici !
+// Props du composant CityEditor
 export default function CityEditor({ mode, isNight }: { mode: string | null, isNight: boolean }) {
     const { controls } = useThree() as any;
     const [isPending, startTransition] = useTransition();
-
-    // ON A SUPPRIMÉ LE useState(false) ICI car on utilise celui du parent
 
     const {
         roadNetwork, riverNetwork, zones, props,
@@ -51,28 +49,35 @@ export default function CityEditor({ mode, isNight }: { mode: string | null, isN
         <group>
             <CameraRig />
 
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}
+            {/* Sol interactif pour le Drag & Drop */}
+            <mesh
+                rotation={[-Math.PI / 2, 0, 0]}
+                position={[0, -0.01, 0]}
                 onPointerDown={(e) => {
                     if (!mode) return;
+                    e.stopPropagation();
                     setIsDragging(true);
                     setDragStart(e.point.clone());
                     setDragCurrent(e.point.clone());
                     if (controls) controls.enabled = false;
                 }}
                 onPointerMove={(e) => isDragging && setDragCurrent(e.point.clone())}
-                onPointerUp={onPointerUp}>
-                <planeGeometry args={[50, 50]} />
-                <meshStandardMaterial color="#1e293b" />
+                onPointerUp={onPointerUp}
+            >
+                <planeGeometry args={[100, 100]} />
+                <meshStandardMaterial color="#1e293b" transparent opacity={0} />
             </mesh>
 
+            {/* Systèmes de rendu (Routes, Rivières, Trafic) */}
+            <Rivers
+                riverNetwork={riverNetwork}
+                previewPoints={mode === 'WATER' ? previewPoints : []}
+                gridSize={RIVER_GRID}
+            />
 
-
-            <Rivers riverNetwork={riverNetwork} previewPoints={mode === 'WATER' ? previewPoints : []} gridSize={RIVER_GRID} />
-
-            {/* isNight est maintenant correctement transmis ! */}
             <Roads
                 roadNetwork={roadNetwork}
-                previewPoints={previewPoints}
+                previewPoints={mode !== 'WATER' && !mode?.startsWith('NATURE:') ? previewPoints : []}
                 mode={mode}
                 gridSize={2}
                 isNight={isNight}
@@ -87,17 +92,30 @@ export default function CityEditor({ mode, isNight }: { mode: string | null, isN
 
             <NatureProps props={props} />
 
-            {Array.from(zones.values()).map((z) => (
+            {/* Rendu des bâtiments existants */}
+            {Array.from(zones.values()).map((z: any) => (
                 <BuildingTile
                     key={`${z.x},${z.z}`}
-                    {...z}
+                    position={[z.x, 0, z.z]} // Corrected to use position array
+                    type={z.type}
+                    building={z}
+                    zone={z}
+                    isNight={isNight}
                     roadNetwork={roadNetwork}
-                    isBeingDestroyed={mode === 'ROAD' && previewPoints.some(p => p.x === z.x && p.z === z.z)}
+                    isBeingDestroyed={!!z.isBeingDestroyed}
                 />
             ))}
 
-            {isDragging && ['RES', 'COM', 'IND'].includes(mode!) && previewPoints.map((p, i) => (
-                <BuildingTile key={`pre-${i}`} x={p.x} z={p.z} type={mode} roadNetwork={roadNetwork} isPreview={true} />
+            {/* Rendu de la prévisualisation lors du Dragging */}
+            {isDragging && mode && ['RES', 'COM', 'IND'].includes(mode) && previewPoints.map((p: any, i: number) => (
+                <BuildingTile
+                    key={`pre-${i}`}
+                    position={[p.x, 0, p.z]} // Corrected to use position array
+                    type={mode}
+                    roadNetwork={roadNetwork}
+                    isNight={isNight}
+                    isPreview={true}
+                />
             ))}
         </group>
     );

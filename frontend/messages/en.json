@@ -26,7 +26,7 @@
     "howItWorks": "How It Works",
     "market": "RWA Listings",
     "market-analysis": "Analysis",
-    "Info-analysis": "Key Figure"
+    "Info-analysis": "Key Figures"
   },
   "howItWorks": {
     "title": "How It Works?",
@@ -51,7 +51,7 @@
     "title": "Why EcoRWA?",
     "fractional": {
       "title": "Fractional Ownership",
-      "description": "Invest from 100 USDC instead of hundreds of thousands of euros"
+      "description": "Invest from 100 USDC instead of hundreds of thousands of dollars"
     },
     "passive": {
       "title": "Passive Income",
@@ -63,7 +63,7 @@
     },
     "ai": {
       "title": "AI Analysis",
-      "description": "Receive PLU alerts and real-time risk analysis"
+      "description": "Receive zoning alerts and real-time risk analysis"
     }
   },
   "dashboard": {
@@ -136,5 +136,38 @@
     "terms": "Terms of Service",
     "madeWith": "Made with",
     "by": "by"
+  },
+  "infoMarket": {
+    "analysisTitle": "Market Analysis",
+    "keyFigures": "Key Figures",
+    "liveData": "Real-time",
+    "priceParis": "Market: Paris",
+    "priceNY": "Market: New York",
+    "accessibility": "Property Access",
+    "excluded": "Excluded from Market",
+    "canBuy": "Capable to Buy",
+    "scoreOutOf": "Score / 10",
+    "vacancy_rate": "Rental Market Tension",
+    "dominateTitle": "Dominate the market",
+    "dominateSpan": "with EcoRWA",
+    "marketDescription": "Forget bureaucracy. We've turned real estate investment into a strategy game where you actually earn money.",
+    "feature1Title": "AI Urban Advisor",
+    "feature1Desc": "Our AI deciphers legal jargon (Zoning) to give you clear, real-world risk assessments.",
+    "feature2Title": "Active Simulation",
+    "feature2Desc": "Learn to invest risk-free before moving to the big leagues.",
+    "ecoAdvantage": "Tycoon Mode",
+    "adv1": "From $100",
+    "adv2": "Active Governance",
+    "adv3": "Real-time Yields",
+    "adv4": "Fractional Ownership",
+    "startAscent": "Start Ascent",
+    "stats": {
+      "yield_spread": "Arbitrage: Real Estate vs Savings",
+      "vacancy_rate": "Rental Market Tension"
+    },
+    "tooltips": {
+      "yieldSpread": "The gap between rental yield and savings account rates. High spread means real estate is more attractive.",
+      "vacancyRate": "Percentage of empty properties. Low rate (<3%) indicates high demand."
+    }
   }
 }

@@ -1,0 +1,14 @@
+{
+  "resources": {
+    "coal": "Charbon",
+    "water": "Nappe Phréatique",
+    "oil": "Pétrole",
+    "energy": "Énergie"
+  },
+  "actions": {
+    "build": "Construire",
+    "extract": "Extraire",
+    "trade": "Échanger"
+  },
+  "seed_info": "Ville générée via Wallet : {{seed}}"
+}

@@ -1,0 +1,75 @@
+{
+    "packId": "core-buildings",
+    "version": "1.0.0",
+    "buildings": [
+        {
+            "id": 1,
+            "buildingTypeId": "loft-saint-germain",
+            "category": 1,
+            "name": {
+                "fr": "Loft Saint-Germain",
+                "en": "Saint-Germain Loft"
+            },
+            "visual": {
+                "model3D": "/models/loft.glb",
+                "thumbnail": "/assets/buildings/Loft_Saint-Germain.png",
+                "baseColor": "#4990E2"
+            },
+            "economics": {
+                "price": 150000000,
+                "yieldPercentage": 420,
+                "maintenanceCost": 500000
+            },
+            "metadata": {
+                "size": 5,
+                "isMintable": true
+            }
+        },
+        {
+            "id": 2,
+            "buildingTypeId": "bistrot-central",
+            "category": 2,
+            "name": {
+                "fr": "Le Bistrot Central",
+                "en": "Central Bistro"
+            },
+            "visual": {
+                "model3D": "/models/bistrot.glb",
+                "thumbnail": "/assets/buildings/bistro.png",
+                "baseColor": "#FF6B35"
+            },
+            "economics": {
+                "price": 100000000,
+                "yieldPercentage": 780,
+                "maintenanceCost": 800000
+            },
+            "metadata": {
+                "size": 4,
+                "isMintable": true
+            }
+        },
+        {
+            "id": 3,
+            "buildingTypeId": "eco-tower-2030",
+            "category": 3,
+            "name": {
+                "fr": "Eco-Tower 2030",
+                "en": "Eco-Tower 2030"
+            },
+            "visual": {
+                "model3D": "/models/ecotower.glb",
+                "thumbnail": "/assets/buildings/EcoTower_2030.png",
+                "baseColor": "#10B981"
+            },
+            "economics": {
+                "price": 250000000,
+                "yieldPercentage": 650,
+                "maintenanceCost": 1200000
+            },
+            "metadata": {
+                "size": 7,
+                "isMintable": true
+            }
+        }
+    ]
+}

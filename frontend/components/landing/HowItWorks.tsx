@@ -35,9 +35,7 @@ export default function HowItWorks() {
 
   return (
     <section id="how-it-works" className="relative bg-[#020617] pb-32">
-      
-      {/* --- LA JONCTION TRANSPARENTE --- */}
-      {/* On crée une zone de transition qui démarre de la HeroSection */}
+           
       <div className="w-full h-40 bg-gradient-to-b from-transparent to-[#020617] backdrop-blur-[2px]" />
 
       <div className="max-w-7xl mx-auto px-6 relative">
@@ -51,7 +49,7 @@ export default function HowItWorks() {
                 Smart Contract Status
               </span>
             </div>
-            <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-none italic uppercase">
+            <h2 className="title-secondary">
               {t('title')}
             </h2>
           </div>

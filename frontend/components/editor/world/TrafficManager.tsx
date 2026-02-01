@@ -126,23 +126,30 @@ export default function TrafficManager({ roads, zones, props, isNight }: any) {
 
     return (
         <group>
-            {vehicles.map((v) => (
-                <group
-                    key={v.id}
-                    position={[v.position.x, 0, v.position.z]}
-                    rotation={[0, v.rotationY, 0]}
-                >
-                    <GLBModel path={`${vehiclePath}${v.model}`} scale={[0.6, 0.6, 0.6]} />
-                    {v.type === 'TRUCK' && v.hasBox && (
-                        <group position={[0, 0.4, 0]}>
-                            <GLBModel path={`${vehiclePath}${vehicleModels.box}`} scale={[0.4, 0.4, 0.4]} />
-                        </group>
-                    )}
-                    {isNight && (
-                        <pointLight position={[0, 0.3, 0.6]} intensity={1.5} color="#fff8e1" distance={4} />
-                    )}
-                </group>
-            ))}
+            {vehicles.map((v) => {
+                // 🆕 Lateral offset to clear center of road
+                const lateralOffset = (v.id % 2 === 0) ? 0.4 : -0.4;
+                const offsetX = v.position.x + Math.sin(v.rotationY) * lateralOffset;
+                const offsetZ = v.position.z + Math.cos(v.rotationY) * lateralOffset;
+
+                return (
+                    <group
+                        key={v.id}
+                        position={[offsetX, 0, offsetZ]}
+                        rotation={[0, v.rotationY, 0]}
+                    >
+                        <GLBModel path={`${vehiclePath}${v.model}`} scale={[0.42, 0.42, 0.42]} />
+                        {v.type === 'TRUCK' && v.hasBox && (
+                            <group position={[0, 0.4, 0]}>
+                                <GLBModel path={`${vehiclePath}${vehicleModels.box}`} scale={[0.4, 0.4, 0.4]} />
+                            </group>
+                        )}
+                        {isNight && (
+                            <pointLight position={[0, 0.3, 0.6]} intensity={1.5} color="#fff8e1" distance={4} />
+                        )}
+                    </group>
+                );
+            })}
         </group>
     );
 }

@@ -75,7 +75,7 @@ const MarketAnalysis = () => {
             </div>
             
             <div className="group">
-              <h2 className="text-5xl lg:text-7xl font-black text-white leading-[0.85] tracking-tighter italic uppercase">
+              <h2 className="title-secondary">
                 Active Tycoon<span className="text-[#E84142]">.</span><br />
                 <span className="text-white/40 group-hover:text-white transition-colors duration-500">
                   Model Strategy

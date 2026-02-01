@@ -1,101 +1,57 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell 
+  AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { TrendingUp, Zap, GraduationCap, ArrowUpRight, Activity } from 'lucide-react';
+import { Zap, GraduationCap, ArrowUpRight, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { InfoLabel } from '@/components/src/ui/InfoLabel';
+import { useTranslations } from 'next-intl';
 
-// --- DONNÉES STATIQUES ---
-const parisData = [ { year: '2005', price: 5200 }, { year: '2006', price: 5600 }, { year: '2007', price: 6000 }, { year: '2008', price: 6500 }, { year: '2009', price: 6400 }, { year: '2010', price: 7000 }, { year: '2011', price: 8200 }, { year: '2012', price: 8400 }, { year: '2013', price: 8300 }, { year: '2014', price: 8100 }, { year: '2015', price: 8200 }, { year: '2016', price: 8400 }, { year: '2017', price: 8800 }, { year: '2018', price: 9600 }, { year: '2019', price: 10200 }, { year: '2020', price: 10600 }, { year: '2021', price: 9827 }, { year: '2022', price: 10100 }, { year: '2023', price: 10420 }, { year: '2024', price: 10580 }, { year: '2025*', price: 9650 }, ];
-const nyData  = [ { year: '2005', price: 9800 }, { year: '2006', price: 11000 }, { year: '2007', price: 12500 }, { year: '2008', price: 13000 }, { year: '2009', price: 11500 }, { year: '2010', price: 11800 }, { year: '2011', price: 12000 }, { year: '2012', price: 12200 }, { year: '2013', price: 12500 }, { year: '2014', price: 12800 }, { year: '2015', price: 13200 }, { year: '2016', price: 13600 }, { year: '2017', price: 14000 }, { year: '2018', price: 14500 }, { year: '2019', price: 14800 }, { year: '2020', price: 14200 }, { year: '2021', price: 14330 }, { year: '2022', price: 15500 }, { year: '2023', price: 15500 }, { year: '2024', price: 14972 }, { year: '2025*', price: 15317 }, ];
+// Imports Data
+import { 
+  parisMarketHistory, 
+  franceYieldSpreadHistory,
+  accessDataParis
+} from '@/data/market/paris';
+import { 
+  newYorkMarketHistory, 
+  usaYieldSpreadHistory,
+  accessDataNY 
+} from '@/data/market/newyork';
 
-const accessDataNY = [ { name: 'Capable', value: 18 }, { name: 'Excluded', value: 82 } ];
-const accessDataParis = [ { name: 'Capable', value: 25 }, { name: 'Excluded', value: 75 } ];
+interface InfoMarketProps {
+  onClaimUSDC?: () => void;
+}
 
-export default function InfoMarket() {
+export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
+  const t = useTranslations('infoMarket');
   const [activeTab, setActiveTab] = useState<'PARIS' | 'NY'>('PARIS');
-  const [locale, setLocale] = useState('fr');
+  const router = useRouter();
+  
+  const isParis = activeTab === 'PARIS';
 
+  // --- LOGIQUE DE SÉLECTION DES DONNÉES ---
+  const marketHistory = isParis ? parisMarketHistory : newYorkMarketHistory;
+  const yieldData = isParis ? franceYieldSpreadHistory : usaYieldSpreadHistory;
+  const currentAccessData = isParis ? accessDataParis : accessDataNY;
+
+  const lastYearData = currentAccessData[currentAccessData.length - 1];
+
+  // Paramètres Jauges SVG
   const size = 200;
   const strokeWidth = 15;
   const center = size / 2;
   const radius = (size - strokeWidth) / 2;
   const circumference = Math.PI * radius;
 
-  const translations: any = {
-    fr: {
-      liveData: "Temps réel",
-      analysisTitle: "Analyse des",
-      keyFigures: "Chiffres Clés",
-      priceParis: "Évolution Prix m² (Paris)",
-      priceNY: "Prix Médian (Manhattan)",
-      accessibility: "Accès à la Propriété",
-      canBuy: "Capables",
-      interestRate: "Taux d'intérêt moyen",
-      medianRent: "Loyer médian",
-      low: "Très faible",
-      criticallyLow: "Critiquement bas",
-      slowRecovery: "Reprise lente",
-      strainedActive: "Tendu mais actif",
-      dominateTitle: "Dominez le marché",
-      dominateSpan: "avec EcoRWA",
-      marketDescription: "Le marché traditionnel de 2025 est verrouillé. EcoRWA brise les barrières.",
-      solutionSpan: "",
-      feature1Title: "Liquidité Instantanée",
-      feature1Desc: "Échangez vos parts d'actifs en 1 clic.",
-      feature2Title: "Simulation",
-      feature2Desc: "Maîtrisez les cycles sans risque.",
-      ecoAdvantage: "L'avantage EcoRWA",
-      adv1: "Dès 100$",
-      adv2: "Due Diligence IA",
-      adv3: "Gouvernance",
-      adv4: "Blockchain",
-      startAscent: "Commencer l'ascension"
-    },
-    en: {
-        liveData: "Real-time",
-        analysisTitle: "Market Analysis",
-        keyFigures: "Key Figures",
-        priceParis: "Price/m² Evolution (Paris)",
-        priceNY: "Median Price (Manhattan)",
-        accessibility: "Property Access",
-        canBuy: "Capable",
-        interestRate: "Avg Interest Rate",
-        medianRent: "Median Rent",
-        low: "Very Low",
-        criticallyLow: "Critically Low",
-        slowRecovery: "Slow Recovery",
-        strainedActive: "Strained but active",
-        dominateTitle: "Dominate the market",
-        dominateSpan: "with EcoRWA",
-        marketDescription: "Traditional real estate is locked. EcoRWA breaks the barriers.",
-        solutionSpan: "",
-        feature1Title: "Instant Liquidity",
-        feature1Desc: "Trade shares in 1 click.",
-        feature2Title: "Simulation",
-        feature2Desc: "Master cycles risk-free.",
-        ecoAdvantage: "EcoRWA Advantage",
-        adv1: "From $100",
-        adv2: "AI Due Diligence",
-        adv3: "Governance",
-        adv4: "Blockchain",
-        startAscent: "Start Ascent"
-    }
+  const handleAction = () => {
+    onClaimUSDC ? onClaimUSDC() : router.push('/dashboard');
   };
-
-  const t = (key: string) => translations[locale][key] || key;
-
-  useEffect(() => {
-    const saved = document.cookie.split('; ').find(row => row.startsWith('NEXT_LOCALE='))?.split('=')[1];
-    if (saved) setLocale(saved);
-  }, []);
 
   return (
     <section id="Info-analysis" className="relative bg-[#020617] text-white py-20 px-6 font-sans overflow-hidden border-t border-white/5">
-      
-      {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-[#E84142]/10 blur-[120px] pointer-events-none" />
 
       {/* --- HEADER --- */}
@@ -103,30 +59,20 @@ export default function InfoMarket() {
         <div>
           <div className="flex items-center gap-3 mb-3">
             <span className="h-[1.5px] w-8 bg-[#E84142]" />
-            <span className="text-[#E84142] font-bold tracking-[0.4em] uppercase text-[9px]">
-              Live Intelligence
-            </span>
+            <span className="text-[#E84142] font-bold tracking-[0.4em] uppercase text-[9px]">Live Intelligence</span>
           </div>
-          {/* Titre réduit en taille */}
-          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight italic uppercase">
+          <h2 className="title-huge">
             {t('analysisTitle')} <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">
-                {t('keyFigures')}
-            </span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">{t('keyFigures')}</span>
           </h2>
         </div>
 
-        {/* Tab Switcher Style Avalanche */}
         <div className="flex bg-white/[0.02] p-1 rounded-xl border border-white/10 backdrop-blur-md">
           {['PARIS', 'NY'].map((city) => (
             <button 
               key={city}
               onClick={() => setActiveTab(city as any)}
-              className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
-                activeTab === city 
-                ? 'bg-[#E84142] text-white shadow-[0_0_20px_rgba(232,65,66,0.3)]' 
-                : 'text-slate-500 hover:text-white'
-              }`}
+              className={`px-6 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === city ? 'bg-[#E84142] text-white' : 'text-slate-400 hover:text-white'}`}
             >
               {city}
             </button>
@@ -134,36 +80,31 @@ export default function InfoMarket() {
         </div>
       </div>
 
-      {/* --- MAIN GRID --- */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 relative z-10">
+      {/* --- GRAPHIQUES SUPÉRIEURS --- */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 relative z-10">
         
-        {/* Animated Area Chart */}
-        <div className="lg:col-span-2 bg-white/[0.01] backdrop-blur-sm border border-white/5 rounded-[2.5rem] p-8 md:p-10 hover:border-[#E84142]/20 transition-all group">
+        {/* Prix m² */}
+        <div className="lg:col-span-2 glass-card p-8 md:p-10">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-[#E84142]/10 rounded-xl border border-[#E84142]/20">
                 <Activity size={20} className="text-[#E84142] animate-pulse" />
               </div>
               <div>
-                <span className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold">{t('liveData')}</span>
-                <h3 className="text-xl font-black italic uppercase tracking-tight">
-                  {activeTab === 'PARIS' ? t('priceParis') : t('priceNY')}
-                </h3>
+                <span className="label-mono">{t('liveData')}</span>
+                <h3 className="text-xl font-black italic uppercase tracking-tight">{isParis ? t('priceParis') : t('priceNY')}</h3>
               </div>
             </div>
-            <div className="flex flex-col items-end">
-                <span className="text-3xl font-black italic tracking-tighter">
-                  {activeTab === 'PARIS' ? '10 580 €' : '$14 972'}
-                </span>
-                <span className="text-[#E84142] text-[10px] font-black flex items-center gap-0.5">
-                   <ArrowUpRight size={12} /> {activeTab === 'PARIS' ? '+1.5%' : '+4.0%'}
-                </span>
+            <div className="text-right">
+                <span className="text-3xl font-black italic tracking-tighter">{isParis ? '9 650 €' : '$15 317'}</span>
+                <div className="text-[#E84142] text-[10px] font-black flex items-center justify-end gap-0.5">
+                  <ArrowUpRight size={12} /> {isParis ? '-1.5%' : '+4.0%'}
+                </div>
             </div>
           </div>
-
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={activeTab === 'PARIS' ? parisData : nyData}>
+              <AreaChart data={marketHistory}>
                 <defs>
                   <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#E84142" stopOpacity={0.3}/>
@@ -173,155 +114,195 @@ export default function InfoMarket() {
                 <CartesianGrid strokeDasharray="0" vertical={false} stroke="#ffffff05" />
                 <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10}} dy={10} />
                 <Tooltip 
-                  cursor={{stroke: '#E84142', strokeWidth: 1}}
-                  contentStyle={{backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px'}} 
-                  itemStyle={{color: '#E84142', fontWeight: 'bold'}}
+                  cursor={{ stroke: '#E84142', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-[#020617]/80 backdrop-blur-md border border-[#E84142]/50 p-4 rounded-2xl">
+                          <span className="text-slate-500 text-[8px] font-bold uppercase">{data.year}</span>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-white font-black text-xl italic">{payload[0].value?.toLocaleString()}</span>
+                            <span className="text-white/50 text-xs font-bold">{isParis ? '€' : '$'}</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }} 
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke="#E84142" 
-                  strokeWidth={3} 
-                  fill="url(#colorPrice)" 
-                  animationDuration={2000}
-                />
+                <Area type="monotone" dataKey="price" stroke="#E84142" strokeWidth={3} fill="url(#colorPrice)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        
+        {/* Accessibilité */}
+        <div className="glass-card p-8 flex flex-col h-full min-h-[400px]">
+          <h3 className="subtitle-accent mb-8">{t('accessibility')}</h3>
+          
+          <div className="flex-1 flex flex-row gap-8 items-center h-full">
+            <div className="w-12 h-full min-h-[250px] bg-white/5 rounded-full relative overflow-hidden border border-white/10 shadow-inner">
+              <motion.div 
+                initial={{ height: 0 }}
+                animate={{ height: `${lastYearData.excluded}%` }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+                className="absolute top-0 w-full bg-[#E84142] shadow-[0_0_20px_rgba(232,65,66,0.4)]"
+              />
+              <motion.div 
+                initial={{ height: 0 }}
+                animate={{ height: `${lastYearData.capable}%` }}
+                transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
+                className="absolute bottom-0 w-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+              />
+            </div>
+
+            <div className="flex flex-col justify-between h-full min-h-[250px] py-2">
+              <div className="flex flex-col">
+                <span className="label-mono text-[#E84142] mb-1">{t('excluded')}</span>
+                <span className="title-secondary !text-5xl">{lastYearData.excluded}%</span>
+              </div>
+              
+              <div className="flex flex-col border-t border-white/10 pt-4">
+                 <span className="label-mono text-emerald-500 mb-1">{t('canBuy')}</span>
+                 <span className="title-secondary !text-3xl opacity-60">{lastYearData.capable}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
+             <span className="label-mono">Analysis 2025</span>
+             <span className="text-[#E84142] font-black italic">CRITICAL</span>
+          </div>
+        </div>
+      </div>
+
+      {/* --- GRAPHIQUES ANALYTIQUES BAS --- */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20 relative z-10">
+        
+        {/* Arbitrage */}
+        <div className="glass-card p-8">
+          <div className="mb-6">
+            <InfoLabel label={t('stats.yield_spread')} description={t('tooltips.yieldSpread')} />
+            <h4 className="text-xl font-black italic uppercase mt-1">
+              {isParis ? 'Arbitrage Immo vs Épargne' : 'Arbitrage Immo vs T-Notes'}
+            </h4>
+          </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={yieldData}>
+                <defs>
+                  <linearGradient id="colorRental" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#E84142" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#E84142" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10}} />
+                <Tooltip contentStyle={{backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px'}} />
+                <Area type="monotone" dataKey="rental" stroke="#E84142" fill="url(#colorRental)" strokeWidth={2} name="Immo %" />
+                <Area type="step" dataKey="savings" stroke="#475569" fill="transparent" strokeDasharray="5 5" name="Ref %" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Accessibility Card */}
-        <div className="bg-white/[0.01] backdrop-blur-sm border border-white/5 rounded-[2.5rem] p-10 flex flex-col justify-between hover:border-white/10 transition-all">
-          <h3 className="text-slate-500 text-[9px] font-black uppercase tracking-[0.3em]">{t('accessibility')}</h3>
-          
-          <div className="h-[200px] w-full relative my-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                    <Pie
-                      data={activeTab === 'PARIS' ? accessDataParis : accessDataNY}
-                      cx="50%" cy="50%" innerRadius={75} outerRadius={90} paddingAngle={10} dataKey="value"
-                      animationBegin={0} animationDuration={1500}
-                    >
-                    {(activeTab === 'PARIS' ? accessDataParis : accessDataNY).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={index === 0 ? '#E84142' : 'rgba(255,255,255,0.03)'} stroke="none" />
-                    ))}
-                    </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-5xl font-black italic tracking-tighter">{activeTab === 'PARIS' ? '25%' : '18%'}</span>
-                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{t('canBuy')}</span>
-              </div>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-3">
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between">
-              <span className="text-[9px] text-slate-500 font-bold uppercase">{t('interestRate')}</span>
-              <span className="text-xs font-black">{activeTab === 'PARIS' ? '3.8%' : '7.23%'}</span>
+        {/* Tension Locative */}
+        <div className="glass-card p-8 flex flex-col items-center justify-between min-h-[400px]">
+          <div className="w-full mb-2">
+            <div className="flex justify-between items-start w-full">
+              <InfoLabel label={t('stats.vacancy_rate')} description={t('tooltips.vacancyRate')} />
             </div>
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between">
-              <span className="text-[9px] text-slate-500 font-bold uppercase">{t('medianRent')}</span>
-              <span className="text-xs font-black">{activeTab === 'PARIS' ? '1 600 €' : '$4 500'}</span>
+            <h4 className="text-xl font-black italic uppercase mt-1">{t('vacancy_rate')}</h4>
+          </div>
+
+          <div className="relative flex justify-center items-center h-[200px] w-full">
+            <svg viewBox={`0 0 ${size} ${size / 2 + 10}`} width={size + 40} height={(size / 2) + 20} className="overflow-visible">
+              <defs>
+                <linearGradient id="tensionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="50%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#E84142" />
+                </linearGradient>
+              </defs>
+              <path d={`M ${center - radius},${center} A ${radius},${radius} 0 0,1 ${center + radius},${center}`} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth={25} strokeLinecap="round" />
+              <motion.path 
+                initial={{ strokeDashoffset: circumference }}
+                animate={{ strokeDashoffset: circumference - (isParis ? 0.75 : 0.94) * circumference }}
+                transition={{ duration: 2, ease: "easeOut" }}
+                d={`M ${center - radius},${center} A ${radius},${radius} 0 0,1 ${center + radius},${center}`} 
+                fill="none" stroke="url(#tensionGradient)" strokeWidth={25} strokeDasharray={circumference} strokeLinecap="round" 
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
+              <span className="text-6xl font-black italic tracking-tighter">
+                {isParis ? '7.5' : '9.4'}
+              </span>
+              <span className="label-mono">{t('scoreOutOf')}</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* --- ASSET GAUGES --- */}
-      <div className="max-w-7xl mx-auto mb-20"> 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {[
-            { name: "PARIS ASSET", type: t('slowRecovery'), status: t('low'), weight: "9 550 €/m²", percentage: 75, color: "#E84142" },
-            { name: "NY ASSET", type: t('strainedActive'), status: t('criticallyLow'), weight: "$15 317/m²", percentage: 92, color: "#ffffff" }
-          ].map((asset, i) => {
-            const strokeDashoffset = circumference - (asset.percentage / 100) * circumference;
-            return (
-              <div key={i} className="relative bg-white/[0.01] border border-white/5 rounded-[2.5rem] p-8 transition-all hover:border-[#E84142]/30 group">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h4 className="text-[9px] font-black text-[#E84142] tracking-[0.3em] uppercase mb-1">{asset.name}</h4>
-                    <p className="text-lg text-white font-black italic uppercase tracking-tight">{asset.type}</p>
-                  </div>
+          <div className="w-full grid grid-cols-4 gap-2 mt-4">
+            {['FAIBLE', 'MOYEN', 'TENDU', 'CRITIQUE'].map((label, idx) => {
+              const colors = ['#10b981', '#f59e0b', '#f97316', '#E84142'];
+              const isActive = isParis ? idx <= 2 : idx <= 3;
+              return (
+                <div key={label} className="flex flex-col gap-1.5">
+                  <div className="h-1 rounded-full transition-all duration-1000" style={{ backgroundColor: isActive ? colors[idx] : 'rgba(255,255,255,0.05)' }} />
+                  <span className={`text-[7px] text-center font-black uppercase ${isActive ? 'text-white' : 'text-slate-600'}`}>{label}</span>
                 </div>
-
-                <div className="relative flex justify-center items-center h-[140px]">
-                  <svg viewBox={`0 0 ${size} ${size / 2 + 10}`} width={size} height={size / 2 + 10} className="overflow-visible">
-                    <path d={`M ${center - radius},${center} A ${radius},${radius} 0 0,1 ${center + radius},${center}`} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth={strokeWidth} strokeLinecap="round" />
-                    <motion.path 
-                      initial={{ strokeDashoffset: circumference }}
-                      whileInView={{ strokeDashoffset }}
-                      transition={{ duration: 2, ease: "easeOut" }}
-                      d={`M ${center - radius},${center} A ${radius},${radius} 0 0,1 ${center + radius},${center}`} 
-                      fill="none" 
-                      stroke={asset.color} 
-                      strokeWidth={strokeWidth} 
-                      strokeDasharray={circumference} 
-                      strokeLinecap="round" 
-                      style={{ filter: `drop-shadow(0 0 8px ${asset.color}40)` }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
-                    <span className="text-5xl font-black text-white italic tracking-tighter">{asset.percentage}%</span>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex justify-between items-end pt-6 border-t border-white/5">
-                  <div>
-                    <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Market Value</span>
-                    <span className="text-lg font-bold italic">{asset.weight}</span>
-                  </div>
-                  <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${asset.color === '#E84142' ? 'bg-[#E84142]/10 text-[#E84142]' : 'bg-white/10 text-white'}`}>
-                    {asset.status}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* --- FOOTER CTA --- */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto relative z-10">
         <div className="bg-white/[0.01] backdrop-blur-3xl rounded-[3.5rem] p-10 md:p-16 border border-white/5 flex flex-col lg:flex-row gap-16 items-center">
           <div className="flex-1">
-            <h2 className="text-4xl md:text-5xl font-black mb-6 italic uppercase tracking-tighter leading-none">
+            <h2 className="title-secondary !text-5xl mb-6">
               {t('dominateTitle')} <span className="text-[#E84142]">{t('dominateSpan')}</span>
             </h2>
             <p className="text-slate-400 text-base mb-10 max-w-lg font-medium leading-relaxed">
               {t('marketDescription')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { icon: <Zap size={18} className="text-[#E84142]" />, title: t('feature1Title') },
-                { icon: <GraduationCap size={18} className="text-white" />, title: t('feature2Title') }
-              ].map((f, i) => (
-                <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/5">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/[0.03]">{f.icon}</div>
-                  <h4 className="font-black text-[10px] uppercase tracking-widest">{f.title}</h4>
+               <div className="flex flex-col gap-2 p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#E84142]/20 text-[#E84142]"><Zap size={16} /></div>
+                  <h4 className="label-mono !text-[10px]">{t('feature1Title')}</h4>
                 </div>
-              ))}
+                <p className="text-[10px] text-slate-500 leading-relaxed">{t('feature1Desc')}</p>
+              </div>
+              <div className="flex flex-col gap-2 p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 text-white"><GraduationCap size={16} /></div>
+                  <h4 className="label-mono !text-[10px]">{t('feature2Title')}</h4>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-relaxed">{t('feature2Desc')}</p>
+              </div>
             </div>
           </div>
 
           <div className="w-full lg:w-[400px] bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-10 relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#E84142] to-transparent opacity-40" />
             <h3 className="text-lg font-black mb-8 uppercase italic tracking-widest">{t('ecoAdvantage')}</h3>
             <div className="space-y-5 mb-10">
               {[t('adv1'), t('adv2'), t('adv3'), t('adv4')].map((adv, i) => (
                 <div key={i} className="flex items-center gap-4 group/item">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#E84142] shadow-[0_0_8px_#E84142]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#E84142]" />
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 group-hover/item:text-white transition-colors">{adv}</span>
                 </div>
               ))}
             </div>
-            <button className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-xl transition-all hover:bg-[#E84142] hover:text-white hover:scale-[1.02] active:scale-95 shadow-2xl">
+            <button 
+              onClick={handleAction}
+              className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-xl transition-all hover:bg-[#E84142] hover:text-white hover:scale-[1.02] active:scale-95 cursor-pointer"
+            >
               {t('startAscent')}
             </button>
           </div>
         </div>
       </div>
-      
-
     </section>
   );
 }

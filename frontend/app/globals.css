@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+
+@tailwind utilities;
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -120,7 +123,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[#020617] text-white antialiased selection:bg-[#E84142]/30;
+  }
+  button:not(:disabled) {
+    @apply cursor-pointer transition-transform active:scale-95;
   }
 }
 @layer utilities {
@@ -150,4 +156,77 @@
 .animate-gradient-x {
   background-size: 200% 200%;
   animation: gradient-x 3s linear infinite;
+}
+
+@layer components {
+  /* --- TITRES --- */
+  .title-huge {
+    @apply text-6xl lg:text-8xl font-black tracking-tighter italic leading-[0.85] uppercase;
+  }
+
+  .title-secondary {
+    @apply text-3xl lg:text-8xl font-black text-white leading-[0.85] tracking-tighter italic uppercase;
+  }
+
+  .subtitle-accent {
+    @apply text-[#E84142] font-bold tracking-[0.3em] uppercase text-[10px] flex items-center gap-4;
+  }
+
+  .subtitle-accent::before {
+    content: "";
+    @apply h-[1px] w-12 bg-[#E84142];
+  }
+
+  /* --- GLASSMORPHISM --- */
+  .glass-card {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl transition-all duration-300 hover:border-white/20;
+  }
+
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-md border border-white/5 p-6 rounded-3xl;
+  }
+
+  /* --- BOUTONS & INTERACTIFS --- */
+  .btn-primary {
+    @apply px-8 py-4 bg-[#E84142] hover:bg-[#ff4d4f] text-white font-black italic uppercase transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50;
+  }
+
+  .btn-glass {
+    @apply px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-sm text-white font-bold transition-all;
+  }
+
+  /* --- TEXTES PETITS / MONO --- */
+  .label-mono {
+    @apply text-slate-500 text-[10px] font-mono opacity-50 uppercase tracking-widest;
+  }
+}
+
+/* Animation de flux laser */
+@keyframes laser-flow {
+  from { stroke-dashoffset: 100; opacity: 0.4; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+.network-energy {
+  stroke: #ff9d00 !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 20 15;
+  animation: laser-flow 2s linear infinite;
+  filter: drop-shadow(0 0 5px #ff9d00);
+}
+
+.network-water {
+  stroke: #00f2ff !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 30 10;
+  animation: laser-flow 4s linear infinite;
+  filter: drop-shadow(0 0 5px #00f2ff);
+}
+
+/* Grille de fond type blueprint */
+.blueprint-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
 }

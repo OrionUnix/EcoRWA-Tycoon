@@ -27,7 +27,6 @@
     "market": "Listings",
     "market-analysis": "Analyses",
     "Info-analysis": "Chiffres & analyses"
-
   },
   "howItWorks": {
     "title": "Comment ça marche ?",
@@ -68,7 +67,7 @@
     }
   },
   "dashboard": {
-   "title": "Dashboard Utilisateur"
+    "title": "Dashboard Utilisateur"
   },
   "properties": {
     "title": "RWA LISTINGS",
@@ -130,18 +129,46 @@
     "zoom": "Molette : Zoom",
     "pitch": "Clic Droit : Inclinaison"
   },
-
-"footer": {
-  "tagline": "L'investissement immobilier devient un jeu. SimCity rencontre la DeFi sur Avalanche.",
-  "rights": "Tous droits réservés",
-  "privacy": "Confidentialité",
-  "terms": "Conditions",
-  "madeWith": "Fait avec",
-  "by": "par"
+  "footer": {
+    "tagline": "L'investissement immobilier devient un jeu. SimCity rencontre la DeFi sur Avalanche.",
+    "rights": "Tous droits réservés",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "madeWith": "Fait avec",
+    "by": "par"
+  },
+  "infoMarket": {
+    "analysisTitle": "Analyse du Marché",
+    "keyFigures": "Chiffres Clés",
+    "liveData": "Données en temps réel",
+    "priceParis": "Marché Parisien",
+    "priceNY": "Marché New Yorkais",
+    "accessibility": "Accessibilité",
+    "excluded": "Exclus du marché",
+    "canBuy": "Peuvent acheter",
+    "scoreOutOf": "Score / 10",
+    "vacancy_rate": "Tension Locative",
+    "dominateTitle": "Dominez le marché",
+    "dominateSpan": "avec EcoRWA",
+    "marketDescription": "Oubliez la bureaucratie. Nous avons transformé l'investissement immobilier en un jeu de stratégie où vous gagnez réellement de l'argent.",
+    "feature1Title": "IA Urban Advisor",
+    "feature1Desc": "Notre IA déchiffre le jargon légal (PLU) pour vous donner les vrais risques en clair.",
+    "feature2Title": "Simulation Active",
+    "feature2Desc": "Apprenez à investir sans risque avant de passer aux choses sérieuses.",
+    "ecoAdvantage": "Le Mode Tycoon",
+    "adv1": "Dès 100$",
+    "adv2": "Gouvernance Active",
+    "adv3": "Revenus en Temps Réel",
+    "adv4": "Propriété Fractionnée",
+    "startAscent": "Commencer l'ascension",
+    "stats": {
+      "yield_spread": "Arbitrage : Immo vs Épargne",
+      "vacancy_rate": "Tension Locative"
+    },
+    "scoreOutOf": "Score / 10",
+    "tooltips": {
+      "yieldSpread": "L'écart entre le rendement locatif et le taux du Livret A. Si le spread est élevé, l'immobilier est beaucoup plus attractif.",
+      "vacancyRate": "Pourcentage de logements vides. À Paris, un taux bas (<3%) indique une forte demande."
+    }
+  }
 }
-
-
-}
-
-
-  

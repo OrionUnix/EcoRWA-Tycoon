@@ -52,15 +52,12 @@ export default function LandingPage({
           <PropertiesSection />
         </section>
 
-        {/* PAGE 1 : Analyse Stratégique (Cartes Zap, Scale, etc.) */}
         <MarketAnalysis />
-
-        {/* PAGE 2 : Analyse Data (Graphiques Recharts Paris/NY) */}
         <InfoMarket />
 
       </div>
 
-<Footer />
+      <Footer />
     </main>
   );
 }

@@ -1,0 +1,35 @@
+{
+  "analysisTitle": "Market Analysis",
+  "keyFigures": "Key Figures",
+  "liveData": "Real-Time Data",
+  "priceParis": "Average Price Paris",
+  "priceNY": "Average Price New York",
+  "accessibility": "Housing Accessibility",
+  "canBuy": "Can Buy",
+  "excluded": "Excluded from the Market",
+  "rentalTension": "Rental Tension",
+  "liveStatus": "Live Status",
+  "scoreOutOf": "Score / 10",
+  "dominateTitle": "Dominate",
+  "dominateSpan": "The Market",
+  "marketDescription": "Access premium assets with liquidity guaranteed by blockchain.",
+  "ecoAdvantage": "Ecosystem Advantages",
+  "startAscent": "Start the Ascent",
+  "feature1Title": "Speed",
+  "feature1Desc": "Instant transactions via USDC.",
+  "feature2Title": "Knowledge",
+  "feature2Desc": "Built-in AI predictive analytics.",
+  "adv1": "Zero entry fees",
+  "adv2": "Daily revenues",
+  "adv3": "Active governance",
+  "adv4": "On-chain audit",
+  "stats": {
+    "yield_spread": "Arbitrage Real Estate vs Savings",
+    "vacancy_rate": "Rental Market Tension"
+  },
+  "scoreOutOf": "Score / 10",
+  "tooltips": {
+    "yieldSpread": "Difference between gross rental yield and the risk-free savings rate.",
+    "vacancyRate": "Percentage of unoccupied housing. A low rate indicates strong demand."
+  }
+}
