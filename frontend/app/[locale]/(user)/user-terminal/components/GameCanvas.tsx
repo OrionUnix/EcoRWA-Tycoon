@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 import { getMapEngine, regenerateWorld } from '../engine/MapEngine';
 import { gridToScreen, screenToGrid } from '../engine/isometric';
@@ -16,115 +16,203 @@ const COLORS = {
     PLAINS: 0x81c784, PLAINS_VAR: 0x66bb6a,
     FOREST: 0x2e7d32, MOUNTAIN: 0x8d6e63,
     DESERT: 0xe6c288, SNOW: 0xffffff,
-
-    WHITE_MODEL: 0xf5f5f5,
-    WATER_MODEL: 0xb3e5fc,
-
-    OIL: 0xffd700,
-    COAL: 0x212121,
-    IRON: 0xff5722,
-    WOOD: 0x43a047,
-    FOOD: 0xff3366,
-    WATER_RES: 0x0000ff
+    WHITE_MODEL: 0xf5f5f5, WATER_MODEL: 0xb3e5fc,
+    OIL: 0xffd700, COAL: 0x212121, IRON: 0xff5722,
+    WOOD: 0x43a047, FOOD: 0xff3366, WATER_RES: 0x0000ff,
+    GRID_LINES: 0x999999,
+    HIGHLIGHT: 0xFFFFFF
 };
 
 type ViewMode = 'ALL' | 'WATER' | 'OIL' | 'COAL' | 'IRON' | 'WOOD' | 'FOOD';
 
-const BIOME_NAMES = {
-    [BiomeType.DEEP_OCEAN]: 'MER', [BiomeType.OCEAN]: 'CÔTE', [BiomeType.BEACH]: 'PLAGE',
-    [BiomeType.DESERT]: 'DÉSERT', [BiomeType.PLAINS]: 'PLAINE', [BiomeType.FOREST]: 'FORÊT',
-    [BiomeType.MOUNTAIN]: 'MONTAGNE', [BiomeType.SNOW]: 'NEIGE',
+const BIOME_KEYS: Record<number, string> = {
+    [BiomeType.DEEP_OCEAN]: 'deep_ocean', [BiomeType.OCEAN]: 'ocean',
+    [BiomeType.BEACH]: 'beach', [BiomeType.DESERT]: 'desert',
+    [BiomeType.PLAINS]: 'plains', [BiomeType.FOREST]: 'forest',
+    [BiomeType.MOUNTAIN]: 'mountain', [BiomeType.SNOW]: 'snow',
 };
 
 export default function GameCanvas() {
     const t = useTranslations('Game');
+    const locale = useLocale();
+
     const pixiContainerRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<PIXI.Application | null>(null);
     const graphicsRef = useRef<PIXI.Graphics | null>(null);
+    const highlightRef = useRef<PIXI.Graphics | null>(null);
 
-    const viewState = useRef({ x: 0, y: 0, zoom: INITIAL_ZOOM, isDragging: false, lastMouse: { x: 0, y: 0 } });
-    const lastHoverUpdate = useRef(0);
+    const viewModeRef = useRef<ViewMode>('ALL');
+    const showGridRef = useRef(false);
 
     const [viewMode, setViewMode] = useState<ViewMode>('ALL');
     const [showGrid, setShowGrid] = useState(false);
+
+    // DEBUG INFO
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [hoverInfo, setHoverInfo] = useState<ResourceInfo & { biomeName: string } | null>(null);
     const [debugFPS, setDebugFPS] = useState(0);
     const [summary, setSummary] = useState<any>(null);
 
-    // Fonction Helper
-    const formatNumber = (num: number) => {
-        return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(num);
-    };
+    useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
+    useEffect(() => { showGridRef.current = showGrid; }, [showGrid]);
 
-    // 1. INIT PIXI
+    const formatNumber = (num: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(num);
+
+    // 1. INIT
     useEffect(() => {
-        if (!pixiContainerRef.current || typeof window === 'undefined') return;
-        if (appRef.current) return;
+        if (!pixiContainerRef.current || appRef.current) return;
 
         const init = async () => {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-
             const app = new PIXI.Application();
             await app.init({
-                width, height, backgroundColor: COLORS.BG, antialias: true, resolution: window.devicePixelRatio || 1
+                resizeTo: pixiContainerRef.current!,
+                backgroundColor: COLORS.BG,
+                antialias: true,
+                resolution: window.devicePixelRatio || 1,
+                eventMode: 'static' // Important pour capturer les events Pixi
             });
 
-            // --- CORRECTION TYPE SCRIPT ---
-            // On vérifie que le ref existe toujours après le 'await'
-            if (!pixiContainerRef.current) {
-                app.destroy();
-                return;
-            }
-
+            if (!pixiContainerRef.current) { app.destroy(); return; }
             pixiContainerRef.current.appendChild(app.canvas);
             appRef.current = app;
 
+            // Conteneur principal (Caméra)
             const stage = new PIXI.Container();
+            // On définit une zone de hit pour que le stage capture la souris partout
+            stage.hitArea = new PIXI.Rectangle(-100000, -100000, 200000, 200000);
+            stage.eventMode = 'static';
+            app.stage.addChild(stage);
+
             const graphics = new PIXI.Graphics();
             stage.addChild(graphics);
-            app.stage.addChild(stage);
             graphicsRef.current = graphics;
 
+            const highlight = new PIXI.Graphics();
+            stage.addChild(highlight);
+            highlightRef.current = highlight;
+
+            // Centrage
             const center = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
-            viewState.current.x = (width / 2) - (center.x * INITIAL_ZOOM);
-            viewState.current.y = (height / 2) - (center.y * INITIAL_ZOOM);
-            stage.position.set(viewState.current.x, viewState.current.y);
+            const screenW = app.screen.width;
+            const screenH = app.screen.height;
+
+            stage.position.set((screenW / 2) - (center.x * INITIAL_ZOOM), (screenH / 2) - (center.y * INITIAL_ZOOM));
             stage.scale.set(INITIAL_ZOOM);
+
+            // GESTION EVENTS PIXI (Plus fiable que les events DOM)
+            stage.on('pointermove', (e) => {
+                const globalPos = e.global;
+                // Pixi convertit la position globale en position locale (tient compte du zoom/pan)
+                const localPos = stage.toLocal(globalPos);
+
+                // Convertit pixels -> grille
+                const gridPos = screenToGrid(localPos.x, localPos.y);
+                setCursorPos(gridPos); // Mise à jour UI Debug
+
+                // Mise à jour curseur visuel
+                updateHighlight(gridPos.x, gridPos.y);
+
+                // Logique Tooltip
+                const engine = getMapEngine();
+                if (gridPos.x >= 0 && gridPos.x < engine.config.size && gridPos.y >= 0 && gridPos.y < engine.config.size) {
+                    const idx = gridPos.y * engine.config.size + gridPos.x;
+                    const biome = engine.biomes[idx] as BiomeType;
+                    const info = getResourceAtTile(engine, idx, viewModeRef.current);
+
+                    const biomeKey = BIOME_KEYS[biome] || 'plains';
+                    const translatedBiome = t(`biomes.${biomeKey}`);
+
+                    if (info) setHoverInfo({ ...info, biomeName: translatedBiome });
+                    else setHoverInfo({ value: 0, amount: 0, resourceKey: '', unitKey: '', techReq: 0, biomeName: translatedBiome });
+                } else {
+                    setHoverInfo(null);
+                }
+            });
+
+            // GESTION DRAG & ZOOM (Événements DOM standards pour plus de fluidité)
+            const canvas = app.canvas;
+            let isDragging = false;
+            let lastX = 0;
+            let lastY = 0;
+
+            const onWheel = (e: WheelEvent) => {
+                e.preventDefault();
+                const zoomSpeed = 0.001;
+                let newZoom = stage.scale.x * (1 - e.deltaY * zoomSpeed);
+                newZoom = Math.max(0.2, Math.min(5.0, newZoom));
+
+                // Zoom souris
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const worldPos = {
+                    x: (mouseX - stage.x) / stage.scale.x,
+                    y: (mouseY - stage.y) / stage.scale.y
+                };
+
+                stage.scale.set(newZoom);
+                stage.position.set(mouseX - worldPos.x * newZoom, mouseY - worldPos.y * newZoom);
+            };
+
+            const onMouseDown = (e: MouseEvent) => {
+                isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            };
+
+            const onMouseMove = (e: MouseEvent) => {
+                if (!isDragging) return;
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                stage.x += dx;
+                stage.y += dy;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            };
+
+            const onMouseUp = () => { isDragging = false; };
+
+            canvas.addEventListener('wheel', onWheel);
+            canvas.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
 
             regenerateWorld();
             setSummary(getMapEngine().currentSummary);
-            drawMap();
+            app.ticker.add(renderLoop);
         };
         init();
         return () => { appRef.current?.destroy({ removeView: true }); appRef.current = null; };
     }, []);
 
     // 2. RENDER LOOP
-    const drawMap = useCallback(() => {
+    const renderLoop = useCallback(() => {
         const g = graphicsRef.current;
         if (!g || g.destroyed) return;
         if (appRef.current) setDebugFPS(Math.round(appRef.current.ticker.FPS));
 
         g.clear();
+        const currentMode = viewModeRef.current;
+        const isGridVisible = showGridRef.current;
         const engine = getMapEngine();
         const { oil, coal, iron, wood, animals, fish } = engine.resourceMaps;
         const water = engine.getLayer(LayerType.WATER);
         const biomes = engine.biomes;
-
         const getVariation = (idx: number) => (Math.sin(idx * 999) > 0.5);
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
                 const i = y * GRID_SIZE + x;
+                // Culling (Optimisation: ne pas dessiner hors écran)
+                // Ici on dessine tout pour simplifier, mais on pourrait optimiser
                 const pos = gridToScreen(x, y);
                 const biome = biomes[i];
 
                 let fillColor = 0x000000;
                 let strokeAlpha = 0;
 
-                if (viewMode === 'ALL') {
+                if (currentMode === 'ALL') {
                     if (biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.DEEP_OCEAN;
                     else if (biome === BiomeType.OCEAN) fillColor = COLORS.OCEAN;
                     else if (biome === BiomeType.BEACH) fillColor = COLORS.BEACH;
@@ -133,22 +221,18 @@ export default function GameCanvas() {
                     else if (biome === BiomeType.MOUNTAIN) fillColor = COLORS.MOUNTAIN;
                     else if (biome === BiomeType.SNOW) fillColor = COLORS.SNOW;
                     else fillColor = getVariation(i) ? COLORS.PLAINS : COLORS.PLAINS_VAR;
-
-                    if (showGrid) strokeAlpha = 0.1;
+                    if (isGridVisible) strokeAlpha = 0.1;
                 } else {
-                    // DATA MODE
                     fillColor = COLORS.WHITE_MODEL;
                     if (biome === BiomeType.OCEAN || biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.WATER_MODEL;
                     strokeAlpha = 0.15;
 
-                    if (viewMode === 'OIL' && oil[i] > 0.1) fillColor = COLORS.OIL;
-                    else if (viewMode === 'COAL' && coal[i] > 0.1) fillColor = COLORS.COAL;
-                    else if (viewMode === 'IRON' && iron[i] > 0.1) fillColor = COLORS.IRON;
-                    else if (viewMode === 'WOOD' && wood[i] > 0.1) fillColor = COLORS.WOOD;
-                    else if (viewMode === 'WATER' && water[i] > 0.1) fillColor = COLORS.WATER_RES;
-                    else if (viewMode === 'FOOD') {
-                        if (fish[i] > 0.1 || animals[i] > 0.1) fillColor = COLORS.FOOD;
-                    }
+                    if (currentMode === 'OIL' && oil[i] > 0.01) fillColor = COLORS.OIL;
+                    else if (currentMode === 'COAL' && coal[i] > 0.01) fillColor = COLORS.COAL;
+                    else if (currentMode === 'IRON' && iron[i] > 0.01) fillColor = COLORS.IRON;
+                    else if (currentMode === 'WOOD' && wood[i] > 0.01) fillColor = COLORS.WOOD;
+                    else if (currentMode === 'WATER' && water[i] > 0.01) fillColor = COLORS.WATER_RES;
+                    else if (currentMode === 'FOOD' && (fish[i] > 0.01 || animals[i] > 0.01)) fillColor = COLORS.FOOD;
                 }
 
                 g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
@@ -156,97 +240,29 @@ export default function GameCanvas() {
                 g.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
                 g.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
                 g.closePath();
-
                 g.fill({ color: fillColor });
-                if (strokeAlpha > 0) g.stroke({ width: 1, color: 0x999999, alpha: strokeAlpha });
+                if (strokeAlpha > 0) g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: strokeAlpha });
             }
         }
-    }, [viewMode, showGrid]);
+    }, []);
 
-    useEffect(() => { if (appRef.current) drawMap(); }, [viewMode, showGrid, drawMap]);
+    const updateHighlight = (x: number, y: number) => {
+        const h = highlightRef.current;
+        if (!h || h.destroyed) return;
+        h.clear();
+        if (x < 0 || y < 0 || x >= GRID_SIZE || y >= GRID_SIZE) return;
 
-    // 3. INPUTS
-    useEffect(() => {
-        const handleWheel = (e: WheelEvent) => {
-            if (!appRef.current) return;
-            const stage = appRef.current.stage.children[0];
-            const zoomSpeed = 0.001;
-            let newZoom = viewState.current.zoom * (1 - e.deltaY * zoomSpeed);
-            newZoom = Math.max(0.1, Math.min(4.0, newZoom));
-            viewState.current.zoom = newZoom;
-            stage.scale.set(newZoom);
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-
-            // Calcul position Monde
-            const worldPos = {
-                x: (mouseX - viewState.current.x) / viewState.current.zoom,
-                y: (mouseY - viewState.current.y) / viewState.current.zoom
-            };
-
-            viewState.current.x = mouseX - worldPos.x * newZoom;
-            viewState.current.y = mouseY - worldPos.y * newZoom;
-            stage.position.set(viewState.current.x, viewState.current.y);
-        };
-
-        const handleMouseDown = (e: MouseEvent) => { viewState.current.isDragging = true; viewState.current.lastMouse = { x: e.clientX, y: e.clientY }; };
-
-        const handleMouseMove = (e: MouseEvent) => {
-            const app = appRef.current;
-            if (!app) return;
-            const stage = app.stage.children[0];
-
-            if (viewState.current.isDragging) {
-                const dx = e.clientX - viewState.current.lastMouse.x;
-                const dy = e.clientY - viewState.current.lastMouse.y;
-                viewState.current.x += dx;
-                viewState.current.y += dy;
-                viewState.current.lastMouse = { x: e.clientX, y: e.clientY };
-                stage.position.set(viewState.current.x, viewState.current.y);
-            }
-
-            // TOOLTIP LOGIC
-            const now = Date.now();
-            if (now - lastHoverUpdate.current > 40) {
-                lastHoverUpdate.current = now;
-
-                // Utilisation de toLocal pour corriger le décalage
-                const localPos = stage.toLocal({ x: e.clientX, y: e.clientY });
-                const gridPos = screenToGrid(localPos.x, localPos.y);
-                setCursorPos(gridPos);
-
-                const engine = getMapEngine();
-                if (gridPos.x >= 0 && gridPos.x < engine.config.size && gridPos.y >= 0 && gridPos.y < engine.config.size) {
-                    const idx = gridPos.y * engine.config.size + gridPos.x;
-                    const biome = engine.biomes[idx] as BiomeType;
-                    const info = getResourceAtTile(engine, idx, viewMode);
-                    setHoverInfo(info ? { ...info, biomeName: BIOME_NAMES[biome] || '' } : null);
-                } else {
-                    setHoverInfo(null);
-                }
-            }
-        };
-        const handleMouseUp = () => { viewState.current.isDragging = false; };
-
-        window.addEventListener('wheel', handleWheel, { passive: false });
-        window.addEventListener('mousedown', handleMouseDown);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-        window.addEventListener('contextmenu', e => e.preventDefault());
-        return () => {
-            window.removeEventListener('wheel', handleWheel);
-            window.removeEventListener('mousedown', handleMouseDown);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
-            window.removeEventListener('contextmenu', e => e.preventDefault());
-        };
-    }, [viewMode]);
-
-    const handleRegenerate = () => {
-        regenerateWorld();
-        setSummary(getMapEngine().currentSummary);
-        drawMap();
+        const pos = gridToScreen(x, y);
+        h.lineStyle(2, COLORS.HIGHLIGHT, 1);
+        h.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
+        h.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
+        h.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
+        h.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
+        h.closePath();
+        h.stroke();
     };
+
+    const handleRegenerate = () => { regenerateWorld(); setSummary(getMapEngine().currentSummary); };
 
     const ResourceBar = ({ label, value, color }: any) => (
         <div className="flex items-center gap-2 text-xs mb-1">
@@ -261,9 +277,11 @@ export default function GameCanvas() {
     return (
         <div className="w-full h-full relative overflow-hidden bg-black">
             <div ref={pixiContainerRef} className="absolute inset-0" />
-            <div className="absolute top-2 right-2 text-xs text-green-500 font-mono z-20">FPS: {debugFPS}</div>
+            <div className="absolute top-2 right-2 text-xs text-green-500 font-mono z-20 flex flex-col items-end">
+                <span>FPS: {debugFPS}</span>
+                <span className="text-yellow-400">MOUSE: {cursorPos.x}, {cursorPos.y}</span>
+            </div>
 
-            {/* UI GAUCHE */}
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 bg-gray-900/90 p-2 rounded border border-gray-700 shadow-xl backdrop-blur-md">
                 <div className="flex justify-between items-center mb-2 border-b border-gray-700 pb-1">
                     <h3 className="text-xs text-blue-400 font-bold uppercase px-1">Vues</h3>
@@ -285,7 +303,6 @@ export default function GameCanvas() {
                 ))}
             </div>
 
-            {/* UI BAS GAUCHE (RAPPORT) */}
             {summary && (
                 <div className="absolute bottom-4 left-4 z-10 bg-gray-900/95 p-4 rounded-lg border border-gray-600 shadow-2xl w-64 backdrop-blur-sm">
                     <h3 className="text-sm font-bold text-white mb-3 border-b border-gray-700 pb-2">RAPPORT GÉOLOGIQUE</h3>
@@ -297,18 +314,13 @@ export default function GameCanvas() {
                 </div>
             )}
 
-            {/* UI DROITE (TOOLTIP) */}
             <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
-                {/* Boite Coordonnées */}
                 <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
                     <span>XY: [{cursorPos.x}, {cursorPos.y}]</span>
-                    {hoverInfo?.biomeName && (
-                        <span className="text-white font-bold">{hoverInfo.biomeName}</span>
-                    )}
+                    {hoverInfo && <span className="text-white font-bold">{hoverInfo.biomeName}</span>}
                 </div>
 
-                {/* Boite Détail Ressource */}
-                {hoverInfo ? (
+                {hoverInfo && hoverInfo.resourceKey ? (
                     <div className="bg-gray-900/95 backdrop-blur border border-blue-500/50 rounded-lg p-4 shadow-2xl animate-in fade-in slide-in-from-top-2">
                         <div className="flex justify-between items-start mb-2">
                             <div>
@@ -338,10 +350,6 @@ export default function GameCanvas() {
                                 className="h-full bg-gradient-to-r from-blue-500 to-green-400 transition-all duration-300"
                                 style={{ width: `${Math.min(100, hoverInfo.value * 100)}%` }}
                             />
-                        </div>
-                        <div className="flex justify-between text-[10px] text-gray-500 mt-1">
-                            <span>Pauvre</span>
-                            <span>Abondant</span>
                         </div>
                     </div>
                 ) : (

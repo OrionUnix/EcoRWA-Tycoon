@@ -10,7 +10,7 @@ export const TILE_WIDTH = 64;
 export const TILE_HEIGHT = 32;
 
 // Zoom plus proche par défaut vu que la carte est plus petite
-export const INITIAL_ZOOM = 0.5;
+export const INITIAL_ZOOM = 1.0;
 
 export const RESOURCE_CAPACITY = {
     OIL: 250000, COAL: 50000, IRON: 40000,
