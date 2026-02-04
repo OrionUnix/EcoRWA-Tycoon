@@ -67,12 +67,9 @@ export class MapEngine {
 
     // --- Place Road Method Modifiée ---
     public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
-        // 1. Check strict si la case est valide (pour éviter les glitchs via console ou autre)
-        // Note: On passe null pour prevIndex car on suppose que le contrôle principal a été fait par le UI
-        // Mais idéalement, on devrait passer le contexte. Pour l'instant on accepte.
 
         // 2. Destruction de la forêt (Rayon 1)
-        RoadManager.clearForestAround(this, index);
+        RoadManager.applyEnvironmentalImpact(this, index);
 
         // 3. Détermine le type (Pont, Tunnel) basé sur le terrain actuel
         const waterDepth = this.getLayer(LayerType.WATER)[index];
