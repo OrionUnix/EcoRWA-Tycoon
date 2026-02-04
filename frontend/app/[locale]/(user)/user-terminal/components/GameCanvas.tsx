@@ -70,18 +70,33 @@ export default function GameCanvas() {
 
     // 1. INIT PIXI
     useEffect(() => {
+        // Attendre que la ref soit prête
         if (!pixiContainerRef.current || appRef.current) return;
 
         const init = async () => {
+            const parent = pixiContainerRef.current!;
+
+            // Attendre que le parent ait une taille (important pour éviter le 0x0)
+            if (parent.clientWidth === 0 || parent.clientHeight === 0) {
+                console.warn("Parent container has 0 size, waiting...");
+                // On pourrait ajouter un resizeObserver ici, mais pour l'instant on initialise
+            }
+
             const app = new PIXI.Application();
-            // Use window as resizeTo source to ensure full screen coverage
             await app.init({
-                resizeTo: window,
+                // On utilise 'parent' pour la taille initiale
+                width: parent.clientWidth || window.innerWidth,
+                height: parent.clientHeight || window.innerHeight,
                 backgroundColor: COLORS.BG,
                 antialias: true,
                 resolution: window.devicePixelRatio || 1,
                 eventMode: 'static'
             });
+
+            // IMPORTANT : On force le style du canvas pour qu'il remplisse le div parent
+            app.canvas.style.width = "100%";
+            app.canvas.style.height = "100%";
+            app.canvas.style.display = "block"; // Évite les scrollbars fantômes
 
             if (!pixiContainerRef.current) { app.destroy(); return; }
             pixiContainerRef.current.appendChild(app.canvas);
@@ -104,10 +119,12 @@ export default function GameCanvas() {
             stage.addChild(highlight);
             highlightRef.current = highlight;
 
-            // --- CENTRAGE DE LA CAMÉRA ---
+            // --- CENTRAGE ROBUSTE ---
             const centerCamera = () => {
-                const screenW = app.screen.width;
-                const screenH = app.screen.height;
+                // On utilise les dimensions réelles du canvas rendu
+                const screenW = app.renderer.width / app.renderer.resolution;
+                const screenH = app.renderer.height / app.renderer.resolution;
+
                 const center = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
 
                 stage.position.set(
@@ -117,15 +134,20 @@ export default function GameCanvas() {
                 stage.scale.set(INITIAL_ZOOM);
             };
 
-            // Centrage initial
+            // 1. Centrage Initial
             centerCamera();
 
-            // Recalcul du centre lors du redimensionnement de la fenêtre
-            window.addEventListener('resize', () => {
-                app.resize();
-                // Optional: Recenter on resize if desired, or let user pan
-                // centerCamera(); 
+            // 2. Gestion du redimensionnement (Layout Shift)
+            const resizeObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    const { width, height } = entry.contentRect;
+                    if (width > 0 && height > 0) {
+                        app.renderer.resize(width, height);
+                        centerCamera(); // On recentre à chaque changement de taille
+                    }
+                }
             });
+            resizeObserver.observe(parent);
 
             // --- GESTION ÉVÉNEMENTS ---
             let isDraggingCamera = false;
@@ -384,8 +406,7 @@ export default function GameCanvas() {
     const ResourceBar = ({ label, value, color }: any) => (<div className="flex items-center gap-2 text-xs mb-1"> <span className="w-16 text-gray-400 font-bold uppercase">{label}</span> <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"> <div className="h-full transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color }}></div> </div> <span className="w-8 text-right text-white">{Math.round(value)}%</span> </div>);
 
     return (
-        // IMPORTANT: w-screen h-screen ensures full viewport usage
-        <div className="w-screen h-screen relative overflow-hidden bg-black">
+        <div className="w-full h-full relative overflow-hidden bg-black">
             <div ref={pixiContainerRef} className="absolute inset-0" />
 
             <div className="absolute top-2 right-2 text-xs text-green-500 font-mono z-20 flex flex-col items-end pointer-events-none">
@@ -393,7 +414,6 @@ export default function GameCanvas() {
                 <span className="text-yellow-400">{t('ui.coords')}: {cursorPos.x}, {cursorPos.y}</span>
             </div>
 
-            {/* INFO COÛT */}
             {viewMode === 'BUILD_ROAD' && totalCost > 0 && (
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 animate-in fade-in zoom-in duration-200">
                     <div className={`px-4 py-2 rounded-full font-bold text-white shadow-xl backdrop-blur-md border border-white/20 ${isValidBuild ? 'bg-green-600/90' : 'bg-red-600/90'}`}>

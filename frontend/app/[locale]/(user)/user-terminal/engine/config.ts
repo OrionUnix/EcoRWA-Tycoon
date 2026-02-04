@@ -1,21 +1,3 @@
-// Exemple de config wagmi moderne
-import { createConfig, http } from 'wagmi';
-import { mainnet, avalancheFuji } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
-
-export const config = createConfig({
-    chains: [avalancheFuji],
-    transports: {
-        [avalancheFuji.id]: http(),
-    },
-    connectors: [
-        injected(), // Ceci gère automatiquement EIP-6963 et évite les conflits window.ethereum
-    ],
-});
-
-// Détection du mode DEV
-export const IS_DEV = process.env.NODE_ENV === 'development';
-
 // 128x128 est le "Sweet Spot" pour un city builder web performant
 export const GRID_SIZE = 128;
 export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
@@ -24,8 +6,8 @@ export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 export const TILE_WIDTH = 64;
 export const TILE_HEIGHT = 32;
 
-// Zoom plus proche par défaut vu que la carte est plus petite
-export const INITIAL_ZOOM = 1.0;
+// Zoom par défaut (Réduit pour voir plus de carte)
+export const INITIAL_ZOOM = 0.5;
 
 export const RESOURCE_CAPACITY = {
     OIL: 250000, COAL: 50000, IRON: 40000,
