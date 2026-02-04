@@ -459,7 +459,34 @@ export default function GameCanvas() {
                     </button>
                 ))}
             </div>
-
+            <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
+                <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
+                    <span>{t('ui.coords')}: [{cursorPos.x}, {cursorPos.y}]</span>
+                    {hoverInfo && <span className="text-white font-bold">{hoverInfo.biomeName}</span>}
+                </div>
+                {hoverInfo && hoverInfo.resourceKey ? (
+                    <div className="bg-gray-900/95 backdrop-blur border border-blue-500/50 rounded-lg p-4 shadow-2xl animate-in fade-in slide-in-from-top-2">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 className="text-sm text-gray-400 uppercase tracking-wider text-[10px]">{t('ui.potential')}</h4>
+                                <h2 className="text-xl font-bold text-white leading-tight">{t(`resources.${hoverInfo.resourceKey}`)}</h2>
+                            </div>
+                            <div className="bg-blue-900 text-blue-200 text-[10px] font-bold px-1.5 py-0.5 rounded border border-blue-700">{t('ui.level_short')} {hoverInfo.techReq}</div>
+                        </div>
+                        <div className="my-3">
+                            <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">{formatNumber(hoverInfo.amount)}</span>
+                            <span className="text-sm text-gray-400 ml-1">{t(`units.${hoverInfo.unitKey}`)}</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mt-1">
+                            <div className="h-full bg-gradient-to-r from-blue-500 to-green-400 transition-all duration-300" style={{ width: `${Math.min(100, hoverInfo.value * 100)}%` }} />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-black/60 backdrop-blur border border-gray-800 rounded-lg p-4 text-center">
+                        <p className="text-gray-500 text-xs italic">{t('resources.none')}</p>
+                    </div>
+                )}
+            </div>
             {summary && (
                 <div className="absolute bottom-4 left-4 z-10 bg-gray-900/95 p-4 rounded-lg border border-gray-600 shadow-2xl w-64 backdrop-blur-sm pointer-events-none">
                     <h3 className="text-sm font-bold text-white mb-3 border-b border-gray-700 pb-2">{t('ui.data_title')}</h3>
