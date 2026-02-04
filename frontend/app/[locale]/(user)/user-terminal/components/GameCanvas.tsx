@@ -30,7 +30,6 @@ const COLORS = {
 };
 
 type ViewMode = 'ALL' | 'WATER' | 'OIL' | 'COAL' | 'IRON' | 'WOOD' | 'FOOD' | 'BUILD_ROAD' | 'BULLDOZER';
-
 const BIOME_KEYS: Record<number, string> = {
     [BiomeType.DEEP_OCEAN]: 'deep_ocean', [BiomeType.OCEAN]: 'ocean',
     [BiomeType.BEACH]: 'beach', [BiomeType.DESERT]: 'desert',
@@ -49,10 +48,16 @@ export default function GameCanvas() {
 
     const pixiContainerRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<PIXI.Application | null>(null);
-    const graphicsRef = useRef<PIXI.Graphics | null>(null);
-    const highlightRef = useRef<PIXI.Graphics | null>(null);
-    const resizeCleanupRef = useRef<(() => void) | null>(null);
 
+    // OPTIMISATION : Séparation des couches graphiques
+    const staticGraphicsRef = useRef<PIXI.Graphics | null>(null); // Terrain + Routes (Cached)
+    const uiGraphicsRef = useRef<PIXI.Graphics | null>(null);     // Preview + Cursor (Dynamic)
+
+    // Cache State
+    const lastRenderedRevision = useRef<number>(-1);
+    const lastViewMode = useRef<ViewMode>('ALL');
+
+    const resizeCleanupRef = useRef<(() => void) | null>(null);
     const viewModeRef = useRef<ViewMode>('ALL');
     const showGridRef = useRef(false);
 
@@ -75,25 +80,21 @@ export default function GameCanvas() {
     // 1. INIT PIXI
     useEffect(() => {
         if (!pixiContainerRef.current || appRef.current) return;
-
         let timeoutId: NodeJS.Timeout;
 
         const init = async () => {
             const app = new PIXI.Application();
-
-            // On initialise en utilisant window directement pour éviter les délais de layout
             await app.init({
                 resizeTo: window,
                 backgroundColor: COLORS.BG,
                 antialias: true,
                 resolution: window.devicePixelRatio || 1,
                 eventMode: 'static',
-                autoDensity: true // Important pour le redimensionnement CSS vs Rendu
+                autoDensity: true
             });
 
             if (!pixiContainerRef.current) { app.destroy(); return; }
 
-            // FORCER LE CSS DU CANVAS POUR REMPLIR LE CONTENEUR
             app.canvas.style.position = 'absolute';
             app.canvas.style.width = '100%';
             app.canvas.style.height = '100%';
@@ -108,21 +109,24 @@ export default function GameCanvas() {
             stage.sortableChildren = true;
             app.stage.addChild(stage);
 
-            const graphics = new PIXI.Graphics();
-            stage.addChild(graphics);
-            graphicsRef.current = graphics;
+            // 1. Couche Statique (Terrain, Routes)
+            const staticGraphics = new PIXI.Graphics();
+            staticGraphics.label = "StaticLayer";
+            stage.addChild(staticGraphics);
+            staticGraphicsRef.current = staticGraphics;
 
-            const highlight = new PIXI.Graphics();
-            highlight.zIndex = 100;
-            stage.addChild(highlight);
-            highlightRef.current = highlight;
+            // 2. Couche UI (Cursor, Preview, Highlights)
+            const uiGraphics = new PIXI.Graphics();
+            uiGraphics.label = "UILayer";
+            uiGraphics.zIndex = 100;
+            stage.addChild(uiGraphics);
+            uiGraphicsRef.current = uiGraphics;
 
             const centerCamera = () => {
                 if (!app.renderer) return;
                 const screenW = app.screen.width;
                 const screenH = app.screen.height;
                 const center = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
-
                 stage.position.set(
                     (screenW / 2) - (center.x * INITIAL_ZOOM),
                     (screenH / 2) - (center.y * INITIAL_ZOOM)
@@ -130,14 +134,9 @@ export default function GameCanvas() {
                 stage.scale.set(INITIAL_ZOOM);
             };
 
-            // Centrage initial différé pour laisser le temps au resizeTo de s'appliquer
             timeoutId = setTimeout(centerCamera, 100);
 
-            // Gestionnaire de redimensionnement manuel (sécurité)
-            const handleResize = () => {
-                if (!app.renderer) return;
-                app.resize();
-            };
+            const handleResize = () => { if (app.renderer) app.resize(); };
             window.addEventListener('resize', handleResize);
             resizeCleanupRef.current = () => window.removeEventListener('resize', handleResize);
 
@@ -169,6 +168,7 @@ export default function GameCanvas() {
 
                 const currentMode = viewModeRef.current;
 
+                // GESTION DES LABELS (TOOLTIP)
                 if ((currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') && startDragTileRef.current) {
                     const start = startDragTileRef.current;
                     const path = RoadManager.getPreviewPath(start.x, start.y, gridPos.x, gridPos.y);
@@ -180,7 +180,7 @@ export default function GameCanvas() {
                         let valid = true;
                         let prevIdx: number | null = null;
                         for (const idx of path) {
-                            const check: RoadCheckResult = RoadManager.checkTile(engine, idx, prevIdx);
+                            const check = RoadManager.checkTile(engine, idx, prevIdx);
                             if (!check.valid) valid = false;
                             cost += check.cost;
                             prevIdx = idx;
@@ -193,6 +193,7 @@ export default function GameCanvas() {
                         setIsValidBuild(true);
                     }
                 } else {
+                    // Hover normal
                     const engine = getMapEngine();
                     if (gridPos.x >= 0 && gridPos.x < engine.config.size && gridPos.y >= 0 && gridPos.y < engine.config.size) {
                         const idx = gridPos.y * engine.config.size + gridPos.x;
@@ -270,146 +271,150 @@ export default function GameCanvas() {
         };
     }, []);
 
-    // 2. RENDER LOOP
+    // 2. RENDER LOOP OPTIMISÉ
     const renderLoop = useCallback(() => {
-        const g = graphicsRef.current;
-        const h = highlightRef.current;
+        const staticG = staticGraphicsRef.current;
+        const uiG = uiGraphicsRef.current;
         const app = appRef.current;
-        if (!g || g.destroyed || !h || !app || !app.renderer) return;
+
+        if (!staticG || staticG.destroyed || !uiG || !app || !app.renderer) return;
 
         setDebugFPS(Math.round(app.ticker.FPS));
-        g.clear();
-        h.clear();
 
-        const stage = app.stage.children[0] as PIXI.Container;
-
-        // CULLING
-        const topLeft = screenToGrid((0 - stage.x) / stage.scale.x, (0 - stage.y) / stage.scale.y);
-        const bottomRight = screenToGrid((app.screen.width - stage.x) / stage.scale.x, (app.screen.height - stage.y) / stage.scale.y);
-        const topRight = screenToGrid((app.screen.width - stage.x) / stage.scale.x, (0 - stage.y) / stage.scale.y);
-        const bottomLeft = screenToGrid((0 - stage.x) / stage.scale.x, (app.screen.height - stage.y) / stage.scale.y);
-
-        const minX = Math.max(0, Math.min(topLeft.x, bottomRight.x, topRight.x, bottomLeft.x) - 2);
-        const maxX = Math.min(GRID_SIZE, Math.max(topLeft.x, bottomRight.x, topRight.x, bottomLeft.x) + 2);
-        const minY = Math.max(0, Math.min(topLeft.y, bottomRight.y, topRight.y, bottomLeft.y) - 2);
-        const maxY = Math.min(GRID_SIZE, Math.max(topLeft.y, bottomRight.y, topRight.y, bottomLeft.y) + 2);
-
+        const engine = getMapEngine();
         const currentMode = viewModeRef.current;
         const isGridVisible = showGridRef.current;
-        const engine = getMapEngine();
-        const { oil, coal, iron, wood, animals, fish } = engine.resourceMaps;
-        const biomes = engine.biomes;
-        const getVariation = (idx: number) => (Math.sin(idx * 999) > 0.5);
 
-        for (let y = minY; y < maxY; y++) {
-            for (let x = minX; x < maxX; x++) {
-                const i = y * GRID_SIZE + x;
-                if (i < 0 || i >= engine.config.totalCells) continue;
+        // ----------------------------------------------------
+        // A. COUCHE STATIQUE (Terrain + Routes)
+        // ----------------------------------------------------
+        if (engine.revision !== lastRenderedRevision.current || currentMode !== lastViewMode.current) {
+            staticG.clear();
 
-                const pos = gridToScreen(x, y);
-                const biome = biomes[i];
+            const { oil, coal, iron, wood, animals, fish } = engine.resourceMaps;
+            const water = engine.getLayer(LayerType.WATER);
+            const biomes = engine.biomes;
+            const getVariation = (idx: number) => (Math.sin(idx * 999) > 0.5);
 
-                let fillColor = 0x000000;
-                let strokeAlpha = 0;
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const i = y * GRID_SIZE + x;
+                    const pos = gridToScreen(x, y);
+                    const biome = biomes[i];
 
-                // Terrain
-                if (currentMode === 'ALL' || currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') {
-                    if (biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.DEEP_OCEAN;
-                    else if (biome === BiomeType.OCEAN) fillColor = COLORS.OCEAN;
-                    else if (biome === BiomeType.BEACH) fillColor = COLORS.BEACH;
-                    else if (biome === BiomeType.FOREST) fillColor = COLORS.FOREST;
-                    else if (biome === BiomeType.DESERT) fillColor = COLORS.DESERT;
-                    else if (biome === BiomeType.MOUNTAIN) fillColor = COLORS.MOUNTAIN;
-                    else if (biome === BiomeType.SNOW) fillColor = COLORS.SNOW;
-                    else fillColor = getVariation(i) ? COLORS.PLAINS : COLORS.PLAINS_VAR;
-                    if (isGridVisible) strokeAlpha = 0.1;
-                } else {
-                    fillColor = COLORS.WHITE_MODEL;
-                    if (biome === BiomeType.OCEAN || biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.WATER_MODEL;
-                    strokeAlpha = 0.15;
-                    if (currentMode === 'OIL' && oil[i] > 0.01) fillColor = COLORS.OIL;
-                    else if (currentMode === 'COAL' && coal[i] > 0.01) fillColor = COLORS.COAL;
-                    else if (currentMode === 'IRON' && iron[i] > 0.01) fillColor = COLORS.IRON;
-                    else if (currentMode === 'WOOD' && wood[i] > 0.01) fillColor = COLORS.WOOD;
-                    else if (currentMode === 'WATER' && engine.getLayer(LayerType.WATER)[i] > 0.01) fillColor = COLORS.WATER_RES;
-                    else if (currentMode === 'FOOD' && (fish[i] > 0.01 || animals[i] > 0.01)) fillColor = COLORS.FOOD;
-                }
+                    let fillColor = 0x000000;
+                    let strokeAlpha = 0;
 
-                g.beginPath();
-                g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
-                g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
-                g.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
-                g.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
-                g.closePath();
-                g.fill({ color: fillColor });
-                if (strokeAlpha > 0) g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: strokeAlpha });
-
-                // --- PREVIEW ROUTE (CORRECTION) ---
-                if (previewPathRef.current.includes(i)) {
-                    let color = COLORS.ROAD_PREVIEW_VALID;
-                    if (currentMode === 'BULLDOZER') {
-                        color = 0xFF0000;
+                    // Terrain Logic
+                    if (currentMode === 'ALL' || currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') {
+                        if (biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.DEEP_OCEAN;
+                        else if (biome === BiomeType.OCEAN) fillColor = COLORS.OCEAN;
+                        else if (biome === BiomeType.BEACH) fillColor = COLORS.BEACH;
+                        else if (biome === BiomeType.FOREST) fillColor = COLORS.FOREST;
+                        else if (biome === BiomeType.DESERT) fillColor = COLORS.DESERT;
+                        else if (biome === BiomeType.MOUNTAIN) fillColor = COLORS.MOUNTAIN;
+                        else if (biome === BiomeType.SNOW) fillColor = COLORS.SNOW;
+                        else fillColor = getVariation(i) ? COLORS.PLAINS : COLORS.PLAINS_VAR;
+                        if (isGridVisible) strokeAlpha = 0.1;
                     } else {
-                        const check = RoadManager.checkTile(engine, i, null);
-                        if (!check.valid || !isValidBuildRef.current) color = COLORS.ROAD_PREVIEW_INVALID;
-                        else if (check.isBridge) color = COLORS.ROAD_BRIDGE;
+                        fillColor = COLORS.WHITE_MODEL;
+                        if (biome === BiomeType.OCEAN || biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.WATER_MODEL;
+                        strokeAlpha = 0.15;
+                        if (currentMode === 'OIL' && oil[i] > 0.01) fillColor = COLORS.OIL;
+                        else if (currentMode === 'COAL' && coal[i] > 0.01) fillColor = COLORS.COAL;
+                        else if (currentMode === 'IRON' && iron[i] > 0.01) fillColor = COLORS.IRON;
+                        else if (currentMode === 'WOOD' && wood[i] > 0.01) fillColor = COLORS.WOOD;
+                        else if (currentMode === 'WATER' && water[i] > 0.01) fillColor = COLORS.WATER_RES;
+                        else if (currentMode === 'FOOD' && (fish[i] > 0.01 || animals[i] > 0.01)) fillColor = COLORS.FOOD;
                     }
 
-                    // RE-DESSINER LE CHEMIN POUR QUE LE FILL S'APPLIQUE
-                    g.beginPath();
-                    g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
-                    g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
-                    g.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
-                    g.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
-                    g.closePath();
+                    staticG.beginPath();
+                    staticG.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
+                    staticG.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
+                    staticG.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
+                    staticG.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
+                    staticG.closePath();
+                    staticG.fill({ color: fillColor });
+                    if (strokeAlpha > 0) staticG.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: strokeAlpha });
 
-                    g.fill({ color, alpha: 0.6 });
-                }
+                    // Road Logic (Static - Dessiné PAR DESSUS le terrain)
+                    if (engine.roadLayer && engine.roadLayer[i]) {
+                        const road = engine.roadLayer[i];
+                        if (road) {
+                            const cx = pos.x; const cy = pos.y;
+                            const n_dx = TILE_WIDTH / 4; const n_dy = -TILE_HEIGHT / 4;
+                            const s_dx = -TILE_WIDTH / 4; const s_dy = TILE_HEIGHT / 4;
+                            const e_dx = TILE_WIDTH / 4; const e_dy = TILE_HEIGHT / 4;
+                            const w_dx = -TILE_WIDTH / 4; const w_dy = -TILE_HEIGHT / 4;
 
-                // ROUTES (CONTINUOUS GRAPH)
-                if (engine.roadLayer && engine.roadLayer[i]) {
-                    const road = engine.roadLayer[i];
-                    if (road) {
-                        const cx = pos.x;
-                        const cy = pos.y;
+                            const roadColor = road.isBridge ? COLORS.ROAD_BRIDGE : COLORS.ROAD_ASPHALT;
 
-                        const n_dx = TILE_WIDTH / 4; const n_dy = -TILE_HEIGHT / 4;
-                        const s_dx = -TILE_WIDTH / 4; const s_dy = TILE_HEIGHT / 4;
-                        const e_dx = TILE_WIDTH / 4; const e_dy = TILE_HEIGHT / 4;
-                        const w_dx = -TILE_WIDTH / 4; const w_dy = -TILE_HEIGHT / 4;
+                            // Asphalt
+                            staticG.beginPath();
+                            if (road.connections.n) { staticG.moveTo(cx, cy); staticG.lineTo(cx + n_dx, cy + n_dy); }
+                            if (road.connections.s) { staticG.moveTo(cx, cy); staticG.lineTo(cx + s_dx, cy + s_dy); }
+                            if (road.connections.e) { staticG.moveTo(cx, cy); staticG.lineTo(cx + e_dx, cy + e_dy); }
+                            if (road.connections.w) { staticG.moveTo(cx, cy); staticG.lineTo(cx + w_dx, cy + w_dy); }
+                            staticG.stroke({ width: 16, color: roadColor, alpha: 1, cap: 'round', join: 'round' });
 
-                        const roadColor = road.isBridge ? COLORS.ROAD_BRIDGE : COLORS.ROAD_ASPHALT;
-
-                        // 1. Asphalt
-                        g.beginPath();
-                        if (road.connections.n) { g.moveTo(cx, cy); g.lineTo(cx + n_dx, cy + n_dy); }
-                        if (road.connections.s) { g.moveTo(cx, cy); g.lineTo(cx + s_dx, cy + s_dy); }
-                        if (road.connections.e) { g.moveTo(cx, cy); g.lineTo(cx + e_dx, cy + e_dy); }
-                        if (road.connections.w) { g.moveTo(cx, cy); g.lineTo(cx + w_dx, cy + w_dy); }
-                        g.stroke({ width: 16, color: roadColor, alpha: 1, cap: 'round', join: 'round' });
-
-                        // 2. Yellow Marking
-                        g.beginPath();
-                        if (road.connections.n) { g.moveTo(cx, cy); g.lineTo(cx + n_dx, cy + n_dy); }
-                        if (road.connections.s) { g.moveTo(cx, cy); g.lineTo(cx + s_dx, cy + s_dy); }
-                        if (road.connections.e) { g.moveTo(cx, cy); g.lineTo(cx + e_dx, cy + e_dy); }
-                        if (road.connections.w) { g.moveTo(cx, cy); g.lineTo(cx + w_dx, cy + w_dy); }
-                        g.stroke({ width: 2, color: COLORS.ROAD_MARKING, alpha: 1, cap: 'round', join: 'round' });
+                            // Marking
+                            staticG.beginPath();
+                            if (road.connections.n) { staticG.moveTo(cx, cy); staticG.lineTo(cx + n_dx, cy + n_dy); }
+                            if (road.connections.s) { staticG.moveTo(cx, cy); staticG.lineTo(cx + s_dx, cy + s_dy); }
+                            if (road.connections.e) { staticG.moveTo(cx, cy); staticG.lineTo(cx + e_dx, cy + e_dy); }
+                            if (road.connections.w) { staticG.moveTo(cx, cy); staticG.lineTo(cx + w_dx, cy + w_dy); }
+                            staticG.stroke({ width: 2, color: COLORS.ROAD_MARKING, alpha: 1, cap: 'round', join: 'round' });
+                        }
                     }
                 }
             }
+
+            // Mise à jour des flags
+            lastRenderedRevision.current = engine.revision;
+            lastViewMode.current = currentMode;
         }
 
-        // Highlight
+        // ----------------------------------------------------
+        // B. COUCHE UI (Preview, Cursor)
+        // ----------------------------------------------------
+        uiG.clear();
+
+        // 1. Highlight Cursor
         const highlightPos = gridToScreen(cursorPos.x, cursorPos.y);
-        h.lineStyle(2, COLORS.HIGHLIGHT, 1);
-        h.beginPath();
-        h.moveTo(highlightPos.x, highlightPos.y - TILE_HEIGHT / 2);
-        h.lineTo(highlightPos.x + TILE_WIDTH / 2, highlightPos.y);
-        h.lineTo(highlightPos.x, highlightPos.y + TILE_HEIGHT / 2);
-        h.lineTo(highlightPos.x - TILE_WIDTH / 2, highlightPos.y);
-        h.closePath();
-        h.stroke();
+        uiG.lineStyle(2, COLORS.HIGHLIGHT, 1);
+        uiG.beginPath();
+        uiG.moveTo(highlightPos.x, highlightPos.y - TILE_HEIGHT / 2);
+        uiG.lineTo(highlightPos.x + TILE_WIDTH / 2, highlightPos.y);
+        uiG.lineTo(highlightPos.x, highlightPos.y + TILE_HEIGHT / 2);
+        uiG.lineTo(highlightPos.x - TILE_WIDTH / 2, highlightPos.y);
+        uiG.closePath();
+        uiG.stroke();
+
+        // 2. Preview Path
+        if (previewPathRef.current.length > 0) {
+            for (const idx of previewPathRef.current) {
+                const x = idx % GRID_SIZE;
+                const y = Math.floor(idx / GRID_SIZE);
+                const pos = gridToScreen(x, y);
+
+                let color = COLORS.ROAD_PREVIEW_VALID;
+                if (currentMode === 'BULLDOZER') {
+                    color = 0xFF0000;
+                } else {
+                    const check = RoadManager.checkTile(engine, idx, null);
+                    if (!check.valid || !isValidBuildRef.current) color = COLORS.ROAD_PREVIEW_INVALID;
+                    else if (check.isBridge) color = COLORS.ROAD_BRIDGE;
+                }
+
+                uiG.beginPath();
+                uiG.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
+                uiG.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
+                uiG.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
+                uiG.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
+                uiG.closePath();
+                uiG.fill({ color, alpha: 0.6 });
+            }
+        }
 
     }, [cursorPos]);
 
@@ -417,7 +422,6 @@ export default function GameCanvas() {
     const ResourceBar = ({ label, value, color }: any) => (<div className="flex items-center gap-2 text-xs mb-1"> <span className="w-16 text-gray-400 font-bold uppercase">{label}</span> <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"> <div className="h-full transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color }}></div> </div> <span className="w-8 text-right text-white">{Math.round(value)}%</span> </div>);
 
     return (
-        // FIXED POSITION + Z-INDEX 0 POUR ÊTRE SÛR QU'IL PREND TOUT L'ÉCRAN SANS GÊNER
         <div className="fixed inset-0 w-screen h-screen bg-black z-0 overflow-hidden">
             <div ref={pixiContainerRef} className="absolute inset-0" />
 
@@ -459,6 +463,8 @@ export default function GameCanvas() {
                     </button>
                 ))}
             </div>
+
+            {/* INFO PANEL (RESTAURÉ) */}
             <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
                 <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
                     <span>{t('ui.coords')}: [{cursorPos.x}, {cursorPos.y}]</span>
@@ -487,6 +493,7 @@ export default function GameCanvas() {
                     </div>
                 )}
             </div>
+
             {summary && (
                 <div className="absolute bottom-4 left-4 z-10 bg-gray-900/95 p-4 rounded-lg border border-gray-600 shadow-2xl w-64 backdrop-blur-sm pointer-events-none">
                     <h3 className="text-sm font-bold text-white mb-3 border-b border-gray-700 pb-2">{t('ui.data_title')}</h3>

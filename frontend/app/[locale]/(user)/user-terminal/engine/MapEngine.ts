@@ -1,53 +1,24 @@
 import { createNoise2D } from 'simplex-noise';
 import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData } from './types';
 import { RoadManager } from './RoadManager';
-import { RoadGraph } from './Pathfinding'; // Import du Pathfinding
+import { RoadGraph } from './Pathfinding';
 import { GRID_SIZE, TOTAL_CELLS } from './config';
 
-// ... (Garder les types ResourceRule, BiomeRule et BIOME_SIGNATURES inchangés) ...
+// ... (Garde les constantes BIOME_SIGNATURES et types ici, pas de changement) ...
 type ResourceRule = { chance: number, intensity: number };
 type BiomeRule = {
-    oil: ResourceRule;
-    coal: ResourceRule;
-    iron: ResourceRule;
-    wood: ResourceRule;
-    animals: ResourceRule;
-    fish: ResourceRule;
+    oil: ResourceRule; coal: ResourceRule; iron: ResourceRule; wood: ResourceRule; animals: ResourceRule; fish: ResourceRule;
 };
 
 const BIOME_SIGNATURES: Record<number, BiomeRule> = {
-    [BiomeType.DEEP_OCEAN]: {
-        oil: { chance: 0.3, intensity: 1.0 }, coal: { chance: 0, intensity: 0 }, iron: { chance: 0, intensity: 0 },
-        wood: { chance: 0, intensity: 0 }, animals: { chance: 0, intensity: 0 }, fish: { chance: 0.8, intensity: 1.0 }
-    },
-    [BiomeType.OCEAN]: {
-        oil: { chance: 0.1, intensity: 0.5 }, coal: { chance: 0, intensity: 0 }, iron: { chance: 0, intensity: 0 },
-        wood: { chance: 0, intensity: 0 }, animals: { chance: 0, intensity: 0 }, fish: { chance: 0.6, intensity: 0.8 }
-    },
-    [BiomeType.BEACH]: {
-        oil: { chance: 0.05, intensity: 0.3 }, coal: { chance: 0, intensity: 0 }, iron: { chance: 0, intensity: 0 },
-        wood: { chance: 0.1, intensity: 0.2 }, animals: { chance: 0.1, intensity: 0.2 }, fish: { chance: 0.2, intensity: 0.3 }
-    },
-    [BiomeType.PLAINS]: {
-        oil: { chance: 0.05, intensity: 0.4 }, coal: { chance: 0.1, intensity: 0.5 }, iron: { chance: 0.1, intensity: 0.3 },
-        wood: { chance: 0.2, intensity: 0.3 }, animals: { chance: 0.4, intensity: 0.5 }, fish: { chance: 0, intensity: 0 }
-    },
-    [BiomeType.FOREST]: {
-        oil: { chance: 0.02, intensity: 0.2 }, coal: { chance: 0.2, intensity: 0.4 }, iron: { chance: 0.1, intensity: 0.3 },
-        wood: { chance: 1.0, intensity: 1.0 }, animals: { chance: 0.9, intensity: 1.0 }, fish: { chance: 0, intensity: 0 }
-    },
-    [BiomeType.DESERT]: {
-        oil: { chance: 0.8, intensity: 1.0 }, coal: { chance: 0.1, intensity: 0.3 }, iron: { chance: 0.2, intensity: 0.4 },
-        wood: { chance: 0, intensity: 0 }, animals: { chance: 0.1, intensity: 0.1 }, fish: { chance: 0, intensity: 0 }
-    },
-    [BiomeType.MOUNTAIN]: {
-        oil: { chance: 0, intensity: 0 }, coal: { chance: 0.7, intensity: 1.0 }, iron: { chance: 0.8, intensity: 1.0 },
-        wood: { chance: 0.2, intensity: 0.3 }, animals: { chance: 0.2, intensity: 0.4 }, fish: { chance: 0, intensity: 0 }
-    },
-    [BiomeType.SNOW]: {
-        oil: { chance: 0.1, intensity: 0.5 }, coal: { chance: 0.3, intensity: 0.5 }, iron: { chance: 0.3, intensity: 0.5 },
-        wood: { chance: 0.1, intensity: 0.2 }, animals: { chance: 0.1, intensity: 0.2 }, fish: { chance: 0, intensity: 0 }
-    }
+    [BiomeType.DEEP_OCEAN]: { oil: { chance: 0.3, intensity: 1.0 }, coal: { chance: 0, intensity: 0 }, iron: { chance: 0, intensity: 0 }, wood: { chance: 0, intensity: 0 }, animals: { chance: 0, intensity: 0 }, fish: { chance: 0.8, intensity: 1.0 } },
+    [BiomeType.OCEAN]: { oil: { chance: 0.1, intensity: 0.5 }, coal: { chance: 0, intensity: 0 }, iron: { chance: 0, intensity: 0 }, wood: { chance: 0, intensity: 0 }, animals: { chance: 0, intensity: 0 }, fish: { chance: 0.6, intensity: 0.8 } },
+    [BiomeType.BEACH]: { oil: { chance: 0.05, intensity: 0.3 }, coal: { chance: 0, intensity: 0 }, iron: { chance: 0, intensity: 0 }, wood: { chance: 0.1, intensity: 0.2 }, animals: { chance: 0.1, intensity: 0.2 }, fish: { chance: 0.2, intensity: 0.3 } },
+    [BiomeType.PLAINS]: { oil: { chance: 0.05, intensity: 0.4 }, coal: { chance: 0.1, intensity: 0.5 }, iron: { chance: 0.1, intensity: 0.3 }, wood: { chance: 0.2, intensity: 0.3 }, animals: { chance: 0.4, intensity: 0.5 }, fish: { chance: 0, intensity: 0 } },
+    [BiomeType.FOREST]: { oil: { chance: 0.02, intensity: 0.2 }, coal: { chance: 0.2, intensity: 0.4 }, iron: { chance: 0.1, intensity: 0.3 }, wood: { chance: 1.0, intensity: 1.0 }, animals: { chance: 0.9, intensity: 1.0 }, fish: { chance: 0, intensity: 0 } },
+    [BiomeType.DESERT]: { oil: { chance: 0.8, intensity: 1.0 }, coal: { chance: 0.1, intensity: 0.3 }, iron: { chance: 0.2, intensity: 0.4 }, wood: { chance: 0, intensity: 0 }, animals: { chance: 0.1, intensity: 0.1 }, fish: { chance: 0, intensity: 0 } },
+    [BiomeType.MOUNTAIN]: { oil: { chance: 0, intensity: 0 }, coal: { chance: 0.7, intensity: 1.0 }, iron: { chance: 0.8, intensity: 1.0 }, wood: { chance: 0.2, intensity: 0.3 }, animals: { chance: 0.2, intensity: 0.4 }, fish: { chance: 0, intensity: 0 } },
+    [BiomeType.SNOW]: { oil: { chance: 0.1, intensity: 0.5 }, coal: { chance: 0.3, intensity: 0.5 }, iron: { chance: 0.3, intensity: 0.5 }, wood: { chance: 0.1, intensity: 0.2 }, animals: { chance: 0.1, intensity: 0.2 }, fish: { chance: 0, intensity: 0 } }
 };
 
 export class MapEngine {
@@ -59,69 +30,11 @@ export class MapEngine {
     public resourceMaps: { oil: Float32Array; coal: Float32Array; iron: Float32Array; wood: Float32Array; animals: Float32Array; fish: Float32Array; };
     public currentSummary: ResourceSummary = { oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0 };
 
-    // Road Layer Logic
     public roadLayer: (RoadData | null)[];
-
-    // Pathfinding Logic (Ajouté)
     public roadGraph: RoadGraph;
 
-    // --- Place Road Method Modifiée ---
-    public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
-
-        // 2. Destruction de la forêt (Rayon 1)
-        RoadManager.applyEnvironmentalImpact(this, index);
-
-        // 3. Détermine le type (Pont, Tunnel) basé sur le terrain actuel
-        const waterDepth = this.getLayer(LayerType.WATER)[index];
-        const isWater = waterDepth > 0.3;
-
-        // Tunnel : On fait simple pour l'instant, si hauteur > X et pas d'eau
-        const isTunnel = this.heightMap[index] > 0.85 && !isWater;
-
-        // 4. Create road data
-        this.roadLayer[index] = RoadManager.createRoad(type, isWater, isTunnel);
-
-        // 5. Update connections & Graph
-        this.updateGraphAround(index);
-    }
-
-    // --- Remove Road Method Modifiée ---
-    public removeRoad(index: number) {
-        if (this.roadLayer[index] === null) return;
-
-        this.roadLayer[index] = null;
-
-        // Update Graph (Suppression du noeud et mise à jour des voisins)
-        this.roadGraph.removeNode(index);
-        this.updateGraphAround(index);
-    }
-
-    // Helper pour mettre à jour le graphe autour d'une tuile modifiée
-    private updateGraphAround(index: number) {
-        const x = index % GRID_SIZE;
-        const y = Math.floor(index / GRID_SIZE);
-
-        // Update self
-        if (this.roadLayer[index]) {
-            RoadManager.updateConnections(index, this.roadLayer);
-            this.roadGraph.addNode(index, this.roadLayer[index]!.connections);
-        }
-
-        // Update neighbors
-        const neighbors = [
-            (y > 0) ? (y - 1) * GRID_SIZE + x : -1, // N
-            (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1, // S
-            (x > 0) ? y * GRID_SIZE + (x - 1) : -1, // W
-            (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1 // E
-        ];
-
-        neighbors.forEach(nIdx => {
-            if (nIdx !== -1 && this.roadLayer[nIdx]) {
-                RoadManager.updateConnections(nIdx, this.roadLayer);
-                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections);
-            }
-        });
-    }
+    // IMPORTANT : C'est ce chiffre qui dit au Canvas de redessiner
+    public revision: number = 0;
 
     constructor() {
         this.config = { size: GRID_SIZE, totalCells: TOTAL_CELLS };
@@ -143,7 +56,54 @@ export class MapEngine {
             fish: new Float32Array(TOTAL_CELLS)
         };
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
-        this.roadGraph = new RoadGraph(); // Init Graph
+        this.roadGraph = new RoadGraph();
+    }
+
+    public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
+        RoadManager.applyEnvironmentalImpact(this, index);
+        const waterDepth = this.getLayer(LayerType.WATER)[index];
+        const isWater = waterDepth > 0.3;
+        const isTunnel = this.heightMap[index] > 0.85 && !isWater;
+
+        this.roadLayer[index] = RoadManager.createRoad(type, isWater, isTunnel);
+        this.updateGraphAround(index);
+
+        // ✅ IMPORTANT : Signaler le changement
+        this.revision++;
+    }
+
+    public removeRoad(index: number) {
+        if (this.roadLayer[index] === null) return;
+        this.roadLayer[index] = null;
+        this.roadGraph.removeNode(index);
+        this.updateGraphAround(index);
+
+        // ✅ IMPORTANT : Signaler le changement
+        this.revision++;
+    }
+
+    private updateGraphAround(index: number) {
+        const x = index % GRID_SIZE;
+        const y = Math.floor(index / GRID_SIZE);
+
+        if (this.roadLayer[index]) {
+            RoadManager.updateConnections(index, this.roadLayer);
+            this.roadGraph.addNode(index, this.roadLayer[index]!.connections);
+        }
+
+        const neighbors = [
+            (y > 0) ? (y - 1) * GRID_SIZE + x : -1,
+            (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1,
+            (x > 0) ? y * GRID_SIZE + (x - 1) : -1,
+            (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1
+        ];
+
+        neighbors.forEach(nIdx => {
+            if (nIdx !== -1 && this.roadLayer[nIdx]) {
+                RoadManager.updateConnections(nIdx, this.roadLayer);
+                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections);
+            }
+        });
     }
 
     private resetMaps() {
@@ -153,7 +113,7 @@ export class MapEngine {
         Object.values(this.resourceMaps).forEach(map => map.fill(0));
         Object.values(this.layers).forEach(map => map.fill(0));
         this.roadLayer.fill(null);
-        this.roadGraph = new RoadGraph(); // Reset Graph
+        this.roadGraph = new RoadGraph();
     }
 
     private fbm(x: number, y: number, octaves: number, noiseFunc: (x: number, y: number) => number): number {
@@ -218,6 +178,9 @@ export class MapEngine {
             }
         }
         this.calculateSummary();
+
+        // ✅ IMPORTANT : Forcer le rafraîchissement graphique après la génération
+        this.revision++;
     }
 
     private calculateSummary() {
