@@ -1,3 +1,18 @@
+// Exemple de config wagmi moderne
+import { createConfig, http } from 'wagmi';
+import { mainnet, avalancheFuji } from 'wagmi/chains';
+import { injected } from 'wagmi/connectors';
+
+export const config = createConfig({
+    chains: [avalancheFuji],
+    transports: {
+        [avalancheFuji.id]: http(),
+    },
+    connectors: [
+        injected(), // Ceci gère automatiquement EIP-6963 et évite les conflits window.ethereum
+    ],
+});
+
 // Détection du mode DEV
 export const IS_DEV = process.env.NODE_ENV === 'development';
 

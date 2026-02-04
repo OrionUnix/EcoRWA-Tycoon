@@ -3,7 +3,7 @@ import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData }
 import { RoadManager } from './RoadManager';
 import { GRID_SIZE, TOTAL_CELLS } from './config';
 
-// Définition des règles de spawn par biome
+// Resource and Biome Rules
 type ResourceRule = { chance: number, intensity: number };
 type BiomeRule = {
     oil: ResourceRule;
@@ -14,7 +14,6 @@ type BiomeRule = {
     fish: ResourceRule;
 };
 
-// --- CONFIGURATION DES BIOMES ---
 const BIOME_SIGNATURES: Record<number, BiomeRule> = {
     [BiomeType.DEEP_OCEAN]: {
         oil: { chance: 0.3, intensity: 1.0 }, coal: { chance: 0, intensity: 0 }, iron: { chance: 0, intensity: 0 },
@@ -52,29 +51,45 @@ const BIOME_SIGNATURES: Record<number, BiomeRule> = {
 
 export class MapEngine {
     private layers: Record<LayerType, Float32Array>;
-    public config: GridConfig; // Correction: ; au lieu de :
+    public config: GridConfig;
     public biomes: Uint8Array;
     public heightMap: Float32Array;
     public moistureMap: Float32Array;
     public resourceMaps: { oil: Float32Array; coal: Float32Array; iron: Float32Array; wood: Float32Array; animals: Float32Array; fish: Float32Array; };
     public currentSummary: ResourceSummary = { oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0 };
 
-    // --- GESTION DES ROUTES ---
+    // Road Layer Logic
     public roadLayer: (RoadData | null)[];
 
+    // Place Road Method
     public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
+        // 1. Destroy trees
+        if (this.resourceMaps.wood[index] > 0) {
+            this.resourceMaps.wood[index] = 0;
+        }
+
+        // 2. Check for water (Bridge)
         const isWater = this.getLayer(LayerType.WATER)[index] > 0.5;
+
+        // 3. Create road
         this.roadLayer[index] = RoadManager.createRoad(type, isWater);
+
+        // 4. Update connections
         RoadManager.updateConnections(index, this.roadLayer);
     }
 
+    // Remove Road Method
     public removeRoad(index: number) {
         this.roadLayer[index] = null;
-        // Idéalement: mettre à jour les voisins ici aussi
-        RoadManager.updateConnections(index + 1, this.roadLayer); // Est
-        RoadManager.updateConnections(index - 1, this.roadLayer); // Ouest
-        RoadManager.updateConnections(index + GRID_SIZE, this.roadLayer); // Sud
-        RoadManager.updateConnections(index - GRID_SIZE, this.roadLayer); // Nord
+
+        // Update neighbors
+        const x = index % GRID_SIZE;
+        const y = Math.floor(index / GRID_SIZE);
+
+        if (y > 0) RoadManager.updateConnections((y - 1) * GRID_SIZE + x, this.roadLayer);
+        if (y < GRID_SIZE - 1) RoadManager.updateConnections((y + 1) * GRID_SIZE + x, this.roadLayer);
+        if (x > 0) RoadManager.updateConnections(y * GRID_SIZE + (x - 1), this.roadLayer);
+        if (x < GRID_SIZE - 1) RoadManager.updateConnections(y * GRID_SIZE + (x + 1), this.roadLayer);
     }
 
     constructor() {
@@ -96,7 +111,6 @@ export class MapEngine {
             animals: new Float32Array(TOTAL_CELLS),
             fish: new Float32Array(TOTAL_CELLS)
         };
-        // Initialisation de la couche routes avec des nulls
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
     }
 
@@ -106,7 +120,7 @@ export class MapEngine {
         this.moistureMap.fill(0);
         Object.values(this.resourceMaps).forEach(map => map.fill(0));
         Object.values(this.layers).forEach(map => map.fill(0));
-        this.roadLayer.fill(null); // Reset routes
+        this.roadLayer.fill(null);
     }
 
     private fbm(x: number, y: number, octaves: number, noiseFunc: (x: number, y: number) => number): number {
@@ -129,7 +143,7 @@ export class MapEngine {
         const offsetY = Math.random() * 1000;
         const scale = 0.025;
 
-        console.log("🏗️ Génération: Biomes & Ressources...");
+        console.log("🏗️ Generation: Realistic Biomes & Resources...");
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -193,7 +207,9 @@ export class MapEngine {
     public getLayer(layer: LayerType): Float32Array { return this.layers[layer]; }
 }
 
+// --- SINGLETON EXPORTS ---
 let mapEngineInstance: MapEngine | null = null;
+
 export function getMapEngine(): MapEngine {
     if (!mapEngineInstance) {
         mapEngineInstance = new MapEngine();
@@ -201,4 +217,7 @@ export function getMapEngine(): MapEngine {
     }
     return mapEngineInstance;
 }
-export function regenerateWorld() { if (mapEngineInstance) mapEngineInstance.generateWorld(); }
+
+export function regenerateWorld() {
+    if (mapEngineInstance) mapEngineInstance.generateWorld();
+}
