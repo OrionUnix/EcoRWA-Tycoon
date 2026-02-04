@@ -165,7 +165,6 @@
       "yield_spread": "Arbitrage : Immo vs Épargne",
       "vacancy_rate": "Tension Locative"
     },
-    "scoreOutOf": "Score / 10",
     "tooltips": {
       "yieldSpread": "L'écart entre le rendement locatif et le taux du Livret A. Si le spread est élevé, l'immobilier est beaucoup plus attractif.",
       "vacancyRate": "Pourcentage de logements vides. À Paris, un taux bas (<3%) indique une forte demande."
@@ -174,43 +173,51 @@
   "Game": {
     "ui": {
       "potential": "Potentiel Estimé",
-      "level_short": "Nv."
+      "level_short": "Nv.",
+      "data_title": "Données Géologiques",
+      "grid": "GRILLE",
+      "coords": "COORD",
+      "zoom": "ZOOM",
+      "tech_req": "Tech Requise",
+      "hint": "Clic Droit + Glisser • Molette Zoom"
     },
-    "data_title": "Données Géologiques",
-    "grid": "GRILLE",
-    "coords": "COORD",
-    "zoom": "ZOOM",
-    "tech_req": "Tech Requise"
-  },
-  "layers": {
-    "oil": "Pétrole Brut",
-    "coal": "Charbon",
-    "wood": "Bois de Construction",
-    "fish": "Banc de Poissons",
-    "game": "Gibier Sauvage",
-    "iron": "Minerai de Fer",
-    "water": "Eau Douce",
-    "altitude": "Altitude",
-    "none": "Terrain Vierge"
-  },
-  "resources": {
-    "oil": "Pétrole Brut",
-    "coal": "Charbon",
-    "wood": "Bois de Construction",
-    "fish": "Banc de Poissons",
-    "game": "Gibier Sauvage",
-    "iron": "Minerai de Fer",
-    "water": "Eau Douce",
-    "altitude": "Altitude",
-    "none": "Terrain Vierge"
-  },
-  "units": {
-    "barrel": "Barils",
-    "ton": "Tonnes",
-    "m3": "m³",
-    "head": "Têtes",
-    "unit": "Unités",
-    "liter": "Litre"
+    "layers": {
+      "satellite": "Satellite",
+      "forests": "Forêts",
+      "food": "Vivres",
+      "water": "Nappes",
+      "oil": "Pétrole",
+      "coal": "Charbon",
+      "iron": "Minerais"
+    },
+    "resources": {
+      "oil": "Pétrole Brut",
+      "coal": "Charbon",
+      "wood": "Bois de Construction",
+      "fish": "Banc de Poissons",
+      "game": "Gibier Sauvage",
+      "iron": "Minerai de Fer",
+      "water": "Eau Douce",
+      "altitude": "Altitude",
+      "none": "Terrain Vierge"
+    },
+    "units": {
+      "barrel": "Barils",
+      "ton": "Tonnes",
+      "m3": "m³",
+      "head": "Têtes",
+      "unit": "Unités",
+      "liter": "Litres"
+    },
+    "biomes": {
+      "deep_ocean": "Haute Mer",
+      "ocean": "Côte / Rivière",
+      "beach": "Plage",
+      "plains": "Plaines",
+      "forest": "Forêt",
+      "mountain": "Montagne",
+      "desert": "Désert",
+      "snow": "Neige"
+    }
   }
-}
 }

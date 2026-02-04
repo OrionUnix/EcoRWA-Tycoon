@@ -172,11 +172,13 @@
   },
   "Game": {
     "ui": {
+      "potential": "Est. Potential",
+      "level_short": "Lvl.",
       "data_title": "Geological Data",
       "grid": "GRID",
+      "coords": "COORDS",
       "zoom": "ZOOM",
-      "level_short": "Lvl.",
-      "potential": "Est. Potential",
+      "tech_req": "Tech Req.",
       "hint": "Right Click + Drag • Scroll Zoom"
     },
     "layers": {
@@ -206,6 +208,16 @@
       "head": "Heads",
       "unit": "Units",
       "liter": "Liters"
+    },
+    "biomes": {
+      "deep_ocean": "Deep Ocean",
+      "ocean": "Coast / River",
+      "beach": "Beach",
+      "plains": "Plains",
+      "forest": "Forest",
+      "mountain": "Mountain",
+      "desert": "Desert",
+      "snow": "Snow"
     }
   }
 }

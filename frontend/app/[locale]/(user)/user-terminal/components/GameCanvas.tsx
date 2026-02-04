@@ -279,22 +279,22 @@ export default function GameCanvas() {
             <div ref={pixiContainerRef} className="absolute inset-0" />
             <div className="absolute top-2 right-2 text-xs text-green-500 font-mono z-20 flex flex-col items-end">
                 <span>FPS: {debugFPS}</span>
-                <span className="text-yellow-400">MOUSE: {cursorPos.x}, {cursorPos.y}</span>
+                <span className="text-yellow-400">{t('ui.coords')}: {cursorPos.x}, {cursorPos.y}</span>
             </div>
 
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 bg-gray-900/90 p-2 rounded border border-gray-700 shadow-xl backdrop-blur-md">
                 <div className="flex justify-between items-center mb-2 border-b border-gray-700 pb-1">
-                    <h3 className="text-xs text-blue-400 font-bold uppercase px-1">Vues</h3>
+                    <h3 className="text-xs text-blue-400 font-bold uppercase px-1">{t('ui.zoom')}</h3>
                     <button onClick={() => setShowGrid(!showGrid)} className={`text-[10px] px-2 py-0.5 rounded border ${showGrid ? 'bg-blue-600 text-white border-blue-500' : 'text-gray-400 border-gray-600'}`}>#</button>
                 </div>
                 {[
-                    { id: 'ALL', label: '🌍 Satellite' },
-                    { id: 'OIL', label: '🛢️ Pétrole' },
-                    { id: 'COAL', label: '🪨 Charbon' },
-                    { id: 'IRON', label: '🔩 Fer' },
-                    { id: 'WOOD', label: '🌲 Forêts' },
-                    { id: 'FOOD', label: '🍖 Nourriture' },
-                    { id: 'WATER', label: '💧 Eau' },
+                    { id: 'ALL', label: t('layers.satellite') },
+                    { id: 'OIL', label: t('layers.oil') },
+                    { id: 'COAL', label: t('layers.coal') },
+                    { id: 'IRON', label: t('layers.iron') },
+                    { id: 'WOOD', label: t('layers.forests') },
+                    { id: 'FOOD', label: t('layers.food') },
+                    { id: 'WATER', label: t('layers.water') },
                 ].map(l => (
                     <button key={l.id} onClick={() => setViewMode(l.id as ViewMode)}
                         className={`text-left px-3 py-1.5 text-xs font-bold rounded transition-all duration-200 ${viewMode === l.id ? 'bg-blue-600 text-white shadow-lg translate-x-1' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
@@ -305,18 +305,18 @@ export default function GameCanvas() {
 
             {summary && (
                 <div className="absolute bottom-4 left-4 z-10 bg-gray-900/95 p-4 rounded-lg border border-gray-600 shadow-2xl w-64 backdrop-blur-sm">
-                    <h3 className="text-sm font-bold text-white mb-3 border-b border-gray-700 pb-2">RAPPORT GÉOLOGIQUE</h3>
-                    <ResourceBar label="Pétrole" value={summary.oil} color="#ffd700" />
-                    <ResourceBar label="Charbon" value={summary.coal} color="#212121" />
-                    <ResourceBar label="Fer" value={summary.iron} color="#ff5722" />
-                    <ResourceBar label="Bois" value={summary.wood} color="#00c853" />
-                    <ResourceBar label="Eau" value={summary.water} color="#29b6f6" />
+                    <h3 className="text-sm font-bold text-white mb-3 border-b border-gray-700 pb-2">{t('ui.data_title')}</h3>
+                    <ResourceBar label={t('resources.oil')} value={summary.oil} color="#ffd700" />
+                    <ResourceBar label={t('resources.coal')} value={summary.coal} color="#212121" />
+                    <ResourceBar label={t('resources.iron')} value={summary.iron} color="#ff5722" />
+                    <ResourceBar label={t('resources.wood')} value={summary.wood} color="#00c853" />
+                    <ResourceBar label={t('resources.water')} value={summary.water} color="#29b6f6" />
                 </div>
             )}
 
             <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
                 <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
-                    <span>XY: [{cursorPos.x}, {cursorPos.y}]</span>
+                    <span>{t('ui.coords')}: [{cursorPos.x}, {cursorPos.y}]</span>
                     {hoverInfo && <span className="text-white font-bold">{hoverInfo.biomeName}</span>}
                 </div>
 
