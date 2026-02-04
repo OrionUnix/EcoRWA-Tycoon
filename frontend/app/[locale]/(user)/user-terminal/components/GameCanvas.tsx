@@ -21,10 +21,15 @@ const COLORS = {
     OIL: 0xffd700, COAL: 0x212121, IRON: 0xff5722,
     WOOD: 0x43a047, FOOD: 0xff3366, WATER_RES: 0x0000ff,
     GRID_LINES: 0x999999,
-    HIGHLIGHT: 0xFFFFFF
+    HIGHLIGHT: 0xFFFFFF,
+    ROAD_ASPHALT: 0x555555,
+    ROAD_BRIDGE: 0x8B4513,
+    ROAD_MARKING: 0xFFD700,
+    ROAD_PREVIEW_VALID: 0x00FF00,
+    ROAD_PREVIEW_INVALID: 0xFF0000
 };
 
-type ViewMode = 'ALL' | 'WATER' | 'OIL' | 'COAL' | 'IRON' | 'WOOD' | 'FOOD' | 'BUILD_ROAD';
+type ViewMode = 'ALL' | 'WATER' | 'OIL' | 'COAL' | 'IRON' | 'WOOD' | 'FOOD' | 'BUILD_ROAD' | 'BULLDOZER';
 
 const BIOME_KEYS: Record<number, string> = {
     [BiomeType.DEEP_OCEAN]: 'deep_ocean', [BiomeType.OCEAN]: 'ocean',
@@ -37,7 +42,7 @@ export default function GameCanvas() {
     const t = useTranslations('Game');
     const locale = useLocale();
 
-    // --- REFS ---
+    // REFS
     const startDragTileRef = useRef<{ x: number, y: number } | null>(null);
     const previewPathRef = useRef<number[]>([]);
     const isValidBuildRef = useRef<boolean>(true);
@@ -46,11 +51,12 @@ export default function GameCanvas() {
     const appRef = useRef<PIXI.Application | null>(null);
     const graphicsRef = useRef<PIXI.Graphics | null>(null);
     const highlightRef = useRef<PIXI.Graphics | null>(null);
+    const resizeCleanupRef = useRef<(() => void) | null>(null);
 
     const viewModeRef = useRef<ViewMode>('ALL');
     const showGridRef = useRef(false);
 
-    // --- STATES ---
+    // STATES
     const [viewMode, setViewMode] = useState<ViewMode>('ALL');
     const [showGrid, setShowGrid] = useState(false);
 
@@ -58,8 +64,6 @@ export default function GameCanvas() {
     const [hoverInfo, setHoverInfo] = useState<ResourceInfo & { biomeName: string } | null>(null);
     const [debugFPS, setDebugFPS] = useState(0);
     const [summary, setSummary] = useState<any>(null);
-
-    // UI Construction
     const [totalCost, setTotalCost] = useState(0);
     const [isValidBuild, setIsValidBuild] = useState(true);
 
@@ -70,46 +74,40 @@ export default function GameCanvas() {
 
     // 1. INIT PIXI
     useEffect(() => {
-        // Attendre que la ref soit prête
         if (!pixiContainerRef.current || appRef.current) return;
 
+        let timeoutId: NodeJS.Timeout;
+
         const init = async () => {
-            const parent = pixiContainerRef.current!;
-
-            // Attendre que le parent ait une taille (important pour éviter le 0x0)
-            if (parent.clientWidth === 0 || parent.clientHeight === 0) {
-                console.warn("Parent container has 0 size, waiting...");
-                // On pourrait ajouter un resizeObserver ici, mais pour l'instant on initialise
-            }
-
             const app = new PIXI.Application();
+
+            // On initialise en utilisant window directement pour éviter les délais de layout
             await app.init({
-                // On utilise 'parent' pour la taille initiale
-                width: parent.clientWidth || window.innerWidth,
-                height: parent.clientHeight || window.innerHeight,
+                resizeTo: window,
                 backgroundColor: COLORS.BG,
                 antialias: true,
                 resolution: window.devicePixelRatio || 1,
-                eventMode: 'static'
+                eventMode: 'static',
+                autoDensity: true // Important pour le redimensionnement CSS vs Rendu
             });
 
-            // IMPORTANT : On force le style du canvas pour qu'il remplisse le div parent
-            app.canvas.style.width = "100%";
-            app.canvas.style.height = "100%";
-            app.canvas.style.display = "block"; // Évite les scrollbars fantômes
-
             if (!pixiContainerRef.current) { app.destroy(); return; }
+
+            // FORCER LE CSS DU CANVAS POUR REMPLIR LE CONTENEUR
+            app.canvas.style.position = 'absolute';
+            app.canvas.style.width = '100%';
+            app.canvas.style.height = '100%';
+            app.canvas.style.display = 'block';
+
             pixiContainerRef.current.appendChild(app.canvas);
             appRef.current = app;
 
-            // STAGE
             const stage = new PIXI.Container();
             stage.hitArea = new PIXI.Rectangle(-1000000, -1000000, 2000000, 2000000);
             stage.eventMode = 'static';
             stage.sortableChildren = true;
             app.stage.addChild(stage);
 
-            // LAYERS
             const graphics = new PIXI.Graphics();
             stage.addChild(graphics);
             graphicsRef.current = graphics;
@@ -119,12 +117,10 @@ export default function GameCanvas() {
             stage.addChild(highlight);
             highlightRef.current = highlight;
 
-            // --- CENTRAGE ROBUSTE ---
             const centerCamera = () => {
-                // On utilise les dimensions réelles du canvas rendu
-                const screenW = app.renderer.width / app.renderer.resolution;
-                const screenH = app.renderer.height / app.renderer.resolution;
-
+                if (!app.renderer) return;
+                const screenW = app.screen.width;
+                const screenH = app.screen.height;
                 const center = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
 
                 stage.position.set(
@@ -134,22 +130,18 @@ export default function GameCanvas() {
                 stage.scale.set(INITIAL_ZOOM);
             };
 
-            // 1. Centrage Initial
-            centerCamera();
+            // Centrage initial différé pour laisser le temps au resizeTo de s'appliquer
+            timeoutId = setTimeout(centerCamera, 100);
 
-            // 2. Gestion du redimensionnement (Layout Shift)
-            const resizeObserver = new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    const { width, height } = entry.contentRect;
-                    if (width > 0 && height > 0) {
-                        app.renderer.resize(width, height);
-                        centerCamera(); // On recentre à chaque changement de taille
-                    }
-                }
-            });
-            resizeObserver.observe(parent);
+            // Gestionnaire de redimensionnement manuel (sécurité)
+            const handleResize = () => {
+                if (!app.renderer) return;
+                app.resize();
+            };
+            window.addEventListener('resize', handleResize);
+            resizeCleanupRef.current = () => window.removeEventListener('resize', handleResize);
 
-            // --- GESTION ÉVÉNEMENTS ---
+            // GESTION EVENTS
             let isDraggingCamera = false;
             let lastGlobalX = 0;
             let lastGlobalY = 0;
@@ -161,7 +153,7 @@ export default function GameCanvas() {
 
             stage.on('pointerdown', (e) => {
                 const globalPos = e.global;
-                if (viewModeRef.current === 'BUILD_ROAD' && e.button === 0) {
+                if ((viewModeRef.current === 'BUILD_ROAD' || viewModeRef.current === 'BULLDOZER') && e.button === 0) {
                     startDragTileRef.current = getGridPosFromGlobal(globalPos.x, globalPos.y);
                 } else {
                     isDraggingCamera = true;
@@ -173,29 +165,33 @@ export default function GameCanvas() {
             stage.on('pointermove', (e) => {
                 const globalPos = e.global;
                 const gridPos = getGridPosFromGlobal(globalPos.x, globalPos.y);
-
                 setCursorPos(prev => (prev.x === gridPos.x && prev.y === gridPos.y) ? prev : gridPos);
 
-                if (viewModeRef.current === 'BUILD_ROAD' && startDragTileRef.current) {
+                const currentMode = viewModeRef.current;
+
+                if ((currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') && startDragTileRef.current) {
                     const start = startDragTileRef.current;
                     const path = RoadManager.getPreviewPath(start.x, start.y, gridPos.x, gridPos.y);
                     previewPathRef.current = path;
 
                     const engine = getMapEngine();
-                    let cost = 0;
-                    let valid = true;
-                    let prevIdx: number | null = null;
-
-                    for (const idx of path) {
-                        const check: RoadCheckResult = RoadManager.checkTile(engine, idx, prevIdx);
-                        if (!check.valid) valid = false;
-                        cost += check.cost;
-                        prevIdx = idx;
+                    if (currentMode === 'BUILD_ROAD') {
+                        let cost = 0;
+                        let valid = true;
+                        let prevIdx: number | null = null;
+                        for (const idx of path) {
+                            const check: RoadCheckResult = RoadManager.checkTile(engine, idx, prevIdx);
+                            if (!check.valid) valid = false;
+                            cost += check.cost;
+                            prevIdx = idx;
+                        }
+                        isValidBuildRef.current = valid;
+                        setTotalCost(cost);
+                        setIsValidBuild(valid);
+                    } else {
+                        setTotalCost(0);
+                        setIsValidBuild(true);
                     }
-                    isValidBuildRef.current = valid;
-                    setTotalCost(cost);
-                    setIsValidBuild(valid);
-
                 } else {
                     const engine = getMapEngine();
                     if (gridPos.x >= 0 && gridPos.x < engine.config.size && gridPos.y >= 0 && gridPos.y < engine.config.size) {
@@ -204,7 +200,6 @@ export default function GameCanvas() {
                         const biome = engine.biomes[idx] as BiomeType;
                         const biomeKey = BIOME_KEYS[biome] || 'plains';
                         const translatedBiome = t(`biomes.${biomeKey}`);
-
                         setHoverInfo(prev => {
                             if (prev?.resourceKey === info?.resourceKey && prev?.amount === info?.amount) return prev;
                             return info ? { ...info, biomeName: translatedBiome } : { value: 0, amount: 0, resourceKey: '', unitKey: '', techReq: 0, biomeName: translatedBiome };
@@ -225,12 +220,17 @@ export default function GameCanvas() {
             });
 
             stage.on('pointerup', () => {
-                if (viewModeRef.current === 'BUILD_ROAD' && startDragTileRef.current && previewPathRef.current.length > 0) {
-                    if (isValidBuildRef.current) {
-                        const engine = getMapEngine();
-                        previewPathRef.current.forEach(idx => engine.placeRoad(idx, RoadType.ASPHALT));
-                        setSummary({ ...engine.currentSummary });
+                const currentMode = viewModeRef.current;
+                if ((currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') && startDragTileRef.current && previewPathRef.current.length > 0) {
+                    const engine = getMapEngine();
+                    if (currentMode === 'BUILD_ROAD') {
+                        if (isValidBuildRef.current) {
+                            previewPathRef.current.forEach(idx => engine.placeRoad(idx, RoadType.ASPHALT));
+                        }
+                    } else if (currentMode === 'BULLDOZER') {
+                        previewPathRef.current.forEach(idx => engine.removeRoad(idx));
                     }
+                    setSummary({ ...engine.currentSummary });
                     startDragTileRef.current = null;
                     previewPathRef.current = [];
                     setTotalCost(0);
@@ -238,27 +238,20 @@ export default function GameCanvas() {
                 isDraggingCamera = false;
             });
 
-            // Zoom centered on mouse
             app.canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const zoomSpeed = 0.001;
                 let newZoom = stage.scale.x * (1 - e.deltaY * zoomSpeed);
                 newZoom = Math.max(0.1, Math.min(5.0, newZoom));
-
                 const rect = app.canvas.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
-
                 const worldPos = {
                     x: (mouseX - stage.position.x) / stage.scale.x,
                     y: (mouseY - stage.position.y) / stage.scale.y
                 };
-
                 stage.scale.set(newZoom);
-                stage.position.set(
-                    mouseX - worldPos.x * newZoom,
-                    mouseY - worldPos.y * newZoom
-                );
+                stage.position.set(mouseX - worldPos.x * newZoom, mouseY - worldPos.y * newZoom);
             }, { passive: false });
 
             app.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -268,7 +261,13 @@ export default function GameCanvas() {
             app.ticker.add(renderLoop);
         };
         init();
-        return () => { appRef.current?.destroy({ removeView: true }); appRef.current = null; };
+
+        return () => {
+            clearTimeout(timeoutId);
+            if (resizeCleanupRef.current) resizeCleanupRef.current();
+            appRef.current?.destroy({ removeView: true });
+            appRef.current = null;
+        };
     }, []);
 
     // 2. RENDER LOOP
@@ -276,10 +275,9 @@ export default function GameCanvas() {
         const g = graphicsRef.current;
         const h = highlightRef.current;
         const app = appRef.current;
-        if (!g || g.destroyed || !h || !app) return;
+        if (!g || g.destroyed || !h || !app || !app.renderer) return;
 
         setDebugFPS(Math.round(app.ticker.FPS));
-
         g.clear();
         h.clear();
 
@@ -300,7 +298,6 @@ export default function GameCanvas() {
         const isGridVisible = showGridRef.current;
         const engine = getMapEngine();
         const { oil, coal, iron, wood, animals, fish } = engine.resourceMaps;
-        const water = engine.getLayer(LayerType.WATER);
         const biomes = engine.biomes;
         const getVariation = (idx: number) => (Math.sin(idx * 999) > 0.5);
 
@@ -316,7 +313,7 @@ export default function GameCanvas() {
                 let strokeAlpha = 0;
 
                 // Terrain
-                if (currentMode === 'ALL' || currentMode === 'BUILD_ROAD') {
+                if (currentMode === 'ALL' || currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') {
                     if (biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.DEEP_OCEAN;
                     else if (biome === BiomeType.OCEAN) fillColor = COLORS.OCEAN;
                     else if (biome === BiomeType.BEACH) fillColor = COLORS.BEACH;
@@ -330,12 +327,11 @@ export default function GameCanvas() {
                     fillColor = COLORS.WHITE_MODEL;
                     if (biome === BiomeType.OCEAN || biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.WATER_MODEL;
                     strokeAlpha = 0.15;
-
                     if (currentMode === 'OIL' && oil[i] > 0.01) fillColor = COLORS.OIL;
                     else if (currentMode === 'COAL' && coal[i] > 0.01) fillColor = COLORS.COAL;
                     else if (currentMode === 'IRON' && iron[i] > 0.01) fillColor = COLORS.IRON;
                     else if (currentMode === 'WOOD' && wood[i] > 0.01) fillColor = COLORS.WOOD;
-                    else if (currentMode === 'WATER' && water[i] > 0.01) fillColor = COLORS.WATER_RES;
+                    else if (currentMode === 'WATER' && engine.getLayer(LayerType.WATER)[i] > 0.01) fillColor = COLORS.WATER_RES;
                     else if (currentMode === 'FOOD' && (fish[i] > 0.01 || animals[i] > 0.01)) fillColor = COLORS.FOOD;
                 }
 
@@ -348,42 +344,57 @@ export default function GameCanvas() {
                 g.fill({ color: fillColor });
                 if (strokeAlpha > 0) g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: strokeAlpha });
 
-                // Preview Route
+                // --- PREVIEW ROUTE (CORRECTION) ---
                 if (previewPathRef.current.includes(i)) {
-                    const check = RoadManager.checkTile(engine, i, null);
-                    let color = 0x00FF00;
-                    let alpha = 0.6;
+                    let color = COLORS.ROAD_PREVIEW_VALID;
+                    if (currentMode === 'BULLDOZER') {
+                        color = 0xFF0000;
+                    } else {
+                        const check = RoadManager.checkTile(engine, i, null);
+                        if (!check.valid || !isValidBuildRef.current) color = COLORS.ROAD_PREVIEW_INVALID;
+                        else if (check.isBridge) color = COLORS.ROAD_BRIDGE;
+                    }
 
-                    if (!check.valid) { color = 0xFF0000; alpha = 0.8; }
-                    else if (!isValidBuildRef.current) { color = 0xFF4444; alpha = 0.6; }
-                    else if (check.isBridge) { color = 0x8B4513; alpha = 0.8; }
+                    // RE-DESSINER LE CHEMIN POUR QUE LE FILL S'APPLIQUE
+                    g.beginPath();
+                    g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
+                    g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
+                    g.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
+                    g.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
+                    g.closePath();
 
-                    g.fill({ color, alpha });
+                    g.fill({ color, alpha: 0.6 });
                 }
 
-                // Routes Réelles
+                // ROUTES (CONTINUOUS GRAPH)
                 if (engine.roadLayer && engine.roadLayer[i]) {
                     const road = engine.roadLayer[i];
                     if (road) {
-                        const roadColor = road.isBridge ? 0x8B4513 : 0x555555;
-                        g.beginPath();
-                        g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
-                        g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
-                        g.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
-                        g.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
-                        g.closePath();
-                        g.fill({ color: roadColor });
+                        const cx = pos.x;
+                        const cy = pos.y;
 
-                        g.lineStyle(3, 0xFFD700, 1);
-                        const cx = pos.x; const cy = pos.y;
-                        const qw = TILE_WIDTH / 4; const qh = TILE_HEIGHT / 4;
+                        const n_dx = TILE_WIDTH / 4; const n_dy = -TILE_HEIGHT / 4;
+                        const s_dx = -TILE_WIDTH / 4; const s_dy = TILE_HEIGHT / 4;
+                        const e_dx = TILE_WIDTH / 4; const e_dy = TILE_HEIGHT / 4;
+                        const w_dx = -TILE_WIDTH / 4; const w_dy = -TILE_HEIGHT / 4;
+
+                        const roadColor = road.isBridge ? COLORS.ROAD_BRIDGE : COLORS.ROAD_ASPHALT;
+
+                        // 1. Asphalt
                         g.beginPath();
-                        if (road.connections.n) { g.moveTo(cx, cy); g.lineTo(cx - qw, cy - qh); }
-                        if (road.connections.s) { g.moveTo(cx, cy); g.lineTo(cx + qw, cy + qh); }
-                        if (road.connections.e) { g.moveTo(cx, cy); g.lineTo(cx + qw, cy - qh); }
-                        if (road.connections.w) { g.moveTo(cx, cy); g.lineTo(cx - qw, cy + qh); }
-                        g.stroke();
-                        g.lineStyle(0);
+                        if (road.connections.n) { g.moveTo(cx, cy); g.lineTo(cx + n_dx, cy + n_dy); }
+                        if (road.connections.s) { g.moveTo(cx, cy); g.lineTo(cx + s_dx, cy + s_dy); }
+                        if (road.connections.e) { g.moveTo(cx, cy); g.lineTo(cx + e_dx, cy + e_dy); }
+                        if (road.connections.w) { g.moveTo(cx, cy); g.lineTo(cx + w_dx, cy + w_dy); }
+                        g.stroke({ width: 16, color: roadColor, alpha: 1, cap: 'round', join: 'round' });
+
+                        // 2. Yellow Marking
+                        g.beginPath();
+                        if (road.connections.n) { g.moveTo(cx, cy); g.lineTo(cx + n_dx, cy + n_dy); }
+                        if (road.connections.s) { g.moveTo(cx, cy); g.lineTo(cx + s_dx, cy + s_dy); }
+                        if (road.connections.e) { g.moveTo(cx, cy); g.lineTo(cx + e_dx, cy + e_dy); }
+                        if (road.connections.w) { g.moveTo(cx, cy); g.lineTo(cx + w_dx, cy + w_dy); }
+                        g.stroke({ width: 2, color: COLORS.ROAD_MARKING, alpha: 1, cap: 'round', join: 'round' });
                     }
                 }
             }
@@ -406,9 +417,11 @@ export default function GameCanvas() {
     const ResourceBar = ({ label, value, color }: any) => (<div className="flex items-center gap-2 text-xs mb-1"> <span className="w-16 text-gray-400 font-bold uppercase">{label}</span> <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"> <div className="h-full transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color }}></div> </div> <span className="w-8 text-right text-white">{Math.round(value)}%</span> </div>);
 
     return (
-        <div className="w-full h-full relative overflow-hidden bg-black">
+        // FIXED POSITION + Z-INDEX 0 POUR ÊTRE SÛR QU'IL PREND TOUT L'ÉCRAN SANS GÊNER
+        <div className="fixed inset-0 w-screen h-screen bg-black z-0 overflow-hidden">
             <div ref={pixiContainerRef} className="absolute inset-0" />
 
+            {/* UI */}
             <div className="absolute top-2 right-2 text-xs text-green-500 font-mono z-20 flex flex-col items-end pointer-events-none">
                 <span>FPS: {debugFPS}</span>
                 <span className="text-yellow-400">{t('ui.coords')}: {cursorPos.x}, {cursorPos.y}</span>
@@ -423,9 +436,13 @@ export default function GameCanvas() {
             )}
 
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 bg-gray-900/90 p-2 rounded border border-gray-700 shadow-xl backdrop-blur-md">
-                <button onClick={() => setViewMode('BUILD_ROAD')} className={`text-left px-3 py-1.5 text-xs font-bold rounded mb-2 border ${viewMode === 'BUILD_ROAD' ? 'bg-yellow-600 text-white border-yellow-500' : 'bg-gray-800 text-gray-300 border-gray-600'}`}>
+                <button onClick={() => setViewMode('BUILD_ROAD')} className={`text-left px-3 py-1.5 text-xs font-bold rounded mb-1 border ${viewMode === 'BUILD_ROAD' ? 'bg-yellow-600 text-white border-yellow-500' : 'bg-gray-800 text-gray-300 border-gray-600'}`}>
                     🚧 ROUTE
                 </button>
+                <button onClick={() => setViewMode('BULLDOZER')} className={`text-left px-3 py-1.5 text-xs font-bold rounded mb-2 border ${viewMode === 'BULLDOZER' ? 'bg-red-600 text-white border-red-500' : 'bg-gray-800 text-gray-300 border-gray-600'}`}>
+                    💣 BULLDOZER
+                </button>
+
                 <div className="h-px bg-gray-700 my-1"></div>
                 {[
                     { id: 'ALL', label: t('layers.satellite') },
@@ -453,35 +470,6 @@ export default function GameCanvas() {
                     <ResourceBar label={t('resources.water')} value={summary.water} color="#29b6f6" />
                 </div>
             )}
-
-            <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
-                <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
-                    <span>{t('ui.coords')}: [{cursorPos.x}, {cursorPos.y}]</span>
-                    {hoverInfo && <span className="text-white font-bold">{hoverInfo.biomeName}</span>}
-                </div>
-                {hoverInfo && hoverInfo.resourceKey ? (
-                    <div className="bg-gray-900/95 backdrop-blur border border-blue-500/50 rounded-lg p-4 shadow-2xl animate-in fade-in slide-in-from-top-2">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <h4 className="text-sm text-gray-400 uppercase tracking-wider text-[10px]">{t('ui.potential')}</h4>
-                                <h2 className="text-xl font-bold text-white leading-tight">{t(`resources.${hoverInfo.resourceKey}`)}</h2>
-                            </div>
-                            <div className="bg-blue-900 text-blue-200 text-[10px] font-bold px-1.5 py-0.5 rounded border border-blue-700">{t('ui.level_short')} {hoverInfo.techReq}</div>
-                        </div>
-                        <div className="my-3">
-                            <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">{formatNumber(hoverInfo.amount)}</span>
-                            <span className="text-sm text-gray-400 ml-1">{t(`units.${hoverInfo.unitKey}`)}</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mt-1">
-                            <div className="h-full bg-gradient-to-r from-blue-500 to-green-400 transition-all duration-300" style={{ width: `${Math.min(100, hoverInfo.value * 100)}%` }} />
-                        </div>
-                    </div>
-                ) : (
-                    <div className="bg-black/60 backdrop-blur border border-gray-800 rounded-lg p-4 text-center">
-                        <p className="text-gray-500 text-xs italic">{t('resources.none')}</p>
-                    </div>
-                )}
-            </div>
 
             <button onClick={handleRegenerate} className="absolute bottom-4 right-4 z-10 bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-6 rounded shadow-lg pointer-events-auto">🎲 GÉNÉRER</button>
         </div>
