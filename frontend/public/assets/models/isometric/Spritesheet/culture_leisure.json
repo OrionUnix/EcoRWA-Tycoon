@@ -1,0 +1,124 @@
+{
+    "category": "CULTURE_AND_LEISURE",
+    "metadata": {
+        "spritesheet": "assets/buildings/leisure_v1.png",
+        "tileSize": 256
+    },
+    "culture": {
+        "THEATER": {
+            "name": "Grand Theater",
+            "cost": 8000,
+            "maintenance": 400,
+            "radius": 12,
+            "tourism_boost": 0.15,
+            "sprite": {
+                "row": 0,
+                "col": 0
+            }
+        },
+        "MUSEUM": {
+            "name": "History & Art Museum",
+            "cost": 12000,
+            "maintenance": 650,
+            "radius": 15,
+            "education_bonus": 0.1,
+            "sprite": {
+                "row": 0,
+                "col": 1
+            }
+        },
+        "LIBRARY": {
+            "name": "Modern Library",
+            "cost": 3500,
+            "maintenance": 120,
+            "radius": 8,
+            "education_bonus": 0.25,
+            "sprite": {
+                "row": 0,
+                "col": 3
+            }
+        },
+        "CULTURAL_CENTER": {
+            "name": "Community Hub",
+            "cost": 5000,
+            "maintenance": 250,
+            "radius": 10,
+            "social_happiness": 20,
+            "sprite": {
+                "row": 0,
+                "col": 2
+            }
+        }
+    },
+    "entertainment": {
+        "CINEMA": {
+            "name": "Multiplex Cinema",
+            "cost": 4500,
+            "maintenance": 180,
+            "radius": 7,
+            "commercial_revenue_boost": 0.12,
+            "sprite": {
+                "row": 1,
+                "col": 0
+            }
+        },
+        "STADIUM": {
+            "name": "Olympic Arena",
+            "cost": 45000,
+            "maintenance": 2500,
+            "radius": 30,
+            "tourism_boost": 0.5,
+            "noise_pollution": 15,
+            "sprite": {
+                "row": 2,
+                "col": 1
+            }
+        },
+        "AQUARIUM": {
+            "name": "Oceanic Dome",
+            "cost": 15000,
+            "maintenance": 900,
+            "radius": 14,
+            "education_bonus": 0.05,
+            "sprite": {
+                "row": 3,
+                "col": 1
+            }
+        },
+        "ZOO": {
+            "name": "City Safari",
+            "cost": 20000,
+            "maintenance": 1200,
+            "radius": 20,
+            "happiness_boost": 0.3,
+            "sprite": {
+                "row": 3,
+                "col": 0
+            }
+        }
+    },
+    "sports": {
+        "SWIMMING_POOL": {
+            "name": "Aquatic Center",
+            "cost": 3000,
+            "maintenance": 200,
+            "radius": 6,
+            "health_bonus": 0.1,
+            "sprite": {
+                "row": 2,
+                "col": 2
+            }
+        },
+        "SPORT_CENTER": {
+            "name": "Tennis & Fitness Club",
+            "cost": 2500,
+            "maintenance": 150,
+            "radius": 5,
+            "health_bonus": 0.15,
+            "sprite": {
+                "row": 1,
+                "col": 3
+            }
+        }
+    }
+}

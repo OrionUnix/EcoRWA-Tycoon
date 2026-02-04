@@ -169,5 +169,43 @@
       "yieldSpread": "The gap between rental yield and savings account rates. High spread means real estate is more attractive.",
       "vacancyRate": "Percentage of empty properties. Low rate (<3%) indicates high demand."
     }
+  },
+  "Game": {
+    "ui": {
+      "data_title": "Geological Data",
+      "grid": "GRID",
+      "zoom": "ZOOM",
+      "level_short": "Lvl.",
+      "potential": "Est. Potential",
+      "hint": "Right Click + Drag • Scroll Zoom"
+    },
+    "layers": {
+      "satellite": "Satellite",
+      "forests": "Forests",
+      "food": "Food",
+      "water": "Aquifers",
+      "oil": "Oil",
+      "coal": "Coal",
+      "iron": "Ores"
+    },
+    "resources": {
+      "oil": "Crude Oil",
+      "coal": "Coal",
+      "wood": "Timber",
+      "fish": "School of Fish",
+      "game": "Wild Game",
+      "iron": "Iron Ore",
+      "water": "Fresh Water",
+      "altitude": "Elevation",
+      "none": "Barren Land"
+    },
+    "units": {
+      "barrel": "Barrels",
+      "ton": "Tons",
+      "m3": "m³",
+      "head": "Heads",
+      "unit": "Units",
+      "liter": "Liters"
+    }
   }
 }

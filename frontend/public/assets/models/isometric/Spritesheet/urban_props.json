@@ -1,0 +1,124 @@
+{
+    "category": "URBAN_DECORATIONS_DETAIL",
+    "metadata": {
+        "spritesheet": "assets/environment/urban_props_v1.png",
+        "tileSize": 64,
+        "has_night_layer": true
+    },
+    "lighting": {
+        "STREET_LAMP": {
+            "name": "Classic Lamp Post",
+            "cost": 150,
+            "maintenance": 5,
+            "light_radius": 4,
+            "light_color": "#FFFAD5",
+            "sprites": {
+                "row": 0,
+                "col": 0,
+                "variations": 4
+            }
+        }
+    },
+    "seating_and_social": {
+        "BENCH": {
+            "name": "Wooden City Bench",
+            "cost": 40,
+            "comfort_bonus": 2,
+            "social_interaction_rate": 0.1,
+            "sprites": {
+                "row": 1,
+                "col": 0,
+                "variations": 4
+            }
+        },
+        "CAFE_TERRACE": {
+            "name": "Bistro Terrace",
+            "cost": 800,
+            "commercial_boost": 0.05,
+            "requires_adjacent_commercial": true,
+            "sprites": {
+                "row": 4,
+                "col": 6,
+                "variations": 2
+            }
+        },
+        "KIOSK": {
+            "name": "Gazebo / Newsstand",
+            "cost": 1200,
+            "leisure_score": 5,
+            "sprite": {
+                "row": 3,
+                "col": 0
+            }
+        }
+    },
+    "water_and_art": {
+        "FOUNTAIN": {
+            "name": "Tiered Fountain",
+            "cost": 2000,
+            "maintenance": 40,
+            "sound_effect": "water_loop",
+            "land_value_bonus": 0.05,
+            "sprite": {
+                "row": 2,
+                "col": 0
+            }
+        },
+        "STATUE": {
+            "name": "Historical Monument",
+            "cost": 3500,
+            "culture_points": 15,
+            "sprite": {
+                "row": 2,
+                "col": 1
+            }
+        }
+    },
+    "nature_detail": {
+        "FLOWER_BOX": {
+            "name": "Planter Box",
+            "cost": 100,
+            "beautification_score": 2,
+            "sprites": {
+                "row": 5,
+                "col": 0,
+                "variations": 6
+            }
+        }
+    },
+    "boundaries_and_ground": {
+        "FENCE_IRON": {
+            "name": "Wrought Iron Fence",
+            "cost": 10,
+            "is_path_blocker": true,
+            "sprites": {
+                "straight": [
+                    6,
+                    0
+                ],
+                "corner": [
+                    6,
+                    1
+                ]
+            }
+        },
+        "BRICK_WALL": {
+            "name": "Low Brick Wall",
+            "cost": 15,
+            "sprite": {
+                "row": 7,
+                "col": 0
+            }
+        },
+        "DECORATIVE_PAVEMENT": {
+            "name": "Patterned Tiles",
+            "cost": 5,
+            "speed_modifier": 1.1,
+            "sprites": {
+                "row": 7,
+                "col": 2,
+                "variations": 4
+            }
+        }
+    }
+}

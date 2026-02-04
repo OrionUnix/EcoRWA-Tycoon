@@ -170,5 +170,47 @@
       "yieldSpread": "L'écart entre le rendement locatif et le taux du Livret A. Si le spread est élevé, l'immobilier est beaucoup plus attractif.",
       "vacancyRate": "Pourcentage de logements vides. À Paris, un taux bas (<3%) indique une forte demande."
     }
+  },
+  "Game": {
+    "ui": {
+      "data_title": "Données Géologiques",
+      "grid": "GRILLE",
+      "coords": "COORD",
+      "zoom": "ZOOM",
+      "tech_req": "Tech Requise",
+      "level_short": "Nv.",
+      "hint": "Clic Droit + Glisser • Molette Zoom",
+      "potential": "Potentiel Estimé"
+    },
+    "layers": {
+      "oil": "Pétrole Brut",
+      "coal": "Charbon",
+      "wood": "Bois de Construction",
+      "fish": "Banc de Poissons",
+      "game": "Gibier Sauvage",
+      "iron": "Minerai de Fer",
+      "water": "Eau Douce",
+      "altitude": "Altitude",
+      "none": "Terrain Vierge"
+    },
+    "resources": {
+      "oil": "Pétrole Brut",
+      "coal": "Charbon",
+      "wood": "Bois de Construction",
+      "fish": "Banc de Poissons",
+      "game": "Gibier Sauvage",
+      "iron": "Minerai de Fer",
+      "water": "Eau Douce",
+      "altitude": "Altitude",
+      "none": "Terrain Vierge"
+    },
+    "units": {
+      "barrel": "Barils",
+      "ton": "Tonnes",
+      "m3": "m³",
+      "head": "Têtes",
+      "unit": "Unités",
+      "liter": "Litre"
+    }
   }
 }
