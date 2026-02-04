@@ -1,9 +1,10 @@
 import { createNoise2D } from 'simplex-noise';
 import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData } from './types';
 import { RoadManager } from './RoadManager';
+import { RoadGraph } from './Pathfinding'; // Import du Pathfinding
 import { GRID_SIZE, TOTAL_CELLS } from './config';
 
-// Resource and Biome Rules
+// ... (Garder les types ResourceRule, BiomeRule et BIOME_SIGNATURES inchangés) ...
 type ResourceRule = { chance: number, intensity: number };
 type BiomeRule = {
     oil: ResourceRule;
@@ -61,35 +62,68 @@ export class MapEngine {
     // Road Layer Logic
     public roadLayer: (RoadData | null)[];
 
-    // Place Road Method
+    // Pathfinding Logic (Ajouté)
+    public roadGraph: RoadGraph;
+
+    // --- Place Road Method Modifiée ---
     public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
-        // 1. Destroy trees
-        if (this.resourceMaps.wood[index] > 0) {
-            this.resourceMaps.wood[index] = 0;
-        }
+        // 1. Check strict si la case est valide (pour éviter les glitchs via console ou autre)
+        // Note: On passe null pour prevIndex car on suppose que le contrôle principal a été fait par le UI
+        // Mais idéalement, on devrait passer le contexte. Pour l'instant on accepte.
 
-        // 2. Check for water (Bridge)
-        const isWater = this.getLayer(LayerType.WATER)[index] > 0.5;
+        // 2. Destruction de la forêt (Rayon 1)
+        RoadManager.clearForestAround(this, index);
 
-        // 3. Create road
-        this.roadLayer[index] = RoadManager.createRoad(type, isWater);
+        // 3. Détermine le type (Pont, Tunnel) basé sur le terrain actuel
+        const waterDepth = this.getLayer(LayerType.WATER)[index];
+        const isWater = waterDepth > 0.3;
 
-        // 4. Update connections
-        RoadManager.updateConnections(index, this.roadLayer);
+        // Tunnel : On fait simple pour l'instant, si hauteur > X et pas d'eau
+        const isTunnel = this.heightMap[index] > 0.85 && !isWater;
+
+        // 4. Create road data
+        this.roadLayer[index] = RoadManager.createRoad(type, isWater, isTunnel);
+
+        // 5. Update connections & Graph
+        this.updateGraphAround(index);
     }
 
-    // Remove Road Method
+    // --- Remove Road Method Modifiée ---
     public removeRoad(index: number) {
+        if (this.roadLayer[index] === null) return;
+
         this.roadLayer[index] = null;
 
-        // Update neighbors
+        // Update Graph (Suppression du noeud et mise à jour des voisins)
+        this.roadGraph.removeNode(index);
+        this.updateGraphAround(index);
+    }
+
+    // Helper pour mettre à jour le graphe autour d'une tuile modifiée
+    private updateGraphAround(index: number) {
         const x = index % GRID_SIZE;
         const y = Math.floor(index / GRID_SIZE);
 
-        if (y > 0) RoadManager.updateConnections((y - 1) * GRID_SIZE + x, this.roadLayer);
-        if (y < GRID_SIZE - 1) RoadManager.updateConnections((y + 1) * GRID_SIZE + x, this.roadLayer);
-        if (x > 0) RoadManager.updateConnections(y * GRID_SIZE + (x - 1), this.roadLayer);
-        if (x < GRID_SIZE - 1) RoadManager.updateConnections(y * GRID_SIZE + (x + 1), this.roadLayer);
+        // Update self
+        if (this.roadLayer[index]) {
+            RoadManager.updateConnections(index, this.roadLayer);
+            this.roadGraph.addNode(index, this.roadLayer[index]!.connections);
+        }
+
+        // Update neighbors
+        const neighbors = [
+            (y > 0) ? (y - 1) * GRID_SIZE + x : -1, // N
+            (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1, // S
+            (x > 0) ? y * GRID_SIZE + (x - 1) : -1, // W
+            (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1 // E
+        ];
+
+        neighbors.forEach(nIdx => {
+            if (nIdx !== -1 && this.roadLayer[nIdx]) {
+                RoadManager.updateConnections(nIdx, this.roadLayer);
+                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections);
+            }
+        });
     }
 
     constructor() {
@@ -112,6 +146,7 @@ export class MapEngine {
             fish: new Float32Array(TOTAL_CELLS)
         };
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
+        this.roadGraph = new RoadGraph(); // Init Graph
     }
 
     private resetMaps() {
@@ -121,6 +156,7 @@ export class MapEngine {
         Object.values(this.resourceMaps).forEach(map => map.fill(0));
         Object.values(this.layers).forEach(map => map.fill(0));
         this.roadLayer.fill(null);
+        this.roadGraph = new RoadGraph(); // Reset Graph
     }
 
     private fbm(x: number, y: number, octaves: number, noiseFunc: (x: number, y: number) => number): number {
@@ -207,7 +243,6 @@ export class MapEngine {
     public getLayer(layer: LayerType): Float32Array { return this.layers[layer]; }
 }
 
-// --- SINGLETON EXPORTS ---
 let mapEngineInstance: MapEngine | null = null;
 
 export function getMapEngine(): MapEngine {

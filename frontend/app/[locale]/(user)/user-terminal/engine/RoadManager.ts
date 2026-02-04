@@ -3,11 +3,12 @@ import { RoadData, RoadType, BiomeType, LayerType } from './types';
 import { MapEngine } from './MapEngine';
 
 const RULES = {
-    MAX_SLOPE: 0.15, // Height difference limit
+    MAX_SLOPE: 0.8, // Pente max pour une route normale
+    TUNNEL_THRESHOLD: 0.5, // Pente à partir de laquelle on envisage un tunnel
     COST: {
         BASE: 10,
         BRIDGE: 50,
-        TUNNEL: 100,
+        TUNNEL: 150,
         FOREST_EXTRA: 5,
         MOUNTAIN_EXTRA: 20
     }
@@ -22,19 +23,18 @@ export interface RoadCheckResult {
 }
 
 export class RoadManager {
-    // ... createRoad, getPreviewPath, updateConnections (keep existing) ...
-
-    static createRoad(type: RoadType, isBridge: boolean = false): RoadData {
+    static createRoad(type: RoadType, isBridge: boolean, isTunnel: boolean): RoadData {
         return {
             type,
             isBridge,
-            isTunnel: false,
+            isTunnel,
             connections: { n: false, s: false, e: false, w: false },
-            speedLimit: 60,
-            capacity: 500
+            speedLimit: isTunnel ? 80 : 50,
+            capacity: 1000
         };
     }
 
+    // ... (Garder getPreviewPath inchangé) ...
     static getPreviewPath(startX: number, startY: number, endX: number, endY: number): number[] {
         const path: number[] = [];
         let currentX = startX;
@@ -47,6 +47,7 @@ export class RoadManager {
         return Array.from(new Set(path));
     }
 
+    // Mise à jour des connexions (inchangé, mais crucial pour le graphe)
     static updateConnections(index: number, roadMap: (RoadData | null)[]) {
         const road = roadMap[index];
         if (!road) return;
@@ -58,70 +59,90 @@ export class RoadManager {
             w: (x > 0) ? y * GRID_SIZE + (x - 1) : -1,
             e: (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1,
         };
-        // Update SELF
-        if (neighbors.n !== -1 && roadMap[neighbors.n]) road.connections.n = true;
-        if (neighbors.s !== -1 && roadMap[neighbors.s]) road.connections.s = true;
-        if (neighbors.w !== -1 && roadMap[neighbors.w]) road.connections.w = true;
-        if (neighbors.e !== -1 && roadMap[neighbors.e]) road.connections.e = true;
-        // Update NEIGHBORS
-        if (neighbors.n !== -1 && roadMap[neighbors.n]) roadMap[neighbors.n]!.connections.s = true;
-        if (neighbors.s !== -1 && roadMap[neighbors.s]) roadMap[neighbors.s]!.connections.n = true;
-        if (neighbors.w !== -1 && roadMap[neighbors.w]) roadMap[neighbors.w]!.connections.e = true;
-        if (neighbors.e !== -1 && roadMap[neighbors.e]) roadMap[neighbors.e]!.connections.w = true;
+
+        // Reset connections
+        road.connections = { n: false, s: false, e: false, w: false };
+
+        if (neighbors.n !== -1 && roadMap[neighbors.n]) { road.connections.n = true; roadMap[neighbors.n]!.connections.s = true; }
+        if (neighbors.s !== -1 && roadMap[neighbors.s]) { road.connections.s = true; roadMap[neighbors.s]!.connections.n = true; }
+        if (neighbors.w !== -1 && roadMap[neighbors.w]) { road.connections.w = true; roadMap[neighbors.w]!.connections.e = true; }
+        if (neighbors.e !== -1 && roadMap[neighbors.e]) { road.connections.e = true; roadMap[neighbors.e]!.connections.w = true; }
     }
 
     /**
-     * CHECKS IF A TILE IS VALID FOR ROAD PLACEMENT
+     * Nettoie les arbres autour d'une position (Rayon 1)
+     */
+    static clearForestAround(engine: MapEngine, index: number) {
+        const x = index % GRID_SIZE;
+        const y = Math.floor(index / GRID_SIZE);
+        const woodMap = engine.resourceMaps.wood;
+
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const nx = x + dx;
+                const ny = y + dy;
+                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+                    const ni = ny * GRID_SIZE + nx;
+                    if (woodMap[ni] > 0) woodMap[ni] = 0; // Coupe l'arbre
+                }
+            }
+        }
+    }
+
+    /**
+     * VÉRIFICATION AVANCÉE
      */
     static checkTile(engine: MapEngine, index: number, prevIndex: number | null): RoadCheckResult {
-        const biomes = engine.biomes;
         const heightMap = engine.heightMap;
         const waterLayer = engine.getLayer(LayerType.WATER);
         const woodLayer = engine.resourceMaps.wood;
 
-        const biome = biomes[index];
         const height = heightMap[index];
-        const waterDepth = waterLayer[index];
+        const isWater = waterLayer[index] > 0.3;
         const hasWood = woodLayer[index] > 0.1;
 
-        let valid = true;
-        let reason = '';
         let isBridge = false;
         let isTunnel = false;
         let cost = RULES.COST.BASE;
 
-        // 1. RULE: DEEP OCEAN (Forbidden)
-        // Adjust threshold based on your MapEngine generation
-        if (biome === BiomeType.DEEP_OCEAN || waterDepth >= 0.9) {
-            return { valid: false, reason: "Too deep", cost: 0, isBridge: false, isTunnel: false };
-        }
-
-        // 2. RULE: BRIDGE (Shallow Water)
-        if (waterDepth > 0.1 || biome === BiomeType.OCEAN || biome === BiomeType.BEACH) {
+        // 1. RÈGLE PONT STRICTE
+        // On ne peut pas commencer un tracé (prevIndex == null) DANS l'eau.
+        // Il faut partir de la terre ou d'un pont existant.
+        if (isWater) {
+            if (prevIndex === null) {
+                // On vérifie si c'est une extension d'un pont existant
+                if (!engine.roadLayer[index]) {
+                    return { valid: false, reason: "Impossible de commencer dans l'eau", cost: 0, isBridge: false, isTunnel: false };
+                }
+            }
             isBridge = true;
             cost = RULES.COST.BRIDGE;
         }
 
-        // 3. RULE: SLOPE
+        // 2. RÈGLE PENTE & TUNNEL
         if (prevIndex !== null) {
             const prevHeight = heightMap[prevIndex];
             const slope = Math.abs(height - prevHeight);
 
+            // Si la pente est extrême, c'est un mur -> Impossible
             if (slope > RULES.MAX_SLOPE) {
-                // For now, block steep slopes. Tunnel logic would go here.
-                return { valid: false, reason: "Too steep", cost: 0, isBridge: false, isTunnel: false };
+                return { valid: false, reason: "Pente trop raide", cost: 0, isBridge: false, isTunnel: false };
             }
 
-            if (slope > 0.05) {
-                cost += RULES.COST.MOUNTAIN_EXTRA;
+            // Si pente forte mais acceptable -> Tunnel automatique
+            if (slope > RULES.TUNNEL_THRESHOLD && !isWater) {
+                isTunnel = true;
+                cost = RULES.COST.TUNNEL;
+            } else if (slope > 0.1) {
+                cost += RULES.COST.MOUNTAIN_EXTRA; // Surcoût montagne
             }
         }
 
-        // 4. RULE: FOREST (Destruction cost)
+        // 3. COÛT FORÊT
         if (hasWood) {
             cost += RULES.COST.FOREST_EXTRA;
         }
 
-        return { valid, reason, isBridge, isTunnel, cost };
+        return { valid: true, reason: '', isBridge, isTunnel, cost };
     }
 }
