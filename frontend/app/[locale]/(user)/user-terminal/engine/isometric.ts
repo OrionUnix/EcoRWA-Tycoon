@@ -1,6 +1,6 @@
 import { TILE_WIDTH, TILE_HEIGHT } from './config';
 
-// Convertit Grille -> Pixels (Pour dessiner)
+// Convertit Grille -> Écran (Pour dessiner les tuiles)
 export function gridToScreen(x: number, y: number) {
     return {
         x: (x - y) * TILE_WIDTH / 2,
@@ -8,17 +8,16 @@ export function gridToScreen(x: number, y: number) {
     };
 }
 
-// Convertit Pixels -> Grille (Pour la souris)
+// Convertit Écran -> Grille (Pour détecter la souris)
 export function screenToGrid(screenX: number, screenY: number) {
     const halfW = TILE_WIDTH / 2;
     const halfH = TILE_HEIGHT / 2;
 
-    // Formule mathématique pure de l'isométrie inversée
-    // On divise par le demi-largeur/hauteur pour normaliser
+    // Formule inverse précise
+    // On ajoute un petit offset (+0.5) pour compenser les arrondis de bordure
     const gridX = (screenX / halfW + screenY / halfH) / 2;
     const gridY = (screenY / halfH - screenX / halfW) / 2;
 
-    // Math.floor est LE standard pour trouver l'index d'une case dans un tableau
     return {
         x: Math.floor(gridX),
         y: Math.floor(gridY)
