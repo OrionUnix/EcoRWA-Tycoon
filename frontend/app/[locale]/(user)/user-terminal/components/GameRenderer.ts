@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { MapEngine } from '../engine/MapEngine';
 import { gridToScreen } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
-import { RoadType, ROAD_SPECS, ZoneType, ZONE_COLORS, LayerType, BiomeType } from '../engine/types';
+import { RoadType, RoadData, ROAD_SPECS, ZoneType, BuildingData, ZONE_COLORS, LayerType, BiomeType } from '../engine/types';
 import { RoadManager } from '../engine/RoadManager';
 
 export const COLORS = {
@@ -100,7 +100,7 @@ export class GameRenderer {
         }
     }
 
-    private static drawRoadTile(g: PIXI.Graphics, road: any, cx: number, cy: number, index: number) {
+    private static drawRoadTile(g: PIXI.Graphics, road: RoadData, cx: number, cy: number, index: number) {
         const specs = ROAD_SPECS[road.type];
         if (!specs) return;
 
@@ -169,7 +169,7 @@ export class GameRenderer {
         }
     }
 
-    private static drawBuilding(g: PIXI.Graphics, building: any, cx: number, cy: number) {
+    private static drawBuilding(g: PIXI.Graphics, building: BuildingData, cx: number, cy: number) {
         const bHeight = building.level * 8 + 5;
         const bWidth = TILE_WIDTH * 0.5;
         const bColor = ZONE_COLORS[building.type];

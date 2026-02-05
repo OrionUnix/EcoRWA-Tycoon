@@ -1,69 +1,73 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 import { useTranslations } from 'next-intl';
 
+import { getGameEngine } from '../engine/GameEngine';
 import { getMapEngine, regenerateWorld } from '../engine/MapEngine';
 import { gridToScreen, screenToGrid } from '../engine/isometric';
-import { GRID_SIZE, INITIAL_ZOOM, TILE_HEIGHT, TILE_WIDTH } from '../engine/config';
+import { GRID_SIZE, INITIAL_ZOOM } from '../engine/config';
 import { RoadType, ZoneType, PlayerResources, CityStats } from '../engine/types';
 import { getResourceAtTile } from '../utils/resourceUtils';
 import { RoadManager } from '../engine/RoadManager';
-import { BuildingManager } from '../engine/BuildingManager';
 
-// IMPORTS LOCAUX
 import { GameRenderer, COLORS } from './GameRenderer';
 import GameUI from './GameUI';
 
 type ViewMode = 'ALL' | 'WATER' | 'OIL' | 'COAL' | 'IRON' | 'WOOD' | 'FOOD' | 'BUILD_ROAD' | 'BULLDOZER' | 'ZONE';
 
+/**
+ * GameCanvas - Composant React (Vue uniquement)
+ * 
+ * Rôle:
+ * 1. Créer le canvas PixiJS
+ * 2. Capturer les inputs souris
+ * 3. Appeler GameEngine pour la logique
+ * 4. Afficher l'UI via GameUI
+ */
 export default function GameCanvas() {
     const t = useTranslations('Game');
 
-    // STATES
+    // === ÉTATS UI ===
     const [viewMode, setViewMode] = useState<ViewMode>('ALL');
     const [selectedRoadType, setSelectedRoadType] = useState<RoadType>(RoadType.ASPHALT);
     const [selectedZoneType, setSelectedZoneType] = useState<ZoneType>(ZoneType.RESIDENTIAL);
-
-    // UI Data
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [hoverInfo, setHoverInfo] = useState<any>(null);
     const [debugFPS, setDebugFPS] = useState(0);
     const [summary, setSummary] = useState<any>(null);
     const [playerResources, setPlayerResources] = useState<PlayerResources | null>(null);
-    const [cityStats, setCityStats] = useState<CityStats | null>(null); // State for Stats
+    const [cityStats, setCityStats] = useState<CityStats | null>(null);
     const [totalCost, setTotalCost] = useState(0);
     const [isValidBuild, setIsValidBuild] = useState(true);
 
-    // REFS (For PixiLoop & Logic)
+    // === REFS ===
     const pixiContainerRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<PIXI.Application | null>(null);
     const staticGRef = useRef<PIXI.Graphics | null>(null);
     const uiGRef = useRef<PIXI.Graphics | null>(null);
-
     const startDragTileRef = useRef<{ x: number, y: number } | null>(null);
     const previewPathRef = useRef<number[]>([]);
 
-    // --- REFS TO AVOID STALE CLOSURES IN LOOP ---
+    // Refs pour éviter les closures stale
     const viewModeRef = useRef<ViewMode>('ALL');
     const selectedRoadTypeRef = useRef(selectedRoadType);
     const selectedZoneTypeRef = useRef(selectedZoneType);
     const isValidBuildRef = useRef(true);
-    const cursorPosRef = useRef({ x: 0, y: 0 }); // New Ref for smoother cursor
-
-    // Cache for rendering
+    const cursorPosRef = useRef({ x: 0, y: 0 });
     const lastRenderedRevision = useRef(-1);
     const lastViewMode = useRef<ViewMode>('ALL');
 
-    // Sync Refs
+    // Sync refs
     useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
     useEffect(() => { selectedRoadTypeRef.current = selectedRoadType; }, [selectedRoadType]);
     useEffect(() => { selectedZoneTypeRef.current = selectedZoneType; }, [selectedZoneType]);
 
-    // INIT PIXI
+    // === INIT PIXI ===
     useEffect(() => {
         if (!pixiContainerRef.current) return;
+
         const init = async () => {
             const app = new PIXI.Application();
             await app.init({
@@ -81,7 +85,6 @@ export default function GameCanvas() {
             app.canvas.style.width = '100%';
             app.canvas.style.height = '100%';
             app.canvas.style.display = 'block';
-
             appRef.current = app;
 
             const stage = new PIXI.Container();
@@ -101,46 +104,41 @@ export default function GameCanvas() {
             stage.addChild(uiG);
             uiGRef.current = uiG;
 
-            // Robust Camera Centering
-            const centerCamera = () => {
-                if (!app.renderer) return;
-                app.resize();
-                const screenW = app.screen.width;
-                const screenH = app.screen.height;
-                const centerGrid = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
-                stage.position.set(
-                    (screenW / 2) - (centerGrid.x * INITIAL_ZOOM),
-                    (screenH / 2) - (centerGrid.y * INITIAL_ZOOM)
-                );
-                stage.scale.set(INITIAL_ZOOM);
-            };
-
-            centerCamera();
-            setTimeout(centerCamera, 100);
-
-            window.addEventListener('resize', () => { app.resize(); });
-
-            // Setup Inputs
+            centerCamera(app, stage);
+            setTimeout(() => centerCamera(app, stage), 100);
+            window.addEventListener('resize', () => app.resize());
             setupEvents(stage, app);
 
-            // Initial Generation
+            // Initialisation
             regenerateWorld();
             const engine = getMapEngine();
             setSummary(engine.currentSummary);
             setPlayerResources({ ...engine.resources });
 
-            // Start Loop
             app.ticker.add(gameLoop);
         };
+
         init();
         return () => { appRef.current?.destroy({ removeView: true }); };
     }, []);
 
-    // EVENTS MOUSE
+    const centerCamera = (app: PIXI.Application, stage: PIXI.Container) => {
+        if (!app.renderer) return;
+        app.resize();
+        const screenW = app.screen.width;
+        const screenH = app.screen.height;
+        const centerGrid = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
+        stage.position.set(
+            (screenW / 2) - (centerGrid.x * INITIAL_ZOOM),
+            (screenH / 2) - (centerGrid.y * INITIAL_ZOOM)
+        );
+        stage.scale.set(INITIAL_ZOOM);
+    };
+
+    // === GESTION DES INPUTS ===
     const setupEvents = (stage: PIXI.Container, app: PIXI.Application) => {
         let isDraggingCam = false;
-        let lastX = 0;
-        let lastY = 0;
+        let lastX = 0, lastY = 0;
 
         const getGridPos = (gx: number, gy: number) => {
             const local = stage.toLocal({ x: gx, y: gy });
@@ -164,7 +162,6 @@ export default function GameCanvas() {
         stage.on('pointermove', (e) => {
             const gridPos = getGridPos(e.global.x, e.global.y);
 
-            // Sync both State (for UI) and Ref (for Game Loop)
             if (gridPos.x !== cursorPosRef.current.x || gridPos.y !== cursorPosRef.current.y) {
                 setCursorPos(gridPos);
                 cursorPosRef.current = gridPos;
@@ -177,54 +174,55 @@ export default function GameCanvas() {
                 stage.position.y += dy;
                 lastX = e.global.x;
                 lastY = e.global.y;
-            } else {
-                // Construction Preview Logic
-                if (startDragTileRef.current) {
-                    const path = RoadManager.getPreviewPath(startDragTileRef.current.x, startDragTileRef.current.y, gridPos.x, gridPos.y);
-                    previewPathRef.current = path;
+            } else if (startDragTileRef.current) {
+                // Construction preview
+                const gameEngine = getGameEngine();
+                const path = gameEngine.getPreviewPath(
+                    startDragTileRef.current.x,
+                    startDragTileRef.current.y,
+                    gridPos.x,
+                    gridPos.y
+                );
+                previewPathRef.current = path;
 
-                    if (viewModeRef.current === 'BUILD_ROAD') {
-                        let cost = 0; let valid = true;
-                        const engine = getMapEngine();
-                        path.forEach(idx => {
-                            const check = RoadManager.checkTile(engine, idx, null);
-                            if (!check.valid) valid = false;
-                            cost += check.cost;
-                        });
-                        setTotalCost(cost);
-                        setIsValidBuild(valid);
-                        isValidBuildRef.current = valid;
-                    }
-                } else {
-                    updateHoverInfo(gridPos);
+                if (viewModeRef.current === 'BUILD_ROAD') {
+                    const validation = gameEngine.validateBuildPath(path);
+                    setTotalCost(validation.cost);
+                    setIsValidBuild(validation.valid);
+                    isValidBuildRef.current = validation.valid;
                 }
+            } else {
+                updateHoverInfo(gridPos);
             }
         });
 
         const handlePointerUp = () => {
             isDraggingCam = false;
+
             if (startDragTileRef.current && previewPathRef.current.length > 0) {
-                const engine = getMapEngine();
+                const gameEngine = getGameEngine();
                 const mode = viewModeRef.current;
 
+                // Déléguer au GameEngine
                 if (mode === 'BUILD_ROAD' && isValidBuildRef.current) {
-                    previewPathRef.current.forEach(idx => engine.placeRoad(idx, selectedRoadTypeRef.current));
+                    gameEngine.handleBuildRoad(previewPathRef.current, selectedRoadTypeRef.current);
                 } else if (mode === 'ZONE') {
-                    previewPathRef.current.forEach(idx => engine.setZone(idx, selectedZoneTypeRef.current));
+                    gameEngine.handleSetZone(previewPathRef.current, selectedZoneTypeRef.current);
                 } else if (mode === 'BULLDOZER') {
-                    previewPathRef.current.forEach(idx => { engine.removeRoad(idx); engine.removeZone(idx); });
+                    gameEngine.handleBulldoze(previewPathRef.current);
                 }
 
                 startDragTileRef.current = null;
                 previewPathRef.current = [];
                 setTotalCost(0);
-                setSummary({ ...engine.currentSummary });
+                setSummary({ ...gameEngine.summary });
             }
         };
 
         stage.on('pointerup', handlePointerUp);
         stage.on('pointerupoutside', handlePointerUp);
 
+        // Zoom
         app.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             const zoomSpeed = 0.001;
@@ -249,53 +247,53 @@ export default function GameCanvas() {
             const idx = gridPos.y * GRID_SIZE + gridPos.x;
             const info = getResourceAtTile(engine, idx, viewModeRef.current);
             setHoverInfo(info ? { ...info, biomeName: 'Biome' } : null);
-        } else setHoverInfo(null);
+        } else {
+            setHoverInfo(null);
+        }
     };
 
-    // --- GAME LOOP ---
+    // === GAME LOOP ===
     const gameLoop = () => {
         if (!appRef.current || !staticGRef.current || !uiGRef.current) return;
+
         const app = appRef.current;
+        const gameEngine = getGameEngine();
         const engine = getMapEngine();
 
         setDebugFPS(Math.round(app.ticker.FPS));
 
-        // 1. Tick Logic
-        engine.tick();
+        // Tick simulation via GameEngine
+        gameEngine.tick();
 
-        // 2. Update React UI State (throttled)
+        // Update React UI
         if (app.ticker.lastTime % 30 < 1) {
-            setPlayerResources({ ...engine.resources });
-
-            // Force React to detect change by spreading object
-            if (engine.stats) {
-                setCityStats({
-                    ...engine.stats,
-                    demand: { ...engine.stats.demand }
-                });
+            setPlayerResources({ ...gameEngine.resources });
+            if (gameEngine.stats) {
+                setCityStats({ ...gameEngine.stats, demand: { ...gameEngine.stats.demand } });
             }
         }
 
         const currentViewMode = viewModeRef.current;
 
-        // 3. Static Render (Only on change)
-        if (engine.revision !== lastRenderedRevision.current || currentViewMode !== lastViewMode.current) {
+        // Rendu statique (seulement si changement)
+        if (gameEngine.revision !== lastRenderedRevision.current || currentViewMode !== lastViewMode.current) {
             GameRenderer.renderStaticLayer(staticGRef.current, engine, currentViewMode, false);
-            lastRenderedRevision.current = engine.revision;
+            lastRenderedRevision.current = gameEngine.revision;
             lastViewMode.current = currentViewMode;
         }
 
-        // 4. Dynamic Render (Every frame)
+        // Rendu dynamique (chaque frame)
         GameRenderer.renderDynamicLayer(
             uiGRef.current,
             engine,
-            cursorPosRef.current, // Use Ref for smoothness
+            cursorPosRef.current,
             previewPathRef.current,
             viewModeRef.current,
             isValidBuildRef.current
         );
     };
 
+    // === RENDER ===
     return (
         <div className="fixed inset-0 w-screen h-screen bg-black z-0 overflow-hidden">
             <div ref={pixiContainerRef} className="absolute inset-0" />
@@ -308,8 +306,8 @@ export default function GameCanvas() {
                 fps={debugFPS} cursorPos={cursorPos} hoverInfo={hoverInfo}
                 resources={playerResources} summary={summary}
                 stats={cityStats}
-                onSpawnTraffic={() => getMapEngine().spawnTraffic(50)}
-                onRegenerate={() => { regenerateWorld(); getMapEngine().revision++; }}
+                onSpawnTraffic={() => getGameEngine().spawnTraffic(50)}
+                onRegenerate={() => { getGameEngine().regenerate(); }}
             />
         </div>
     );

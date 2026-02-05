@@ -1,7 +1,6 @@
 import { createNoise2D } from 'simplex-noise';
 import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData, Vehicle, ZoneType, PlayerResources, BuildingData, CityStats } from './types';
-import { RoadManager } from './RoadManager';
-import { BuildingManager } from './BuildingManager';
+
 import { RoadGraph } from './Pathfinding';
 import { GRID_SIZE, TOTAL_CELLS } from './config';
 
@@ -71,7 +70,7 @@ export class MapEngine {
 
     public tick() {
         this.updateVehicles();
-        BuildingManager.updateBuildings(this);
+
         this.calculateStats();
     }
 
@@ -227,61 +226,13 @@ export class MapEngine {
         };
     }
 
-    // --- LOGIQUE ROUTES (Inchangée) ---
-    public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
-        RoadManager.applyEnvironmentalImpact(this, index);
-        const waterDepth = this.getLayer(LayerType.WATER)[index];
-        const isWater = waterDepth > 0.3;
-        const isTunnel = this.heightMap[index] > 0.85 && !isWater;
-        this.roadLayer[index] = RoadManager.createRoad(type, isWater, isTunnel);
-        this.zoningLayer[index] = ZoneType.NONE; // Écrase zone
-        this.buildingLayer[index] = null; // Écrase bâtiment
-        this.updateGraphAround(index);
-        this.revision++;
-    }
 
-    public removeRoad(index: number) {
-        if (this.roadLayer[index] === null) return;
-        this.roadLayer[index] = null;
-        this.roadGraph.removeNode(index);
-        this.updateGraphAround(index);
-        this.revision++;
-    }
 
-    private updateGraphAround(index: number) {
-        const x = index % GRID_SIZE;
-        const y = Math.floor(index / GRID_SIZE);
-        if (this.roadLayer[index]) {
-            RoadManager.updateConnections(index, this.roadLayer);
-            this.roadGraph.addNode(index, this.roadLayer[index]!.connections, this.roadLayer[index]!.speedLimit);
-        }
-        const neighbors = [(y > 0) ? (y - 1) * GRID_SIZE + x : -1, (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1, (x > 0) ? y * GRID_SIZE + (x - 1) : -1, (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1];
-        neighbors.forEach(nIdx => {
-            if (nIdx !== -1 && this.roadLayer[nIdx]) {
-                RoadManager.updateConnections(nIdx, this.roadLayer);
-                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections, this.roadLayer[nIdx]!.speedLimit);
-            }
-        });
-    }
 
-    // --- LOGIQUE ZONAGE (Inchangée) ---
-    public setZone(index: number, type: ZoneType) {
-        const isWater = this.layers[LayerType.WATER][index] > 0.3;
-        const hasRoad = this.roadLayer[index] !== null;
-        if (!isWater && !hasRoad) {
-            this.zoningLayer[index] = type;
-            if (this.buildingLayer[index] && this.buildingLayer[index]!.type !== type) {
-                this.buildingLayer[index] = null;
-            }
-            this.revision++;
-        }
-    }
 
-    public removeZone(index: number) {
-        this.zoningLayer[index] = ZoneType.NONE;
-        this.buildingLayer[index] = null;
-        this.revision++;
-    }
+
+
+
 
     // --- VÉHICULES (Inchangés) ---
     public spawnTraffic(count: number) {
