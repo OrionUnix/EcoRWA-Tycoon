@@ -180,7 +180,7 @@ export default function GameCanvas() {
                         let valid = true;
                         let prevIdx: number | null = null;
                         for (const idx of path) {
-                            const check = RoadManager.checkTile(engine, idx, prevIdx);
+                            const check: RoadCheckResult = RoadManager.checkTile(engine, idx, prevIdx);
                             if (!check.valid) valid = false;
                             cost += check.cost;
                             prevIdx = idx;
@@ -285,9 +285,7 @@ export default function GameCanvas() {
         const currentMode = viewModeRef.current;
         const isGridVisible = showGridRef.current;
 
-        // ----------------------------------------------------
-        // A. COUCHE STATIQUE (Terrain + Routes)
-        // ----------------------------------------------------
+        // A. COUCHE STATIQUE
         if (engine.revision !== lastRenderedRevision.current || currentMode !== lastViewMode.current) {
             staticG.clear();
 
@@ -305,7 +303,6 @@ export default function GameCanvas() {
                     let fillColor = 0x000000;
                     let strokeAlpha = 0;
 
-                    // Terrain Logic
                     if (currentMode === 'ALL' || currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') {
                         if (biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.DEEP_OCEAN;
                         else if (biome === BiomeType.OCEAN) fillColor = COLORS.OCEAN;
@@ -337,7 +334,6 @@ export default function GameCanvas() {
                     staticG.fill({ color: fillColor });
                     if (strokeAlpha > 0) staticG.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: strokeAlpha });
 
-                    // Road Logic (Static - Dessiné PAR DESSUS le terrain)
                     if (engine.roadLayer && engine.roadLayer[i]) {
                         const road = engine.roadLayer[i];
                         if (road) {
@@ -349,7 +345,6 @@ export default function GameCanvas() {
 
                             const roadColor = road.isBridge ? COLORS.ROAD_BRIDGE : COLORS.ROAD_ASPHALT;
 
-                            // Asphalt
                             staticG.beginPath();
                             if (road.connections.n) { staticG.moveTo(cx, cy); staticG.lineTo(cx + n_dx, cy + n_dy); }
                             if (road.connections.s) { staticG.moveTo(cx, cy); staticG.lineTo(cx + s_dx, cy + s_dy); }
@@ -357,7 +352,6 @@ export default function GameCanvas() {
                             if (road.connections.w) { staticG.moveTo(cx, cy); staticG.lineTo(cx + w_dx, cy + w_dy); }
                             staticG.stroke({ width: 16, color: roadColor, alpha: 1, cap: 'round', join: 'round' });
 
-                            // Marking
                             staticG.beginPath();
                             if (road.connections.n) { staticG.moveTo(cx, cy); staticG.lineTo(cx + n_dx, cy + n_dy); }
                             if (road.connections.s) { staticG.moveTo(cx, cy); staticG.lineTo(cx + s_dx, cy + s_dy); }
@@ -368,18 +362,77 @@ export default function GameCanvas() {
                     }
                 }
             }
-
-            // Mise à jour des flags
             lastRenderedRevision.current = engine.revision;
             lastViewMode.current = currentMode;
         }
 
-        // ----------------------------------------------------
-        // B. COUCHE UI (Preview, Cursor)
-        // ----------------------------------------------------
+        // B. COUCHE UI
         uiG.clear();
 
-        // 1. Highlight Cursor
+        // 0. VEHICLES
+        engine.updateVehicles();
+        engine.vehicles.forEach(car => {
+            const screenPos = gridToScreen(car.x, car.y);
+
+            // --- LOGIQUE DE DÉCALAGE (ROULER À DROITE) ---
+            let offsetX = 0;
+            let offsetY = 0;
+
+            // On regarde vers la prochaine tuile cible pour savoir où est "la droite"
+            if (car.path && car.targetIndex < car.path.length) {
+                const targetIdx = car.path[car.targetIndex];
+                const tx = targetIdx % GRID_SIZE;
+                const ty = Math.floor(targetIdx / GRID_SIZE);
+
+                // Vecteur direction
+                const dx = tx - car.x;
+                const dy = ty - car.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+
+                if (len > 0.01) { // Si on bouge
+                    // Vecteur Normalisé
+                    const ux = dx / len;
+                    const uy = dy / len;
+
+                    // En isométrique, "droite" est complexe à calculer vectoriellement pur
+                    // Astuce simple : On décale perpendiculairement à la direction
+                    // Si je vais vers l'Est (+x), ma droite est le Sud (+y)
+
+                    const OFFSET_AMOUNT = 6; // Ecartement par rapport au centre (en pixels)
+
+                    // On projette la direction en vecteur écran pour calculer la perpendiculaire écran
+                    const p1 = gridToScreen(0, 0);
+                    const p2 = gridToScreen(ux, uy); // Où serait le vecteur unitaire à l'écran
+
+                    const screenDx = p2.x - p1.x;
+                    const screenDy = p2.y - p1.y;
+                    const screenLen = Math.sqrt(screenDx * screenDx + screenDy * screenDy);
+
+                    if (screenLen > 0) {
+                        // Perpendiculaire en 2D (x, y) -> (-y, x) pour tourner à 90°
+                        const perpX = -screenDy / screenLen;
+                        const perpY = screenDx / screenLen;
+
+                        offsetX = perpX * OFFSET_AMOUNT;
+                        offsetY = perpY * OFFSET_AMOUNT;
+                    }
+                }
+            }
+
+            const finalX = screenPos.x + offsetX;
+            const finalY = screenPos.y + offsetY;
+
+            // Dessin
+            uiG.beginFill(car.color);
+            uiG.drawCircle(finalX, finalY, 4); // La voiture
+            uiG.endFill();
+
+            // Phare (Petit point blanc pour voir le sens)
+            uiG.beginFill(0xFFFFFF);
+            uiG.drawCircle(finalX + offsetX * 0.5, finalY + offsetY * 0.5, 1.5);
+            uiG.endFill();
+        });
+        // 1. Highlight
         const highlightPos = gridToScreen(cursorPos.x, cursorPos.y);
         uiG.lineStyle(2, COLORS.HIGHLIGHT, 1);
         uiG.beginPath();
@@ -390,7 +443,7 @@ export default function GameCanvas() {
         uiG.closePath();
         uiG.stroke();
 
-        // 2. Preview Path
+        // 2. Preview
         if (previewPathRef.current.length > 0) {
             for (const idx of previewPathRef.current) {
                 const x = idx % GRID_SIZE;
@@ -425,7 +478,6 @@ export default function GameCanvas() {
         <div className="fixed inset-0 w-screen h-screen bg-black z-0 overflow-hidden">
             <div ref={pixiContainerRef} className="absolute inset-0" />
 
-            {/* UI */}
             <div className="absolute top-2 right-2 text-xs text-green-500 font-mono z-20 flex flex-col items-end pointer-events-none">
                 <span>FPS: {debugFPS}</span>
                 <span className="text-yellow-400">{t('ui.coords')}: {cursorPos.x}, {cursorPos.y}</span>
@@ -447,6 +499,24 @@ export default function GameCanvas() {
                     💣 BULLDOZER
                 </button>
 
+                <button
+                    onClick={() => {
+                        // On appelle spawnTraffic avec 50 voitures !
+                        // La méthode existe déjà dans ton MapEngine mis à jour
+                        const success = getMapEngine().spawnTraffic(50);
+
+                        // Petit log pour vérifier
+                        console.log(`Trafic actuel : ${getMapEngine().vehicles.length} véhicules`);
+
+                        if (!success && getMapEngine().vehicles.length === 0) {
+                            alert("Construisez plus de routes connectées d'abord !");
+                        }
+                    }}
+                    className="text-left px-3 py-1.5 text-xs font-bold rounded mb-2 border bg-purple-600 text-white border-purple-500 hover:bg-purple-500"
+                >
+                    🚗 TRAFIC (x50)
+                </button>
+
                 <div className="h-px bg-gray-700 my-1"></div>
                 {[
                     { id: 'ALL', label: t('layers.satellite') },
@@ -464,7 +534,6 @@ export default function GameCanvas() {
                 ))}
             </div>
 
-            {/* INFO PANEL (RESTAURÉ) */}
             <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
                 <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
                     <span>{t('ui.coords')}: [{cursorPos.x}, {cursorPos.y}]</span>

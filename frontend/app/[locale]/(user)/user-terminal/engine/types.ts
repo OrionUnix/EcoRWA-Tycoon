@@ -59,3 +59,12 @@ export interface RoadData {
     speedLimit: number;
     capacity: number;
 }
+export interface Vehicle {
+    id: number;
+    x: number;      // Position précise sur la grille (ex: 10.5)
+    y: number;
+    path: number[]; // Liste des index de tuiles à parcourir
+    targetIndex: number; // Prochain index dans le path
+    speed: number;
+    color: number;
+}

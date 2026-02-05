@@ -1,10 +1,9 @@
 import { createNoise2D } from 'simplex-noise';
-import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData } from './types';
+import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData, Vehicle } from './types';
 import { RoadManager } from './RoadManager';
 import { RoadGraph } from './Pathfinding';
 import { GRID_SIZE, TOTAL_CELLS } from './config';
 
-// ... (Garde les constantes BIOME_SIGNATURES et types ici, pas de changement) ...
 type ResourceRule = { chance: number, intensity: number };
 type BiomeRule = {
     oil: ResourceRule; coal: ResourceRule; iron: ResourceRule; wood: ResourceRule; animals: ResourceRule; fish: ResourceRule;
@@ -33,7 +32,10 @@ export class MapEngine {
     public roadLayer: (RoadData | null)[];
     public roadGraph: RoadGraph;
 
-    // IMPORTANT : C'est ce chiffre qui dit au Canvas de redessiner
+    // Véhicules
+    public vehicles: Vehicle[] = [];
+    private nextVehicleId = 1;
+
     public revision: number = 0;
 
     constructor() {
@@ -59,6 +61,96 @@ export class MapEngine {
         this.roadGraph = new RoadGraph();
     }
 
+    // --- LOGIQUE VEHICULES ---
+
+    public spawnTraffic(count: number) {
+        let successCount = 0;
+        for (let i = 0; i < count; i++) {
+            if (this.spawnTestVehicle()) {
+                successCount++;
+            }
+        }
+        return successCount > 0;
+    }
+
+    public spawnTestVehicle(): boolean {
+        const roadIndices: number[] = [];
+        this.roadLayer.forEach((road, index) => { if (road) roadIndices.push(index); });
+
+        if (roadIndices.length < 2) return false;
+
+        const startIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
+        const endIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
+
+        if (startIdx === endIdx) return false;
+
+        const path = this.roadGraph.findPath(startIdx, endIdx);
+        if (!path || path.length === 0) return false;
+
+        const startX = startIdx % GRID_SIZE;
+        const startY = Math.floor(startIdx / GRID_SIZE);
+
+        const colors = [0x00FFFF, 0xFF00FF, 0xFFFF00, 0x00FF00, 0xFFFFFF];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        const randomSpeed = 0.08 + Math.random() * 0.05;
+
+        const car: Vehicle = {
+            id: this.nextVehicleId++,
+            x: startX,
+            y: startY,
+            path: path,
+            targetIndex: 0,
+            speed: randomSpeed,
+            color: randomColor
+        };
+
+        this.vehicles.push(car);
+        return true;
+    }
+
+    public updateVehicles() {
+        for (let i = this.vehicles.length - 1; i >= 0; i--) {
+            const car = this.vehicles[i];
+
+            if (car.targetIndex >= car.path.length) {
+                // Repartir vers une nouvelle destination
+                const currentIdx = car.path[car.path.length - 1];
+                const roadIndices: number[] = [];
+                this.roadLayer.forEach((road, index) => { if (road) roadIndices.push(index); });
+                const newDestIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
+
+                const newPath = this.roadGraph.findPath(currentIdx, newDestIdx);
+
+                if (newPath && newPath.length > 0) {
+                    car.path = newPath;
+                    car.targetIndex = 0;
+                } else {
+                    this.vehicles.splice(i, 1);
+                }
+                continue;
+            }
+
+            const targetTileIdx = car.path[car.targetIndex];
+            const targetX = targetTileIdx % GRID_SIZE;
+            const targetY = Math.floor(targetTileIdx / GRID_SIZE);
+
+            const dx = targetX - car.x;
+            const dy = targetY - car.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < car.speed) {
+                car.x = targetX;
+                car.y = targetY;
+                car.targetIndex++;
+            } else {
+                car.x += (dx / dist) * car.speed;
+                car.y += (dy / dist) * car.speed;
+            }
+        }
+    }
+
+    // --- LOGIQUE ROUTES ---
+
     public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
         RoadManager.applyEnvironmentalImpact(this, index);
         const waterDepth = this.getLayer(LayerType.WATER)[index];
@@ -67,8 +159,6 @@ export class MapEngine {
 
         this.roadLayer[index] = RoadManager.createRoad(type, isWater, isTunnel);
         this.updateGraphAround(index);
-
-        // ✅ IMPORTANT : Signaler le changement
         this.revision++;
     }
 
@@ -77,8 +167,6 @@ export class MapEngine {
         this.roadLayer[index] = null;
         this.roadGraph.removeNode(index);
         this.updateGraphAround(index);
-
-        // ✅ IMPORTANT : Signaler le changement
         this.revision++;
     }
 
@@ -114,6 +202,7 @@ export class MapEngine {
         Object.values(this.layers).forEach(map => map.fill(0));
         this.roadLayer.fill(null);
         this.roadGraph = new RoadGraph();
+        this.vehicles = [];
     }
 
     private fbm(x: number, y: number, octaves: number, noiseFunc: (x: number, y: number) => number): number {
@@ -178,8 +267,6 @@ export class MapEngine {
             }
         }
         this.calculateSummary();
-
-        // ✅ IMPORTANT : Forcer le rafraîchissement graphique après la génération
         this.revision++;
     }
 
