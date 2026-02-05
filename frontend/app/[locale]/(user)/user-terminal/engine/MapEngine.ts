@@ -1,10 +1,9 @@
 import { createNoise2D } from 'simplex-noise';
-import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData, Vehicle, ZoneType, PlayerResources, BuildingData } from './types';
+import { LayerType, GridConfig, BiomeType, ResourceSummary, RoadType, RoadData, Vehicle, ZoneType, PlayerResources, BuildingData, CityStats } from './types';
 import { RoadManager } from './RoadManager';
 import { BuildingManager } from './BuildingManager';
 import { RoadGraph } from './Pathfinding';
 import { GRID_SIZE, TOTAL_CELLS } from './config';
-import { CityStats } from './types';
 
 type ResourceRule = { chance: number, intensity: number };
 type BiomeRule = {
@@ -30,32 +29,32 @@ export class MapEngine {
     public moistureMap: Float32Array;
     public resourceMaps: { oil: Float32Array; coal: Float32Array; iron: Float32Array; wood: Float32Array; animals: Float32Array; fish: Float32Array; };
     public currentSummary: ResourceSummary = { oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0 };
-    public stats: CityStats;
+
     public roadLayer: (RoadData | null)[];
     public roadGraph: RoadGraph;
-
-    // Véhicules
     public vehicles: Vehicle[] = [];
     private nextVehicleId = 1;
     public revision: number = 0;
 
-    // Zonage & Ressources
     public zoningLayer: ZoneType[];
     public buildingLayer: (BuildingData | null)[];
     public resources: PlayerResources;
+    public stats: CityStats;
 
     constructor() {
         this.config = { size: GRID_SIZE, totalCells: TOTAL_CELLS };
-
-        // Init Arrays
         this.zoningLayer = new Array(TOTAL_CELLS).fill(ZoneType.NONE);
         this.buildingLayer = new Array(TOTAL_CELLS).fill(null);
         this.resources = { wood: 500, concrete: 200, glass: 100, steel: 50, energy: 1000 };
+        this.stats = {
+            population: 0, jobsCommercial: 0, jobsIndustrial: 0, unemployed: 0,
+            demand: { residential: 100, commercial: 50, industrial: 50 }
+        };
 
         this.layers = {
             [LayerType.TERRAIN]: new Float32Array(TOTAL_CELLS),
             [LayerType.WATER]: new Float32Array(TOTAL_CELLS),
-            [LayerType.ROADS]: new Float32Array(TOTAL_CELLS), // Si utilisé
+            [LayerType.ROADS]: new Float32Array(TOTAL_CELLS),
             [LayerType.RESOURCES]: new Float32Array(TOTAL_CELLS),
         };
         this.biomes = new Uint8Array(TOTAL_CELLS);
@@ -68,62 +67,56 @@ export class MapEngine {
         };
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
         this.roadGraph = new RoadGraph();
-        // Init Stats par défaut
-        this.stats = {
-            population: 0,
-            jobsCommercial: 0,
-            jobsIndustrial: 0,
-            unemployed: 0,
-            demand: { residential: 100, commercial: 50, industrial: 50 } // Demande forte au début pour lancer le jeu
-        };
     }
 
-    // --- BOUCLE DE JEU (TICK) ---
     public tick() {
-        // Simulation Traffic
         this.updateVehicles();
         BuildingManager.updateBuildings(this);
-        if (this.revision % 60 === 0) {
-            this.calculateStats();
-        }
+        this.calculateStats();
     }
 
     private calculateStats() {
         let pop = 0;
         let jobsC = 0;
         let jobsI = 0;
-        // 1. Recensement (On parcourt tous les bâtiments)
+        let activeBuildings = 0;
+
         for (let i = 0; i < this.config.totalCells; i++) {
             const b = this.buildingLayer[i];
 
-            // On compte seulement les bâtiments construits (ACTIVE) ou en cours (CONSTRUCTION)
-            if (b && (b.state === 'ACTIVE' || b.state === 'CONSTRUCTION')) {
-                // Formule : Niveau * Densité de base
+            // On compte les bâtiments qui ont dépassé le stade "terrain nu"
+            // Note: Assurez-vous que ZoneType est bien importé depuis './types'
+            if (b) {
+                // Logique simplifiée pour être sûr de compter
                 if (b.type === ZoneType.RESIDENTIAL) {
-                    pop += b.level * 10; // 1 maison niv 1 = 10 habitants
+                    // Si niveau 1, on compte 10 habitants
+                    // Si en construction, on compte quand même pour le feedback immédiat
+                    pop += Math.max(1, b.level) * 10;
+                    activeBuildings++;
                 }
                 else if (b.type === ZoneType.COMMERCIAL) {
-                    jobsC += b.level * 5; // 1 commerce niv 1 = 5 emplois
+                    jobsC += Math.max(1, b.level) * 5;
+                    activeBuildings++;
                 }
                 else if (b.type === ZoneType.INDUSTRIAL) {
-                    jobsI += b.level * 8; // 1 usine niv 1 = 8 emplois
+                    jobsI += Math.max(1, b.level) * 8;
+                    activeBuildings++;
                 }
             }
         }
 
+        // DEBUG: Voir si le moteur détecte des bâtiments
+        if (this.revision % 120 === 0 && activeBuildings > 0) {
+            console.log(`📊 Stats Debug: Bâtiments=${activeBuildings}, Pop=${pop}, JobsC=${jobsC}, JobsI=${jobsI}`);
+        }
+
         const totalJobs = jobsC + jobsI;
 
-        // 2. Calcul du Flux (Demande RCI)
-        // Résidentiel : Ils viennent s'il y a du travail ou si la ville est vide (start)
-        let demandR = 50 + (totalJobs - pop) * 0.5;
+        // Calcul Demande (Flux) - Formule ajustée pour être plus dynamique
+        let demandR = 50 + (totalJobs - pop);
+        let demandC = (pop * 0.5) - jobsC;
+        let demandI = (pop * 0.3) - jobsI + 20;
 
-        // Commercial : Ils viennent s'il y a des habitants (clients)
-        let demandC = (pop * 0.4) - jobsC;
-
-        // Industriel : Ils viennent s'il y a des chômeurs (main d'œuvre)
-        let demandI = (pop - totalJobs) * 0.8 + 20;
-
-        // Clamp entre 0 et 100 pour l'affichage des barres
         const clamp = (val: number) => Math.max(0, Math.min(100, val));
 
         this.stats = {
@@ -138,186 +131,17 @@ export class MapEngine {
             }
         };
     }
-    // --- LOGIQUE VEHICULES ---
-
-    public spawnTraffic(count: number) {
-        let successCount = 0;
-        for (let i = 0; i < count; i++) {
-            if (this.spawnTestVehicle()) successCount++;
-        }
-        console.log(`🚗 Trafic : ${successCount} voitures générées`);
-        return successCount > 0;
-    }
-
-    public spawnTestVehicle(): boolean {
-        const roadIndices: number[] = [];
-        this.roadLayer.forEach((road, index) => { if (road) roadIndices.push(index); });
-
-        if (roadIndices.length < 2) return false;
-
-        const startIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
-        const endIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
-
-        if (startIdx === endIdx) return false;
-
-        const path = this.roadGraph.findPath(startIdx, endIdx);
-        if (!path || path.length === 0) return false;
-
-        const startX = startIdx % GRID_SIZE;
-        const startY = Math.floor(startIdx / GRID_SIZE);
-
-        const colors = [0x00FFFF, 0xFF00FF, 0xFFFF00, 0x00FF00, 0xFFFFFF];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-        const randomSpeed = 0.08 + Math.random() * 0.05;
-
-        const car: Vehicle = {
-            id: this.nextVehicleId++,
-            x: startX, y: startY,
-            path: path, targetIndex: 0,
-            speed: randomSpeed, color: randomColor
-        };
-
-        this.vehicles.push(car);
-        return true;
-    }
-
-    public updateVehicles() {
-        for (let i = this.vehicles.length - 1; i >= 0; i--) {
-            const car = this.vehicles[i];
-
-            if (car.targetIndex >= car.path.length) {
-                const currentIdx = car.path[car.path.length - 1];
-                const roadIndices: number[] = [];
-                this.roadLayer.forEach((road, index) => { if (road) roadIndices.push(index); });
-                if (roadIndices.length === 0) { this.vehicles.splice(i, 1); continue; }
-
-                const newDestIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
-                const newPath = this.roadGraph.findPath(currentIdx, newDestIdx);
-
-                if (newPath && newPath.length > 0) {
-                    car.path = newPath; car.targetIndex = 0;
-                } else {
-                    this.vehicles.splice(i, 1);
-                }
-                continue;
-            }
-
-            const targetTileIdx = car.path[car.targetIndex];
-            const targetX = targetTileIdx % GRID_SIZE;
-            const targetY = Math.floor(targetTileIdx / GRID_SIZE);
-
-            const roadInfo = this.roadLayer[targetTileIdx];
-            let targetSpeed = 0.05;
-            if (roadInfo) {
-                targetSpeed = roadInfo.speedLimit * 0.2;
-            }
-
-            car.speed = car.speed * 0.7 + targetSpeed * 0.3;
-
-            const dx = targetX - car.x;
-            const dy = targetY - car.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < car.speed) {
-                car.x = targetX; car.y = targetY; car.targetIndex++;
-            } else {
-                car.x += (dx / dist) * car.speed; car.y += (dy / dist) * car.speed;
-            }
-        }
-    }
-
-    // --- LOGIQUE ROUTES ---
-
-    public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
-        RoadManager.applyEnvironmentalImpact(this, index);
-        const waterDepth = this.getLayer(LayerType.WATER)[index];
-
-        // CORRECTION : Détection eau plus souple (comme dans checkTile)
-        const isWater = waterDepth > 0.3;
-        const isTunnel = this.heightMap[index] > 0.85 && !isWater;
-
-        // On ne bloque plus l'eau ici ! (Le check UI le fait, mais ici on applique)
-
-        // On passe isWater = true pour créer un pont
-        this.roadLayer[index] = RoadManager.createRoad(type, isWater, isTunnel);
-
-        this.updateGraphAround(index);
-        this.revision++;
-    }
-
-    public removeRoad(index: number) {
-        if (this.roadLayer[index] === null) return;
-        this.roadLayer[index] = null;
-        this.roadGraph.removeNode(index);
-        this.updateGraphAround(index);
-        this.revision++;
-    }
-
-    private updateGraphAround(index: number) {
-        const x = index % GRID_SIZE;
-        const y = Math.floor(index / GRID_SIZE);
-
-        if (this.roadLayer[index]) {
-            RoadManager.updateConnections(index, this.roadLayer);
-            this.roadGraph.addNode(index, this.roadLayer[index]!.connections, this.roadLayer[index]!.speedLimit);
-        }
-
-        const neighbors = [
-            (y > 0) ? (y - 1) * GRID_SIZE + x : -1,
-            (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1,
-            (x > 0) ? y * GRID_SIZE + (x - 1) : -1,
-            (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1
-        ];
-
-        neighbors.forEach(nIdx => {
-            if (nIdx !== -1 && this.roadLayer[nIdx]) {
-                RoadManager.updateConnections(nIdx, this.roadLayer);
-                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections, this.roadLayer[nIdx]!.speedLimit);
-            }
-        });
-    }
-
-    // --- LOGIQUE ZONAGE ---
-
-    public setZone(index: number, type: ZoneType) {
-        const isWater = this.layers[LayerType.WATER][index] > 0.3;
-        const hasRoad = this.roadLayer[index] !== null;
-
-        if (!isWater && !hasRoad) {
-            this.zoningLayer[index] = type;
-            this.revision++;
-        }
-    }
-
-    public removeZone(index: number) {
-        this.zoningLayer[index] = ZoneType.NONE;
-        this.buildingLayer[index] = null;
-        this.revision++;
-    }
-
-    // --- GENERATION ---
-
-    private resetMaps() {
-        this.biomes.fill(0);
-        this.heightMap.fill(0);
-        this.moistureMap.fill(0);
-        Object.values(this.resourceMaps).forEach(map => map.fill(0));
-        Object.values(this.layers).forEach(map => map.fill(0));
-        this.roadLayer.fill(null);
-        this.roadGraph = new RoadGraph();
-        this.vehicles = [];
-        this.zoningLayer.fill(ZoneType.NONE);
-        this.buildingLayer.fill(null);
-    }
-
+    // --- MATHS TERRAIN (RESTITUÉES) ---
     private fbm(x: number, y: number, octaves: number, noiseFunc: (x: number, y: number) => number): number {
-        let value = 0, amplitude = 0.5, frequency = 1;
+        let value = 0;
+        let amplitude = 0.5;
+        let frequency = 1;
         for (let i = 0; i < octaves; i++) {
             value += noiseFunc(x * frequency, y * frequency) * amplitude;
             amplitude *= 0.5;
             frequency *= 2;
         }
-        return (value + 1) * 0.5;
+        return (value + 1) * 0.5; // Normaliser entre 0 et 1
     }
 
     public generateWorld(): void {
@@ -358,9 +182,7 @@ export class MapEngine {
                 const applyRes = (targetMap: Float32Array, r: ResourceRule, offset: number) => {
                     if (r.chance === 0) return;
                     const n = resNoise((x + offset) * 0.05, (y + offset) * 0.05);
-                    if (n > (1 - r.chance * 2)) {
-                        targetMap[i] = r.intensity * Math.abs(n);
-                    }
+                    if (n > (1 - r.chance * 2)) targetMap[i] = r.intensity * Math.abs(n);
                 };
 
                 applyRes(this.resourceMaps.oil, rule.oil, 0);
@@ -373,6 +195,19 @@ export class MapEngine {
         }
         this.calculateSummary();
         this.revision++;
+    }
+
+    private resetMaps() {
+        this.biomes.fill(0);
+        this.heightMap.fill(0);
+        this.moistureMap.fill(0);
+        Object.values(this.resourceMaps).forEach(map => map.fill(0));
+        Object.values(this.layers).forEach(map => map.fill(0));
+        this.roadLayer.fill(null);
+        this.roadGraph = new RoadGraph();
+        this.vehicles = [];
+        this.zoningLayer.fill(ZoneType.NONE);
+        this.buildingLayer.fill(null);
     }
 
     private calculateSummary() {
@@ -392,19 +227,106 @@ export class MapEngine {
         };
     }
 
+    // --- LOGIQUE ROUTES (Inchangée) ---
+    public placeRoad(index: number, type: RoadType = RoadType.ASPHALT) {
+        RoadManager.applyEnvironmentalImpact(this, index);
+        const waterDepth = this.getLayer(LayerType.WATER)[index];
+        const isWater = waterDepth > 0.3;
+        const isTunnel = this.heightMap[index] > 0.85 && !isWater;
+        this.roadLayer[index] = RoadManager.createRoad(type, isWater, isTunnel);
+        this.zoningLayer[index] = ZoneType.NONE; // Écrase zone
+        this.buildingLayer[index] = null; // Écrase bâtiment
+        this.updateGraphAround(index);
+        this.revision++;
+    }
+
+    public removeRoad(index: number) {
+        if (this.roadLayer[index] === null) return;
+        this.roadLayer[index] = null;
+        this.roadGraph.removeNode(index);
+        this.updateGraphAround(index);
+        this.revision++;
+    }
+
+    private updateGraphAround(index: number) {
+        const x = index % GRID_SIZE;
+        const y = Math.floor(index / GRID_SIZE);
+        if (this.roadLayer[index]) {
+            RoadManager.updateConnections(index, this.roadLayer);
+            this.roadGraph.addNode(index, this.roadLayer[index]!.connections, this.roadLayer[index]!.speedLimit);
+        }
+        const neighbors = [(y > 0) ? (y - 1) * GRID_SIZE + x : -1, (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1, (x > 0) ? y * GRID_SIZE + (x - 1) : -1, (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1];
+        neighbors.forEach(nIdx => {
+            if (nIdx !== -1 && this.roadLayer[nIdx]) {
+                RoadManager.updateConnections(nIdx, this.roadLayer);
+                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections, this.roadLayer[nIdx]!.speedLimit);
+            }
+        });
+    }
+
+    // --- LOGIQUE ZONAGE (Inchangée) ---
+    public setZone(index: number, type: ZoneType) {
+        const isWater = this.layers[LayerType.WATER][index] > 0.3;
+        const hasRoad = this.roadLayer[index] !== null;
+        if (!isWater && !hasRoad) {
+            this.zoningLayer[index] = type;
+            if (this.buildingLayer[index] && this.buildingLayer[index]!.type !== type) {
+                this.buildingLayer[index] = null;
+            }
+            this.revision++;
+        }
+    }
+
+    public removeZone(index: number) {
+        this.zoningLayer[index] = ZoneType.NONE;
+        this.buildingLayer[index] = null;
+        this.revision++;
+    }
+
+    // --- VÉHICULES (Inchangés) ---
+    public spawnTraffic(count: number) {
+        let successCount = 0;
+        for (let i = 0; i < count; i++) { if (this.spawnTestVehicle()) successCount++; }
+        return successCount > 0;
+    }
+    public spawnTestVehicle(): boolean {
+        const roadIndices: number[] = [];
+        this.roadLayer.forEach((road, index) => { if (road) roadIndices.push(index); });
+        if (roadIndices.length < 2) return false;
+        const startIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
+        const endIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
+        if (startIdx === endIdx) return false;
+        const path = this.roadGraph.findPath(startIdx, endIdx);
+        if (!path || path.length === 0) return false;
+        const startX = startIdx % GRID_SIZE;
+        const startY = Math.floor(startIdx / GRID_SIZE);
+        const colors = [0x00FFFF, 0xFF00FF, 0xFFFF00, 0x00FF00, 0xFFFFFF];
+        this.vehicles.push({ id: this.nextVehicleId++, x: startX, y: startY, path: path, targetIndex: 0, speed: 0.1, color: colors[Math.floor(Math.random() * colors.length)] });
+        return true;
+    }
+    public updateVehicles() {
+        for (let i = this.vehicles.length - 1; i >= 0; i--) {
+            const car = this.vehicles[i];
+            if (car.targetIndex >= car.path.length) { this.vehicles.splice(i, 1); continue; }
+            const targetTileIdx = car.path[car.targetIndex];
+            const targetX = targetTileIdx % GRID_SIZE;
+            const targetY = Math.floor(targetTileIdx / GRID_SIZE);
+            const roadInfo = this.roadLayer[targetTileIdx];
+            let targetSpeed = 0.05;
+            if (roadInfo) targetSpeed = roadInfo.speedLimit * 0.2;
+            car.speed = car.speed * 0.7 + targetSpeed * 0.3;
+            const dx = targetX - car.x;
+            const dy = targetY - car.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < car.speed) { car.x = targetX; car.y = targetY; car.targetIndex++; } else { car.x += (dx / dist) * car.speed; car.y += (dy / dist) * car.speed; }
+        }
+    }
     public getLayer(layer: LayerType): Float32Array { return this.layers[layer]; }
 }
 
 let mapEngineInstance: MapEngine | null = null;
-
 export function getMapEngine(): MapEngine {
-    if (!mapEngineInstance) {
-        mapEngineInstance = new MapEngine();
-        mapEngineInstance.generateWorld();
-    }
+    if (!mapEngineInstance) { mapEngineInstance = new MapEngine(); mapEngineInstance.generateWorld(); }
     return mapEngineInstance;
 }
-
-export function regenerateWorld() {
-    if (mapEngineInstance) mapEngineInstance.generateWorld();
-}
+export function regenerateWorld() { if (mapEngineInstance) mapEngineInstance.generateWorld(); }

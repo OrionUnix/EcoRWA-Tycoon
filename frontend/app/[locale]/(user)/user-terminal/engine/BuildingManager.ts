@@ -38,22 +38,22 @@ export class BuildingManager {
 
     // Appelé à chaque "tick" de simulation pour faire évoluer la ville
     static updateBuildings(engine: MapEngine) {
-        // On ne check pas toutes les cases à chaque frame (trop lourd)
-        // On check aléatoirement 50 tuiles par tick pour simuler la croissance organique
-        for (let i = 0; i < 50; i++) {
+        // On check aléatoirement 100 tuiles par tick pour accélérer un peu le début
+        for (let i = 0; i < 100; i++) {
             const idx = Math.floor(Math.random() * engine.config.totalCells);
             const zoneType = engine.zoningLayer[idx];
             const building = engine.buildingLayer[idx];
 
-            // Pas de zone, pas de bâtiment
-            if (zoneType === ZoneType.NONE) continue;
+            // Pas de zone ou c'est une route = on passe
+            if (zoneType === ZoneType.NONE || engine.roadLayer[idx]) continue;
 
             // 1. CONSTRUCTION INITIALE (Terrain vide + Zone définie)
             if (!building) {
                 if (this.hasRoadAccess(engine, idx)) {
                     // Essayer de construire le niveau 1
                     const cost = BUILDING_COSTS[zoneType][1];
-                    if (this.tryConsumeResources(engine, cost)) {
+                    // Si on a les ressources, on construit
+                    if (cost && this.tryConsumeResources(engine, cost)) {
                         engine.buildingLayer[idx] = {
                             type: zoneType,
                             level: 1,
@@ -68,8 +68,8 @@ export class BuildingManager {
             }
             // 2. ÉVOLUTION (Bâtiment existant)
             else if (building.state === 'ACTIVE' && building.level < 5) {
-                // Chance aléatoire d'évoluer si conditions réunies (ici simplifiées)
-                if (Math.random() < 0.1) {
+                // Chance aléatoire d'évoluer (1% par tick pour ne pas être instantané)
+                if (Math.random() < 0.01) {
                     const nextLevel = building.level + 1;
                     const cost = BUILDING_COSTS[building.type][nextLevel];
 
@@ -84,7 +84,7 @@ export class BuildingManager {
             // 3. FIN DE CONSTRUCTION
             else if (building.state === 'CONSTRUCTION') {
                 building.constructionTimer++;
-                if (building.constructionTimer > 60) { // 1 seconde de "travaux"
+                if (building.constructionTimer > 30) { // 0.5 seconde de "travaux" (accéléré)
                     building.state = 'ACTIVE';
                     engine.revision++;
                 }

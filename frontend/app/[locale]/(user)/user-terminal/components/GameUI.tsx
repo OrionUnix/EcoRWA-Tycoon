@@ -34,6 +34,15 @@ export default function GameUI({
     const locale = useLocale();
     const formatNumber = (num: number) => new Intl.NumberFormat(locale).format(num);
 
+    // --- CORRECTION : Valeurs par défaut si stats est null (Affichage 0) ---
+    const currentStats = stats || {
+        population: 0,
+        jobsCommercial: 0,
+        jobsIndustrial: 0,
+        unemployed: 0,
+        demand: { residential: 50, commercial: 0, industrial: 0 } // Demande par défaut
+    };
+
     const ResourceBar = ({ label, value, color }: any) => (
         <div className="flex items-center gap-2 text-xs mb-1">
             <span className="w-16 text-gray-400 font-bold uppercase">{label}</span>
@@ -46,11 +55,11 @@ export default function GameUI({
 
     const RCIBar = ({ r, c, i }: { r: number, c: number, i: number }) => (
         <div className="flex gap-1 h-6 items-end bg-gray-900/50 p-1 rounded border border-gray-700 tooltip" title="Demande RCI">
-            {/* R */}
+            {/* R - Vert */}
             <div className="w-2 bg-green-500 transition-all duration-500 rounded-sm" style={{ height: `${Math.max(10, r)}%` }} title={`Résidentiel: ${Math.floor(r)}%`}></div>
-            {/* C */}
+            {/* C - Bleu */}
             <div className="w-2 bg-blue-500 transition-all duration-500 rounded-sm" style={{ height: `${Math.max(10, c)}%` }} title={`Commercial: ${Math.floor(c)}%`}></div>
-            {/* I */}
+            {/* I - Jaune */}
             <div className="w-2 bg-yellow-500 transition-all duration-500 rounded-sm" style={{ height: `${Math.max(10, i)}%` }} title={`Industriel: ${Math.floor(i)}%`}></div>
         </div>
     );
@@ -85,35 +94,31 @@ export default function GameUI({
                     )}
                 </div>
 
-                {/* 2. POPULATION & RCI (DROITE) */}
+                {/* 2. POPULATION & RCI (DROITE - Toujours visible maintenant) */}
                 <div className="flex items-center gap-4">
-                    {stats && (
-                        <>
-                            {/* RCI Bar */}
-                            <div className="flex flex-col items-center mr-2">
-                                <span className="text-[9px] text-gray-500 font-bold tracking-wider mb-0.5">DEMANDE</span>
-                                <RCIBar r={stats.demand.residential} c={stats.demand.commercial} i={stats.demand.industrial} />
-                            </div>
+                    {/* RCI Bar */}
+                    <div className="flex flex-col items-center mr-2">
+                        <span className="text-[9px] text-gray-500 font-bold tracking-wider mb-0.5">DEMANDE</span>
+                        <RCIBar r={currentStats.demand.residential} c={currentStats.demand.commercial} i={currentStats.demand.industrial} />
+                    </div>
 
-                            {/* Population Stats */}
-                            <div className="flex gap-4 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-600">
-                                {/* Habitants */}
-                                <div className="flex flex-col items-end">
-                                    <span className="text-[9px] text-gray-400 uppercase font-bold">Population</span>
-                                    <span className="text-base font-bold text-white leading-none">👥 {formatNumber(stats.population)}</span>
-                                </div>
+                    {/* Population Stats */}
+                    <div className="flex gap-4 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-600">
+                        {/* Habitants */}
+                        <div className="flex flex-col items-end">
+                            <span className="text-[9px] text-gray-400 uppercase font-bold">Population</span>
+                            <span className="text-base font-bold text-white leading-none">👥 {formatNumber(currentStats.population)}</span>
+                        </div>
 
-                                {/* Jobs */}
-                                <div className="flex flex-col items-end border-l border-gray-600 pl-3">
-                                    <span className="text-[9px] text-gray-400 uppercase font-bold">Emplois</span>
-                                    <div className="flex gap-2 text-xs font-bold leading-none">
-                                        <span className="text-blue-400" title="Bureaux">🏢 {formatNumber(stats.jobsCommercial)}</span>
-                                        <span className="text-yellow-500" title="Usines">🏭 {formatNumber(stats.jobsIndustrial)}</span>
-                                    </div>
-                                </div>
+                        {/* Jobs */}
+                        <div className="flex flex-col items-end border-l border-gray-600 pl-3">
+                            <span className="text-[9px] text-gray-400 uppercase font-bold">Emplois</span>
+                            <div className="flex gap-2 text-xs font-bold leading-none">
+                                <span className="text-blue-400" title="Bureaux">🏢 {formatNumber(currentStats.jobsCommercial)}</span>
+                                <span className="text-yellow-500" title="Usines">🏭 {formatNumber(currentStats.jobsIndustrial)}</span>
                             </div>
-                        </>
-                    )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
