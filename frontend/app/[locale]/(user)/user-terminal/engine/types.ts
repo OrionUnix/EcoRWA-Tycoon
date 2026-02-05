@@ -56,7 +56,10 @@ export const ZONE_COLORS: Record<ZoneType, number> = {
     [ZoneType.INDUSTRIAL]: 0xFFC107   // Jaune
 };
 
-// --- ROUTES ---
+// =========================
+// === ROUTES (SimCity 2013 Style) ===
+// =========================
+
 export enum RoadType {
     DIRT = 'DIRT',
     ASPHALT = 'ASPHALT',
@@ -64,49 +67,89 @@ export enum RoadType {
     HIGHWAY = 'HIGHWAY'
 }
 
-export const ROAD_SPECS: Record<RoadType, { speed: number, cost: number, color: number, width: number, label: string }> = {
+/**
+ * Spécifications des types de routes
+ * - speed: Multiplicateur de vitesse (1.0 = base)
+ * - capacity: Nombre max de véhicules par segment avant congestion
+ * - cost: Coût de construction par tuile
+ * - color: Couleur de rendu hex
+ * - width: Largeur visuelle en pixels
+ * - label: Nom affiché dans l'UI
+ */
+export interface RoadSpecs {
+    speed: number;
+    capacity: number;
+    cost: number;
+    color: number;
+    width: number;
+    label: string;
+}
+
+export const ROAD_SPECS: Record<RoadType, RoadSpecs> = {
     [RoadType.DIRT]: {
-        speed: 0.2, cost: 5,
-        color: 0x8B4513, // MARRON 
-        width: 10, label: "Chemin de Terre"
+        speed: 0.3,
+        capacity: 10,
+        cost: 5,
+        color: 0x8B4513,   // Marron terre
+        width: 10,
+        label: "Chemin de Terre"
     },
     [RoadType.ASPHALT]: {
-        speed: 1.0, cost: 20,
-        color: 0x555555, // GRIS MOYEN
-        width: 18, label: "Route (2 voies)"
+        speed: 1.0,
+        capacity: 50,
+        cost: 20,
+        color: 0x555555,   // Gris moyen
+        width: 18,
+        label: "Route Standard"
     },
     [RoadType.AVENUE]: {
-        speed: 1.5, cost: 60,
-        color: 0x333333, // GRIS FONCÉ
-        width: 28, label: "Avenue (4 voies)"
+        speed: 1.5,
+        capacity: 100,
+        cost: 50,
+        color: 0x333333,   // Gris foncé
+        width: 28,
+        label: "Avenue (4 voies)"
     },
     [RoadType.HIGHWAY]: {
-        speed: 4.0, cost: 150,
-        color: 0x111111, // NOIR
-        width: 40, label: "Autoroute (6 voies)"
+        speed: 2.5,
+        capacity: 300,
+        cost: 150,
+        color: 0x111111,   // Noir profond
+        width: 40,
+        label: "Autoroute"
     }
 };
 
+/**
+ * Données d'un segment de route
+ * - trafficLoad: Charge de trafic actuelle (0.0 à 1.0+, >1 = congestion)
+ * - effectiveSpeed: Vitesse réelle tenant compte de la congestion
+ */
 export interface RoadData {
     type: RoadType;
     isBridge: boolean;
     isTunnel: boolean;
-    connections: { n: boolean, s: boolean, e: boolean, w: boolean };
+    connections: { n: boolean; s: boolean; e: boolean; w: boolean };
     speedLimit: number;
     capacity: number;
+    trafficLoad: number;       // 0.0 à 1.0+ (ratio véhicules/capacité)
+    effectiveSpeed: number;    // Vitesse réelle après congestion
 }
 
 export interface Vehicle {
-    id: number; x: number; y: number;
-    path: number[]; targetIndex: number;
-    speed: number; color: number;
+    id: number;
+    x: number;
+    y: number;
+    path: number[];
+    targetIndex: number;
+    speed: number;
+    color: number;
 }
 
-// Coûts Bâtiments (Vide pour l'instant pour éviter les erreurs)
-export const BUILDING_COSTS: any = {
+// Coûts Bâtiments
+export const BUILDING_COSTS: Record<ZoneType, Record<number, Record<string, number>>> = {
     [ZoneType.RESIDENTIAL]: { 1: { wood: 10 } },
     [ZoneType.COMMERCIAL]: { 1: { wood: 15 } },
     [ZoneType.INDUSTRIAL]: { 1: { concrete: 20 } },
     [ZoneType.NONE]: {}
 };
-
