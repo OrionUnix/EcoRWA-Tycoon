@@ -1,56 +1,54 @@
 import { GRID_SIZE } from './config';
 
-// Nœud du graphe de navigation
 interface PathNode {
     index: number;
-    g: number; // Coût depuis le départ
-    h: number; // Heuristique (distance vol d'oiseau vers fin)
-    f: number; // Score total (g + h)
+    g: number;
+    h: number;
+    f: number;
     parent: PathNode | null;
 }
 
+// NOUVEAU : Structure pour stocker le voisin ET le coût pour y aller
+interface Neighbor {
+    index: number;
+    moveCost: number; // Coût de déplacement (1 / vitesse)
+}
+
 export class RoadGraph {
-    // Liste d'adjacence : index -> liste des voisins accessibles
-    private adjacencyList: Map<number, number[]> = new Map();
+    // Map : index -> liste des voisins avec leur coût
+    private adjacencyList: Map<number, Neighbor[]> = new Map();
 
     /**
-     * Ajoute ou met à jour un nœud (tuile de route) dans le graphe
+     * Ajoute un nœud avec la vitesse de la route
      */
-    public addNode(index: number, connections: { n: boolean, s: boolean, e: boolean, w: boolean }) {
-        const neighbors: number[] = [];
+    public addNode(index: number, connections: { n: boolean, s: boolean, e: boolean, w: boolean }, speed: number) {
+        const neighbors: Neighbor[] = [];
         const x = index % GRID_SIZE;
         const y = Math.floor(index / GRID_SIZE);
 
-        // On ne stocke que les voisins RÉELLEMENT connectés par la route
-        if (connections.n) neighbors.push((y - 1) * GRID_SIZE + x);
-        if (connections.s) neighbors.push((y + 1) * GRID_SIZE + x);
-        if (connections.w) neighbors.push(y * GRID_SIZE + (x - 1));
-        if (connections.e) neighbors.push(y * GRID_SIZE + (x + 1));
+        // Le coût est l'inverse de la vitesse.
+        // Vitesse 3.0 (Autoroute) -> Coût 0.33 (Pas cher, on y va !)
+        // Vitesse 0.2 (Terre) -> Coût 5.0 (Très cher, on évite)
+        const cost = 1 / Math.max(0.1, speed);
+
+        if (connections.n) neighbors.push({ index: (y - 1) * GRID_SIZE + x, moveCost: cost });
+        if (connections.s) neighbors.push({ index: (y + 1) * GRID_SIZE + x, moveCost: cost });
+        if (connections.w) neighbors.push({ index: y * GRID_SIZE + (x - 1), moveCost: cost });
+        if (connections.e) neighbors.push({ index: y * GRID_SIZE + (x + 1), moveCost: cost });
 
         this.adjacencyList.set(index, neighbors);
     }
 
-    /**
-     * Supprime un nœud (quand on bulldozer)
-     */
     public removeNode(index: number) {
         this.adjacencyList.delete(index);
-        // On doit aussi nettoyer les références vers ce nœud chez les voisins
-        // (Mais RoadManager.updateConnections s'en charge logiquement en mettant à jour les voisins, 
-        //  qui appelleront addNode à leur tour. Donc removeNode suffit ici pour l'instant).
     }
 
-    /**
-     * Algorithme A* (A-Star) pour trouver le chemin le plus court
-     */
     public findPath(startIndex: number, endIndex: number): number[] | null {
         if (!this.adjacencyList.has(startIndex) || !this.adjacencyList.has(endIndex)) return null;
 
         const openList: PathNode[] = [];
-        const closedSet = new Set<number>();
-
-        // Map pour accès rapide aux nœuds ouverts par index
         const openListMap = new Map<number, PathNode>();
+        const closedSet = new Set<number>();
 
         const startNode: PathNode = {
             index: startIndex,
@@ -65,66 +63,59 @@ export class RoadGraph {
         openListMap.set(startIndex, startNode);
 
         while (openList.length > 0) {
-            // 1. Trouver le nœud avec le plus petit F
-            // (Tri basique, pour perf max on utiliserait un Binary Heap)
             openList.sort((a, b) => a.f - b.f);
             const current = openList.shift()!;
             openListMap.delete(current.index);
 
-            // 2. Arrivé ?
             if (current.index === endIndex) {
                 return this.reconstructPath(current);
             }
 
             closedSet.add(current.index);
 
-            // 3. Explorer voisins
             const neighbors = this.adjacencyList.get(current.index) || [];
 
-            for (const neighborIdx of neighbors) {
-                if (closedSet.has(neighborIdx)) continue;
+            for (const neighbor of neighbors) {
+                if (closedSet.has(neighbor.index)) continue;
 
-                const tentativeG = current.g + 1; // Coût uniforme pour l'instant (distance = 1)
+                // C'EST ICI QUE LA VITESSE JOUE : On ajoute le moveCost spécifique de la route
+                const tentativeG = current.g + neighbor.moveCost;
 
-                let neighborNode = openListMap.get(neighborIdx);
+                let neighborNode = openListMap.get(neighbor.index);
 
                 if (!neighborNode) {
                     neighborNode = {
-                        index: neighborIdx,
+                        index: neighbor.index,
                         g: tentativeG,
-                        h: this.heuristic(neighborIdx, endIndex),
+                        h: this.heuristic(neighbor.index, endIndex),
                         f: 0,
                         parent: current
                     };
                     neighborNode.f = neighborNode.g + neighborNode.h;
                     openList.push(neighborNode);
-                    openListMap.set(neighborIdx, neighborNode);
+                    openListMap.set(neighbor.index, neighborNode);
                 } else if (tentativeG < neighborNode.g) {
-                    // On a trouvé un meilleur chemin pour ce voisin
                     neighborNode.g = tentativeG;
                     neighborNode.f = tentativeG + neighborNode.h;
                     neighborNode.parent = current;
                 }
             }
         }
-
-        return null; // Pas de chemin
+        return null;
     }
 
-    // Distance de Manhattan (optimisé grille)
     private heuristic(a: number, b: number): number {
         const ax = a % GRID_SIZE; const ay = Math.floor(a / GRID_SIZE);
         const bx = b % GRID_SIZE; const by = Math.floor(b / GRID_SIZE);
-        return Math.abs(ax - bx) + Math.abs(ay - by);
+        // Heuristique simple (distance manhattan) * coût de base minimum (ex: 0.3)
+        // pour ne pas surestimer le coût
+        return (Math.abs(ax - bx) + Math.abs(ay - by)) * 0.3;
     }
 
     private reconstructPath(node: PathNode): number[] {
         const path = [];
         let curr: PathNode | null = node;
-        while (curr) {
-            path.push(curr.index);
-            curr = curr.parent;
-        }
+        while (curr) { path.push(curr.index); curr = curr.parent; }
         return path.reverse();
     }
 }

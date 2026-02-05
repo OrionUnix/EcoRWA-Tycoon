@@ -4,7 +4,11 @@ export enum LayerType {
     TERRAIN = 'terrain',
     WATER = 'water',
     RESOURCES = 'resources',
-    ROADS = 'roads'
+
+    DIRT = 'DIRT',       // Chemin de terre
+    ASPHALT = 'ASPHALT', // Route standard
+    AVENUE = 'AVENUE',   // Avenue (plus large)
+    HIGHWAY = 'HIGHWAY'  // Autoroute (très rapide)
 }
 
 export enum BiomeType {
@@ -41,19 +45,54 @@ export enum RoadType {
     HIGHWAY = 'HIGHWAY'  // Autoroute
 }
 
+// 2. Configuration centralisée (La "Bible" des routes)
+export const ROAD_SPECS: Record<RoadType, { speed: number, cost: number, color: number, width: number, label: string, markings: boolean, markingColor: number }> = {
+    [RoadType.DIRT]: {
+        speed: 0.2, // Très lent
+        cost: 5,
+        color: 0x5D4037, // MARRON FONCÉ (Terre)
+        width: 10,
+        label: "Chemin de Terre",
+        markings: false, // Pas de lignes
+        markingColor: 0x000000
+    },
+    [RoadType.ASPHALT]: {
+        speed: 1.0, // Vitesse standard
+        cost: 20,
+        color: 0x757575, // GRIS MOYEN
+        width: 16,
+        label: "Route Asphalte",
+        markings: true,
+        markingColor: 0xFFD700 // JAUNE
+    },
+    [RoadType.AVENUE]: {
+        speed: 1.5, // Rapide
+        cost: 50,
+        color: 0x424242, // GRIS FONCÉ
+        width: 24, // Plus large
+        label: "Grande Avenue",
+        markings: true,
+        markingColor: 0xFFFFFF // BLANC (Double ligne simulée par épaisseur)
+    },
+    [RoadType.HIGHWAY]: {
+        speed: 3.0, // Très rapide
+        cost: 100,
+        color: 0x212121, // NOIR (Bitume neuf)
+        width: 32, // Très large (6 voies simulées)
+        label: "Autoroute",
+        markings: true,
+        markingColor: 0xFFFFFF // BLANC
+    }
+};
+
 // Données d'une route sur une tuile spécifique
 export interface RoadData {
     type: RoadType;
-    isBridge: boolean;   // Si sur l'eau
-    isTunnel: boolean;   // (Pour plus tard)
+    isBridge: boolean;
+    isTunnel: boolean;
 
     // Connexions logiques (Vrai si une route est connectée de ce côté)
-    connections: {
-        n: boolean; // Nord (Haut Gauche en iso)
-        s: boolean; // Sud (Bas Droite en iso)
-        e: boolean; // Est (Haut Droite en iso)
-        w: boolean; // Ouest (Bas Gauche en iso)
-    };
+    connections: { n: boolean, s: boolean, e: boolean, w: boolean };
 
     // Pour le pathfinding futur
     speedLimit: number;

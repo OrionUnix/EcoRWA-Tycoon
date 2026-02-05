@@ -7,7 +7,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { getMapEngine, regenerateWorld } from '../engine/MapEngine';
 import { gridToScreen, screenToGrid } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, INITIAL_ZOOM, GRID_SIZE } from '../engine/config';
-import { LayerType, BiomeType, RoadType } from '../engine/types';
+import { LayerType, BiomeType, RoadType, ROAD_SPECS } from '../engine/types';
 import { getResourceAtTile, ResourceInfo } from '../utils/resourceUtils';
 import { RoadManager, RoadCheckResult } from '../engine/RoadManager';
 
@@ -40,6 +40,9 @@ const BIOME_KEYS: Record<number, string> = {
 export default function GameCanvas() {
     const t = useTranslations('Game');
     const locale = useLocale();
+
+    // NOUVEAU STATE : Type de route sélectionné
+    const [selectedRoadType, setSelectedRoadType] = useState<RoadType>(RoadType.ASPHALT);
 
     // REFS
     const startDragTileRef = useRef<{ x: number, y: number } | null>(null);
@@ -180,7 +183,7 @@ export default function GameCanvas() {
                         let valid = true;
                         let prevIdx: number | null = null;
                         for (const idx of path) {
-                            const check: RoadCheckResult = RoadManager.checkTile(engine, idx, prevIdx);
+                            const check = RoadManager.checkTile(engine, idx, prevIdx);
                             if (!check.valid) valid = false;
                             cost += check.cost;
                             prevIdx = idx;
@@ -226,7 +229,8 @@ export default function GameCanvas() {
                     const engine = getMapEngine();
                     if (currentMode === 'BUILD_ROAD') {
                         if (isValidBuildRef.current) {
-                            previewPathRef.current.forEach(idx => engine.placeRoad(idx, RoadType.ASPHALT));
+                            // UTILISATION DU TYPE SÉLECTIONNÉ
+                            previewPathRef.current.forEach(idx => engine.placeRoad(idx, selectedRoadType));
                         }
                     } else if (currentMode === 'BULLDOZER') {
                         previewPathRef.current.forEach(idx => engine.removeRoad(idx));
@@ -285,7 +289,9 @@ export default function GameCanvas() {
         const currentMode = viewModeRef.current;
         const isGridVisible = showGridRef.current;
 
-        // A. COUCHE STATIQUE
+        // ----------------------------------------------------
+        // A. COUCHE STATIQUE (Terrain + Routes)
+        // ----------------------------------------------------
         if (engine.revision !== lastRenderedRevision.current || currentMode !== lastViewMode.current) {
             staticG.clear();
 
@@ -303,6 +309,7 @@ export default function GameCanvas() {
                     let fillColor = 0x000000;
                     let strokeAlpha = 0;
 
+                    // Terrain Logic
                     if (currentMode === 'ALL' || currentMode === 'BUILD_ROAD' || currentMode === 'BULLDOZER') {
                         if (biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.DEEP_OCEAN;
                         else if (biome === BiomeType.OCEAN) fillColor = COLORS.OCEAN;
@@ -334,39 +341,82 @@ export default function GameCanvas() {
                     staticG.fill({ color: fillColor });
                     if (strokeAlpha > 0) staticG.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: strokeAlpha });
 
+                    // Road Logic (Visualisation Avancée)
                     if (engine.roadLayer && engine.roadLayer[i]) {
                         const road = engine.roadLayer[i];
                         if (road) {
+                            // RECUPERATION DES SPECS
+                            const specs = ROAD_SPECS[road.type];
+                            const roadWidth = specs ? specs.width : 16;
+                            const roadColor = road.isBridge ? COLORS.ROAD_BRIDGE : (specs ? specs.color : COLORS.ROAD_ASPHALT);
+
                             const cx = pos.x; const cy = pos.y;
+
+                            // Offsets pour dessiner les lignes
                             const n_dx = TILE_WIDTH / 4; const n_dy = -TILE_HEIGHT / 4;
                             const s_dx = -TILE_WIDTH / 4; const s_dy = TILE_HEIGHT / 4;
                             const e_dx = TILE_WIDTH / 4; const e_dy = TILE_HEIGHT / 4;
                             const w_dx = -TILE_WIDTH / 4; const w_dy = -TILE_HEIGHT / 4;
 
-                            const roadColor = road.isBridge ? COLORS.ROAD_BRIDGE : COLORS.ROAD_ASPHALT;
+                            // Helper pour tracer une ligne
+                            const drawLine = (width: number, color: number, alpha: number = 1) => {
+                                staticG.beginPath();
+                                if (road.connections.n) { staticG.moveTo(cx, cy); staticG.lineTo(cx + n_dx, cy + n_dy); }
+                                if (road.connections.s) { staticG.moveTo(cx, cy); staticG.lineTo(cx + s_dx, cy + s_dy); }
+                                if (road.connections.e) { staticG.moveTo(cx, cy); staticG.lineTo(cx + e_dx, cy + e_dy); }
+                                if (road.connections.w) { staticG.moveTo(cx, cy); staticG.lineTo(cx + w_dx, cy + w_dy); }
+                                staticG.stroke({ width, color, alpha, cap: 'round', join: 'round' });
+                            };
 
+                            // --- 1. BASE DE LA ROUTE (Le sol) ---
+                            // On commence le tracé
                             staticG.beginPath();
                             if (road.connections.n) { staticG.moveTo(cx, cy); staticG.lineTo(cx + n_dx, cy + n_dy); }
                             if (road.connections.s) { staticG.moveTo(cx, cy); staticG.lineTo(cx + s_dx, cy + s_dy); }
                             if (road.connections.e) { staticG.moveTo(cx, cy); staticG.lineTo(cx + e_dx, cy + e_dy); }
                             if (road.connections.w) { staticG.moveTo(cx, cy); staticG.lineTo(cx + w_dx, cy + w_dy); }
-                            staticG.stroke({ width: 16, color: roadColor, alpha: 1, cap: 'round', join: 'round' });
+                            staticG.stroke({ width: roadWidth, color: roadColor, alpha: 1, cap: 'round', join: 'round' });
 
-                            staticG.beginPath();
-                            if (road.connections.n) { staticG.moveTo(cx, cy); staticG.lineTo(cx + n_dx, cy + n_dy); }
-                            if (road.connections.s) { staticG.moveTo(cx, cy); staticG.lineTo(cx + s_dx, cy + s_dy); }
-                            if (road.connections.e) { staticG.moveTo(cx, cy); staticG.lineTo(cx + e_dx, cy + e_dy); }
-                            if (road.connections.w) { staticG.moveTo(cx, cy); staticG.lineTo(cx + w_dx, cy + w_dy); }
-                            staticG.stroke({ width: 2, color: COLORS.ROAD_MARKING, alpha: 1, cap: 'round', join: 'round' });
+                            // --- 2. DÉTAILS SELON LE TYPE ---
+
+                            // A. AUTOROUTE
+                            if (road.type === RoadType.HIGHWAY) {
+                                // Ligne centrale (Béton)
+                                drawLine(2, 0x9E9E9E, 1);
+                                // Lignes de voies latérales (simulées)
+                                drawLine(roadWidth - 4, 0xFFFFFF, 0.3); // Effet de bord
+                            }
+
+                            // B. AVENUE (Terre-plein central)
+                            else if (road.type === RoadType.AVENUE) {
+                                // Dessine de l'herbe au milieu !
+                                drawLine(6, 0x2E7D32, 1); // Vert foncé (Herbe)
+                                // Bordures du terre-plein
+                                drawLine(8, 0xFFFFFF, 0.5); // Bordure blanche fine
+                            }
+
+                            // C. ROUTE STANDARD (Ligne jaune)
+                            else if (road.type === RoadType.ASPHALT) {
+                                drawLine(1, 0xFFD700, 0.8); // Jaune standard
+                            }
+
+                            // D. CHEMIN DE TERRE (Traces de pneus)
+                            else if (road.type === RoadType.DIRT) {
+                                // Juste la base marron, pas de lignes, mais on peut foncer le centre
+                                drawLine(2, 0x3E2723, 0.3); // Centre plus foncé (ornière)
+                            }
                         }
                     }
                 }
             }
+
             lastRenderedRevision.current = engine.revision;
             lastViewMode.current = currentMode;
         }
 
-        // B. COUCHE UI
+        // ----------------------------------------------------
+        // B. COUCHE UI (Preview, Cursor, Vehicles)
+        // ----------------------------------------------------
         uiG.clear();
 
         // 0. VEHICLES
@@ -378,41 +428,32 @@ export default function GameCanvas() {
             let offsetX = 0;
             let offsetY = 0;
 
-            // On regarde vers la prochaine tuile cible pour savoir où est "la droite"
             if (car.path && car.targetIndex < car.path.length) {
                 const targetIdx = car.path[car.targetIndex];
                 const tx = targetIdx % GRID_SIZE;
                 const ty = Math.floor(targetIdx / GRID_SIZE);
 
-                // Vecteur direction
                 const dx = tx - car.x;
                 const dy = ty - car.y;
                 const len = Math.sqrt(dx * dx + dy * dy);
 
-                if (len > 0.01) { // Si on bouge
-                    // Vecteur Normalisé
+                if (len > 0.01) {
                     const ux = dx / len;
                     const uy = dy / len;
 
-                    // En isométrique, "droite" est complexe à calculer vectoriellement pur
-                    // Astuce simple : On décale perpendiculairement à la direction
-                    // Si je vais vers l'Est (+x), ma droite est le Sud (+y)
+                    // Ecartement selon le type de route si on voulait faire compliqué, 
+                    // mais 6px c'est bien pour commencer.
+                    const OFFSET_AMOUNT = 6;
 
-                    const OFFSET_AMOUNT = 6; // Ecartement par rapport au centre (en pixels)
-
-                    // On projette la direction en vecteur écran pour calculer la perpendiculaire écran
                     const p1 = gridToScreen(0, 0);
-                    const p2 = gridToScreen(ux, uy); // Où serait le vecteur unitaire à l'écran
-
+                    const p2 = gridToScreen(ux, uy);
                     const screenDx = p2.x - p1.x;
                     const screenDy = p2.y - p1.y;
                     const screenLen = Math.sqrt(screenDx * screenDx + screenDy * screenDy);
 
                     if (screenLen > 0) {
-                        // Perpendiculaire en 2D (x, y) -> (-y, x) pour tourner à 90°
                         const perpX = -screenDy / screenLen;
                         const perpY = screenDx / screenLen;
-
                         offsetX = perpX * OFFSET_AMOUNT;
                         offsetY = perpY * OFFSET_AMOUNT;
                     }
@@ -422,17 +463,18 @@ export default function GameCanvas() {
             const finalX = screenPos.x + offsetX;
             const finalY = screenPos.y + offsetY;
 
-            // Dessin
+            // Dessin Voiture
             uiG.beginFill(car.color);
-            uiG.drawCircle(finalX, finalY, 4); // La voiture
+            uiG.drawCircle(finalX, finalY, 4);
             uiG.endFill();
 
-            // Phare (Petit point blanc pour voir le sens)
+            // Phare
             uiG.beginFill(0xFFFFFF);
             uiG.drawCircle(finalX + offsetX * 0.5, finalY + offsetY * 0.5, 1.5);
             uiG.endFill();
         });
-        // 1. Highlight
+
+        // 1. Highlight Cursor
         const highlightPos = gridToScreen(cursorPos.x, cursorPos.y);
         uiG.lineStyle(2, COLORS.HIGHLIGHT, 1);
         uiG.beginPath();
@@ -443,7 +485,7 @@ export default function GameCanvas() {
         uiG.closePath();
         uiG.stroke();
 
-        // 2. Preview
+        // 2. Preview Path
         if (previewPathRef.current.length > 0) {
             for (const idx of previewPathRef.current) {
                 const x = idx % GRID_SIZE;
@@ -478,6 +520,7 @@ export default function GameCanvas() {
         <div className="fixed inset-0 w-screen h-screen bg-black z-0 overflow-hidden">
             <div ref={pixiContainerRef} className="absolute inset-0" />
 
+            {/* UI */}
             <div className="absolute top-2 right-2 text-xs text-green-500 font-mono z-20 flex flex-col items-end pointer-events-none">
                 <span>FPS: {debugFPS}</span>
                 <span className="text-yellow-400">{t('ui.coords')}: {cursorPos.x}, {cursorPos.y}</span>
@@ -493,21 +536,41 @@ export default function GameCanvas() {
 
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 bg-gray-900/90 p-2 rounded border border-gray-700 shadow-xl backdrop-blur-md">
                 <button onClick={() => setViewMode('BUILD_ROAD')} className={`text-left px-3 py-1.5 text-xs font-bold rounded mb-1 border ${viewMode === 'BUILD_ROAD' ? 'bg-yellow-600 text-white border-yellow-500' : 'bg-gray-800 text-gray-300 border-gray-600'}`}>
-                    🚧 ROUTE
+                    🚧 CONSTRUCTION ROUTE
                 </button>
+
+                {/* SOUS-MENU TYPE DE ROUTE */}
+                {viewMode === 'BUILD_ROAD' && (
+                    <div className="flex flex-col gap-1 ml-2 mb-2 pl-2 border-l border-gray-600">
+                        {(Object.keys(ROAD_SPECS) as RoadType[]).map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setSelectedRoadType(type)}
+                                className={`text-left px-2 py-1 text-[10px] font-bold rounded border transition-all flex items-center gap-2 ${selectedRoadType === type
+                                        ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500'
+                                        : 'text-gray-400 border-transparent hover:text-white'
+                                    }`}
+                            >
+                                <div
+                                    className="w-3 h-3 rounded-sm shadow-sm"
+                                    style={{ backgroundColor: `#${ROAD_SPECS[type].color.toString(16).padStart(6, '0')}` }}
+                                ></div>
+
+                                <span>{ROAD_SPECS[type].label}</span>
+                                <span className="text-gray-500 ml-auto">${ROAD_SPECS[type].cost}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 <button onClick={() => setViewMode('BULLDOZER')} className={`text-left px-3 py-1.5 text-xs font-bold rounded mb-2 border ${viewMode === 'BULLDOZER' ? 'bg-red-600 text-white border-red-500' : 'bg-gray-800 text-gray-300 border-gray-600'}`}>
                     💣 BULLDOZER
                 </button>
 
                 <button
                     onClick={() => {
-                        // On appelle spawnTraffic avec 50 voitures !
-                        // La méthode existe déjà dans ton MapEngine mis à jour
                         const success = getMapEngine().spawnTraffic(50);
-
-                        // Petit log pour vérifier
                         console.log(`Trafic actuel : ${getMapEngine().vehicles.length} véhicules`);
-
                         if (!success && getMapEngine().vehicles.length === 0) {
                             alert("Construisez plus de routes connectées d'abord !");
                         }
@@ -534,6 +597,7 @@ export default function GameCanvas() {
                 ))}
             </div>
 
+            {/* INFO PANEL */}
             <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
                 <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
                     <span>{t('ui.coords')}: [{cursorPos.x}, {cursorPos.y}]</span>

@@ -1,5 +1,5 @@
 import { GRID_SIZE } from './config';
-import { RoadData, RoadType, BiomeType, LayerType } from './types';
+import { RoadData, RoadType, BiomeType, LayerType, ROAD_SPECS } from './types';
 import { MapEngine } from './MapEngine';
 
 const RULES = {
@@ -24,12 +24,18 @@ export interface RoadCheckResult {
 
 export class RoadManager {
     static createRoad(type: RoadType, isBridge: boolean, isTunnel: boolean): RoadData {
+        const specs = ROAD_SPECS[type];
+
+        // Si c'est un tunnel, on booste un peu la vitesse (pas de météo)
+        // Si c'est un pont, c'est la vitesse standard
+        const speed = isTunnel ? specs.speed * 1.2 : specs.speed;
+
         return {
             type,
             isBridge,
             isTunnel,
             connections: { n: false, s: false, e: false, w: false },
-            speedLimit: isTunnel ? 80 : 50,
+            speedLimit: speed,
             capacity: 1000
         };
     }

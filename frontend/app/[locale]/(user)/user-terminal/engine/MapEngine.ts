@@ -70,6 +70,7 @@ export class MapEngine {
                 successCount++;
             }
         }
+        console.log(`🚗 Trafic : ${successCount} voitures générées`);
         return successCount > 0;
     }
 
@@ -85,6 +86,7 @@ export class MapEngine {
         if (startIdx === endIdx) return false;
 
         const path = this.roadGraph.findPath(startIdx, endIdx);
+        // ICI : On vérifie bien si path est null ou vide
         if (!path || path.length === 0) return false;
 
         const startX = startIdx % GRID_SIZE;
@@ -112,37 +114,61 @@ export class MapEngine {
         for (let i = this.vehicles.length - 1; i >= 0; i--) {
             const car = this.vehicles[i];
 
+            // 1. Fin de parcours ?
             if (car.targetIndex >= car.path.length) {
-                // Repartir vers une nouvelle destination
-                const currentIdx = car.path[car.path.length - 1];
+                // Essayer de trouver une nouvelle destination
+                const currentIdx = car.path[car.path.length - 1]; // Position actuelle (fin du path précédent)
                 const roadIndices: number[] = [];
                 this.roadLayer.forEach((road, index) => { if (road) roadIndices.push(index); });
-                const newDestIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
 
+                // Si plus de routes (bulldozer massif ?), on supprime
+                if (roadIndices.length === 0) {
+                    this.vehicles.splice(i, 1);
+                    continue;
+                }
+
+                const newDestIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
                 const newPath = this.roadGraph.findPath(currentIdx, newDestIdx);
 
+                // ICI : La logique de "rebond" infinie
                 if (newPath && newPath.length > 0) {
                     car.path = newPath;
                     car.targetIndex = 0;
                 } else {
+                    // Si coincé sans chemin, on supprime la voiture
                     this.vehicles.splice(i, 1);
                 }
                 continue;
             }
 
+            // 2. Mouvement normal
             const targetTileIdx = car.path[car.targetIndex];
             const targetX = targetTileIdx % GRID_SIZE;
             const targetY = Math.floor(targetTileIdx / GRID_SIZE);
+
+            // --- PHYSIQUE DE VITESSE ---
+            const roadInfo = this.roadLayer[targetTileIdx];
+            let currentRoadSpeed = 0.1;
+
+            if (roadInfo) {
+                // Vitesse basée sur le type de route (ROAD_SPECS via speedLimit)
+                currentRoadSpeed = roadInfo.speedLimit * 0.15;
+            }
+
+            // Acceleration / Freinage lissé
+            car.speed = car.speed * 0.9 + currentRoadSpeed * 0.1;
 
             const dx = targetX - car.x;
             const dy = targetY - car.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < car.speed) {
+                // Arrivé au centre de la tuile cible
                 car.x = targetX;
                 car.y = targetY;
                 car.targetIndex++;
             } else {
+                // Avance
                 car.x += (dx / dist) * car.speed;
                 car.y += (dy / dist) * car.speed;
             }
@@ -176,7 +202,8 @@ export class MapEngine {
 
         if (this.roadLayer[index]) {
             RoadManager.updateConnections(index, this.roadLayer);
-            this.roadGraph.addNode(index, this.roadLayer[index]!.connections);
+            // Ajout du speedLimit dans le graphe
+            this.roadGraph.addNode(index, this.roadLayer[index]!.connections, this.roadLayer[index]!.speedLimit);
         }
 
         const neighbors = [
@@ -189,7 +216,7 @@ export class MapEngine {
         neighbors.forEach(nIdx => {
             if (nIdx !== -1 && this.roadLayer[nIdx]) {
                 RoadManager.updateConnections(nIdx, this.roadLayer);
-                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections);
+                this.roadGraph.addNode(nIdx, this.roadLayer[nIdx]!.connections, this.roadLayer[nIdx]!.speedLimit);
             }
         });
     }
