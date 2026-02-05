@@ -116,17 +116,11 @@ export class MapEngine {
 
             // 1. Fin de parcours ?
             if (car.targetIndex >= car.path.length) {
-                // Essayer de trouver une nouvelle destination
-                const currentIdx = car.path[car.path.length - 1]; // Position actuelle (fin du path précédent)
+                const currentIdx = car.path[car.path.length - 1];
                 const roadIndices: number[] = [];
                 this.roadLayer.forEach((road, index) => { if (road) roadIndices.push(index); });
-
                 // Si plus de routes (bulldozer massif ?), on supprime
-                if (roadIndices.length === 0) {
-                    this.vehicles.splice(i, 1);
-                    continue;
-                }
-
+                if (roadIndices.length === 0) { this.vehicles.splice(i, 1); continue; }
                 const newDestIdx = roadIndices[Math.floor(Math.random() * roadIndices.length)];
                 const newPath = this.roadGraph.findPath(currentIdx, newDestIdx);
 
@@ -135,7 +129,6 @@ export class MapEngine {
                     car.path = newPath;
                     car.targetIndex = 0;
                 } else {
-                    // Si coincé sans chemin, on supprime la voiture
                     this.vehicles.splice(i, 1);
                 }
                 continue;
@@ -146,29 +139,30 @@ export class MapEngine {
             const targetX = targetTileIdx % GRID_SIZE;
             const targetY = Math.floor(targetTileIdx / GRID_SIZE);
 
-            // --- PHYSIQUE DE VITESSE ---
+            // --- PHYSIQUE DE VITESSE CORRIGÉE ---
             const roadInfo = this.roadLayer[targetTileIdx];
-            let currentRoadSpeed = 0.1;
-
+            let targetSpeed = 0.05; // Très lent si hors route (bug)
             if (roadInfo) {
-                // Vitesse basée sur le type de route (ROAD_SPECS via speedLimit)
-                currentRoadSpeed = roadInfo.speedLimit * 0.15;
+                // Multiplicateur ajusté pour voir la différence
+                // Terre (0.2) -> 0.04
+                // Asphalte (1.0) -> 0.2
+                // Autoroute (5.0) -> 1.0 (Très rapide)
+                targetSpeed = roadInfo.speedLimit * 0.2;
             }
 
-            // Acceleration / Freinage lissé
-            car.speed = car.speed * 0.9 + currentRoadSpeed * 0.1;
+            // ✅ FIX: Lissage réduit pour des changements plus visibles
+            // Avant: 0.9/0.1 (trop lent) → Après: 0.7/0.3 (plus réactif)
+            car.speed = car.speed * 0.7 + targetSpeed * 0.3;
 
             const dx = targetX - car.x;
             const dy = targetY - car.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < car.speed) {
-                // Arrivé au centre de la tuile cible
                 car.x = targetX;
                 car.y = targetY;
                 car.targetIndex++;
             } else {
-                // Avance
                 car.x += (dx / dist) * car.speed;
                 car.y += (dy / dist) * car.speed;
             }
