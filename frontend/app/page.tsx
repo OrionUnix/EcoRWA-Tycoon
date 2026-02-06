@@ -67,7 +67,7 @@ export default function RootPage() {
         <div className="loader"></div>
         <div className="text-center">
           <div className="text-[#E84142] font-bold tracking-[0.3em] text-sm mb-1 uppercase">
-            Avalanche
+            ECO RWA TYCOON
           </div>
           <div className="text-slate-500 font-mono text-xs animate-pulse">
             Loading ecosystem...

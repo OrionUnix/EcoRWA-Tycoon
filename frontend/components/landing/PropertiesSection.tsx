@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Image from 'next/image'; // ✅ On utilise le composant Image natif
 import { useTranslations, useLocale } from 'next-intl';
-
+import Link from 'next/link';
 import { BUILDINGS_DATA } from '@/data/buildings';
 // Assure-toi que ce composant existe, sinon commente-le temporairement
 
@@ -49,8 +49,8 @@ export default function PropertiesSection() {
               'Commercial': '/assets/models/house/bistro_central.webp',
               'Mixte': '/assets/models/house/eco_tower_2300.webp',
             };
-
-            const imagePath = imageConfigs[building.type.fr] || '/assets/models/house/saint_germain.png';
+            const normalizedType = building.type.fr.normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents .toLowerCase();
+            const imagePath = imageConfigs[normalizedType] || '/assets/models/house/saint_germain.webp';
 
             return (
               <div key={building.id} className="group relative flex flex-col items-center">

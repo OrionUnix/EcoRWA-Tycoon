@@ -1,15 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Zap, BookOpen, Scale, Globe, Check } from 'lucide-react';
-
+import Link from 'next/link';
 
 const MarketAnalysis = () => {
 
   const [locale, setLocale] = useState('fr');
 
   useEffect(() => {
-    const saved = typeof document !== 'undefined' 
-      ? document.cookie.split('; ').find(row => row.startsWith('NEXT_LOCALE='))?.split('=')[1] 
+    const saved = typeof document !== 'undefined'
+      ? document.cookie.split('; ').find(row => row.startsWith('NEXT_LOCALE='))?.split('=')[1]
       : 'fr';
     if (saved) setLocale(saved);
   }, []);
@@ -61,9 +61,9 @@ const MarketAnalysis = () => {
       {/* Gradients de fond */}
       <div className="absolute inset-0 bg-gradient-to-t from-red-950/20 via-[#020617] to-[#020617] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none opacity-40" />
-      
+
       <div className="container relative z-10 mx-auto px-4">
-        
+
         {/* Header Industriel */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-20 gap-12">
           <div className="space-y-6 max-w-2xl">
@@ -73,7 +73,7 @@ const MarketAnalysis = () => {
                 Market Disruption Strategy
               </span>
             </div>
-            
+
             <div className="group">
               <h2 className="title-secondary">
                 Active Tycoon<span className="text-[#E84142]">.</span><br />
@@ -94,8 +94,8 @@ const MarketAnalysis = () => {
         {/* Grille de cartes */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-24">
           {solutions.map((item, idx) => (
-            <div 
-              key={idx} 
+            <div
+              key={idx}
               className="group p-8 rounded-xl bg-white/[0.01] border border-white/[0.05] backdrop-blur-sm hover:bg-white/[0.03] hover:border-red-500/40 transition-all duration-500"
             >
               <div className="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center mb-6 group-hover:bg-red-500/20 transition-colors">

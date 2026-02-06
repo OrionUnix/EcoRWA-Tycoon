@@ -1,100 +1,104 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+
 import { getGameEngine } from '../engine/GameEngine';
-import { getMapEngine, regenerateWorld } from '../engine/MapEngine';
-import { GameRenderer } from './GameRenderer';
-import GameUI from './GameUI';
+import { regenerateWorld } from '../engine/MapEngine'; // Si besoin d'accès direct
+import { RoadType, ZoneType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
+
+// Hooks Modulaires
 import { usePixiApp } from '../hooks/usePixiApp';
 import { useGameInput } from '../hooks/useGameInput';
-import { RoadType, ZoneType, PlayerResources, CityStats } from '../engine/types';
+import { useGameLoop } from '../hooks/useGameLoop';
 
-/**
- * GameCanvas - Composant Principal Refactorisé
- * Architecture:
- * - usePixiApp: Gère le canvas, PixiJS, layers, camera
- * - useGameInput: Gère la souris, drag, clics, zoom
- * - GameRenderer: Gère le dessin (View pure)
- * - GameEngine: Gère la logique (Controller/Model)
- */
+import GameUI from './GameUI';
+
+const DEFAULT_SUMMARY: ResourceSummary = { oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0 };
+
 export default function GameCanvas() {
     const t = useTranslations('Game');
 
-    // --- STATE UI ---
+    // --- STATE UI (Sélection Joueur) ---
     const [viewMode, setViewMode] = useState<any>('ALL');
     const [selectedRoad, setSelectedRoad] = useState<RoadType>(RoadType.ASPHALT);
     const [selectedZone, setSelectedZone] = useState<ZoneType>(ZoneType.RESIDENTIAL);
 
-    // --- STATE FEEDBACK ---
+    // --- STATE FEEDBACK (Visuel immédiat) ---
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [hoverInfo, setHoverInfo] = useState<any>(null);
     const [totalCost, setTotalCost] = useState(0);
     const [isValidBuild, setIsValidBuild] = useState(true);
     const [fps, setFps] = useState(0);
 
-    // --- STATE JEU (Sync avec Engine pour UI) ---
+    // --- STATE DATA (Données du jeu synchronisées) ---
     const [resources, setResources] = useState<PlayerResources | null>(null);
     const [stats, setStats] = useState<CityStats | null>(null);
+    // ✅ FIX: On stocke le summary dans le state pour éviter le crash "undefined"
+    const [summary, setSummary] = useState<ResourceSummary>(DEFAULT_SUMMARY);
 
     // --- REFS ---
     const containerRef = useRef<HTMLDivElement>(null);
     const previewPathRef = useRef<number[]>([]);
-    const isValidBuildRef = useRef(true); // Pour accès synchrone dans les events
+    const isValidBuildRef = useRef(true);
 
-    // --- HOOKS ---
+    // =========================================================
+    // 🧱 ASSEMBLAGE DES BRIQUES (HOOKS)
+    // =========================================================
+
+    // 1. Moteur Graphique
     const { appRef, staticGRef, uiGRef, stageRef, isReady } = usePixiApp(containerRef);
 
+    // 2. Gestion des Entrées
     useGameInput(
         stageRef, appRef, viewMode, selectedRoad, selectedZone,
         setCursorPos, setHoverInfo, setTotalCost, setIsValidBuild,
         previewPathRef, isValidBuildRef
     );
 
-    // --- BOUCLE DE JEU (GAME LOOP) ---
-    // On la garde ici car elle met à jour les états React locaux (resources, stats) pour l'UI
-    React.useEffect(() => {
-        if (!isReady || !appRef.current) return;
+    // 3. Boucle de Jeu
+    useGameLoop(
+        appRef, staticGRef, uiGRef, isReady,
+        viewMode, cursorPos, previewPathRef, isValidBuildRef,
+        setFps, setResources, setStats
+    );
 
+    // =========================================================
+    // 🔄 SYNC INITIALE & REGENERATION
+    // =========================================================
+
+    // Au montage, on récupère le summary initial du moteur
+    useEffect(() => {
         const engine = getGameEngine();
-        const map = getMapEngine();
-        let lastRev = -1;
+        if (engine && engine.map) {
+            setSummary(engine.map.currentSummary || DEFAULT_SUMMARY);
+        }
+    }, [isReady]);
 
-        const tick = () => {
-            // 1. Logique Jeu
-            engine.tick();
+    const handleRegenerate = () => {
+        const engine = getGameEngine();
+        if (engine && engine.map) {
+            engine.map.generateWorld(); // Régénère la map
+            setSummary({ ...engine.map.currentSummary }); // Met à jour l'UI
+        }
+    };
 
-            // 2. Sync UI (Throttled: maj toutes les 30 frames seulement)
-            if (appRef.current && (Math.round(appRef.current.ticker.lastTime) % 30 < 1)) {
-                setFps(Math.round(appRef.current.ticker.FPS));
-                setResources({ ...engine.resources });
-                if (engine.stats) {
-                    setStats({ ...engine.stats, demand: { ...engine.stats.demand } });
-                }
-            }
+    const handleSpawnTraffic = () => {
+        const engine = getGameEngine();
+        if (engine && engine.map) {
+            engine.map.spawnTraffic(50);
+        }
+    };
 
-            // 3. Rendu Statique (Seulement si changement)
-            if (engine.revision !== lastRev) {
-                GameRenderer.renderStaticLayer(staticGRef.current!, map, viewMode, false);
-                lastRev = engine.revision;
-            }
-
-            // 4. Rendu Dynamique (Curseur, Preview)
-            GameRenderer.renderDynamicLayer(
-                uiGRef.current!, map, cursorPos, previewPathRef.current, viewMode, isValidBuildRef.current
-            );
-        };
-
-        appRef.current.ticker.add(tick);
-        return () => { appRef.current?.ticker.remove(tick); };
-    }, [isReady, viewMode, cursorPos]); // Dépendances importantes pour le rendu
-
+    // =========================================================
+    // 🎨 RENDU REACT
+    // =========================================================
     return (
         <div className="fixed inset-0 w-screen h-screen bg-black overflow-hidden">
-            {/* CANVAS CONTAINER */}
-            <div ref={containerRef} className="absolute inset-0" />
+            {/* COUCHE 1 : JEU (PixiJS) */}
+            <div ref={containerRef} className="absolute inset-0 z-0" />
 
-            {/* UI LAYER */}
+            {/* COUCHE 2 : INTERFACE (React HTML) */}
             <GameUI
                 t={t}
                 viewMode={viewMode} setViewMode={setViewMode}
@@ -102,9 +106,11 @@ export default function GameCanvas() {
                 selectedZoneType={selectedZone} setSelectedZoneType={setSelectedZone}
                 totalCost={totalCost} isValidBuild={isValidBuild}
                 fps={fps} cursorPos={cursorPos} hoverInfo={hoverInfo}
-                resources={resources} stats={stats} summary={getGameEngine().summary}
-                onSpawnTraffic={() => getGameEngine().spawnTraffic(50)}
-                onRegenerate={() => { getGameEngine().regenerate(); }}
+                resources={resources}
+                stats={stats}
+                summary={summary} // ✅ Utilise le state sécurisé
+                onSpawnTraffic={handleSpawnTraffic}
+                onRegenerate={handleRegenerate}
             />
         </div>
     );

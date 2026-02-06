@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import { 
-  AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+import {
+  AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { Zap, GraduationCap, ArrowUpRight, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -10,15 +10,15 @@ import { InfoLabel } from '@/components/src/ui/InfoLabel';
 import { useTranslations } from 'next-intl';
 
 // Imports Data
-import { 
-  parisMarketHistory, 
+import {
+  parisMarketHistory,
   franceYieldSpreadHistory,
   accessDataParis
 } from '@/data/market/paris';
-import { 
-  newYorkMarketHistory, 
+import {
+  newYorkMarketHistory,
   usaYieldSpreadHistory,
-  accessDataNY 
+  accessDataNY
 } from '@/data/market/newyork';
 
 interface InfoMarketProps {
@@ -29,7 +29,7 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
   const t = useTranslations('infoMarket');
   const [activeTab, setActiveTab] = useState<'PARIS' | 'NY'>('PARIS');
   const router = useRouter();
-  
+
   const isParis = activeTab === 'PARIS';
 
   // --- LOGIQUE DE SÉLECTION DES DONNÉES ---
@@ -69,7 +69,7 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
 
         <div className="flex bg-white/[0.02] p-1 rounded-xl border border-white/10 backdrop-blur-md">
           {['PARIS', 'NY'].map((city) => (
-            <button 
+            <button
               key={city}
               onClick={() => setActiveTab(city as any)}
               className={`px-6 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === city ? 'bg-[#E84142] text-white' : 'text-slate-400 hover:text-white'}`}
@@ -82,7 +82,7 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
 
       {/* --- GRAPHIQUES SUPÉRIEURS --- */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 relative z-10">
-        
+
         {/* Prix m² */}
         <div className="lg:col-span-2 glass-card p-8 md:p-10">
           <div className="flex items-center justify-between mb-8">
@@ -96,10 +96,10 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
               </div>
             </div>
             <div className="text-right">
-                <span className="text-3xl font-black italic tracking-tighter">{isParis ? '9 650 €' : '$15 317'}</span>
-                <div className="text-[#E84142] text-[10px] font-black flex items-center justify-end gap-0.5">
-                  <ArrowUpRight size={12} /> {isParis ? '-1.5%' : '+4.0%'}
-                </div>
+              <span className="text-3xl font-black italic tracking-tighter">{isParis ? '9 650 €' : '$15 317'}</span>
+              <div className="text-[#E84142] text-[10px] font-black flex items-center justify-end gap-0.5">
+                <ArrowUpRight size={12} /> {isParis ? '-1.5%' : '+4.0%'}
+              </div>
             </div>
           </div>
           <div className="h-[300px] w-full">
@@ -107,13 +107,13 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
               <AreaChart data={marketHistory}>
                 <defs>
                   <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#E84142" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#E84142" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#E84142" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#E84142" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="0" vertical={false} stroke="#ffffff05" />
-                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10}} dy={10} />
-                <Tooltip 
+                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} dy={10} />
+                <Tooltip
                   cursor={{ stroke: '#E84142', strokeWidth: 1, strokeDasharray: '4 4' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
@@ -129,27 +129,27 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
                       );
                     }
                     return null;
-                  }} 
+                  }}
                 />
                 <Area type="monotone" dataKey="price" stroke="#E84142" strokeWidth={3} fill="url(#colorPrice)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
-        
+
         {/* Accessibilité */}
         <div className="glass-card p-8 flex flex-col h-full min-h-[400px]">
           <h3 className="subtitle-accent mb-8">{t('accessibility')}</h3>
-          
+
           <div className="flex-1 flex flex-row gap-8 items-center h-full">
             <div className="w-12 h-full min-h-[250px] bg-white/5 rounded-full relative overflow-hidden border border-white/10 shadow-inner">
-              <motion.div 
+              <motion.div
                 initial={{ height: 0 }}
                 animate={{ height: `${lastYearData.excluded}%` }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
                 className="absolute top-0 w-full bg-[#E84142] shadow-[0_0_20px_rgba(232,65,66,0.4)]"
               />
-              <motion.div 
+              <motion.div
                 initial={{ height: 0 }}
                 animate={{ height: `${lastYearData.capable}%` }}
                 transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
@@ -162,24 +162,24 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
                 <span className="label-mono text-[#E84142] mb-1">{t('excluded')}</span>
                 <span className="title-secondary !text-5xl">{lastYearData.excluded}%</span>
               </div>
-              
+
               <div className="flex flex-col border-t border-white/10 pt-4">
-                 <span className="label-mono text-emerald-500 mb-1">{t('canBuy')}</span>
-                 <span className="title-secondary !text-3xl opacity-60">{lastYearData.capable}%</span>
+                <span className="label-mono text-emerald-500 mb-1">{t('canBuy')}</span>
+                <span className="title-secondary !text-3xl opacity-60">{lastYearData.capable}%</span>
               </div>
             </div>
           </div>
 
           <div className="mt-8 p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
-             <span className="label-mono">Analysis 2025</span>
-             <span className="text-[#E84142] font-black italic">CRITICAL</span>
+            <span className="label-mono">Analysis 2025</span>
+            <span className="text-[#E84142] font-black italic">CRITICAL</span>
           </div>
         </div>
       </div>
 
       {/* --- GRAPHIQUES ANALYTIQUES BAS --- */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20 relative z-10">
-        
+
         {/* Arbitrage */}
         <div className="glass-card p-8">
           <div className="mb-6">
@@ -193,12 +193,12 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
               <AreaChart data={yieldData}>
                 <defs>
                   <linearGradient id="colorRental" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#E84142" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#E84142" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#E84142" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#E84142" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10}} />
-                <Tooltip contentStyle={{backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px'}} />
+                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} />
+                <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid #ffffff10', borderRadius: '12px' }} />
                 <Area type="monotone" dataKey="rental" stroke="#E84142" fill="url(#colorRental)" strokeWidth={2} name="Immo %" />
                 <Area type="step" dataKey="savings" stroke="#475569" fill="transparent" strokeDasharray="5 5" name="Ref %" />
               </AreaChart>
@@ -225,12 +225,12 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
                 </linearGradient>
               </defs>
               <path d={`M ${center - radius},${center} A ${radius},${radius} 0 0,1 ${center + radius},${center}`} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth={25} strokeLinecap="round" />
-              <motion.path 
+              <motion.path
                 initial={{ strokeDashoffset: circumference }}
                 animate={{ strokeDashoffset: circumference - (isParis ? 0.75 : 0.94) * circumference }}
                 transition={{ duration: 2, ease: "easeOut" }}
-                d={`M ${center - radius},${center} A ${radius},${radius} 0 0,1 ${center + radius},${center}`} 
-                fill="none" stroke="url(#tensionGradient)" strokeWidth={25} strokeDasharray={circumference} strokeLinecap="round" 
+                d={`M ${center - radius},${center} A ${radius},${radius} 0 0,1 ${center + radius},${center}`}
+                fill="none" stroke="url(#tensionGradient)" strokeWidth={25} strokeDasharray={circumference} strokeLinecap="round"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
@@ -267,7 +267,7 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
               {t('marketDescription')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <div className="flex flex-col gap-2 p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+              <div className="flex flex-col gap-2 p-5 rounded-2xl bg-white/[0.02] border border-white/5">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#E84142]/20 text-[#E84142]"><Zap size={16} /></div>
                   <h4 className="label-mono !text-[10px]">{t('feature1Title')}</h4>
@@ -294,8 +294,9 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
                 </div>
               ))}
             </div>
-            <button 
+            <button
               onClick={handleAction}
+
               className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-xl transition-all hover:bg-[#E84142] hover:text-white hover:scale-[1.02] active:scale-95 cursor-pointer"
             >
               {t('startAscent')}
