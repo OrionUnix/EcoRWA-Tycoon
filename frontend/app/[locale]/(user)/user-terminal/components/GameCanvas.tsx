@@ -4,7 +4,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { getGameEngine } from '../engine/GameEngine';
-import { regenerateWorld } from '../engine/MapEngine'; // Si besoin d'accès direct
 import { RoadType, ZoneType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
 
 // Hooks Modulaires
@@ -70,23 +69,23 @@ export default function GameCanvas() {
     // Au montage, on récupère le summary initial du moteur
     useEffect(() => {
         const engine = getGameEngine();
-        if (engine && engine.map) {
-            setSummary(engine.map.currentSummary || DEFAULT_SUMMARY);
+        if (engine) {
+            setSummary(engine.summary || DEFAULT_SUMMARY);
         }
     }, [isReady]);
 
     const handleRegenerate = () => {
         const engine = getGameEngine();
-        if (engine && engine.map) {
-            engine.map.generateWorld(); // Régénère la map
-            setSummary({ ...engine.map.currentSummary }); // Met à jour l'UI
+        if (engine) {
+            engine.regenerate(); // Régénère la map (via engine)
+            setSummary({ ...engine.summary }); // Met à jour l'UI
         }
     };
 
     const handleSpawnTraffic = () => {
         const engine = getGameEngine();
-        if (engine && engine.map) {
-            engine.map.spawnTraffic(50);
+        if (engine) {
+            engine.spawnTraffic(50);
         }
     };
 

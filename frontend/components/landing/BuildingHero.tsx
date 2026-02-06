@@ -1,14 +1,13 @@
 'use client';
 import React, { Suspense, useState, useEffect, useRef, useMemo } from 'react';
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, ContactShadows, Environment, Float, PerspectiveCamera } from '@react-three/drei';
 import { MapPin } from 'lucide-react';
 import * as THREE from 'three';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 
-const isProd = process.env.NODE_ENV === 'production';
-const basePath = isProd ? '/EcoRWA-Tycoon' : '';
-const MODEL_PATH = `${basePath}/assets/models/suburban/loft-saint-germain.glb`;
+const MODEL_PATH = withBasePath('/assets/models/suburban/loft-saint-germain.glb');
 
 function Model() {
   const { scene } = useGLTF(MODEL_PATH);
@@ -24,12 +23,12 @@ function Model() {
         child.castShadow = true;
         child.receiveShadow = true;
         if (child.material) {
-          child.material.envMapIntensity = 2.5; 
+          child.material.envMapIntensity = 2.5;
           child.material.roughness = 0.15;
-          child.material.metalness = 0.8; 
-          
+          child.material.metalness = 0.8;
+
           if (child.name.toLowerCase().includes('window') || child.name.toLowerCase().includes('glass')) {
-            child.material.emissive = new THREE.Color('#ffffff'); 
+            child.material.emissive = new THREE.Color('#ffffff');
             child.material.emissiveIntensity = 20;
           }
         }
@@ -44,7 +43,7 @@ function Model() {
   });
 
   return (
-    <group ref={groupRef} position={[0, 0.5, 0]}> 
+    <group ref={groupRef} position={[0, 0.5, 0]}>
       <primitive object={scene} scale={responsiveScale} />
       <ContactShadows opacity={0.3} scale={20} blur={2.5} far={4.5} />
     </group>
@@ -59,17 +58,17 @@ export default function BuildingHero() {
 
   return (
     <div className="relative w-full h-full bg-transparent">
-      <Canvas 
+      <Canvas
         shadows
         gl={{ preserveDrawingBuffer: true, alpha: true }}
         className="overflow-visible"
       >
         <PerspectiveCamera makeDefault position={[0, 2, 9]} fov={20} />
-        
+
         <ambientLight intensity={0.4} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={3} />
         <pointLight position={[-10, 5, -5]} color="#E84142" intensity={5} />
-        <Environment preset="city" /> 
+        <Environment preset="city" />
 
         <Suspense fallback={null}>
           <Float speed={1.2} rotationIntensity={0.2} floatIntensity={0.5}>
@@ -90,8 +89,8 @@ export default function BuildingHero() {
           </div>
           <div className="h-4 w-[1px] bg-white/10" />
           <div className="flex items-center gap-3 text-white/50 text-[10px] font-medium">
-             <MapPin size={12} className="text-blue-400" />
-             <span className="text-emerald-400 font-bold">+4.0% APY</span>
+            <MapPin size={12} className="text-blue-400" />
+            <span className="text-emerald-400 font-bold">+4.0% APY</span>
           </div>
         </div>
       </div>

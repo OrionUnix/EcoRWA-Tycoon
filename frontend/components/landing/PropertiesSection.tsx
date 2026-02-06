@@ -4,7 +4,7 @@ import Image from 'next/image'; // ✅ On utilise le composant Image natif
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { BUILDINGS_DATA } from '@/data/buildings';
-// Assure-toi que ce composant existe, sinon commente-le temporairement
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 
 
 export default function PropertiesSection() {
@@ -49,8 +49,8 @@ export default function PropertiesSection() {
               'Commercial': '/assets/models/house/bistro_central.webp',
               'Mixte': '/assets/models/house/eco_tower_2300.webp',
             };
-            const normalizedType = building.type.fr.normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents .toLowerCase();
-            const imagePath = imageConfigs[normalizedType] || '/assets/models/house/saint_germain.webp';
+
+            const imagePath = imageConfigs[building.type.fr] || '/assets/models/house/saint_germain.webp';
 
             return (
               <div key={building.id} className="group relative flex flex-col items-center">
@@ -60,7 +60,7 @@ export default function PropertiesSection() {
                 {/* ✅ IMAGE PREVIEW */}
                 <div className="relative w-full h-[380px] z-10 transition-transform duration-700 group-hover:-translate-y-6">
                   <Image
-                    src={imagePath}
+                    src={withBasePath(imagePath)}
                     alt={building.name}
                     fill
                     className="object-contain drop-shadow-2xl"

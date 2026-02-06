@@ -37,17 +37,16 @@ export function useGameLoop(
             // On évite de spammer React de mises à jour d'état inutilement
             if (Math.round(app.ticker.lastTime) % 30 < 1) {
                 setFps(Math.round(app.ticker.FPS));
-                setResources({ ...engine.getResources() }); // Utiliser le getter du GameEngine
-                setStats({ ...engine.getStats() });         // Utiliser le getter du GameEngine
+                setResources({ ...engine.resources }); // Utiliser le getter correct
+                setStats({ ...engine.stats });         // Utiliser le getter correct
             }
 
             // 3. Rendu Statique (Optimisation: uniquement si la map a changé)
-            // engine.map.revision est incrémenté quand on construit/détruit
-            if (engine.map.revision !== lastRevRef.current) {
+            if (engine.revision !== lastRevRef.current) {
                 if (staticGRef.current) {
                     GameRenderer.renderStaticLayer(staticGRef.current, map, viewMode, false);
                 }
-                lastRevRef.current = engine.map.revision;
+                lastRevRef.current = engine.revision;
             }
 
             // 4. Rendu Dynamique (À chaque frame: Curseur, Preview, Drag)

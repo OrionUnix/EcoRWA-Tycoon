@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation'
 interface NavbarLandingProps {
@@ -20,9 +21,9 @@ export default function NavbarLanding({
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [logoHovered, setLogoHovered] = useState(false);
-  
+
   // 2. LANGUE
-  const locale = useLocale(); 
+  const locale = useLocale();
   const t = useTranslations('Navbar');
   const tHero = useTranslations('Hero');
 
@@ -48,13 +49,12 @@ export default function NavbarLanding({
     }
     // On utilise le locale pour garder la bonne langue dans l'URL
     router.push(`/${locale}/user-terminal`);
-  };  
+  };
 
   return (
     <nav
-      className={`fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 ${
-        scrolled ? 'scale-95 py-1.5 px-3 min-w-[280px]' : 'py-2 px-4 min-w-[320px] md:min-w-[450px]'
-      }`}
+      className={`fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 ${scrolled ? 'scale-95 py-1.5 px-3 min-w-[280px]' : 'py-2 px-4 min-w-[320px] md:min-w-[450px]'
+        }`}
     >
       <div className="relative group">
         <div className="absolute -inset-[1.5px] bg-gradient-to-r from-[#E84142]/30 via-[#E84142]/10 to-[#E84142]/30 rounded-full blur-[2px] opacity-15 group-hover:opacity-30 transition-opacity duration-700 animate-gradient-x pointer-events-none" />
@@ -69,7 +69,7 @@ export default function NavbarLanding({
           >
             <div className="relative w-5 h-5 md:w-6 md:h-6">
               <Image
-                src="/logo.svg"
+                src={withBasePath("/logo.svg")}
                 alt="Logo"
                 fill
                 className={`object-contain transition-all duration-300 ${logoGlow}`}
@@ -77,9 +77,8 @@ export default function NavbarLanding({
             </div>
 
             <span
-              className={`text-white font-black tracking-tighter uppercase hidden sm:block transition-all duration-300 ${
-                scrolled ? 'text-[10px]' : 'text-xs'
-              } group-hover/logo:text-[#E84142]/90`}
+              className={`text-white font-black tracking-tighter uppercase hidden sm:block transition-all duration-300 ${scrolled ? 'text-[10px]' : 'text-xs'
+                } group-hover/logo:text-[#E84142]/90`}
             >
               EcoRWA{' '}
               <span className="bg-gradient-to-r from-[#E84142] to-[#FF6B6B] bg-clip-text text-transparent">
@@ -94,7 +93,7 @@ export default function NavbarLanding({
               {t('howItWorks')}
             </a>
             <a href="#market" className="hover:text-white transition-colors uppercase tracking-widest">
-              
+
               {t('market') || 'RWA Listings'}
             </a>
             <a href="#market-analysis" className="hover:text-white transition-colors uppercase tracking-widest">
@@ -121,7 +120,7 @@ export default function NavbarLanding({
               disabled={isFaucetLoading}
               className="relative group/btn p-[1px] rounded-full overflow-hidden transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              
+
               <div className="absolute inset-0 bg-gradient-to-r from-[#E84142] via-[#FF394A] to-[#E84142] opacity-60 group-hover/btn:opacity-100 animate-gradient-x transition-opacity duration-500" />
               <div className="relative px-4 py-1.5 md:px-5 md:py-2 bg-[#020617]/70 rounded-full backdrop-blur-lg">
                 <span className="text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.12em] whitespace-nowrap">
