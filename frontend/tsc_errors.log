@@ -1,0 +1,8 @@
+app/[locale]/(user)/user-terminal/components/GameCanvas.tsx(8,31): error TS2307: Cannot find module '../engine/GameEngine' or its corresponding type declarations.
+app/[locale]/(user)/user-terminal/components/GameCanvas.tsx(211,81): error TS2345: Argument of type 'import("H:/travail/EcoRWA Tycoon/frontend/app/[locale]/(user)/user-terminal/engine/types").RoadType' is not assignable to parameter of type 'RoadData'.
+app/[locale]/(user)/user-terminal/components/GameCanvas.tsx(264,16): error TS2339: Property 'tick' does not exist on type 'MapEngine'.
+app/[locale]/(user)/user-terminal/components/GameCanvas.tsx(312,54): error TS2339: Property 'spawnTraffic' does not exist on type 'MapEngine'.
+app/[locale]/(user)/user-terminal/components/GameRenderer.ts(104,23): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<RoadType, RoadSpecs>'.
+app/[locale]/(user)/user-terminal/components/GameRenderer.ts(175,24): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<ZoneType, number>'.
+app/[locale]/(user)/user-terminal/engine/MapEngine.ts(52,13): error TS2353: Object literal may only specify known properties, and 'money' does not exist in type 'PlayerResources'.
+app/[locale]/(user)/user-terminal/engine/MapEngine.ts(58,13): error TS2353: Object literal may only specify known properties, and 'energy' does not exist in type 'CityStats'.

@@ -2,10 +2,10 @@ import * as PIXI from 'pixi.js';
 import { MapEngine } from '../engine/MapEngine';
 import { gridToScreen } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
-import { RoadType, RoadData, ROAD_SPECS, ZoneType, BuildingData, ZONE_COLORS, LayerType, BiomeType } from '../engine/types';
-import { RoadManager } from '../engine/RoadManager';
+import { RoadData, ROAD_SPECS, ZoneType, BuildingData, ZONE_COLORS, LayerType, BiomeType, RoadType } from '../engine/types';
 
 export const COLORS = {
+    // ... (couleurs existantes inchangées)
     BG: 0x111111,
     DEEP_OCEAN: 0x000080, OCEAN: 0x29b6f6, BEACH: 0xffcc66,
     PLAINS: 0x81c784, PLAINS_VAR: 0x66bb6a,
@@ -14,6 +14,12 @@ export const COLORS = {
     WHITE_MODEL: 0xf5f5f5, WATER_MODEL: 0xb3e5fc,
     OIL: 0xffd700, COAL: 0x212121, IRON: 0xff5722,
     WOOD: 0x43a047, FOOD: 0xff3366, WATER_RES: 0x0000ff,
+
+    // NOUVELLES COULEURS
+    GROUNDWATER_LOW: 0xBBDEFB,  // Bleu très clair
+    GROUNDWATER_HIGH: 0x0D47A1, // Bleu très foncé
+    FISH: 0xFF4081, // Rose
+    ANIMAL: 0x8D6E63, // Marron
     GRID_LINES: 0x999999,
     HIGHLIGHT: 0xFFFFFF,
     ROAD_BRIDGE: 0x8B4513,
@@ -25,10 +31,13 @@ export class GameRenderer {
 
     static renderStaticLayer(g: PIXI.Graphics, engine: MapEngine, viewMode: string, showGrid: boolean) {
         g.clear();
+        g.rect(0, 0, 2000, 2000).fill({ color: 0x222222 });
+
+        if (!engine || !engine.biomes) return;
 
         const biomes = engine.biomes;
         const { oil, coal, iron, wood, animals, fish } = engine.resourceMaps;
-        const water = engine.getLayer(LayerType.WATER);
+        const moistureMap = engine.moistureMap; // ✅ Accès à l'humidité (nappe phréatique)
         const getVariation = (idx: number) => (Math.sin(idx * 999) > 0.5);
 
         for (let y = 0; y < GRID_SIZE; y++) {
@@ -36,11 +45,12 @@ export class GameRenderer {
                 const i = y * GRID_SIZE + x;
                 const pos = gridToScreen(x, y);
 
-                // 1. TERRAIN
+                // --- 1. TERRAIN & RESSOURCES ---
                 let fillColor = 0x000000;
                 let strokeAlpha = 0;
                 const biome = biomes[i];
 
+                // Mode Normal
                 if (viewMode === 'ALL' || viewMode === 'BUILD_ROAD' || viewMode === 'BULLDOZER' || viewMode === 'ZONE') {
                     if (biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.DEEP_OCEAN;
                     else if (biome === BiomeType.OCEAN) fillColor = COLORS.OCEAN;
@@ -51,19 +61,52 @@ export class GameRenderer {
                     else if (biome === BiomeType.SNOW) fillColor = COLORS.SNOW;
                     else fillColor = getVariation(i) ? COLORS.PLAINS : COLORS.PLAINS_VAR;
                     if (showGrid) strokeAlpha = 0.1;
-                } else {
-                    // Vue Calques
-                    fillColor = COLORS.WHITE_MODEL;
-                    if (biome === BiomeType.OCEAN || biome === BiomeType.DEEP_OCEAN) fillColor = COLORS.WATER_MODEL;
-                    strokeAlpha = 0.15;
-                    if (viewMode === 'OIL' && oil[i] > 0.01) fillColor = COLORS.OIL;
-                    else if (viewMode === 'COAL' && coal[i] > 0.01) fillColor = COLORS.COAL;
-                    else if (viewMode === 'IRON' && iron[i] > 0.01) fillColor = COLORS.IRON;
-                    else if (viewMode === 'WOOD' && wood[i] > 0.01) fillColor = COLORS.WOOD;
-                    else if (viewMode === 'WATER' && water[i] > 0.01) fillColor = COLORS.WATER_RES;
-                    else if (viewMode === 'FOOD' && (fish[i] > 0.01 || animals[i] > 0.01)) fillColor = COLORS.FOOD;
+                }
+                // Mode Inspection (Maquette Blanche + Ressources)
+                else {
+                    fillColor = COLORS.WHITE_MODEL; // Fond blanc par défaut
+                    strokeAlpha = 0.1;
+
+                    // Si c'est de l'eau en surface, on la garde bleue en mode maquette pour se repérer
+                    if (biome === BiomeType.OCEAN || biome === BiomeType.DEEP_OCEAN) {
+                        fillColor = COLORS.WATER_MODEL;
+                    }
+
+                    // --- VISUALISATION DES CALQUES ---
+
+                    if (viewMode === 'OIL' && oil[i] > 0.1) {
+                        fillColor = COLORS.OIL; // Jaune
+                    }
+                    else if (viewMode === 'COAL' && coal[i] > 0.1) {
+                        fillColor = COLORS.COAL; // Noir
+                    }
+                    else if (viewMode === 'IRON' && iron[i] > 0.1) {
+                        fillColor = COLORS.IRON; // Orange rouille
+                    }
+                    else if (viewMode === 'WOOD') {
+                        // On affiche le bois si ressource > 0 OU si c'est une forêt
+                        if (wood[i] > 0.1 || biome === BiomeType.FOREST) {
+                            fillColor = COLORS.WOOD; // Vert foncé
+                        }
+                    }
+                    else if (viewMode === 'FOOD') {
+                        if (fish[i] > 0.1) fillColor = COLORS.FISH; // Poisson (Rose)
+                        if (animals[i] > 0.1) fillColor = COLORS.ANIMAL; // Gibier (Marron)
+                    }
+                    else if (viewMode === 'GROUNDWATER') {
+                        // Visualisation de l'humidité du sol
+                        const m = moistureMap[i];
+                        if (biome === BiomeType.OCEAN || biome === BiomeType.DEEP_OCEAN) {
+                            fillColor = COLORS.WATER_MODEL; // Océan reste bleu normal
+                        } else if (m > 0.3) {
+                            // Dégradé de bleu selon la quantité d'eau souterraine
+                            // Plus c'est foncé, plus il y a d'eau
+                            fillColor = m > 0.7 ? COLORS.GROUNDWATER_HIGH : COLORS.GROUNDWATER_LOW;
+                        }
+                    }
                 }
 
+                // Dessin de la case
                 g.beginPath();
                 g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
                 g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
@@ -73,10 +116,10 @@ export class GameRenderer {
                 g.fill({ color: fillColor });
                 if (strokeAlpha > 0) g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: strokeAlpha });
 
-                // 2. ZONAGE
+                // --- 2. ZONES (Transparence) ---
                 const zone = engine.zoningLayer[i];
                 if (zone !== ZoneType.NONE) {
-                    const zColor = ZONE_COLORS[zone];
+                    const zColor = ZONE_COLORS[zone] || 0xFF00FF;
                     g.beginPath();
                     g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
                     g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
@@ -86,12 +129,12 @@ export class GameRenderer {
                     g.stroke({ width: 2, color: zColor, alpha: 0.8 });
                 }
 
-                // 3. ROUTES
+                // --- 3. ROUTES ---
                 if (engine.roadLayer && engine.roadLayer[i]) {
                     this.drawRoadTile(g, engine.roadLayer[i]!, pos.x, pos.y, i);
                 }
 
-                // 4. BATIMENTS
+                // --- 4. BÂTIMENTS ---
                 const building = engine.buildingLayer[i];
                 if (building) {
                     this.drawBuilding(g, building, pos.x, pos.y);
@@ -100,85 +143,46 @@ export class GameRenderer {
         }
     }
 
+    // ... (Le reste des méthodes drawRoadTile, drawBuilding, renderDynamicLayer restent inchangées)
+    // Assurez-vous de garder les méthodes privées existantes !
+
     private static drawRoadTile(g: PIXI.Graphics, road: RoadData, cx: number, cy: number, index: number) {
+        // ... (Reprendre le code de la réponse précédente pour drawRoadTile)
         const specs = ROAD_SPECS[road.type];
         if (!specs) return;
-
+        const baseWidth = specs.width || 8;
+        const baseColor = road.isBridge ? COLORS.ROAD_BRIDGE : (specs.color || 0x555555);
         const n_dx = TILE_WIDTH / 4; const n_dy = -TILE_HEIGHT / 4;
         const s_dx = -TILE_WIDTH / 4; const s_dy = TILE_HEIGHT / 4;
         const e_dx = TILE_WIDTH / 4; const e_dy = TILE_HEIGHT / 4;
         const w_dx = -TILE_WIDTH / 4; const w_dy = -TILE_HEIGHT / 4;
-
         const drawLine = (width: number, color: number, alpha: number = 1) => {
-            g.beginPath();
-            if (road.connections.n) { g.moveTo(cx, cy); g.lineTo(cx + n_dx, cy + n_dy); }
-            if (road.connections.s) { g.moveTo(cx, cy); g.lineTo(cx + s_dx, cy + s_dy); }
-            if (road.connections.e) { g.moveTo(cx, cy); g.lineTo(cx + e_dx, cy + e_dy); }
-            if (road.connections.w) { g.moveTo(cx, cy); g.lineTo(cx + w_dx, cy + w_dy); }
-            g.stroke({ width, color, alpha, cap: 'round', join: 'round' });
+            const conns = road.connections || { n: false, s: false, e: false, w: false };
+            const hasConnections = conns.n || conns.s || conns.e || conns.w;
+            if (!hasConnections) { g.circle(cx, cy, width / 1.5).fill({ color: color, alpha }); }
+            else {
+                g.beginPath();
+                if (conns.n) { g.moveTo(cx, cy); g.lineTo(cx + n_dx, cy + n_dy); }
+                if (conns.s) { g.moveTo(cx, cy); g.lineTo(cx + s_dx, cy + s_dy); }
+                if (conns.e) { g.moveTo(cx, cy); g.lineTo(cx + e_dx, cy + e_dy); }
+                if (conns.w) { g.moveTo(cx, cy); g.lineTo(cx + w_dx, cy + w_dy); }
+                g.stroke({ width, color, alpha, cap: 'round', join: 'round' });
+                g.circle(cx, cy, width / 2.2).fill({ color: color, alpha });
+            }
         };
-
-        const baseWidth = specs.width;
-        const baseColor = road.isBridge ? COLORS.ROAD_BRIDGE : specs.color;
-
-        // Base de la route
-        if (road.isBridge) {
-            drawLine(baseWidth + 4, 0x5D4037, 1); // Bord du pont foncé
-            drawLine(baseWidth, baseColor, 1);     // Dessus du pont
-
-            // DESSIN DES PILIERS (Astuce simple)
-            // On dessine un rectangle vertical sous la route pour simuler un pilier dans l'eau
-            g.beginFill(0x5D4037);
-            g.drawRect(cx - 4, cy, 8, 15); // Pilier qui descend
-            g.endFill();
-        } else {
-            drawLine(baseWidth, baseColor, 1);
-        }
-
-        // --- DÉTAILS SPÉCIFIQUES ---
-
-        // AUTOROUTE : Lignes blanches sur fond noir
-        if (road.type === RoadType.HIGHWAY) {
-            drawLine(2, 0xFFFFFF, 1); // Ligne centrale blanche
-            drawLine(baseWidth - 4, 0xFFFFFF, 0.5); // Lignes de bord
-        }
-        // AVENUE : Bande Verte
-        else if (road.type === RoadType.AVENUE) {
-            drawLine(10, 0x00FF00, 1); // Vert Fluo pour être visible
-            drawLine(12, 0xFFFFFF, 0.5); // Bordure blanche
-        }
-        // ASPHALTE : Ligne Jaune
-        else if (road.type === RoadType.ASPHALT) {
-            drawLine(1, 0xFFD700, 0.8);
-        }
-        // TERRE : Pas de marquage, juste marron (déjà dessiné par baseColor)
-
-        // --- DÉCORATIONS (Props) ---
-        const seed = (index * 9301 + 49297) % 233280;
-
-        // Lampadaires (Sauf Terre et Autoroute)
-        if ((road.type === RoadType.ASPHALT || road.type === RoadType.AVENUE) && (seed % 100) < 50) {
-            const h = 12;
-            g.moveTo(cx + 8, cy).lineTo(cx + 8, cy - h).stroke({ width: 1, color: 0x999999 });
-            g.circle(cx + 8, cy - h, 2).fill({ color: 0xFFFF00 }); // Lumière Jaune
-        }
-
-        // Arbres (Seulement Avenue)
-        if (road.type === RoadType.AVENUE && (seed % 100) < 60) {
-            g.circle(cx, cy - 5, 4).fill({ color: 0x2E7D32 }); // Arbre au centre
-        }
+        drawLine(baseWidth, baseColor, 1);
+        if (road.type === RoadType.HIGHWAY) drawLine(2, 0xFFFFFF, 1);
+        else if (road.type === RoadType.AVENUE) drawLine(baseWidth * 0.8, 0x00FF00, 0.2);
     }
 
     private static drawBuilding(g: PIXI.Graphics, building: BuildingData, cx: number, cy: number) {
         const bHeight = building.level * 8 + 5;
         const bWidth = TILE_WIDTH * 0.5;
-        const bColor = ZONE_COLORS[building.type];
-
+        const bColor = ZONE_COLORS[building.type] || 0xFFFFFF;
         if (building.state === 'CONSTRUCTION') {
             g.stroke({ width: 2, color: 0xFFFF00 });
             g.rect(cx - bWidth / 2, cy - bHeight / 2, bWidth, bHeight / 2).stroke();
         } else {
-            // Volume simple
             g.beginPath();
             g.rect(cx - bWidth / 2, cy - bHeight, bWidth, bHeight);
             g.fill({ color: bColor });
@@ -188,15 +192,14 @@ export class GameRenderer {
 
     static renderDynamicLayer(g: PIXI.Graphics, engine: MapEngine, cursorPos: { x: number, y: number }, previewPath: number[], currentMode: string, isValidBuild: boolean) {
         g.clear();
-
-        // Véhicules
-        engine.updateVehicles();
-        engine.vehicles.forEach(car => {
-            const screenPos = gridToScreen(car.x, car.y);
-            g.circle(screenPos.x, screenPos.y, 3).fill({ color: car.color });
-        });
-
-        // Curseur
+        if (engine.vehicles) {
+            engine.vehicles.forEach(car => {
+                const screenPos = gridToScreen(car.x, car.y);
+                const offX = (car as any).offsetX || 0;
+                const offY = (car as any).offsetY || 0;
+                g.circle(screenPos.x + offX * TILE_WIDTH, screenPos.y + offY * TILE_HEIGHT, 3).fill({ color: car.color || 0xFFFFFF });
+            });
+        }
         const hl = gridToScreen(cursorPos.x, cursorPos.y);
         g.beginPath();
         g.moveTo(hl.x, hl.y - TILE_HEIGHT / 2);
@@ -204,20 +207,13 @@ export class GameRenderer {
         g.lineTo(hl.x, hl.y + TILE_HEIGHT / 2);
         g.lineTo(hl.x - TILE_WIDTH / 2, hl.y);
         g.stroke({ width: 2, color: COLORS.HIGHLIGHT });
-
-        // Preview
         if (previewPath.length > 0) {
             for (const idx of previewPath) {
                 const x = idx % GRID_SIZE; const y = Math.floor(idx / GRID_SIZE);
                 const pos = gridToScreen(x, y);
-
                 let color = COLORS.ROAD_PREVIEW_VALID;
-                const check = RoadManager.checkTile(engine, idx, null);
-
                 if (currentMode === 'BULLDOZER') color = 0xFF0000;
-                else if (!check.valid) color = COLORS.ROAD_PREVIEW_INVALID; // Rouge si invalide (eau)
-                else if (check.isBridge) color = COLORS.ROAD_BRIDGE;
-
+                else if (!isValidBuild) color = COLORS.ROAD_PREVIEW_INVALID;
                 g.beginPath();
                 g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
                 g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);

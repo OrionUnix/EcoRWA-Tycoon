@@ -1,9 +1,8 @@
 import React from 'react';
-import { useLocale } from 'next-intl';
-import { RoadType, ROAD_SPECS, ZoneType, PlayerResources, CityStats } from '../engine/types';
+import { RoadType, ZoneType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
 
 interface GameUIProps {
-    t: any;
+    t: (key: string) => string;
     viewMode: string;
     setViewMode: (mode: any) => void;
     selectedRoadType: RoadType;
@@ -16,229 +15,180 @@ interface GameUIProps {
     cursorPos: { x: number, y: number };
     hoverInfo: any;
     resources: PlayerResources | null;
-    summary: any;
+    stats: CityStats | null;
+    summary: ResourceSummary | null;
     onSpawnTraffic: () => void;
     onRegenerate: () => void;
-    stats: CityStats | null;
 }
 
 export default function GameUI({
-    t, viewMode, setViewMode,
+    t,
+    viewMode, setViewMode,
     selectedRoadType, setSelectedRoadType,
     selectedZoneType, setSelectedZoneType,
-    totalCost, isValidBuild, fps, cursorPos, hoverInfo, resources, summary,
-    onSpawnTraffic, onRegenerate,
-    stats
+    totalCost, isValidBuild,
+    fps, cursorPos, hoverInfo,
+    resources, stats, summary,
+    onSpawnTraffic, onRegenerate
 }: GameUIProps) {
 
-    const locale = useLocale();
-    const formatNumber = (num: number) => new Intl.NumberFormat(locale).format(num);
+    const formatNumber = (num: number | undefined) => Math.floor(num || 0).toLocaleString();
+    const ROADS = [RoadType.DIRT, RoadType.ASPHALT, RoadType.AVENUE, RoadType.HIGHWAY];
 
-    // --- CORRECTION : Valeurs par défaut si stats est null (Affichage 0) ---
-    const currentStats = stats || {
-        population: 0,
-        jobsCommercial: 0,
-        jobsIndustrial: 0,
-        unemployed: 0,
-        demand: { residential: 50, commercial: 0, industrial: 0 } // Demande par défaut
-    };
+    // ✅ LISTE DES CALQUES COMPLÈTE
+    const LAYERS = [
+        { id: 'ALL', label: 'Normal', icon: '🌍' },
+        { id: 'GROUNDWATER', label: 'Ground Water', icon: '💧' }, // Nappes Phréatiques
+        { id: 'WOOD', label: 'Forests', icon: '🌲' },
+        { id: 'FOOD', label: 'Food (Fish/Game)', icon: '🍖' },
+        { id: 'OIL', label: 'Oil', icon: '🛢️' },
+        { id: 'COAL', label: 'Coal', icon: '⚫' },
+        { id: 'IRON', label: 'Iron', icon: '🔩' }
+    ];
 
-    const ResourceBar = ({ label, value, color }: any) => (
-        <div className="flex items-center gap-2 text-xs mb-1">
-            <span className="w-16 text-gray-400 font-bold uppercase">{label}</span>
-            <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color }}></div>
-            </div>
-            <span className="w-8 text-right text-white">{Math.round(value)}%</span>
-        </div>
-    );
-
-    const RCIBar = ({ r, c, i }: { r: number, c: number, i: number }) => (
-        <div className="flex gap-1 h-6 items-end bg-gray-900/50 p-1 rounded border border-gray-700 tooltip" title="Demande RCI">
-            {/* R - Vert */}
-            <div className="w-2 bg-green-500 transition-all duration-500 rounded-sm" style={{ height: `${Math.max(10, r)}%` }} title={`Résidentiel: ${Math.floor(r)}%`}></div>
-            {/* C - Bleu */}
-            <div className="w-2 bg-blue-500 transition-all duration-500 rounded-sm" style={{ height: `${Math.max(10, c)}%` }} title={`Commercial: ${Math.floor(c)}%`}></div>
-            {/* I - Jaune */}
-            <div className="w-2 bg-yellow-500 transition-all duration-500 rounded-sm" style={{ height: `${Math.max(10, i)}%` }} title={`Industriel: ${Math.floor(i)}%`}></div>
-        </div>
-    );
+    const isInspectMode = !['BUILD_ROAD', 'ZONE', 'BULLDOZER'].includes(viewMode);
 
     return (
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none flex flex-col justify-between">
 
-            {/* --- TOP BAR (HUD PRINCIPAL) --- */}
-            <div className="absolute top-0 left-0 w-full h-14 bg-gray-900/95 backdrop-blur-md border-b border-gray-700 flex items-center justify-between px-4 z-50 shadow-xl pointer-events-auto">
-
-                {/* 1. RESSOURCES (GAUCHE) */}
-                <div className="flex gap-4 text-xs font-mono text-white items-center">
-                    {resources && (
-                        <>
-                            <div className="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded" title="Bois">
-                                <span className="text-amber-600 text-lg">🪵</span>
-                                <span>{Math.floor(resources.wood)}</span>
-                            </div>
-                            <div className="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded" title="Béton">
-                                <span className="text-gray-400 text-lg">🧱</span>
-                                <span>{Math.floor(resources.concrete)}</span>
-                            </div>
-                            <div className="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded" title="Verre">
-                                <span className="text-blue-300 text-lg">🧊</span>
-                                <span>{Math.floor(resources.glass)}</span>
-                            </div>
-                            <div className="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded" title="Energie">
-                                <span className="text-yellow-400 text-lg">⚡</span>
-                                <span>{Math.floor(resources.energy)}</span>
-                            </div>
-                        </>
-                    )}
+            {/* --- TOP BAR --- */}
+            <div className="pointer-events-auto bg-gray-900/90 text-white p-2 flex justify-between items-center border-b border-gray-700 shadow-md backdrop-blur-sm">
+                <div className="flex gap-6 items-center">
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 uppercase font-bold">Money</span>
+                        <span className={`text-lg font-mono font-bold ${(resources?.money || 0) < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                            ${formatNumber(resources?.money)}
+                        </span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 uppercase font-bold">Pop</span>
+                        <span className="text-lg font-mono text-blue-300">{formatNumber(stats?.population)}</span>
+                    </div>
                 </div>
 
-                {/* 2. POPULATION & RCI (DROITE - Toujours visible maintenant) */}
-                <div className="flex items-center gap-4">
-                    {/* RCI Bar */}
-                    <div className="flex flex-col items-center mr-2">
-                        <span className="text-[9px] text-gray-500 font-bold tracking-wider mb-0.5">DEMANDE</span>
-                        <RCIBar r={currentStats.demand.residential} c={currentStats.demand.commercial} i={currentStats.demand.industrial} />
-                    </div>
+                <div className="flex gap-4 text-sm">
+                    <ResourceItem label="Wood" value={resources?.wood} color="text-amber-600" />
+                    <ResourceItem label="Steel" value={resources?.steel} color="text-blue-400" />
+                    <ResourceItem label="Elec" value={resources?.energy} color="text-yellow-300" />
+                    <ResourceItem label="Water" value={resources?.water} color="text-cyan-300" />
+                </div>
 
-                    {/* Population Stats */}
-                    <div className="flex gap-4 bg-gray-800/80 px-3 py-1.5 rounded-lg border border-gray-600">
-                        {/* Habitants */}
-                        <div className="flex flex-col items-end">
-                            <span className="text-[9px] text-gray-400 uppercase font-bold">Population</span>
-                            <span className="text-base font-bold text-white leading-none">👥 {formatNumber(currentStats.population)}</span>
-                        </div>
-
-                        {/* Jobs */}
-                        <div className="flex flex-col items-end border-l border-gray-600 pl-3">
-                            <span className="text-[9px] text-gray-400 uppercase font-bold">Emplois</span>
-                            <div className="flex gap-2 text-xs font-bold leading-none">
-                                <span className="text-blue-400" title="Bureaux">🏢 {formatNumber(currentStats.jobsCommercial)}</span>
-                                <span className="text-yellow-500" title="Usines">🏭 {formatNumber(currentStats.jobsIndustrial)}</span>
-                            </div>
-                        </div>
-                    </div>
+                <div className="flex gap-2 text-xs text-gray-500">
+                    <div>FPS: {fps}</div>
+                    <button onClick={onRegenerate} className="bg-red-700 hover:bg-red-600 text-white px-2 rounded">Reset Map</button>
+                    <button onClick={onSpawnTraffic} className="bg-purple-700 hover:bg-purple-600 text-white px-2 rounded">Traffic</button>
                 </div>
             </div>
 
-            {/* --- FPS & COORDS (Bas Droite) --- */}
-            <div className="absolute bottom-4 right-24 text-[10px] text-green-500 font-mono z-20 flex flex-col items-end opacity-70">
-                <span>FPS: {fps}</span>
-                <span className="text-yellow-400">XY: {cursorPos.x}, {cursorPos.y}</span>
-            </div>
+            {/* --- TOOLTIP AMÉLIORÉ (LABELS) --- */}
+            {hoverInfo && (
+                <div className="absolute top-16 left-4 bg-gray-900/95 text-white p-3 rounded border border-gray-500 shadow-xl w-56 text-sm pointer-events-auto z-50">
+                    <h3 className="font-bold text-gray-300 border-b border-gray-600 mb-2 pb-1 flex justify-between">
+                        <span>Case ({cursorPos.x}, {cursorPos.y})</span>
+                        <span className="text-blue-300">{hoverInfo.biome}</span>
+                    </h3>
 
-            {/* --- COUT CONSTRUCTION (Curseur) --- */}
-            {(viewMode === 'BUILD_ROAD' || viewMode === 'ZONE') && totalCost > 0 && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 animate-in fade-in zoom-in duration-200 pointer-events-none">
-                    <div className={`px-4 py-2 rounded-full font-bold text-white shadow-xl backdrop-blur-md border border-white/20 ${isValidBuild ? 'bg-green-600/90' : 'bg-red-600/90'}`}>
-                        {isValidBuild ? `Coût: $${totalCost}` : "Construction Impossible"}
+                    <div className="space-y-1">
+                        {/* Eau Souterraine */}
+                        {hoverInfo.moisture > 0 && (
+                            <div className="flex justify-between text-cyan-300">
+                                <span>💧 Nappe Phréatique:</span>
+                                <span className="font-mono">{(hoverInfo.moisture * 100).toFixed(0)}%</span>
+                            </div>
+                        )}
+
+                        {/* Ressources (Tonnes) */}
+                        {hoverInfo.resources && Object.entries(hoverInfo.resources).map(([key, val]: any) => {
+                            if (val <= 0) return null;
+                            // On simule une valeur en tonnes basée sur l'intensité (0.0 - 1.0)
+                            const tons = Math.floor(val * 1000);
+
+                            let color = "text-gray-300";
+                            if (key === 'oil') color = "text-yellow-400";
+                            if (key === 'wood') color = "text-green-400";
+                            if (key === 'coal') color = "text-gray-400";
+                            if (key === 'animals' || key === 'fish') color = "text-pink-400";
+
+                            return (
+                                <div key={key} className={`flex justify-between ${color}`}>
+                                    <span className="capitalize">{key}:</span>
+                                    <span className="font-mono font-bold">{tons} t</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
 
-            {/* --- BARRE D'OUTILS (GAUCHE) --- */}
-            <div className="absolute top-20 left-4 z-10 flex flex-col gap-2 bg-gray-900/95 p-3 rounded-lg border border-gray-700 shadow-2xl backdrop-blur-md pointer-events-auto max-h-[80vh] overflow-y-auto w-44">
+            {/* --- BOTTOM AREA --- */}
+            <div className="flex flex-col items-center pointer-events-auto">
 
-                {/* Section Routes */}
-                <div>
-                    <button onClick={() => setViewMode('BUILD_ROAD')} className={`w-full text-left px-3 py-2 text-xs font-bold rounded mb-1 border transition-colors ${viewMode === 'BUILD_ROAD' ? 'bg-yellow-600 text-white border-yellow-500' : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'}`}>
-                        🚧 ROUTES
-                    </button>
-                    {viewMode === 'BUILD_ROAD' && (
-                        <div className="flex flex-col gap-1 ml-2 pl-2 border-l-2 border-gray-700">
-                            {(Object.keys(ROAD_SPECS) as RoadType[]).map((type) => (
-                                <button key={type} onClick={() => setSelectedRoadType(type)} className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border flex items-center justify-between transition-all ${selectedRoadType === type ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500' : 'text-gray-400 border-transparent hover:text-white hover:bg-gray-700'}`}>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: `#${ROAD_SPECS[type].color.toString(16).padStart(6, '0')}` }}></div>
-                                        <span>{ROAD_SPECS[type].label}</span>
-                                    </div>
-                                    <span>${ROAD_SPECS[type].cost}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Section Zonage */}
-                <div>
-                    <button onClick={() => setViewMode('ZONE')} className={`w-full text-left px-3 py-2 text-xs font-bold rounded mb-1 border transition-colors ${viewMode === 'ZONE' ? 'bg-purple-600 text-white border-purple-500' : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'}`}>
-                        🏙️ ZONAGE
-                    </button>
-                    {viewMode === 'ZONE' && (
-                        <div className="flex flex-col gap-1 ml-2 pl-2 border-l-2 border-gray-700">
-                            <button onClick={() => setSelectedZoneType(ZoneType.RESIDENTIAL)} className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-all ${selectedZoneType === ZoneType.RESIDENTIAL ? 'bg-green-600 text-white border-green-400' : 'text-gray-400 border-transparent hover:bg-gray-700'}`}>🟩 RÉSIDENTIEL</button>
-                            <button onClick={() => setSelectedZoneType(ZoneType.COMMERCIAL)} className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-all ${selectedZoneType === ZoneType.COMMERCIAL ? 'bg-blue-600 text-white border-blue-400' : 'text-gray-400 border-transparent hover:bg-gray-700'}`}>🟦 COMMERCIAL</button>
-                            <button onClick={() => setSelectedZoneType(ZoneType.INDUSTRIAL)} className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-all ${selectedZoneType === ZoneType.INDUSTRIAL ? 'bg-yellow-600 text-white border-yellow-400' : 'text-gray-400 border-transparent hover:bg-gray-700'}`}>🟨 INDUSTRIEL</button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Outils & Actions */}
-                <div className="space-y-1 mt-2 pt-2 border-t border-gray-700">
-                    <button onClick={() => setViewMode('BULLDOZER')} className={`w-full text-left px-3 py-2 text-xs font-bold rounded border transition-colors ${viewMode === 'BULLDOZER' ? 'bg-red-600 text-white border-red-500' : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'}`}>
-                        💣 BULLDOZER
-                    </button>
-                    <button onClick={onSpawnTraffic} className="w-full text-left px-3 py-2 text-xs font-bold rounded border bg-blue-900/50 text-blue-200 border-blue-800 hover:bg-blue-800 hover:text-white transition-colors">
-                        🚗 AJOUTER TRAFIC
-                    </button>
-                </div>
-
-                {/* Filtres Vue */}
-                <div className="mt-2 pt-2 border-t border-gray-700">
-                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 pl-1">Vues</div>
-                    <div className="grid grid-cols-2 gap-1">
-                        {[{ id: 'ALL', label: 'Satellite' }, { id: 'OIL', label: 'Pétrole' }, { id: 'COAL', label: 'Charbon' }, { id: 'IRON', label: 'Fer' }, { id: 'WOOD', label: 'Forêts' }].map(l => (
-                            <button key={l.id} onClick={() => setViewMode(l.id)} className={`px-2 py-1 text-[9px] font-bold rounded border ${viewMode === l.id ? 'bg-gray-600 text-white border-gray-500' : 'bg-gray-800 text-gray-400 border-transparent hover:bg-gray-700'}`}>
-                                {l.label}
+                {/* BARRE CALQUES */}
+                {isInspectMode && (
+                    <div className="mb-2 bg-black/80 p-2 rounded-lg border border-gray-600 flex gap-2 backdrop-blur">
+                        <span className="text-xs text-gray-400 font-bold uppercase self-center mr-2">Vues:</span>
+                        {LAYERS.map(layer => (
+                            <button
+                                key={layer.id}
+                                onClick={() => setViewMode(layer.id)}
+                                className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition-all ${viewMode === layer.id
+                                        ? 'bg-blue-600 text-white shadow-lg scale-105 ring-1 ring-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                            >
+                                <span>{layer.icon}</span>
+                                <span>{layer.label}</span>
                             </button>
                         ))}
                     </div>
-                </div>
-            </div>
-
-            {/* --- INFO PANEL (DROITE) --- */}
-            <div className="absolute top-20 right-4 z-10 w-64 pointer-events-auto flex flex-col gap-2">
-                {/* Info Tuile */}
-                <div className="bg-black/80 backdrop-blur border border-gray-700 rounded p-2 flex justify-between items-center text-xs font-mono text-gray-400">
-                    <span>Tuile:</span>
-                    {hoverInfo && <span className="text-white font-bold">{hoverInfo.biomeName}</span>}
-                </div>
-
-                {/* Info Ressource */}
-                {hoverInfo && hoverInfo.resourceKey && (
-                    <div className="bg-gray-900/95 backdrop-blur border border-blue-500/50 rounded-lg p-4 shadow-2xl animate-in fade-in slide-in-from-right-2">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <h4 className="text-[10px] text-blue-400 uppercase tracking-wider font-bold">Ressource</h4>
-                                <h2 className="text-lg font-bold text-white capitalize">{t(`resources.${hoverInfo.resourceKey}`)}</h2>
-                            </div>
-                            <div className="bg-blue-900 text-blue-200 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-700">Niv. {hoverInfo.techReq}</div>
-                        </div>
-                        <div className="my-2">
-                            <span className="text-2xl font-black text-white">{formatNumber(hoverInfo.amount)}</span>
-                            <span className="text-xs text-gray-400 ml-1">{t(`units.${hoverInfo.unitKey}`)}</span>
-                        </div>
-                    </div>
                 )}
-            </div>
 
-            {/* --- GEOLOGICAL SUMMARY (BAS GAUCHE) --- */}
-            {summary && (
-                <div className="absolute bottom-4 left-4 z-10 bg-gray-900/95 p-3 rounded-lg border border-gray-600 shadow-2xl w-56 backdrop-blur-sm pointer-events-auto">
-                    <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-2 border-b border-gray-700 pb-1">{t('ui.data_title')}</h3>
-                    <ResourceBar label={t('resources.oil')} value={summary.oil} color="#ffd700" />
-                    <ResourceBar label={t('resources.coal')} value={summary.coal} color="#212121" />
-                    <ResourceBar label={t('resources.iron')} value={summary.iron} color="#ff5722" />
-                    <ResourceBar label={t('resources.wood')} value={summary.wood} color="#00c853" />
-                    <ResourceBar label={t('resources.water')} value={summary.water} color="#29b6f6" />
+                {/* BARRE D'OUTILS PRINCIPALE */}
+                <div className="bg-gray-900/95 p-3 border-t border-gray-700 flex justify-center gap-4 shadow-[0_-5px_15px_rgba(0,0,0,0.5)] w-full">
+                    <div className="flex gap-2 border-r border-gray-700 pr-4">
+                        <ToolButton active={isInspectMode} onClick={() => setViewMode('ALL')} label="Inspect" icon="🔍" />
+                        <ToolButton active={viewMode === 'BULLDOZER'} onClick={() => setViewMode('BULLDOZER')} label="Bulldozer" icon="🚜" color="bg-red-900/50" />
+                    </div>
+                    <div className="flex gap-1 border-r border-gray-700 pr-4 items-center">
+                        <span className="text-xs text-gray-500 font-bold uppercase rotate-180" style={{ writingMode: 'vertical-rl' }}>Roads</span>
+                        {ROADS.map(r => (
+                            <ToolButton key={r} active={viewMode === 'BUILD_ROAD' && selectedRoadType === r} onClick={() => { setViewMode('BUILD_ROAD'); setSelectedRoadType(r); }} label={r.toLowerCase()} icon="🛣️" />
+                        ))}
+                    </div>
+                    <div className="flex gap-1 border-r border-gray-700 pr-4 items-center">
+                        <span className="text-xs text-gray-500 font-bold uppercase rotate-180" style={{ writingMode: 'vertical-rl' }}>Zones</span>
+                        <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.RESIDENTIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.RESIDENTIAL); }} label="Res" icon="🏠" color="bg-green-900/50" />
+                        <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.COMMERCIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.COMMERCIAL); }} label="Com" icon="🏢" color="bg-blue-900/50" />
+                        <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.INDUSTRIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.INDUSTRIAL); }} label="Ind" icon="🏭" color="bg-yellow-900/50" />
+                    </div>
+                    <div className="flex gap-1 items-center">
+                        <span className="text-xs text-gray-500 font-bold uppercase rotate-180" style={{ writingMode: 'vertical-rl' }}>Services</span>
+                        <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.WIND_TURBINE} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.WIND_TURBINE); }} label="Wind" icon="🌬️" />
+                        {/* Ajout pompe à eau */}
+                        <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.WATER_PUMP} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.WATER_PUMP); }} label="Pump" icon="🚰" />
+                    </div>
                 </div>
-            )}
-
-            {/* BOUTON REGENERATE */}
-            <button onClick={onRegenerate} className="absolute bottom-4 right-4 z-10 bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-2 px-4 rounded shadow-lg pointer-events-auto transition-transform hover:scale-105 active:scale-95">
-                🎲 RELANCER CARTE
-            </button>
+            </div>
         </div>
+    );
+}
+
+function ResourceItem({ label, value, color }: { label: string, value: number | undefined, color: string }) {
+    return (
+        <div className="flex flex-col items-center min-w-[30px]">
+            <span className="text-[10px] text-gray-500 uppercase">{label}</span>
+            <span className={`font-mono font-bold ${color}`}>{value !== undefined ? Math.floor(value).toLocaleString() : '0'}</span>
+        </div>
+    );
+}
+
+function ToolButton({ active, onClick, label, icon, color }: any) {
+    const baseClass = "flex flex-col items-center justify-center w-12 h-12 rounded transition-all border";
+    const activeClass = active ? "border-white bg-gray-600 shadow-inner scale-95" : `border-gray-700 hover:bg-gray-700 ${color || 'bg-gray-800'}`;
+    return (
+        <button onClick={onClick} className={`${baseClass} ${activeClass}`}>
+            <span className="text-lg">{icon}</span>
+            <span className="text-[8px] uppercase font-bold mt-[-2px]">{label.substring(0, 4)}</span>
+        </button>
     );
 }

@@ -6,7 +6,6 @@ export class BuildingSystem {
 
     /**
      * Vérifie si une tuile a accès à la route (Nécessaire pour construire)
-     * 👇 STATIC EST OBLIGATOIRE
      */
     static hasRoadAccess(engine: MapEngine, index: number): boolean {
         const x = index % GRID_SIZE;
@@ -26,7 +25,6 @@ export class BuildingSystem {
 
     /**
      * Tente de consommer des ressources. Renvoie true si succès.
-     * 👇 STATIC EST OBLIGATOIRE
      */
     static tryConsumeResources(engine: MapEngine, cost: Partial<PlayerResources>): boolean {
         // 1. Vérification
@@ -48,7 +46,6 @@ export class BuildingSystem {
 
     /**
      * Appelé par GameEngine toutes les X frames
-     * 👇 STATIC EST OBLIGATOIRE (C'est ici que ça plantait)
      */
     static update(engine: MapEngine) {
         // Optimisation : On ne scanne pas toute la map à chaque frame.
@@ -58,7 +55,7 @@ export class BuildingSystem {
             const zoneType = engine.zoningLayer[idx];
             const building = engine.buildingLayer[idx];
 
-            // Pas de zone ou déjà une route = on passe
+            // Si pas de zone ou si c'est déjà une route, on ignore
             if (zoneType === ZoneType.NONE || engine.roadLayer[idx]) continue;
 
             // CAS 1 : Terrain vide zoné -> Construction Niveau 1
@@ -84,8 +81,7 @@ export class BuildingSystem {
             // CAS 2 : Bâtiment en construction -> Avance le timer
             else if (building.state === 'CONSTRUCTION') {
                 building.constructionTimer++;
-                // Petite variation pour que tout ne se finisse pas en même temps
-                if (building.constructionTimer > 20 + (idx % 10)) {
+                if (building.constructionTimer > 20) { // Durée de construction
                     building.state = 'ACTIVE';
                     engine.revision++;
                 }
@@ -95,8 +91,7 @@ export class BuildingSystem {
                 // Faible chance d'évoluer (1/1000) si les conditions sont réunies
                 if (Math.random() < 0.001) {
                     const nextLevel = building.level + 1;
-                    const costs = BUILDING_COSTS[building.type];
-                    const cost = costs ? costs[nextLevel] : null;
+                    const cost = BUILDING_COSTS[building.type][nextLevel];
 
                     if (cost && this.tryConsumeResources(engine, cost)) {
                         building.level = nextLevel;

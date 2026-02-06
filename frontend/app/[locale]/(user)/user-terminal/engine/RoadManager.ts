@@ -1,144 +1,102 @@
-import { GRID_SIZE } from './config';
-import { RoadData, RoadType, ROAD_SPECS, LayerType } from './types';
 import { MapEngine } from './MapEngine';
+import { RoadType, RoadData, LayerType, ROAD_SPECS } from './types';
+import { GRID_SIZE } from './config';
 
-export interface RoadCheckResult {
-    valid: boolean;
-    reason?: string;
-    isBridge: boolean;
-    isTunnel: boolean;
-    cost: number;
-}
-
-/**
- * RoadManager - Fonctions utilitaires pures pour les routes
- * 
- * Ce fichier ne contient QUE des fonctions utilitaires statiques:
- * - Création de RoadData
- * - Calcul de chemins de preview
- * - Validation de tuiles
- * - Mise à jour des connexions
- * 
- * La logique métier (construction, trafic) est dans systems/RoadSystem.ts
- */
 export class RoadManager {
-    /**
-     * Factory: Crée un nouveau segment de route
-     */
-    static createRoad(type: RoadType, isBridge: boolean, isTunnel: boolean): RoadData {
-        const specs = ROAD_SPECS[type];
-        const baseSpeed = isTunnel ? specs.speed * 1.2 : specs.speed;
 
-        return {
-            type,
-            isBridge,
-            isTunnel,
-            connections: { n: false, s: false, e: false, w: false },
-            speedLimit: baseSpeed,
-            capacity: specs.capacity,
-            trafficLoad: 0,
-            effectiveSpeed: baseSpeed
-        };
-    }
+    static checkTile(engine: MapEngine, index: number, type: RoadType | null): { valid: boolean, isBridge: boolean, cost: number } {
+        if (index < 0 || index >= engine.config.totalCells) return { valid: false, isBridge: false, cost: 0 };
 
-    /**
-     * Calcule le chemin L-shaped pour le preview drag-to-build
-     */
-    static getPreviewPath(startX: number, startY: number, endX: number, endY: number): number[] {
-        const path: number[] = [];
-        let currentX = startX;
-        let currentY = startY;
+        const waterDepth = engine.getLayer(LayerType.WATER)[index];
+        const isWater = waterDepth > 0.3;
 
-        // Mouvement horizontal d'abord
-        const stepX = endX > startX ? 1 : -1;
-        while (currentX !== endX) {
-            path.push(currentY * GRID_SIZE + currentX);
-            currentX += stepX;
-        }
-
-        // Puis mouvement vertical
-        const stepY = endY > startY ? 1 : -1;
-        while (currentY !== endY) {
-            path.push(currentY * GRID_SIZE + currentX);
-            currentY += stepY;
-        }
-
-        // Point final
-        path.push(endY * GRID_SIZE + endX);
-        return Array.from(new Set(path)); // Supprime les doublons
-    }
-
-    /**
-     * Met à jour les connexions d'un segment avec ses voisins
-     */
-    static updateConnections(index: number, roadMap: (RoadData | null)[]): void {
-        const road = roadMap[index];
-        if (!road) return;
-
-        const x = index % GRID_SIZE;
-        const y = Math.floor(index / GRID_SIZE);
-
-        const neighbors = {
-            n: y > 0 ? (y - 1) * GRID_SIZE + x : -1,
-            s: y < GRID_SIZE - 1 ? (y + 1) * GRID_SIZE + x : -1,
-            w: x > 0 ? y * GRID_SIZE + (x - 1) : -1,
-            e: x < GRID_SIZE - 1 ? y * GRID_SIZE + (x + 1) : -1,
-        };
-
-        road.connections = { n: false, s: false, e: false, w: false };
-
-        // Connexions bidirectionnelles
-        if (neighbors.n !== -1 && roadMap[neighbors.n]) {
-            road.connections.n = true;
-            roadMap[neighbors.n]!.connections.s = true;
-        }
-        if (neighbors.s !== -1 && roadMap[neighbors.s]) {
-            road.connections.s = true;
-            roadMap[neighbors.s]!.connections.n = true;
-        }
-        if (neighbors.w !== -1 && roadMap[neighbors.w]) {
-            road.connections.w = true;
-            roadMap[neighbors.w]!.connections.e = true;
-        }
-        if (neighbors.e !== -1 && roadMap[neighbors.e]) {
-            road.connections.e = true;
-            roadMap[neighbors.e]!.connections.w = true;
-        }
-    }
-
-    /**
-     * Applique l'impact environnemental de la construction
-     */
-    static applyEnvironmentalImpact(engine: MapEngine, index: number): void {
-        const woodMap = engine.resourceMaps.wood;
-        const animalsMap = engine.resourceMaps.animals;
-
-        if (animalsMap[index] > 0) animalsMap[index] = 0;
-        if (woodMap[index] > 0) woodMap[index] = 0;
-    }
-
-    /**
-     * Vérifie si une tuile peut recevoir une route
-     */
-    static checkTile(engine: MapEngine, index: number, _prevIndex: number | null): RoadCheckResult {
-        const waterLayer = engine.getLayer(LayerType.WATER);
-        const isWater = waterLayer[index] > 0.3;
+        let cost = type ? ROAD_SPECS[type].cost : 0;
+        let isBridge = false;
 
         if (isWater) {
-            return {
-                valid: true,
-                isBridge: true,
-                isTunnel: false,
-                cost: 100 // Coût pont
-            };
+            isBridge = true;
+            cost *= 3;
         }
 
+        const building = engine.buildingLayer[index];
+        if (building) {
+            return { valid: false, isBridge, cost: 0 };
+        }
+
+        return { valid: true, isBridge, cost };
+    }
+
+    static createRoad(type: RoadType, isBridge: boolean, isTunnel: boolean): RoadData {
+        const specs = ROAD_SPECS[type];
         return {
-            valid: true,
-            reason: '',
-            isBridge: false,
-            isTunnel: false,
-            cost: ROAD_SPECS[RoadType.DIRT].cost
+            type,
+            speedLimit: specs.speed,
+            lanes: specs.lanes,
+            isBridge,
+            isTunnel,
+            // ✅ FIX VISUEL : On initialise avec un objet vide, PAS un tableau []
+            connections: { n: false, s: false, e: false, w: false }
         };
+    }
+
+    static updateConnections(engine: MapEngine, index: number) {
+        const neighbors = this.getNeighbors(index);
+
+        // Update de la route centrale
+        this.updateSingleTileConnections(engine, index, neighbors);
+
+        // Update des voisins
+        neighbors.forEach(nIdx => {
+            if (nIdx !== -1 && engine.roadLayer[nIdx]) {
+                const nNeighbors = this.getNeighbors(nIdx);
+                this.updateSingleTileConnections(engine, nIdx, nNeighbors);
+            }
+        });
+    }
+
+    private static getNeighbors(index: number): number[] {
+        const x = index % GRID_SIZE;
+        const y = Math.floor(index / GRID_SIZE);
+        return [
+            (y > 0) ? (y - 1) * GRID_SIZE + x : -1,             // N
+            (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1, // S
+            (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1, // E
+            (x > 0) ? y * GRID_SIZE + (x - 1) : -1              // W
+        ];
+    }
+
+    private static updateSingleTileConnections(engine: MapEngine, index: number, neighbors: number[]) {
+        const road = engine.roadLayer[index];
+        if (!road) return;
+
+        // Calcul des connexions visuelles
+        const connections = {
+            n: neighbors[0] !== -1 && engine.roadLayer[neighbors[0]] !== null,
+            s: neighbors[1] !== -1 && engine.roadLayer[neighbors[1]] !== null,
+            e: neighbors[2] !== -1 && engine.roadLayer[neighbors[2]] !== null,
+            w: neighbors[3] !== -1 && engine.roadLayer[neighbors[3]] !== null
+        };
+
+        // Mise à jour de la donnée pour le Renderer
+        road.connections = connections;
+
+        // Mise à jour du Pathfinding (Graphe logique)
+        const validNeighbors: number[] = [];
+        if (connections.n) validNeighbors.push(neighbors[0]);
+        if (connections.s) validNeighbors.push(neighbors[1]);
+        if (connections.e) validNeighbors.push(neighbors[2]);
+        if (connections.w) validNeighbors.push(neighbors[3]);
+
+        engine.roadGraph.addNode(index, validNeighbors, road.speedLimit);
+    }
+
+    // Helper UI pour la prévisualisation
+    static getPreviewPath(x1: number, y1: number, x2: number, y2: number): number[] {
+        const path: number[] = [];
+        const stepX = x2 > x1 ? 1 : -1;
+        for (let x = x1; x !== x2 + stepX; x += stepX) path.push(y1 * GRID_SIZE + x);
+        const stepY = y2 > y1 ? 1 : -1;
+        for (let y = y1 + stepY; y !== y2 + stepY; y += stepY) path.push(y * GRID_SIZE + x2);
+        return path;
     }
 }

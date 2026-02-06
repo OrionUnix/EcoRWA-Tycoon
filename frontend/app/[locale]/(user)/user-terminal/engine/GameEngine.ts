@@ -1,243 +1,91 @@
-import { MapEngine, getMapEngine, regenerateWorld } from './MapEngine';
-import { RoadSystem } from './systems/RoadSystem';
-import { ZoneSystem } from './systems/ZoneSystem';
+import { MapEngine } from './MapEngine';
 import { BuildingSystem } from './systems/BuildingSystem';
+import { TrafficSystem } from './systems/TrafficSystem';
 import { RoadManager } from './RoadManager';
-import { RoadType, ZoneType, LayerType, PlayerResources, CityStats, ResourceSummary } from './types';
+import { ZoneType, RoadType } from './types';
 
-/**
- * GameEngine - Orchestrateur Principal
- * 
- * Ce fichier est le "cerveau" du jeu. Il:
- * - Initialise et possède le MapEngine
- * - Délègue les actions aux systèmes spécialisés
- * - Expose une API simple pour GameCanvas.tsx
- */
+// Définition globale pour le Singleton (Hot-Reload safe)
+const globalForGame = globalThis as unknown as {
+    gameEngine: GameEngine | undefined;
+};
+
 export class GameEngine {
-    private mapEngine: MapEngine;
+    public map: MapEngine;
+    public isPaused: boolean = false;
+    private tickCount: number = 0;
 
     constructor() {
-        this.mapEngine = getMapEngine();
+        console.log("🚀 GameEngine: Démarrage...");
+        this.map = new MapEngine();
+        this.map.generateWorld();
     }
-
-    // ===========================
-    // === GETTERS POUR L'UI ===
-    // ===========================
-
-    get revision(): number {
-        return this.mapEngine.revision;
-    }
-
-    get resources(): PlayerResources {
-        return this.mapEngine.resources;
-    }
-
-    get stats(): CityStats {
-        return this.mapEngine.stats;
-    }
-
-    get summary(): ResourceSummary {
-        return this.mapEngine.currentSummary;
-    }
-
-    get roadLayer() {
-        return this.mapEngine.roadLayer;
-    }
-
-    get zoningLayer() {
-        return this.mapEngine.zoningLayer;
-    }
-
-    get buildingLayer() {
-        return this.mapEngine.buildingLayer;
-    }
-
-    get vehicles() {
-        return this.mapEngine.vehicles;
-    }
-
-    get biomes() {
-        return this.mapEngine.biomes;
-    }
-
-    get heightMap() {
-        return this.mapEngine.heightMap;
-    }
-
-    get resourceMaps() {
-        return this.mapEngine.resourceMaps;
-    }
-
-    get config() {
-        return this.mapEngine.config;
-    }
-
-    getLayer(layer: LayerType): Float32Array {
-        return this.mapEngine.getLayer(layer);
-    }
-
-    // ===========================
-    // === ACTIONS DU JOUEUR ===
-    // ===========================
 
     /**
-     * Construit des routes sur un chemin
-     * @param path - Liste d'indices de tuiles
-     * @param roadType - Type de route à construire
-     * @returns Coût total de la construction
+     * LA BOUCLE PRINCIPALE
+     * C'est ici qu'on orchestre tout. On N'APPELLE PAS map.tick() !
      */
-    handleBuildRoad(path: number[], roadType: RoadType): number {
-        let totalCost = 0;
+    public tick() {
+        if (this.isPaused) return;
 
-        for (const index of path) {
-            const success = RoadSystem.buildRoad(
-                index,
-                roadType,
-                this.mapEngine.roadLayer,
-                this.mapEngine.roadGraph,
-                this.mapEngine.zoningLayer,
-                this.mapEngine.buildingLayer,
-                this.mapEngine.getLayer(LayerType.WATER),
-                this.mapEngine.heightMap
-            );
+        // 1. TRAFIC (Rapide - Chaque frame)
+        if (TrafficSystem) {
+            TrafficSystem.update(this.map);
+        }
 
-            if (success) {
-                // Appliquer l'impact environnemental
-                RoadManager.applyEnvironmentalImpact(this.mapEngine, index);
+        // 2. BÂTIMENTS (Moyen - Toutes les 10 frames)
+        if (this.tickCount % 10 === 0) {
+            BuildingSystem.update(this.map);
+        }
+
+        // 3. STATS & RESSOURCES (Lent - Toutes les 60 frames / 1 sec)
+        if (this.tickCount % 60 === 0) {
+            this.map.calculateSummary();
+        }
+
+        this.tickCount++;
+
+        // On signale au MapEngine que des choses ont peut-être changé (pour le rendu)
+        // (Optionnel si les sous-systèmes incrémentent déjà revision)
+    }
+
+    // --- INTERACTION ---
+
+    public handleInteraction(pathOrIndex: number | number[], mode: string, type: any) {
+        if (Array.isArray(pathOrIndex)) {
+            if (mode === 'BUILD_ROAD') {
+                pathOrIndex.forEach(idx => {
+                    const check = RoadManager.checkTile(this.map, idx, type);
+                    if (check.valid) {
+                        const isWater = this.map.getLayer(1)[idx] > 0.3; // 1 = LayerType.WATER
+                        const roadData = RoadManager.createRoad(type, isWater, false);
+
+                        this.map.placeRoad(idx, roadData);
+                        RoadManager.updateConnections(this.map, idx);
+                    }
+                });
+            } else if (mode === 'ZONE') {
+                pathOrIndex.forEach(idx => this.map.setZone(idx, type));
+            } else if (mode === 'BULLDOZER') {
+                pathOrIndex.forEach(idx => {
+                    this.map.removeZone(idx);
+                    this.map.removeRoad(idx);
+                });
             }
         }
-
-        this.mapEngine.revision++;
-        return totalCost;
     }
 
-    /**
-     * Définit des zones sur un chemin
-     * @param path - Liste d'indices de tuiles
-     * @param zoneType - Type de zone
-     */
-    handleSetZone(path: number[], zoneType: ZoneType): void {
-        for (const index of path) {
-            ZoneSystem.setZone(
-                index,
-                zoneType,
-                this.mapEngine.zoningLayer,
-                this.mapEngine.buildingLayer,
-                this.mapEngine.roadLayer,
-                this.mapEngine.getLayer(LayerType.WATER)
-            );
-        }
-    }
-
-    /**
-     * Bulldoze (supprime routes et zones) sur un chemin
-     */
-    handleBulldoze(path: number[]): void {
-        for (const index of path) {
-            // Supprimer la route via RoadSystem
-            RoadSystem.removeRoad(
-                index,
-                this.mapEngine.roadLayer,
-                this.mapEngine.roadGraph
-            );
-
-            // Supprimer la zone via ZoneSystem
-            ZoneSystem.removeZone(
-                index,
-                this.mapEngine.zoningLayer,
-                this.mapEngine.buildingLayer
-            );
-        }
-        this.mapEngine.revision++;
-    }
-
-    /**
-     * Vérifie si un chemin de construction est valide
-     * @returns { valid: boolean, cost: number }
-     */
-    validateBuildPath(path: number[]): { valid: boolean; cost: number } {
-        let totalCost = 0;
-        let isValid = true;
-
-        for (const index of path) {
-            const check = RoadManager.checkTile(this.mapEngine, index, null);
-            if (!check.valid) {
-                isValid = false;
-            }
-            totalCost += check.cost;
-        }
-
-        return { valid: isValid, cost: totalCost };
-    }
-
-    /**
-     * Génère un chemin de preview pour le drag-to-build
-     */
-    getPreviewPath(startX: number, startY: number, endX: number, endY: number): number[] {
-        return RoadManager.getPreviewPath(startX, startY, endX, endY);
-    }
-
-    // ===========================
-    // === SIMULATION ===
-    // ===========================
-
-    /**
-     * Exécute un tick de simulation
-     */
-    tick(): void {
-        this.mapEngine.tick();
-
-        // Simulation des bâtiments via BuildingSystem
-        const buildingsChanged = BuildingSystem.updateBuildings(
-            this.mapEngine.config,
-            this.mapEngine.zoningLayer,
-            this.mapEngine.buildingLayer,
-            this.mapEngine.roadLayer,
-            this.mapEngine.resources
-        );
-
-        if (buildingsChanged) {
-            this.mapEngine.revision++;
-        }
-
-        // Calculer le trafic périodiquement (tous les 60 ticks)
-        if (this.mapEngine.revision % 60 === 0) {
-            RoadSystem.calculateTraffic(
-                this.mapEngine.roadLayer,
-                this.mapEngine.buildingLayer
-            );
-        }
-    }
-
-    /**
-     * Fait apparaître des véhicules de test
-     */
-    spawnTraffic(count: number): boolean {
-        return this.mapEngine.spawnTraffic(count);
-    }
-
-    /**
-     * Régénère le monde
-     */
-    regenerate(): void {
-        regenerateWorld();
-        this.mapEngine.revision++;
-    }
-
-    /**
-     * Obtient les statistiques de trafic
-     */
-    getTrafficStats() {
-        return RoadSystem.getTrafficStats(this.mapEngine.roadLayer);
+    // Helpers pour l'UI
+    public getStats() { return this.map.stats; }
+    public getResources() { return this.map.resources; }
+    public getPreviewPath(x1: number, y1: number, x2: number, y2: number) {
+        return RoadManager.getPreviewPath(x1, y1, x2, y2);
     }
 }
 
-// Singleton pour accès global
-let gameEngineInstance: GameEngine | null = null;
-
+// SINGLETON SÉCURISÉ
 export function getGameEngine(): GameEngine {
-    if (!gameEngineInstance) {
-        gameEngineInstance = new GameEngine();
+    if (!globalForGame.gameEngine) {
+        globalForGame.gameEngine = new GameEngine();
     }
-    return gameEngineInstance;
+    return globalForGame.gameEngine;
 }

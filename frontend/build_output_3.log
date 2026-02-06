@@ -1,0 +1,23 @@
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 28.9s
+  Running TypeScript ...
+Failed to compile.
+
+./app/[locale]/(user)/user-terminal/components/GameRenderer.ts:104:23
+Type error: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<RoadType, RoadSpecs>'.
+
+[0m [90m 102 |[39m
+ [90m 103 |[39m     [36mprivate[39m [36mstatic[39m drawRoadTile(g[33m:[39m [33mPIXI[39m[33m.[39m[33mGraphics[39m[33m,[39m road[33m:[39m any[33m,[39m cx[33m:[39m number[33m,[39m cy[33m:[39m number[33m,[39m index[33m:[39m number) {
+[31m[1m>[22m[39m[90m 104 |[39m         [36mconst[39m specs [33m=[39m [33mROAD_SPECS[39m[road[33m.[39mtype][33m;[39m
+ [90m     |[39m                       [31m[1m^[22m[39m
+ [90m 105 |[39m         [36mif[39m ([33m![39mspecs) [36mreturn[39m[33m;[39m
+ [90m 106 |[39m
+ [90m 107 |[39m         [36mconst[39m n_dx [33m=[39m [33mTILE_WIDTH[39m [33m/[39m [35m4[39m[33m;[39m [36mconst[39m n_dy [33m=[39m [33m-[39m[33mTILE_HEIGHT[39m [33m/[39m [35m4[39m[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

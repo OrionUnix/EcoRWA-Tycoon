@@ -1,155 +1,166 @@
+// === ENUMS & CONSTANTES ===
+
 export enum LayerType {
-    TERRAIN = 'terrain',
-    WATER = 'water',
-    RESOURCES = 'resources',
-    ROADS = 'roads'
+    TERRAIN = 0,
+    WATER = 1,
+    ROADS = 2,
+    RESOURCES = 3
 }
 
-export enum BiomeType {
-    DEEP_OCEAN = 0, OCEAN = 1, BEACH = 2, PLAINS = 3, FOREST = 4, DESERT = 5, MOUNTAIN = 6, SNOW = 7
-}
-
-export interface CityStats {
-    population: number;      // Habitants totaux
-    jobsCommercial: number;  // Emplois dans les bureaux/commerces
-    jobsIndustrial: number;  // Emplois dans les usines
-    unemployed: number;      // Chômeurs (Pop - Jobs)
-    demand: {
-        residential: number; // 0 à 100 (Flux entrants)
-        commercial: number;  // 0 à 100
-        industrial: number;  // 0 à 100
-    }
-}
-
-export interface GridConfig { size: number; totalCells: number; }
-export interface ResourceSummary { oil: number; coal: number; iron: number; wood: number; water: number; fertile: number; }
-
-export interface PlayerResources {
-    wood: number;
-    concrete: number;
-    glass: number;
-    steel: number;
-    energy: number;
-}
-
-export interface BuildingData {
-    type: ZoneType;
-    level: number;
-    state: 'CONSTRUCTION' | 'ACTIVE' | 'ABANDONED';
-    pollution: number;
-    happiness: number;
-    constructionTimer: number;
-}
-
-// --- ZONES ---
 export enum ZoneType {
     NONE = 'NONE',
     RESIDENTIAL = 'RESIDENTIAL',
     COMMERCIAL = 'COMMERCIAL',
-    INDUSTRIAL = 'INDUSTRIAL'
+    INDUSTRIAL = 'INDUSTRIAL',
+    // Services
+    WIND_TURBINE = 'WIND_TURBINE',
+    COAL_PLANT = 'COAL_PLANT',
+    WATER_PUMP = 'WATER_PUMP',
+    PARK = 'PARK'
 }
-
-export const ZONE_COLORS: Record<ZoneType, number> = {
-    [ZoneType.NONE]: 0x000000,
-    [ZoneType.RESIDENTIAL]: 0x4CAF50, // Vert
-    [ZoneType.COMMERCIAL]: 0x2196F3,  // Bleu
-    [ZoneType.INDUSTRIAL]: 0xFFC107   // Jaune
-};
-
-// =========================
-// === ROUTES (SimCity 2013 Style) ===
-// =========================
 
 export enum RoadType {
-    DIRT = 'DIRT',
-    ASPHALT = 'ASPHALT',
-    AVENUE = 'AVENUE',
-    HIGHWAY = 'HIGHWAY'
+    DIRT = 'DIRT',       // Chemin de terre (lent)
+    ASPHALT = 'ASPHALT', // Route standard (moyen)
+    AVENUE = 'AVENUE',   // 4 voies (rapide)
+    HIGHWAY = 'HIGHWAY'  // Autoroute (très rapide)
 }
 
-/**
- * Spécifications des types de routes
- * - speed: Multiplicateur de vitesse (1.0 = base)
- * - capacity: Nombre max de véhicules par segment avant congestion
- * - cost: Coût de construction par tuile
- * - color: Couleur de rendu hex
- * - width: Largeur visuelle en pixels
- * - label: Nom affiché dans l'UI
- */
-export interface RoadSpecs {
-    speed: number;
-    capacity: number;
-    cost: number;
-    color: number;
-    width: number;
-    label: string;
+export enum BiomeType {
+    DEEP_OCEAN = 0,
+    OCEAN = 1,
+    BEACH = 2,
+    PLAINS = 3,
+    FOREST = 4,
+    DESERT = 5,
+    MOUNTAIN = 6,
+    SNOW = 7
 }
 
-export const ROAD_SPECS: Record<RoadType, RoadSpecs> = {
-    [RoadType.DIRT]: {
-        speed: 0.3,
-        capacity: 10,
-        cost: 5,
-        color: 0x8B4513,   // Marron terre
-        width: 10,
-        label: "Chemin de Terre"
-    },
-    [RoadType.ASPHALT]: {
-        speed: 1.0,
-        capacity: 50,
-        cost: 20,
-        color: 0x555555,   // Gris moyen
-        width: 18,
-        label: "Route Standard"
-    },
-    [RoadType.AVENUE]: {
-        speed: 1.5,
-        capacity: 100,
-        cost: 50,
-        color: 0x333333,   // Gris foncé
-        width: 28,
-        label: "Avenue (4 voies)"
-    },
-    [RoadType.HIGHWAY]: {
-        speed: 2.5,
-        capacity: 300,
-        cost: 150,
-        color: 0x111111,   // Noir profond
-        width: 40,
-        label: "Autoroute"
-    }
+export enum TrafficLightState {
+    RED = 'RED',
+    GREEN = 'GREEN',
+    YELLOW = 'YELLOW'
+}
+
+export enum PriorityType {
+    STOP = 'STOP',           // Doit s'arrêter
+    YIELD = 'YIELD',         // Cédez le passage
+    MAIN_ROAD = 'MAIN_ROAD', // Prioritaire
+    EQUAL = 'EQUAL'          // Priorité à droite
+}
+
+// === CONFIGURATIONS ===
+
+export const ROAD_SPECS: Record<RoadType, { speed: number; capacity: number; lanes: number; cost: number }> = {
+    [RoadType.DIRT]: { speed: 0.5, capacity: 5, lanes: 1, cost: 10 },
+    [RoadType.ASPHALT]: { speed: 1.0, capacity: 20, lanes: 2, cost: 50 },
+    [RoadType.AVENUE]: { speed: 1.5, capacity: 50, lanes: 4, cost: 150 },
+    [RoadType.HIGHWAY]: { speed: 2.5, capacity: 100, lanes: 6, cost: 500 }
 };
 
-/**
- * Données d'un segment de route
- * - trafficLoad: Charge de trafic actuelle (0.0 à 1.0+, >1 = congestion)
- * - effectiveSpeed: Vitesse réelle tenant compte de la congestion
- */
+export const BUILDING_COSTS: Record<string, Record<number, Partial<PlayerResources>>> = {
+    [ZoneType.RESIDENTIAL]: {
+        1: { wood: 50, money: 100 },
+        2: { wood: 100, concrete: 20, money: 300 },
+        3: { concrete: 100, glass: 50, money: 800 }
+    },
+    [ZoneType.COMMERCIAL]: {
+        1: { wood: 80, money: 200 },
+        2: { concrete: 50, glass: 20, money: 500 }
+    },
+    [ZoneType.INDUSTRIAL]: {
+        1: { wood: 100, money: 500 },
+        2: { steel: 50, concrete: 100, money: 1000 }
+    },
+    [ZoneType.WIND_TURBINE]: { 1: { steel: 50, money: 1200 } },
+    [ZoneType.WATER_PUMP]: { 1: { steel: 20, money: 800 } }
+};
+
+// === INTERFACES DE DONNÉES ===
+
+export interface GridConfig {
+    size: number;
+    totalCells: number;
+}
+
+export interface ResourceSummary {
+    oil: number;
+    coal: number;
+    iron: number;
+    wood: number;
+    water: number;
+    fertile: number;
+}
+
+export interface PlayerResources {
+    money: number;
+    wood: number;
+    concrete: number;
+    glass: number;
+    steel: number;
+    stone: number;
+    // Energie/Eau sont des flux, mais on peut stocker le surplus ou la capacité
+    energy: number;
+    water: number;
+    coal: number;
+    oil: number;
+    iron: number;
+    food: number;
+}
+
+export interface CityStats {
+    population: number;
+    jobsCommercial: number;
+    jobsIndustrial: number;
+    unemployed: number;
+    demand: {
+        residential: number;
+        commercial: number;
+        industrial: number;
+    };
+    energy: { produced: number; consumed: number };
+    water: { produced: number; consumed: number };
+    food: { produced: number; consumed: number };
+}
+
 export interface RoadData {
     type: RoadType;
-    isBridge: boolean;
-    isTunnel: boolean;
-    connections: { n: boolean; s: boolean; e: boolean; w: boolean };
     speedLimit: number;
-    capacity: number;
-    trafficLoad: number;       // 0.0 à 1.0+ (ratio véhicules/capacité)
-    effectiveSpeed: number;    // Vitesse réelle après congestion
+    lanes: number;
+    isTunnel: boolean;
+    isBridge: boolean;
+    connections: any;
 }
 
 export interface Vehicle {
     id: number;
     x: number;
     y: number;
-    path: number[];
-    targetIndex: number;
+    path: number[]; // Liste des indices de tuiles à parcourir
+    targetIndex: number; // Où on est dans le path
     speed: number;
     color: number;
+    // Propriétés visuelles pour le rendu fluide
+    offsetX?: number;
+    offsetY?: number;
 }
 
-// Coûts Bâtiments
-export const BUILDING_COSTS: Record<ZoneType, Record<number, Record<string, number>>> = {
-    [ZoneType.RESIDENTIAL]: { 1: { wood: 10 } },
-    [ZoneType.COMMERCIAL]: { 1: { wood: 15 } },
-    [ZoneType.INDUSTRIAL]: { 1: { concrete: 20 } },
-    [ZoneType.NONE]: {}
+export interface BuildingData {
+    type: ZoneType;
+    level: number;
+    state: 'CONSTRUCTION' | 'ACTIVE' | 'ABANDONED';
+    constructionTimer: number;
+    pollution: number;
+    happiness: number;
+}
+export const ZONE_COLORS: Record<ZoneType, number> = {
+    [ZoneType.NONE]: 0x000000,
+    [ZoneType.RESIDENTIAL]: 0x4CAF50, // Vert
+    [ZoneType.COMMERCIAL]: 0x2196F3,  // Bleu
+    [ZoneType.INDUSTRIAL]: 0xFFC107,  // Orange/Jaune
+    [ZoneType.WIND_TURBINE]: 0xE0E0E0, // Blanc Gris
+    [ZoneType.COAL_PLANT]: 0x3E2723,   // Marron Foncé
+    [ZoneType.WATER_PUMP]: 0x0288D1,   // Bleu Foncé
+    [ZoneType.PARK]: 0x8BC34A          // Vert Clair
 };

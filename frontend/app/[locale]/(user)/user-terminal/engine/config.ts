@@ -3,11 +3,11 @@ export const GRID_SIZE = 64;
 export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 
 // Configuration de l'affichage
-export const TILE_WIDTH = 64;
-export const TILE_HEIGHT = 32;
+export const TILE_WIDTH = 32; // Largeur isométrique
+export const TILE_HEIGHT = 16; // Hauteur isométrique
 
 // Zoom par défaut (Réduit pour voir plus de carte)
-export const INITIAL_ZOOM = 0.5;
+export const INITIAL_ZOOM = 1.0;
 
 export const RESOURCE_CAPACITY = {
     OIL: 250000, COAL: 50000, IRON: 40000,

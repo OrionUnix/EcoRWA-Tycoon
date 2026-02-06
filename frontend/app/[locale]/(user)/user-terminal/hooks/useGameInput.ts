@@ -5,18 +5,14 @@ import { getMapEngine } from '../engine/MapEngine';
 import { screenToGrid } from '../engine/isometric';
 import { GRID_SIZE } from '../engine/config';
 import { getResourceAtTile } from '../utils/resourceUtils';
-import { RoadType, ZoneType } from '../engine/types'; // Import types
 
-/**
- * Hook: useGameInput
- * Responsabilité: Gérer les interactions souris/touch (Drag, Click, Zoom) et déléguer au GameEngine
- */
 export function useGameInput(
     stageRef: React.MutableRefObject<PIXI.Container | null>,
     appRef: React.MutableRefObject<PIXI.Application | null>,
+    isReady: boolean, // ✅ NOUVEAU PARAMÈTRE
     viewMode: string,
-    selectedRoadType: RoadType,
-    selectedZoneType: ZoneType,
+    selectedRoadType: any,
+    selectedZoneType: any,
     setCursorPos: (pos: { x: number, y: number }) => void,
     setHoverInfo: (info: any) => void,
     setTotalCost: (cost: number) => void,
@@ -24,14 +20,16 @@ export function useGameInput(
     previewPathRef: React.MutableRefObject<number[]>,
     isValidBuildRef: React.MutableRefObject<boolean>
 ) {
-    // Refs internes pour éviter les stale closures dans les event listeners Pixi
     const stateRef = useRef({ viewMode, selectedRoadType, selectedZoneType });
     useEffect(() => { stateRef.current = { viewMode, selectedRoadType, selectedZoneType }; }, [viewMode, selectedRoadType, selectedZoneType]);
 
     useEffect(() => {
+        // 🛡️ GUARD: Si Pixi n'est pas prêt, on ne fait RIEN.
+        if (!isReady || !appRef.current || !stageRef.current) return;
+
         const stage = stageRef.current;
         const app = appRef.current;
-        if (!stage || !app) return;
+        const canvas = app.canvas; // Référence stable
 
         let isDraggingCam = false;
         let lastX = 0, lastY = 0;
@@ -61,29 +59,19 @@ export function useGameInput(
                 stage.position.y += e.global.y - lastY;
                 lastX = e.global.x; lastY = e.global.y;
             } else if (startDragTile) {
-                // Logic Preview Path via GameEngine
                 const engine = getGameEngine();
                 const path = engine.getPreviewPath(startDragTile.x, startDragTile.y, gridPos.x, gridPos.y);
                 previewPathRef.current = path;
 
                 if (stateRef.current.viewMode === 'BUILD_ROAD') {
-                    const validation = engine.validateBuildPath(path);
-                    setTotalCost(validation.cost);
-                    setIsValidBuild(validation.valid);
-                    isValidBuildRef.current = validation.valid;
-                } else {
-                    // Pour Zone/Bulldozer, c'est toujours valide (ou gratuit)
-                    setTotalCost(0);
+                    setTotalCost(path.length * 10);
                     setIsValidBuild(true);
                     isValidBuildRef.current = true;
                 }
             } else {
-                // Hover Info
                 if (gridPos.x >= 0 && gridPos.x < GRID_SIZE && gridPos.y >= 0 && gridPos.y < GRID_SIZE) {
                     const idx = gridPos.y * GRID_SIZE + gridPos.x;
-                    const engine = getMapEngine();
-                    const info = getResourceAtTile(engine, idx, stateRef.current.viewMode);
-                    setHoverInfo(info ? { ...info, biomeName: 'Biome' } : null);
+                    setHoverInfo(getResourceAtTile(getMapEngine(), idx, stateRef.current.viewMode));
                 } else {
                     setHoverInfo(null);
                 }
@@ -92,28 +80,18 @@ export function useGameInput(
 
         const onUp = () => {
             isDraggingCam = false;
-
             if (startDragTile && previewPathRef.current.length > 0) {
-                const gameEngine = getGameEngine();
+                const engine = getGameEngine();
                 const { viewMode, selectedRoadType, selectedZoneType } = stateRef.current;
 
-                // Délégation au GameEngine
-                if (viewMode === 'BUILD_ROAD' && isValidBuildRef.current) {
-                    gameEngine.handleBuildRoad(previewPathRef.current, selectedRoadType);
-                } else if (viewMode === 'ZONE') {
-                    gameEngine.handleSetZone(previewPathRef.current, selectedZoneType);
-                } else if (viewMode === 'BULLDOZER') {
-                    gameEngine.handleBulldoze(previewPathRef.current);
-                }
+                engine.handleInteraction(previewPathRef.current, viewMode, viewMode === 'BUILD_ROAD' ? selectedRoadType : selectedZoneType);
 
-                // Reset UI
                 setTotalCost(0);
                 previewPathRef.current = [];
             }
             startDragTile = null;
         };
 
-        // Wheel Zoom
         const onWheel = (e: WheelEvent) => {
             e.preventDefault();
             const scaleBy = 1.1;
@@ -121,11 +99,11 @@ export function useGameInput(
             const newScale = e.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
             const clamped = Math.max(0.1, Math.min(5, newScale));
 
-            // Zoom vers la souris
-            const rect = app.canvas.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
-            const worldPos = { x: (mouseX - stage.position.x) / oldScale, y: (mouseY - stage.position.y) / oldScale };
+
+            const worldPos = { x: (mouseX - stage.x) / oldScale, y: (mouseY - stage.y) / oldScale };
             stage.scale.set(clamped);
             stage.position.set(mouseX - worldPos.x * clamped, mouseY - worldPos.y * clamped);
         };
@@ -134,14 +112,21 @@ export function useGameInput(
         stage.on('pointermove', onMove);
         stage.on('pointerup', onUp);
         stage.on('pointerupoutside', onUp);
-        app.canvas.addEventListener('wheel', onWheel, { passive: false });
+
+        // Ajout sécurisé du wheel listener sur le canvas
+        canvas.addEventListener('wheel', onWheel, { passive: false });
 
         return () => {
-            stage.off('pointerdown', onDown);
-            stage.off('pointermove', onMove);
-            stage.off('pointerup', onUp);
-            stage.off('pointerupoutside', onUp);
-            app.canvas?.removeEventListener('wheel', onWheel);
+            if (stage) {
+                stage.off('pointerdown', onDown);
+                stage.off('pointermove', onMove);
+                stage.off('pointerup', onUp);
+                stage.off('pointerupoutside', onUp);
+            }
+            // Retrait sécurisé
+            if (canvas) {
+                canvas.removeEventListener('wheel', onWheel);
+            }
         };
-    }, [viewMode, selectedRoadType, selectedZoneType]);
+    }, [isReady, viewMode, selectedRoadType, selectedZoneType]); // Ajout de isReady
 }

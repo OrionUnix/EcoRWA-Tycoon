@@ -1,0 +1,23 @@
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 28.0s
+  Running TypeScript ...
+Failed to compile.
+
+./app/[locale]/(user)/user-terminal/components/GameCanvas.tsx:8:31
+Type error: Cannot find module '../engine/GameEngine' or its corresponding type declarations.
+
+[0m [90m  6 |[39m
+ [90m  7 |[39m [36mimport[39m { getMapEngine[33m,[39m regenerateWorld } [36mfrom[39m [32m'../engine/MapEngine'[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { getGameEngine } [36mfrom[39m [32m'../engine/GameEngine'[39m[33m;[39m
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { gridToScreen[33m,[39m screenToGrid } [36mfrom[39m [32m'../engine/isometric'[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mGRID_SIZE[39m[33m,[39m [33mINITIAL_ZOOM[39m[33m,[39m [33mTILE_HEIGHT[39m[33m,[39m [33mTILE_WIDTH[39m } [36mfrom[39m [32m'../engine/config'[39m[33m;[39m
+ [90m 11 |[39m [36mimport[39m { [33mRoadType[39m[33m,[39m [33mZoneType[39m[33m,[39m [33mPlayerResources[39m[33m,[39m [33mCityStats[39m } [36mfrom[39m [32m'../engine/types'[39m[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

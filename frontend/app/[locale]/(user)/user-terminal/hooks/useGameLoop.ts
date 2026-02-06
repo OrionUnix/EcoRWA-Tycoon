@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 import { getGameEngine } from '../engine/GameEngine';
-import { getMapEngine } from '../engine/MapEngine';
 import { GameRenderer } from '../components/GameRenderer';
 
 export function useGameLoop(
@@ -9,65 +8,78 @@ export function useGameLoop(
     staticGRef: React.MutableRefObject<PIXI.Graphics | null>,
     uiGRef: React.MutableRefObject<PIXI.Graphics | null>,
     isReady: boolean,
-    // Etats nécessaires pour le rendu
-    viewMode: string,
+    viewMode: string, // <-- Cette valeur change quand on clique sur les boutons
     cursorPos: { x: number, y: number },
     previewPathRef: React.MutableRefObject<number[]>,
     isValidBuildRef: React.MutableRefObject<boolean>,
-    // Setters pour synchroniser l'UI
     setFps: (fps: number) => void,
     setResources: (res: any) => void,
     setStats: (stats: any) => void
 ) {
-    // On utilise une ref pour stocker la dernière révision rendue
-    const lastRevRef = useRef(-1);
+    const lastRevRef = useRef(-2);
+    // ✅ NOUVEAU : On stocke le dernier mode de vue pour détecter les changements
+    const lastViewModeRef = useRef('FORCE_INIT');
 
     useEffect(() => {
         if (!isReady || !appRef.current) return;
 
         const app = appRef.current;
-        const engine = getGameEngine(); // Singleton GameEngine
-        const map = getMapEngine();     // Singleton MapEngine (Données)
+        const engine = getGameEngine();
+
+        console.log("🎬 GameLoop: Démarrage ou Changement de mode...", { viewMode });
 
         const tick = () => {
-            // 1. Faire avancer le Moteur (Logique)
-            engine.tick();
-
-            // 2. Synchroniser l'UI React (Throttled ~ toutes les 30 frames pour perf)
-            // On évite de spammer React de mises à jour d'état inutilement
-            if (Math.round(app.ticker.lastTime) % 30 < 1) {
-                setFps(Math.round(app.ticker.FPS));
-                setResources({ ...engine.resources }); // Utiliser le getter correct
-                setStats({ ...engine.stats });         // Utiliser le getter correct
+            // 1. Mise à jour Logique
+            if (engine.tick) {
+                engine.tick();
             }
 
-            // 3. Rendu Statique (Optimisation: uniquement si la map a changé)
-            if (engine.revision !== lastRevRef.current) {
-                if (staticGRef.current) {
-                    GameRenderer.renderStaticLayer(staticGRef.current, map, viewMode, false);
+            // 2. Rendu STATIQUE (Terrain, Ressources, Bâtiments)
+            if (engine.map && staticGRef.current) {
+                // ✅ CONDITION CORRIGÉE :
+                // On redessine SI la map a changé (revision) OU SI le mode de vue a changé
+                if (engine.map.revision !== lastRevRef.current || viewMode !== lastViewModeRef.current) {
+
+                    // Debug pour vérifier que ça passe ici
+                    // console.log(`🎨 Redrawing Static: Rev ${engine.map.revision} | Mode ${viewMode}`);
+
+                    GameRenderer.renderStaticLayer(
+                        staticGRef.current,
+                        engine.map,
+                        viewMode,
+                        false
+                    );
+
+                    // On met à jour nos références
+                    lastRevRef.current = engine.map.revision;
+                    lastViewModeRef.current = viewMode;
                 }
-                lastRevRef.current = engine.revision;
             }
 
-            // 4. Rendu Dynamique (À chaque frame: Curseur, Preview, Drag)
-            if (uiGRef.current) {
+            // 3. Rendu DYNAMIQUE (Curseur, Voitures)
+            if (uiGRef.current && engine.map) {
                 GameRenderer.renderDynamicLayer(
                     uiGRef.current,
-                    map,
+                    engine.map,
                     cursorPos,
                     previewPathRef.current,
                     viewMode,
                     isValidBuildRef.current
                 );
             }
+
+            // 4. UI Updates
+            if (Math.round(app.ticker.lastTime) % 30 < 1) {
+                setFps(Math.round(app.ticker.FPS));
+                if (engine.getResources) setResources({ ...engine.getResources() });
+                if (engine.getStats) setStats({ ...engine.getStats() });
+            }
         };
 
-        // Démarrage de la boucle
         app.ticker.add(tick);
 
-        // Nettoyage
         return () => {
             app.ticker.remove(tick);
         };
-    }, [isReady, viewMode, cursorPos]); // On relance si le mode ou le curseur change (pour le rendu dynamique immédiat)
+    }, [isReady, viewMode, cursorPos]); // viewMode est bien une dépendance ici
 }
