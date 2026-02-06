@@ -7,7 +7,7 @@ import { Zap, GraduationCap, ArrowUpRight, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { InfoLabel } from '@/components/src/ui/InfoLabel';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 // Imports Data
 import {
@@ -29,6 +29,7 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
   const t = useTranslations('infoMarket');
   const [activeTab, setActiveTab] = useState<'PARIS' | 'NY'>('PARIS');
   const router = useRouter();
+  const locale = useLocale();
 
   const isParis = activeTab === 'PARIS';
 
@@ -47,7 +48,7 @@ export default function InfoMarket({ onClaimUSDC }: InfoMarketProps) {
   const circumference = Math.PI * radius;
 
   const handleAction = () => {
-    onClaimUSDC ? onClaimUSDC() : router.push('/dashboard');
+    onClaimUSDC ? onClaimUSDC() : router.push(`/${locale}/user-terminal`);
   };
 
   return (

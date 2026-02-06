@@ -1,13 +1,14 @@
 'use client';
 
-import BuildingHero from './BuildingHero';
+import AnimatedHero from './AnimatedHero';
 import { ArrowRight } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 
 export default function HeroSection() {
   const t = useTranslations('Hero');
+  const locale = useLocale();
 
   return (
     <section className="relative min-h-[90vh] lg:h-screen w-full flex items-center bg-[#020617] overflow-visible">
@@ -15,10 +16,10 @@ export default function HeroSection() {
       <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-[#E84142]/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 lg:px-20 w-full grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-        
+
         {/* TEXT CONTENT */}
         <div className="z-20 space-y-8 py-20 lg:py-0">
-          
+
           {/* BADGE AVALANCHE */}
           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md">
             <div className="relative flex h-2 w-2">
@@ -45,12 +46,12 @@ export default function HeroSection() {
 
           <div className="flex flex-wrap items-center gap-6 pt-4">
             {/* Bouton principal */}
-            <Link 
-              href="user-terminal" 
+            <Link
+              href={`/${locale}/user-terminal`}
               className="px-8 py-4 bg-[#E84142] text-white rounded-2xl font-bold hover:bg-[#ff4d4d] hover:shadow-[0_0_30px_-5px_rgba(232,65,66,0.5)] transition-all flex items-center gap-2 group cursor-pointer"
             >
-            {t('buttonMain')}
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              {t('buttonMain')}
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
 
             {/* Yield Card */}
@@ -63,9 +64,9 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* 3D BUILDING */}
+        {/* ANIMATED SPRITE HERO */}
         <div className="relative lg:absolute lg:right-0 lg:top-0 w-full lg:w-1/2 h-[70vh] lg:h-[110%] z-10 pointer-events-none">
-          <BuildingHero />
+          <AnimatedHero />
         </div>
       </div>
     </section>
