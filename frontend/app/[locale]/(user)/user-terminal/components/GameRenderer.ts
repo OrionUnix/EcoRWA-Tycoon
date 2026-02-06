@@ -15,6 +15,7 @@ export const COLORS = {
     WOOD: 0x43a047, FOOD: 0xff3366, WATER_RES: 0x0000ff,
     GROUNDWATER_LOW: 0xBBDEFB, GROUNDWATER_HIGH: 0x0D47A1,
     FISH: 0xFF4081, ANIMAL: 0x8D6E63,
+    STONE: 0x9E9E9E, SILVER: 0xE0E0E0, GOLD: 0xFFD700,
     GRID_LINES: 0x999999,
     HIGHLIGHT: 0xFFFFFF,
     ROAD_BRIDGE: 0x8B4513,
@@ -40,7 +41,7 @@ export class GameRenderer {
         if (!engine || !engine.biomes) return;
 
         const biomes = engine.biomes;
-        const { oil, coal, iron, wood, animals, fish } = engine.resourceMaps;
+        const { oil, coal, iron, wood, animals, fish, stone, silver, gold } = engine.resourceMaps;
         const moistureMap = engine.moistureMap;
         const getVariation = (idx: number) => (Math.sin(idx * 999) > 0.5);
 
@@ -87,6 +88,10 @@ export class GameRenderer {
                     else if (viewMode === 'IRON' && iron[i] > 0.1) fillColor = COLORS.IRON;
                     else if (viewMode === 'WOOD' && (wood[i] > 0.1 || biome === BiomeType.FOREST)) fillColor = COLORS.WOOD;
                     else if (viewMode === 'FOOD' && (fish[i] > 0.1 || animals[i] > 0.1)) fillColor = (fish[i] > 0.1 ? COLORS.FISH : COLORS.ANIMAL);
+                    else if (viewMode === 'STONE' && engine.resourceMaps.stone[i] > 0.1) fillColor = COLORS.STONE;
+                    else if (viewMode === 'SILVER' && engine.resourceMaps.silver[i] > 0.1) fillColor = COLORS.SILVER;
+                    else if (viewMode === 'GOLD' && engine.resourceMaps.gold[i] > 0.1) fillColor = COLORS.GOLD;
+
                     else if (viewMode === 'GROUNDWATER' && biome !== BiomeType.OCEAN) {
                         const m = moistureMap[i];
                         if (m > 0.3) fillColor = m > 0.7 ? COLORS.GROUNDWATER_HIGH : COLORS.GROUNDWATER_LOW;

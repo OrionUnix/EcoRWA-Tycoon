@@ -12,7 +12,11 @@ export class MapEngine {
     public heightMap: Float32Array;
     public moistureMap: Float32Array;
 
-    public resourceMaps: { oil: Float32Array; coal: Float32Array; iron: Float32Array; wood: Float32Array; animals: Float32Array; fish: Float32Array; };
+    public resourceMaps: {
+        oil: Float32Array; coal: Float32Array; iron: Float32Array; wood: Float32Array; animals: Float32Array; fish: Float32Array; stone: Float32Array;
+        silver: Float32Array;
+        gold: Float32Array;
+    };
     public currentSummary: ResourceSummary;
 
     public roadLayer: (RoadData | null)[];
@@ -45,7 +49,9 @@ export class MapEngine {
         this.resourceMaps = {
             oil: new Float32Array(TOTAL_CELLS), coal: new Float32Array(TOTAL_CELLS),
             iron: new Float32Array(TOTAL_CELLS), wood: new Float32Array(TOTAL_CELLS),
-            animals: new Float32Array(TOTAL_CELLS), fish: new Float32Array(TOTAL_CELLS)
+            animals: new Float32Array(TOTAL_CELLS), fish: new Float32Array(TOTAL_CELLS),
+            stone: new Float32Array(TOTAL_CELLS), silver: new Float32Array(TOTAL_CELLS),
+            gold: new Float32Array(TOTAL_CELLS),
         };
 
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
@@ -80,6 +86,7 @@ export class MapEngine {
     // ✅ LOGIQUE RESTAURÉE
     public calculateSummary() {
         let oil = 0, coal = 0, iron = 0, wood = 0, water = 0, fertile = 0;
+        let stone = 0, silver = 0, gold = 0;
 
         // On vérifie une case sur 10 pour ne pas laguer (Sampling)
         const step = 10;
@@ -91,16 +98,17 @@ export class MapEngine {
             if (this.resourceMaps.coal[i] > 0.1) coal++;
             if (this.resourceMaps.iron[i] > 0.1) iron++;
             if (this.resourceMaps.wood[i] > 0.1) wood++;
+            if (this.resourceMaps.stone[i] > 0.1) stone++;
+            if (this.resourceMaps.silver[i] > 0.1) silver++;
+            if (this.resourceMaps.gold[i] > 0.1) gold++;
 
-            // Eau
             if (this.layers[LayerType.WATER][i] > 0.1) water++;
-
-            // Fertilité (basée sur l'humidité)
             if (this.moistureMap[i] > 0.5) fertile++;
         }
-
         // Conversion en pourcentage (0-100) pour l'UI
         const f = 100 / totalSamples;
+        const rareF = f * 5;
+        const veryRareF = f * 20;
 
         this.currentSummary = {
             oil: Math.min(100, oil * f),
@@ -108,7 +116,10 @@ export class MapEngine {
             iron: Math.min(100, iron * f),
             wood: Math.min(100, wood * f),
             water: Math.min(100, water * f),
-            fertile: Math.min(100, fertile * f)
+            fertile: Math.min(100, fertile * f),
+            stone: Math.min(100, stone * f),
+            silver: Math.min(100, silver * rareF),
+            gold: Math.min(100, gold * veryRareF)
         };
     }
 

@@ -91,11 +91,16 @@ export interface ResourceSummary {
     wood: number;
     water: number;
     fertile: number;
+    stone: number;
+    silver: number;
+    gold: number;
 }
 
 export interface PlayerResources {
     money: number;
     wood: number;
+    gold: Float32Array;
+    silver: Float32Array;
     concrete: number;
     glass: number;
     steel: number;

@@ -12,7 +12,10 @@ export function getResourceAtTile(engine: MapEngine, index: number, viewMode: st
         iron: engine.resourceMaps.iron[index],
         wood: engine.resourceMaps.wood[index],
         animals: engine.resourceMaps.animals[index],
-        fish: engine.resourceMaps.fish[index]
+        fish: engine.resourceMaps.fish[index],
+        stone: engine.resourceMaps.stone[index],
+        silver: engine.resourceMaps.silver[index],
+        gold: engine.resourceMaps.gold[index],
     };
 
     // 2. Récupération des données géographiques
