@@ -8,7 +8,7 @@ export function useGameLoop(
     staticGRef: React.MutableRefObject<PIXI.Graphics | null>,
     uiGRef: React.MutableRefObject<PIXI.Graphics | null>,
     isReady: boolean,
-    viewMode: string, // <-- Cette valeur change quand on clique sur les boutons
+    viewMode: string,
     cursorPos: { x: number, y: number },
     previewPathRef: React.MutableRefObject<number[]>,
     isValidBuildRef: React.MutableRefObject<boolean>,
@@ -17,8 +17,8 @@ export function useGameLoop(
     setStats: (stats: any) => void
 ) {
     const lastRevRef = useRef(-2);
-    // ✅ NOUVEAU : On stocke le dernier mode de vue pour détecter les changements
     const lastViewModeRef = useRef('FORCE_INIT');
+    const lastZoomRef = useRef(1); // ✅ Pour ne pas redessiner si le zoom change peu
 
     useEffect(() => {
         if (!isReady || !appRef.current) return;
@@ -26,37 +26,50 @@ export function useGameLoop(
         const app = appRef.current;
         const engine = getGameEngine();
 
-        console.log("🎬 GameLoop: Démarrage ou Changement de mode...", { viewMode });
+        console.log("🎬 GameLoop: LOD System Ready.");
 
         const tick = () => {
-            // 1. Mise à jour Logique
-            if (engine.tick) {
-                engine.tick();
-            }
+            if (engine.tick) engine.tick();
 
-            // 2. Rendu STATIQUE (Terrain, Ressources, Bâtiments)
+            // Récupérer le zoom actuel depuis le conteneur principal (le parent des Graphics)
+            // On suppose que staticGRef est attaché au stage qui subit le zoom
+            const currentZoom = staticGRef.current?.parent?.scale.x || 1.0;
+
+            // --- Rendu STATIQUE ---
             if (engine.map && staticGRef.current) {
-                // ✅ CONDITION CORRIGÉE :
-                // On redessine SI la map a changé (revision) OU SI le mode de vue a changé
-                if (engine.map.revision !== lastRevRef.current || viewMode !== lastViewModeRef.current) {
+                // On redessine si :
+                // 1. La map change (construction)
+                // 2. Le mode change (vue pétrole)
+                // 3. Le zoom franchit un seuil de LOD (Important pour la fluidité)
 
-                    // Debug pour vérifier que ça passe ici
-                    // console.log(`🎨 Redrawing Static: Rev ${engine.map.revision} | Mode ${viewMode}`);
+                const zoomChangedSignificantly = Math.abs(currentZoom - lastZoomRef.current) > 0.1;
+                // On pourrait être plus fin et ne redessiner que si on passe un seuil LOD (0.6 ou 1.2)
 
+                const needsRedraw =
+                    engine.map.revision !== lastRevRef.current ||
+                    viewMode !== lastViewModeRef.current ||
+                    // Astuce : On force le redraw si on passe d'un niveau de LOD à un autre
+                    (currentZoom < 0.6 && lastZoomRef.current >= 0.6) ||
+                    (currentZoom >= 0.6 && lastZoomRef.current < 0.6) ||
+                    (currentZoom > 1.2 && lastZoomRef.current <= 1.2) ||
+                    (currentZoom <= 1.2 && lastZoomRef.current > 1.2);
+
+                if (needsRedraw) {
                     GameRenderer.renderStaticLayer(
                         staticGRef.current,
                         engine.map,
                         viewMode,
-                        false
+                        false,
+                        currentZoom // ✅ On passe le zoom
                     );
 
-                    // On met à jour nos références
                     lastRevRef.current = engine.map.revision;
                     lastViewModeRef.current = viewMode;
+                    lastZoomRef.current = currentZoom;
                 }
             }
 
-            // 3. Rendu DYNAMIQUE (Curseur, Voitures)
+            // --- Rendu DYNAMIQUE ---
             if (uiGRef.current && engine.map) {
                 GameRenderer.renderDynamicLayer(
                     uiGRef.current,
@@ -64,11 +77,12 @@ export function useGameLoop(
                     cursorPos,
                     previewPathRef.current,
                     viewMode,
-                    isValidBuildRef.current
+                    isValidBuildRef.current,
+                    currentZoom // ✅ On passe le zoom aussi ici
                 );
             }
 
-            // 4. UI Updates
+            // UI Updates
             if (Math.round(app.ticker.lastTime) % 30 < 1) {
                 setFps(Math.round(app.ticker.FPS));
                 if (engine.getResources) setResources({ ...engine.getResources() });
@@ -77,9 +91,6 @@ export function useGameLoop(
         };
 
         app.ticker.add(tick);
-
-        return () => {
-            app.ticker.remove(tick);
-        };
-    }, [isReady, viewMode, cursorPos]); // viewMode est bien une dépendance ici
+        return () => { app.ticker.remove(tick); };
+    }, [isReady, viewMode, cursorPos]);
 }

@@ -1,9 +1,6 @@
 import { MapEngine } from '../engine/MapEngine';
 import { BiomeType, LayerType } from '../engine/types';
 
-/**
- * Récupère TOUTES les informations d'une tuile pour l'inspecteur (Tooltip UI)
- */
 export function getResourceAtTile(engine: MapEngine, index: number, viewMode: string) {
     // Sécurité
     if (!engine || index < 0 || index >= engine.config.totalCells) return null;
@@ -21,7 +18,7 @@ export function getResourceAtTile(engine: MapEngine, index: number, viewMode: st
     // 2. Récupération des données géographiques
     const biomeId = engine.biomes[index];
     const elevation = engine.heightMap[index];
-    const moisture = engine.moistureMap[index]; // ✅ C'est ça qui manquait pour l'eau souterraine !
+    const moisture = engine.moistureMap[index];
     const waterDepth = engine.getLayer(LayerType.WATER)[index];
 
     // 3. Construction de l'objet de réponse pour GameUI

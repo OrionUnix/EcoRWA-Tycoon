@@ -107,8 +107,7 @@ export class RoadGraph {
     private heuristic(a: number, b: number): number {
         const ax = a % GRID_SIZE; const ay = Math.floor(a / GRID_SIZE);
         const bx = b % GRID_SIZE; const by = Math.floor(b / GRID_SIZE);
-        // Heuristique simple (distance manhattan) * coût de base minimum (ex: 0.3)
-        // pour ne pas surestimer le coût
+
         return (Math.abs(ax - bx) + Math.abs(ay - by)) * 0.3;
     }
 

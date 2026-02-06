@@ -34,7 +34,7 @@ export class RoadManager {
             lanes: specs.lanes,
             isBridge,
             isTunnel,
-            // ✅ FIX VISUEL : On initialise avec un objet vide, PAS un tableau []
+
             connections: { n: false, s: false, e: false, w: false }
         };
     }
