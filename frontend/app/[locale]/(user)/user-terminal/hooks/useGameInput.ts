@@ -1,18 +1,17 @@
 import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 import { getGameEngine } from '../engine/GameEngine';
-import { getMapEngine } from '../engine/MapEngine';
 import { screenToGrid } from '../engine/isometric';
-import { GRID_SIZE } from '../engine/config';
-import { getResourceAtTile } from '../utils/resourceUtils';
+import { RoadManager } from '../engine/RoadManager';
+import { RoadType, ZoneType } from '../engine/types';
 
 export function useGameInput(
     stageRef: React.MutableRefObject<PIXI.Container | null>,
     appRef: React.MutableRefObject<PIXI.Application | null>,
-    isReady: boolean, // ✅ NOUVEAU PARAMÈTRE
+    isReady: boolean,
     viewMode: string,
-    selectedRoadType: any,
-    selectedZoneType: any,
+    selectedRoad: RoadType,
+    selectedZone: ZoneType,
     setCursorPos: (pos: { x: number, y: number }) => void,
     setHoverInfo: (info: any) => void,
     setTotalCost: (cost: number) => void,
@@ -20,113 +19,115 @@ export function useGameInput(
     previewPathRef: React.MutableRefObject<number[]>,
     isValidBuildRef: React.MutableRefObject<boolean>
 ) {
-    const stateRef = useRef({ viewMode, selectedRoadType, selectedZoneType });
-    useEffect(() => { stateRef.current = { viewMode, selectedRoadType, selectedZoneType }; }, [viewMode, selectedRoadType, selectedZoneType]);
+    // Refs pour le Drag & Drop
+    const isDraggingRef = useRef(false);
+    const startTileRef = useRef<number | null>(null);
+    const lastHoverIdxRef = useRef<number>(-1);
 
     useEffect(() => {
-        // 🛡️ GUARD: Si Pixi n'est pas prêt, on ne fait RIEN.
-        if (!isReady || !appRef.current || !stageRef.current) return;
-
+        if (!isReady || !stageRef.current || !appRef.current) return;
         const stage = stageRef.current;
-        const app = appRef.current;
-        const canvas = app.canvas; // Référence stable
+        const engine = getGameEngine();
 
-        let isDraggingCam = false;
-        let lastX = 0, lastY = 0;
-        let startDragTile: { x: number, y: number } | null = null;
+        // --- GESTION DU SURVOL (HOVER) ---
+        const onPointerMove = (e: PIXI.FederatedPointerEvent) => {
+            const localPos = stage.toLocal(e.global);
+            const gridPos = screenToGrid(localPos.x, localPos.y);
 
-        const getGridPos = (e: any) => {
-            const local = stage.toLocal({ x: e.global.x, y: e.global.y });
-            return screenToGrid(local.x, local.y);
-        };
+            // Sécurité : ne pas sortir de la grille
+            if (gridPos.x < 0 || gridPos.x >= engine.map.config.size ||
+                gridPos.y < 0 || gridPos.y >= engine.map.config.size) return;
 
-        const onDown = (e: any) => {
-            const mode = stateRef.current.viewMode;
-            if (e.button === 0 && ['BUILD_ROAD', 'BULLDOZER', 'ZONE'].includes(mode)) {
-                startDragTile = getGridPos(e);
-            } else {
-                isDraggingCam = true;
-                lastX = e.global.x; lastY = e.global.y;
-            }
-        };
+            const idx = gridPos.y * engine.map.config.size + gridPos.x;
 
-        const onMove = (e: any) => {
-            const gridPos = getGridPos(e);
+            // Mise à jour curseur UI
             setCursorPos(gridPos);
 
-            if (isDraggingCam) {
-                stage.position.x += e.global.x - lastX;
-                stage.position.y += e.global.y - lastY;
-                lastX = e.global.x; lastY = e.global.y;
-            } else if (startDragTile) {
-                const engine = getGameEngine();
-                const path = engine.getPreviewPath(startDragTile.x, startDragTile.y, gridPos.x, gridPos.y);
+            // Optim: Ne rien faire si on est toujours sur la même case
+            if (idx === lastHoverIdxRef.current) return;
+            lastHoverIdxRef.current = idx;
+
+            // 1. Récupération des infos pour le Tooltip
+            if (engine.map && typeof (engine.map as any).getLayer === 'function') {
+                // On utilise getResourceAtTile depuis resourceUtils normalement, 
+                // mais ici on passe par le moteur si vous l'avez exposé, sinon on ignore pour l'instant
+                // ou mieux : importez getResourceAtTile de utils/resourceUtils si besoin.
+            }
+
+            // 2. Gestion du Drag & Drop (Prévisualisation)
+            if (viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
+
+                // 🚨 CORRECTION ICI : On utilise RoadManager directement, pas engine
+                const path = RoadManager.getPreviewPath(startTileRef.current, idx);
+
                 previewPathRef.current = path;
 
-                if (stateRef.current.viewMode === 'BUILD_ROAD') {
-                    setTotalCost(path.length * 10);
-                    setIsValidBuild(true);
-                    isValidBuildRef.current = true;
-                }
+                // Calcul du coût et validation
+                const { cost, valid } = RoadManager.calculateCost(engine.map, path, selectedRoad);
+
+                setTotalCost(cost);
+                setIsValidBuild(valid);
+                isValidBuildRef.current = valid;
             } else {
-                if (gridPos.x >= 0 && gridPos.x < GRID_SIZE && gridPos.y >= 0 && gridPos.y < GRID_SIZE) {
-                    const idx = gridPos.y * GRID_SIZE + gridPos.x;
-                    setHoverInfo(getResourceAtTile(getMapEngine(), idx, stateRef.current.viewMode));
-                } else {
-                    setHoverInfo(null);
+                // Pas de drag, reset preview
+                if (previewPathRef.current.length > 0) {
+                    previewPathRef.current = [];
+                    setTotalCost(0);
                 }
             }
         };
 
-        const onUp = () => {
-            isDraggingCam = false;
-            if (startDragTile && previewPathRef.current.length > 0) {
-                const engine = getGameEngine();
-                const { viewMode, selectedRoadType, selectedZoneType } = stateRef.current;
+        // --- CLIC ENFONCÉ (DÉBUT DRAG) ---
+        const onPointerDown = (e: PIXI.FederatedPointerEvent) => {
+            if (e.button !== 0) return; // Clic gauche uniquement
 
-                engine.handleInteraction(previewPathRef.current, viewMode, viewMode === 'BUILD_ROAD' ? selectedRoadType : selectedZoneType);
+            const localPos = stage.toLocal(e.global);
+            const gridPos = screenToGrid(localPos.x, localPos.y);
+            const idx = gridPos.y * engine.map.config.size + gridPos.x;
 
-                setTotalCost(0);
-                previewPathRef.current = [];
+            if (viewMode === 'BUILD_ROAD') {
+                isDraggingRef.current = true;
+                startTileRef.current = idx;
+                previewPathRef.current = [idx];
+            } else if (viewMode === 'BULLDOZER') {
+                engine.handleInteraction(idx, viewMode, null, null);
+            } else if (viewMode === 'ZONE') {
+                engine.handleInteraction(idx, viewMode, null, selectedZone);
             }
-            startDragTile = null;
         };
 
-        const onWheel = (e: WheelEvent) => {
-            e.preventDefault();
-            const scaleBy = 1.1;
-            const oldScale = stage.scale.x;
-            const newScale = e.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
-            const clamped = Math.max(0.1, Math.min(5, newScale));
+        // --- RELÂCHEMENT (FIN DRAG & CONSTRUCTION) ---
+        const onPointerUp = () => {
+            if (viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
 
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+                const path = previewPathRef.current;
 
-            const worldPos = { x: (mouseX - stage.x) / oldScale, y: (mouseY - stage.y) / oldScale };
-            stage.scale.set(clamped);
-            stage.position.set(mouseX - worldPos.x * clamped, mouseY - worldPos.y * clamped);
+                if (path.length > 0 && isValidBuildRef.current) {
+                    // Construction
+                    engine.handleInteraction(0, 'BUILD_ROAD', path, selectedRoad);
+                }
+
+                // Reset
+                isDraggingRef.current = false;
+                startTileRef.current = null;
+                previewPathRef.current = [];
+                setTotalCost(0);
+            }
         };
 
-        stage.on('pointerdown', onDown);
-        stage.on('pointermove', onMove);
-        stage.on('pointerup', onUp);
-        stage.on('pointerupoutside', onUp);
+        stage.eventMode = 'static';
+        stage.hitArea = new PIXI.Rectangle(-5000, -5000, 10000, 10000);
 
-        // Ajout sécurisé du wheel listener sur le canvas
-        canvas.addEventListener('wheel', onWheel, { passive: false });
+        stage.on('pointermove', onPointerMove);
+        stage.on('pointerdown', onPointerDown);
+        stage.on('pointerup', onPointerUp);
+        stage.on('pointerupoutside', onPointerUp);
 
         return () => {
-            if (stage) {
-                stage.off('pointerdown', onDown);
-                stage.off('pointermove', onMove);
-                stage.off('pointerup', onUp);
-                stage.off('pointerupoutside', onUp);
-            }
-            // Retrait sécurisé
-            if (canvas) {
-                canvas.removeEventListener('wheel', onWheel);
-            }
+            stage.off('pointermove', onPointerMove);
+            stage.off('pointerdown', onPointerDown);
+            stage.off('pointerup', onPointerUp);
+            stage.off('pointerupoutside', onPointerUp);
         };
-    }, [isReady, viewMode, selectedRoadType, selectedZoneType]); // Ajout de isReady
+    }, [isReady, viewMode, selectedRoad, selectedZone]);
 }

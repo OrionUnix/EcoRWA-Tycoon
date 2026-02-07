@@ -20,7 +20,7 @@ export default function Page() {
   };
 
   return (
-    <LandingPage 
+    <LandingPage
       onGetStarted={handleGetStarted}
       address={address}
       usdcBalance={usdcBalance}

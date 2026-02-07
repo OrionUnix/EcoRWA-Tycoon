@@ -85,6 +85,8 @@ export default function GameUI({
                 <ResourceCard icon="🔩" value={s.iron} label="Iron" color="bg-orange-700" />
                 <ResourceCard icon="🌲" value={s.wood} label="Wood" color="bg-emerald-700" />
                 <ResourceCard icon="💧" value={s.water} label="Water" color="bg-blue-600" />
+                <ResourceCard icon="🪙" value={s.gold} label="Gold" color="bg-blue-600" />
+                <ResourceCard icon="🪙" value={s.silver} label="Silver" color="bg-blue-600" />
             </div>
 
             {totalCost > 0 && (
@@ -157,12 +159,12 @@ export default function GameUI({
                             <ToolButton
                                 active={activeCategory === 'VIEWS'}
                                 onClick={() => setActiveCategory(activeCategory === 'VIEWS' ? null : 'VIEWS')}
-                                label="Vues" icon="🔍" variant="circle"
+                                label="Vues" icon="🗺️" variant="circle"
                             />
                             <ToolButton
                                 active={viewMode === 'BULLDOZER'}
                                 onClick={() => { setViewMode('BULLDOZER'); setActiveCategory(null); }}
-                                label="Rasé" icon="🚜" color="bg-red-500/10" variant="circle"
+                                label="Rasé" icon="🧨" color="bg-red-500/10" variant="circle"
                             />
                         </div>
 

@@ -60,9 +60,24 @@ export class MapEngine {
         this.buildingLayer = new Array(TOTAL_CELLS).fill(null);
 
         // Valeurs par défaut stats
-        this.resources = { money: 50000, wood: 500, concrete: 200, glass: 100, steel: 50, stone: 100, coal: 0, iron: 0, oil: 0, food: 0, energy: 0, water: 0 };
-        this.stats = { population: 0, jobsCommercial: 0, jobsIndustrial: 0, unemployed: 0, demand: { residential: 50, commercial: 50, industrial: 50 }, energy: { produced: 0, consumed: 0 }, water: { produced: 0, consumed: 0 }, food: { produced: 0, consumed: 0 } };
-        this.currentSummary = { oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0 };
+        this.resources = {
+            money: 50000, wood: 500, concrete: 200, glass: 100, steel: 50,
+            stone: 100, coal: 0, iron: 0, oil: 0, food: 0,
+            energy: 0, water: 0,
+
+            silver: 0, gold: 0
+        };
+        this.stats = {
+            population: 0, jobsCommercial: 0, jobsIndustrial: 0, unemployed: 0,
+            demand: { residential: 50, commercial: 50, industrial: 50 },
+            energy: { produced: 0, consumed: 0 },
+            water: { produced: 0, consumed: 0 },
+            food: { produced: 0, consumed: 0 }
+        };
+        this.currentSummary = {
+            oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0,
+            stone: 0, silver: 0, gold: 0
+        };
 
         // 2. Génération immédiate
         this.generateWorld();

@@ -1,116 +1,122 @@
 import { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
-import { COLORS } from '../components/GameRenderer';
-import { INITIAL_ZOOM, GRID_SIZE } from '../engine/config';
-import { gridToScreen } from '../engine/isometric';
 
+// On accepte HTMLDivElement | null pour satisfaire TypeScript
 export function usePixiApp(containerRef: React.RefObject<HTMLDivElement | null>) {
     const appRef = useRef<PIXI.Application | null>(null);
     const stageRef = useRef<PIXI.Container | null>(null);
-    const staticGRef = useRef<PIXI.Graphics | null>(null);
-    const uiGRef = useRef<PIXI.Graphics | null>(null);
     const [isReady, setIsReady] = useState(false);
 
-    // Protection contre le double-init strict mode React
-    const initRef = useRef(false);
-
     useEffect(() => {
-        if (!containerRef.current || initRef.current) return;
-        initRef.current = true;
+        if (!containerRef.current || appRef.current) return;
 
-        const init = async () => {
-            const app = new PIXI.Application();
+        // 1. Initialisation de l'application Pixi
+        const app = new PIXI.Application();
 
-            await app.init({
-                resizeTo: window,
-                backgroundColor: COLORS.BG,
-                antialias: true,
-                resolution: window.devicePixelRatio || 1,
-                autoDensity: true,
-            });
+        app.init({
+            resizeTo: containerRef.current,
+            backgroundColor: 0x111111,
+            antialias: true,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true
+        }).then(() => {
+            if (!containerRef.current) return;
 
-            // Si le composant a été démonté pendant l'init async, on nettoie tout de suite
-            if (!containerRef.current) {
-                await app.destroy({ removeView: true });
-                return;
-            }
-
+            // On attache le canvas au DOM
             containerRef.current.appendChild(app.canvas);
 
-            // CSS Force
-            app.canvas.style.position = 'absolute';
-            app.canvas.style.display = 'block';
-            app.canvas.style.width = '100%';
-            app.canvas.style.height = '100%';
-
-            // Stage Setup
+            // 2. Création de la "Caméra" (Stage principal)
             const stage = new PIXI.Container();
             stage.sortableChildren = true;
-            stage.eventMode = 'static';
-            stage.hitArea = new PIXI.Rectangle(-100000, -100000, 200000, 200000);
             app.stage.addChild(stage);
 
-            const staticG = new PIXI.Graphics();
-            staticG.label = "Static";
-
-            const uiG = new PIXI.Graphics();
-            uiG.label = "UI";
-            uiG.zIndex = 100;
-
-            stage.addChild(staticG, uiG);
-
-            // Centrage
-            const centerStage = () => {
-                const zoom = stage.scale.x || INITIAL_ZOOM;
-                const center = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
-                stage.position.set(
-                    (app.screen.width / 2) - (center.x * zoom),
-                    (app.screen.height / 2) - (center.y * zoom)
-                );
-            };
-
-            stage.scale.set(INITIAL_ZOOM);
-            centerStage();
-
-            // On attache l'événement resize
-            app.renderer.on('resize', centerStage);
-
-            // Assignation Refs
             appRef.current = app;
             stageRef.current = stage;
-            staticGRef.current = staticG;
-            uiGRef.current = uiG;
+
+            // Centrage initial
+            stage.x = app.screen.width / 2;
+            stage.y = app.screen.height / 2;
+
+            // ==============================
+            // 🎥 GESTION ZOOM & PAN
+            // ==============================
+            const canvas = app.canvas;
+
+            // --- ZOOM (MOLETTE) ---
+            const onWheel = (e: WheelEvent) => {
+                e.preventDefault();
+                const scaleChange = 1.1;
+                const direction = e.deltaY > 0 ? 1 / scaleChange : scaleChange;
+
+                let newScale = stage.scale.x * direction;
+
+                // Limites du zoom (0.2 = très loin, 4.0 = très près)
+                newScale = Math.max(0.2, Math.min(newScale, 4.0));
+
+                // Zoom vers la position de la souris
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                // Calcul de la position dans le monde avant le zoom
+                const worldPos = {
+                    x: (mouseX - stage.x) / stage.scale.x,
+                    y: (mouseY - stage.y) / stage.scale.y
+                };
+
+                // Application du nouveau zoom
+                stage.scale.set(newScale);
+
+                // Ajustement de la position pour garder la souris au même endroit
+                stage.x = mouseX - worldPos.x * newScale;
+                stage.y = mouseY - worldPos.y * newScale;
+            };
+
+            // --- PAN (DÉPLACEMENT CARTE) ---
+            // On utilise le clic droit (2) ou clic molette (1) pour bouger
+            let isPanning = false;
+            let lastPos = { x: 0, y: 0 };
+
+            const onMouseDown = (e: MouseEvent) => {
+                // 1 = Molette, 2 = Clic Droit
+                if (e.button === 1 || e.button === 2) {
+                    isPanning = true;
+                    lastPos = { x: e.clientX, y: e.clientY };
+                }
+            };
+
+            const onMouseMove = (e: MouseEvent) => {
+                if (isPanning) {
+                    const dx = e.clientX - lastPos.x;
+                    const dy = e.clientY - lastPos.y;
+                    stage.x += dx;
+                    stage.y += dy;
+                    lastPos = { x: e.clientX, y: e.clientY };
+                }
+            };
+
+            const onMouseUp = () => { isPanning = false; };
+
+            // Désactiver le menu contextuel (clic droit) pour permettre le Pan
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // Ajout des écouteurs
+            canvas.addEventListener('wheel', onWheel);
+            canvas.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
 
             setIsReady(true);
-        };
+        });
 
-        init();
-
-        // Cleanup robuste
         return () => {
-            initRef.current = false;
-            setIsReady(false);
-            const app = appRef.current;
-
-            if (app) {
-                // On enlève d'abord le listener pour éviter l'erreur _cancelResize
-                app.renderer.off('resize');
-
-                // On détruit proprement
-                // Note: On évite d'attendre la promise ici car useEffect cleanup est synchrone
-                // On lance la destruction en "fire and forget" sécurisé
-                setTimeout(() => {
-                    try {
-                        app.destroy({ removeView: true });
-                    } catch (e) {
-                        console.warn("Pixi destroy error ignored:", e);
-                    }
-                }, 0);
-
+            // Nettoyage propre
+            if (appRef.current) {
+                appRef.current.destroy(true, { children: true });
                 appRef.current = null;
             }
         };
     }, []);
 
-    return { appRef, stageRef, staticGRef, uiGRef, isReady };
+    return { appRef, stageRef, isReady };
 }

@@ -18,49 +18,50 @@ export function useGameLoop(
 ) {
     const lastRevRef = useRef(-2);
     const lastViewModeRef = useRef('FORCE_INIT');
-    const lastZoomRef = useRef(1); // ✅ Pour ne pas redessiner si le zoom change peu
+    const lastZoomRef = useRef(1);
 
     useEffect(() => {
+
         if (!isReady || !appRef.current) return;
 
         const app = appRef.current;
         const engine = getGameEngine();
 
-        console.log("🎬 GameLoop: LOD System Ready.");
+        console.log("🎬 GameLoop: Engine & LOD Ready.");
 
         const tick = () => {
-            if (engine.tick) engine.tick();
 
-            // Récupérer le zoom actuel depuis le conteneur principal (le parent des Graphics)
-            // On suppose que staticGRef est attaché au stage qui subit le zoom
-            const currentZoom = staticGRef.current?.parent?.scale.x || 1.0;
+            if (!staticGRef || !staticGRef.current || !uiGRef || !uiGRef.current) {
+                return;
+            }
 
-            // --- Rendu STATIQUE ---
-            if (engine.map && staticGRef.current) {
-                // On redessine si :
-                // 1. La map change (construction)
-                // 2. Le mode change (vue pétrole)
-                // 3. Le zoom franchit un seuil de LOD (Important pour la fluidité)
 
-                const zoomChangedSignificantly = Math.abs(currentZoom - lastZoomRef.current) > 0.1;
-                // On pourrait être plus fin et ne redessiner que si on passe un seuil LOD (0.6 ou 1.2)
+            engine.tick();
 
-                const needsRedraw =
-                    engine.map.revision !== lastRevRef.current ||
-                    viewMode !== lastViewModeRef.current ||
-                    // Astuce : On force le redraw si on passe d'un niveau de LOD à un autre
+
+            const currentZoom = staticGRef.current.parent?.scale.x || 1.0;
+
+
+            if (engine.map) {
+
+                const zoomChanged = Math.abs(currentZoom - lastZoomRef.current) > 0.1;
+
+                const lodCrossed =
                     (currentZoom < 0.6 && lastZoomRef.current >= 0.6) ||
                     (currentZoom >= 0.6 && lastZoomRef.current < 0.6) ||
                     (currentZoom > 1.2 && lastZoomRef.current <= 1.2) ||
                     (currentZoom <= 1.2 && lastZoomRef.current > 1.2);
 
-                if (needsRedraw) {
+                if (engine.map.revision !== lastRevRef.current ||
+                    viewMode !== lastViewModeRef.current ||
+                    zoomChanged || lodCrossed) {
+
                     GameRenderer.renderStaticLayer(
                         staticGRef.current,
                         engine.map,
                         viewMode,
-                        false,
-                        currentZoom // ✅ On passe le zoom
+                        false, // showGrid
+                        currentZoom
                     );
 
                     lastRevRef.current = engine.map.revision;
@@ -69,8 +70,8 @@ export function useGameLoop(
                 }
             }
 
-            // --- Rendu DYNAMIQUE ---
-            if (uiGRef.current && engine.map) {
+            // 4. RENDU DYNAMIQUE (UI, Preview, Voitures)
+            if (engine.map) {
                 GameRenderer.renderDynamicLayer(
                     uiGRef.current,
                     engine.map,
@@ -78,12 +79,12 @@ export function useGameLoop(
                     previewPathRef.current,
                     viewMode,
                     isValidBuildRef.current,
-                    currentZoom // ✅ On passe le zoom aussi ici
+                    currentZoom
                 );
             }
 
-            // UI Updates
-            if (Math.round(app.ticker.lastTime) % 30 < 1) {
+            // 5. UI UPDATES
+            if (app.ticker && Math.round(app.ticker.lastTime) % 30 < 1) {
                 setFps(Math.round(app.ticker.FPS));
                 if (engine.getResources) setResources({ ...engine.getResources() });
                 if (engine.getStats) setStats({ ...engine.getStats() });
@@ -91,6 +92,11 @@ export function useGameLoop(
         };
 
         app.ticker.add(tick);
-        return () => { app.ticker.remove(tick); };
+
+        return () => {
+            if (app.ticker) {
+                app.ticker.remove(tick);
+            }
+        };
     }, [isReady, viewMode, cursorPos]);
 }

@@ -26,6 +26,8 @@ export enum RoadType {
     HIGHWAY = 'HIGHWAY'  // Autoroute (très rapide)
 }
 
+
+
 export enum BiomeType {
     DEEP_OCEAN = 0,
     OCEAN = 1,
@@ -52,11 +54,23 @@ export enum PriorityType {
 
 // === CONFIGURATIONS ===
 
-export const ROAD_SPECS: Record<RoadType, { speed: number; capacity: number; lanes: number; cost: number }> = {
-    [RoadType.DIRT]: { speed: 0.5, capacity: 5, lanes: 1, cost: 10 },
-    [RoadType.ASPHALT]: { speed: 1.0, capacity: 20, lanes: 2, cost: 50 },
-    [RoadType.AVENUE]: { speed: 1.5, capacity: 50, lanes: 4, cost: 150 },
-    [RoadType.HIGHWAY]: { speed: 2.5, capacity: 100, lanes: 6, cost: 500 }
+export const ROAD_SPECS: Record<RoadType, { speed: number; capacity: number; lanes: number; cost: number; width: number; color: number }> = {
+    [RoadType.DIRT]: {
+        speed: 0.5, capacity: 10, lanes: 1, cost: 5,
+        width: 6, color: 0x8D6E63 // Marron terre
+    },
+    [RoadType.ASPHALT]: {
+        speed: 1.0, capacity: 50, lanes: 2, cost: 20,
+        width: 8, color: 0x555555 // Gris asphalte
+    },
+    [RoadType.AVENUE]: {
+        speed: 1.5, capacity: 100, lanes: 4, cost: 50,
+        width: 12, color: 0x333333 // Gris foncé
+    },
+    [RoadType.HIGHWAY]: {
+        speed: 3.0, capacity: 200, lanes: 6, cost: 100,
+        width: 14, color: 0x222222 // Presque noir
+    }
 };
 
 export const BUILDING_COSTS: Record<string, Record<number, Partial<PlayerResources>>> = {
@@ -99,19 +113,18 @@ export interface ResourceSummary {
 export interface PlayerResources {
     money: number;
     wood: number;
-    gold: Float32Array;
-    silver: Float32Array;
     concrete: number;
     glass: number;
     steel: number;
-    stone: number;
-    // Energie/Eau sont des flux, mais on peut stocker le surplus ou la capacité
+    coal: number;
+    iron: number;
+    oil: number;
+    food: number;
     energy: number;
     water: number;
-    coal: number;
-    oil: number;
-    iron: number;
-    food: number;
+    stone: number;
+    silver: number;
+    gold: number;
 }
 
 export interface CityStats {

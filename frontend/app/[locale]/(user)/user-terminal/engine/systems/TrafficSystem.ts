@@ -1,13 +1,13 @@
 import { MapEngine } from '../MapEngine';
 import { GRID_SIZE } from '../config';
-// Assurez-vous que PriorityType est bien dans types.ts maintenant (fix précédent)
+
 import { RoadData, RoadType, ROAD_SPECS, Vehicle, TrafficLightState, PriorityType, LayerType } from '../types';
 
 export class TrafficSystem {
     private static MAX_VEHICLES = 300;
     private static SPAWN_RATE = 0.1;
 
-    // 👇 LE MOT-CLÉ "static" EST OBLIGATOIRE ICI
+
     static update(engine: MapEngine) {
         // 1. Spawn
         const pop = engine.stats.population || 0;
@@ -81,7 +81,7 @@ export class TrafficSystem {
         }
     }
 
-    // 👇 LE MOT-CLÉ "static" EST OBLIGATOIRE ICI AUSSI
+
     static spawnVehicle(engine: MapEngine) {
         const roads: number[] = [];
         engine.roadLayer.forEach((r, i) => { if (r) roads.push(i); });
@@ -94,15 +94,22 @@ export class TrafficSystem {
         if (start === end) return;
 
         const path = engine.roadGraph.findPath(start, end);
+
         if (path && path.length > 0) {
             const sx = start % GRID_SIZE;
             const sy = Math.floor(start / GRID_SIZE);
+
             engine.vehicles.push({
                 id: engine.nextVehicleId++,
-                x: sx, y: sy,
-                path, targetIndex: 0,
+                x: sx,
+                y: sy,
+                path: path, // ✅ Une seule fois !
+                targetIndex: 0,
                 speed: 0,
-                color: Math.random() > 0.5 ? 0xCCCCCC : 0xFFFFFF // Voitures Blanches/Grises
+                color: Math.random() > 0.5 ? 0xCCCCCC : 0xFFFFFF, // Voitures Blanches/Grises
+                // On initialise les offsets pour éviter des soucis de type 'any' plus tard
+                offsetX: 0,
+                offsetY: 0
             });
         }
     }

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import * as PIXI from 'pixi.js'; // ✅ IMPORT NÉCESSAIRE pour les types
 import { useTranslations } from 'next-intl';
 
 import { getGameEngine } from '../engine/GameEngine';
-import { regenerateWorld } from '../engine/MapEngine';
 import { RoadType, ZoneType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
 
 // Hooks Modulaires
@@ -14,9 +14,10 @@ import { useGameLoop } from '../hooks/useGameLoop';
 
 import GameUI from './GameUI';
 
-// --- VALEURS PAR DÉFAUT (Pour éviter le crash "undefined") ---
+// --- VALEURS PAR DÉFAUT ---
 const DEFAULT_SUMMARY: ResourceSummary = {
-    oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0
+    oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0,
+    stone: 0, silver: 0, gold: 0
 };
 
 const DEFAULT_STATS: CityStats = {
@@ -24,7 +25,7 @@ const DEFAULT_STATS: CityStats = {
     jobsCommercial: 0,
     jobsIndustrial: 0,
     unemployed: 0,
-    demand: { residential: 50, commercial: 50, industrial: 50 }, // Valeurs moyennes par défaut
+    demand: { residential: 50, commercial: 50, industrial: 50 },
     energy: { produced: 0, consumed: 0 },
     water: { produced: 0, consumed: 0 },
     food: { produced: 0, consumed: 0 }
@@ -33,7 +34,8 @@ const DEFAULT_STATS: CityStats = {
 const DEFAULT_RESOURCES: PlayerResources = {
     money: 50000, wood: 500, concrete: 200, glass: 100, steel: 50,
     stone: 100, coal: 0, iron: 0, oil: 0, food: 0,
-    energy: 0, water: 0
+    energy: 0, water: 0,
+    silver: 0, gold: 0
 };
 
 export default function GameCanvas() {
@@ -51,8 +53,7 @@ export default function GameCanvas() {
     const [isValidBuild, setIsValidBuild] = useState(true);
     const [fps, setFps] = useState(0);
 
-    // --- STATE DATA (Sécurisés avec valeurs par défaut) ---
-    // ✅ FIX : On initialise avec DEFAULT_RESOURCES et DEFAULT_STATS pour éviter le crash
+    // --- STATE DATA ---
     const [resources, setResources] = useState<PlayerResources>(DEFAULT_RESOURCES);
     const [stats, setStats] = useState<CityStats>(DEFAULT_STATS);
     const [summary, setSummary] = useState<ResourceSummary>(DEFAULT_SUMMARY);
@@ -62,14 +63,43 @@ export default function GameCanvas() {
     const previewPathRef = useRef<number[]>([]);
     const isValidBuildRef = useRef(true);
 
+    // ✅ 1. CRÉATION DES REFS POUR LES LAYERS ICI (C'est local au composant)
+    const staticGRef = useRef<PIXI.Graphics | null>(null);
+    const uiGRef = useRef<PIXI.Graphics | null>(null);
+
     // =========================================================
     // 🧱 ASSEMBLAGE DES BRIQUES (HOOKS)
     // =========================================================
 
-    // 1. Moteur Graphique
-    const { appRef, staticGRef, uiGRef, stageRef, isReady } = usePixiApp(containerRef);
+    // 2. Moteur Graphique (On ne récupère QUE ce que usePixiApp renvoie)
+    const { appRef, stageRef, isReady } = usePixiApp(containerRef);
 
-    // 2. Gestion des Entrées
+    // ✅ 3. INITIALISATION DES CALQUES (Dès que Pixi est prêt)
+    useEffect(() => {
+        if (isReady && stageRef.current && !staticGRef.current) {
+            console.log("🎨 Initialisation des Layers Pixi...");
+
+            const staticG = new PIXI.Graphics();
+            const uiG = new PIXI.Graphics();
+
+            // Ajout à la scène
+            stageRef.current.addChild(staticG);
+            stageRef.current.addChild(uiG);
+
+            // Sauvegarde dans les refs
+            staticGRef.current = staticG;
+            uiGRef.current = uiG;
+
+            // Force update du résumé
+            const engine = getGameEngine();
+            if (engine.map) {
+                engine.map.calculateSummary();
+                setSummary({ ...engine.map.currentSummary });
+            }
+        }
+    }, [isReady]);
+
+    // 4. Gestion des Entrées
     useGameInput(
         stageRef, appRef, isReady,
         viewMode, selectedRoad, selectedZone,
@@ -77,7 +107,7 @@ export default function GameCanvas() {
         previewPathRef, isValidBuildRef
     );
 
-    // 3. Boucle de Jeu
+    // 5. Boucle de Jeu
     useGameLoop(
         appRef, staticGRef, uiGRef, isReady,
         viewMode, cursorPos, previewPathRef, isValidBuildRef,
@@ -85,40 +115,24 @@ export default function GameCanvas() {
     );
 
     // =========================================================
-    // 🔄 SYNC INITIALE
+    // 🔄 HELPER FUNCTIONS
     // =========================================================
-
-    // Au montage, on force une première lecture des données du moteur
-    useEffect(() => {
-        const engine = getGameEngine();
-        if (engine && engine.map) {
-            if (engine.map.currentSummary) setSummary(engine.map.currentSummary);
-            if (engine.map.stats) setStats({ ...engine.map.stats });
-            if (engine.map.resources) setResources({ ...engine.map.resources });
-        }
-    }, [isReady]);
 
     const handleRegenerate = () => {
         const engine = getGameEngine();
         if (engine && engine.map) {
             engine.map.generateWorld();
-            // Mise à jour immédiate des états pour l'UI
+            engine.map.calculateSummary();
             setSummary({ ...engine.map.currentSummary });
             setStats({ ...engine.map.stats });
             setResources({ ...engine.map.resources });
+            engine.map.revision++;
         }
     };
 
     const handleSpawnTraffic = () => {
         const engine = getGameEngine();
-        if (engine && engine.map) {
-            // Petite protection si la méthode n'existe pas encore (TrafficSystem)
-            if ((engine.map as any).spawnTraffic) {
-                (engine.map as any).spawnTraffic(50);
-            } else {
-                console.log("TrafficSystem gère le spawn automatiquement.");
-            }
-        }
+        if (engine) engine.spawnTraffic();
     };
 
     // =========================================================
