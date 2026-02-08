@@ -40,9 +40,9 @@ export class TerrainRenderer {
                     sprite = new PIXI.Sprite(texture);
 
                     // --- RÈGLES STRICTES "GRID FLATTENER" ---
-                    sprite.anchor.set(0.5, 1.0);
-                    sprite.width = TILE_WIDTH + 1;
-                    sprite.height = TILE_HEIGHT + 1;
+                    sprite.anchor.set(0.5, 0.5);
+                    sprite.width = TILE_WIDTH + 13;
+                    sprite.height = TILE_HEIGHT + 13;
 
                     container.addChild(sprite);
                     spriteCache.set(i, sprite);
@@ -92,14 +92,22 @@ export class TerrainRenderer {
         }
 
         // =================================================================
-        // 3. OVERLAYS
+        // 3. OVERLAYS (Calques Ressources)
         // =================================================================
         if (viewMode !== 'ALL') {
             let overlayColor = -1;
+
+            // Ressources existantes
             if (viewMode === 'OIL' && engine.resourceMaps.oil[i] > 0.1) overlayColor = COLORS.OIL;
             else if (viewMode === 'COAL' && engine.resourceMaps.coal[i] > 0.1) overlayColor = COLORS.COAL;
             else if (viewMode === 'IRON' && engine.resourceMaps.iron[i] > 0.1) overlayColor = COLORS.IRON;
             else if (viewMode === 'WOOD' && engine.resourceMaps.wood[i] > 0.1) overlayColor = COLORS.WOOD;
+
+            // ✅ AJOUT DES NOUVELLES RESSOURCES
+            else if (viewMode === 'GOLD' && engine.resourceMaps.gold[i] > 0.1) overlayColor = COLORS.GOLD;
+            else if (viewMode === 'SILVER' && engine.resourceMaps.silver[i] > 0.1) overlayColor = COLORS.SILVER;
+            else if (viewMode === 'STONE' && engine.resourceMaps.stone[i] > 0.1) overlayColor = COLORS.STONE;
+            else if (viewMode === 'FOOD' && engine.resourceMaps.food[i] > 0.1) overlayColor = COLORS.FOOD;
 
             if (overlayColor !== -1) {
                 g.beginPath();

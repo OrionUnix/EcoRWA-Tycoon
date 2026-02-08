@@ -5,6 +5,7 @@ export const COLORS = {
     FOREST: 0x2e7d32, MOUNTAIN: 0x8d6e63,
     DESERT: 0xe6c288, SNOW: 0xffffff,
 
+
     // UI & Outils
     GRID_LINES: 0x999999,
     HIGHLIGHT: 0xFFFFFF,
@@ -15,7 +16,11 @@ export const COLORS = {
     // Ressources
     OIL: 0xffd700, COAL: 0x212121, IRON: 0xff5722, WOOD: 0x43a047,
     FOOD: 0xff3366,
+    GOLD: 0xFFD700,    // Or
+    SILVER: 0xC0C0C0,  // Argent
+    STONE: 0x808080,   // Pierre
 
+    DEEP_WATER: 0x000033,
     // Fallback Erreur
     ERROR: 0xFF00FF
 };

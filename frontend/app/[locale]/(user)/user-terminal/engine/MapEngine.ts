@@ -13,7 +13,14 @@ export class MapEngine {
     public moistureMap: Float32Array;
 
     public resourceMaps: {
-        oil: Float32Array; coal: Float32Array; iron: Float32Array; wood: Float32Array; animals: Float32Array; fish: Float32Array; stone: Float32Array;
+        oil: Float32Array;
+        coal: Float32Array;
+        iron: Float32Array;
+        wood: Float32Array;
+        animals: Float32Array;
+        fish: Float32Array;    // ✅
+        food: Float32Array;    // ✅
+        stone: Float32Array;
         silver: Float32Array;
         gold: Float32Array;
     };
@@ -47,11 +54,16 @@ export class MapEngine {
         };
 
         this.resourceMaps = {
-            oil: new Float32Array(TOTAL_CELLS), coal: new Float32Array(TOTAL_CELLS),
-            iron: new Float32Array(TOTAL_CELLS), wood: new Float32Array(TOTAL_CELLS),
-            animals: new Float32Array(TOTAL_CELLS), fish: new Float32Array(TOTAL_CELLS),
-            stone: new Float32Array(TOTAL_CELLS), silver: new Float32Array(TOTAL_CELLS),
+            oil: new Float32Array(TOTAL_CELLS),
+            coal: new Float32Array(TOTAL_CELLS),
+            iron: new Float32Array(TOTAL_CELLS),
+            wood: new Float32Array(TOTAL_CELLS),
+            stone: new Float32Array(TOTAL_CELLS),
+            silver: new Float32Array(TOTAL_CELLS),
             gold: new Float32Array(TOTAL_CELLS),
+            food: new Float32Array(TOTAL_CELLS),    // Agriculture / Plaines
+            animals: new Float32Array(TOTAL_CELLS), // Gibier / Terre
+            fish: new Float32Array(TOTAL_CELLS),    // Poisson / Eau ✅
         };
 
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
