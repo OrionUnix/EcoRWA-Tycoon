@@ -2,61 +2,56 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    
+    # 👇 SOLUTION : On définit le dossier de travail par défaut
+    defaults:
+      run:
+        working-directory: ./frontend
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. Installer Node.js (Indispensable)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: 'npm'
+ 
+          cache-dependency-path: frontend/package-lock.json
 
-      # 2. Configurer Pages (pour Next.js)
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        with:
-          static_site_generator: next
-
-      # 3. Installer les dépendances
       - name: Install dependencies
-        run: npm ci
 
-      # 4. Construire le projet (C'est cette étape qui crée le dossier 'out')
+        run: npm ci --legacy-peer-deps
+
       - name: Build with Next.js
+        # S'exécute dans ./frontend
         run: npm run build
 
-      # 5. Upload du dossier 'out' créé par le build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './out'
+        
+          path: './frontend/out'
 
       - name: Deploy to GitHub Pages
         id: deployment
