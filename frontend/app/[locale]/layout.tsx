@@ -7,7 +7,10 @@ import { Web3Providers } from '@/components/providers/Web3Providers';
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export function generateStaticParams() {
-  return [{ locale: 'fr' }, { locale: 'en' }];
+  return [
+    { locale: 'en' },
+    { locale: 'fr' }
+  ];
 }
 
 export default async function LocaleLayout({
