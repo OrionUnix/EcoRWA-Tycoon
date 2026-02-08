@@ -6,7 +6,7 @@ import { RoadManager } from '../engine/RoadManager';
 import { RoadType, ZoneType } from '../engine/types';
 
 export function useGameInput(
-    stageRef: React.MutableRefObject<PIXI.Container | null>,
+    stageRef: React.MutableRefObject<PIXI.Container | null>, // C'est le worldContainer
     appRef: React.MutableRefObject<PIXI.Application | null>,
     isReady: boolean,
     viewMode: string,
@@ -19,95 +19,142 @@ export function useGameInput(
     previewPathRef: React.MutableRefObject<number[]>,
     isValidBuildRef: React.MutableRefObject<boolean>
 ) {
-    // Refs pour le Drag & Drop
-    const isDraggingRef = useRef(false);
+    // Refs pour la logique interne
+    const isDraggingRef = useRef(false);       // Pour la construction (Clic Gauche)
+    const isPanningRef = useRef(false);        // Pour le déplacement (Clic Droit)
+    const lastPanPos = useRef({ x: 0, y: 0 }); // Position précédente de la souris pour le Pan
     const startTileRef = useRef<number | null>(null);
-    const lastHoverIdxRef = useRef<number>(-1);
 
     useEffect(() => {
         if (!isReady || !stageRef.current || !appRef.current) return;
-        const stage = stageRef.current;
+
+        const stage = stageRef.current; // Le worldContainer
+        const app = appRef.current;     // L'application Pixi
         const engine = getGameEngine();
 
-        // --- GESTION DU SURVOL (HOVER) ---
-        const onPointerMove = (e: PIXI.FederatedPointerEvent) => {
-            const localPos = stage.toLocal(e.global);
-            const gridPos = screenToGrid(localPos.x, localPos.y);
+        // --- 1. GESTION DU ZOOM (MOLETTE) ---
+        const onWheel = (e: WheelEvent) => {
+            e.preventDefault();
 
-            // Sécurité : ne pas sortir de la grille
-            if (gridPos.x < 0 || gridPos.x >= engine.map.config.size ||
-                gridPos.y < 0 || gridPos.y >= engine.map.config.size) return;
+            const scaleFactor = 1.1;
+            const direction = e.deltaY > 0 ? (1 / scaleFactor) : scaleFactor;
 
-            const idx = gridPos.y * engine.map.config.size + gridPos.x;
+            let newScale = stage.scale.x * direction;
 
-            // Mise à jour curseur UI
-            setCursorPos(gridPos);
+            // Limites du zoom (Min: 0.2, Max: 3.0)
+            if (newScale < 0.2) newScale = 0.2;
+            if (newScale > 3.0) newScale = 3.0;
 
-            // Optim: Ne rien faire si on est toujours sur la même case
-            if (idx === lastHoverIdxRef.current) return;
-            lastHoverIdxRef.current = idx;
+            // Zoom centré sur la souris (Calculs mathématiques)
+            // 1. Position de la souris avant zoom (local au monde)
+            const mouseGlobal = { x: e.clientX, y: e.clientY };
+            const worldPos = stage.toLocal(mouseGlobal);
 
-            // 1. Récupération des infos pour le Tooltip
-            if (engine.map && typeof (engine.map as any).getLayer === 'function') {
-                // On utilise getResourceAtTile depuis resourceUtils normalement, 
-                // mais ici on passe par le moteur si vous l'avez exposé, sinon on ignore pour l'instant
-                // ou mieux : importez getResourceAtTile de utils/resourceUtils si besoin.
+            // 2. Appliquer le zoom
+            stage.scale.set(newScale);
+
+            // 3. Ajuster la position du monde pour que la souris reste au même endroit
+            const newWorldPos = stage.toGlobal(worldPos);
+            stage.x += (mouseGlobal.x - newWorldPos.x);
+            stage.y += (mouseGlobal.y - newWorldPos.y);
+        };
+
+        // --- 2. GESTION DU MOUVEMENT (POINTER MOVE) ---
+        const onPointerMove = (e: PointerEvent) => {
+            // A. GESTION DU PAN (Déplacement Caméra - Clic Droit)
+            if (isPanningRef.current) {
+                const dx = e.clientX - lastPanPos.current.x;
+                const dy = e.clientY - lastPanPos.current.y;
+
+                stage.x += dx;
+                stage.y += dy;
+
+                lastPanPos.current = { x: e.clientX, y: e.clientY };
+                return; // Si on bouge la caméra, on ne fait rien d'autre
             }
 
-            // 2. Gestion du Drag & Drop (Prévisualisation)
+            // B. GESTION DU CURSEUR (Calcul case grille)
+            // On transforme la position souris écran -> position locale dans le monde zoomé
+            // Attention : e.clientX est relatif à la fenêtre, il faut utiliser les events Pixi ou compenser
+            // Ici on utilise l'event natif DOM ajouté sur le canvas, donc il faut le bounding rect si besoin
+            // Mais Pixi gère 'toLocal' depuis le global (screen).
+
+            const rect = app.canvas.getBoundingClientRect();
+            const globalX = e.clientX - rect.left;
+            const globalY = e.clientY - rect.top;
+
+            const localPos = stage.toLocal({ x: globalX, y: globalY });
+            const gridPos = screenToGrid(localPos.x, localPos.y);
+
+            setCursorPos(gridPos);
+
+            // C. TOOLTIP & CONSTRUCTION
+            const idx = gridPos.y * engine.map.config.size + gridPos.x;
+
+            // Info Tooltip
+            if (engine.getResourceAtTile) {
+                const info = engine.getResourceAtTile(idx, viewMode);
+                setHoverInfo(info);
+            }
+
+            // Preview Construction (Drag Gauche)
             if (viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
-
-                // 🚨 CORRECTION ICI : On utilise RoadManager directement, pas engine
                 const path = RoadManager.getPreviewPath(startTileRef.current, idx);
-
                 previewPathRef.current = path;
-
-                // Calcul du coût et validation
                 const { cost, valid } = RoadManager.calculateCost(engine.map, path, selectedRoad);
-
                 setTotalCost(cost);
                 setIsValidBuild(valid);
                 isValidBuildRef.current = valid;
             } else {
-                // Pas de drag, reset preview
-                if (previewPathRef.current.length > 0) {
+                if (!isDraggingRef.current) {
                     previewPathRef.current = [];
                     setTotalCost(0);
                 }
             }
         };
 
-        // --- CLIC ENFONCÉ (DÉBUT DRAG) ---
-        const onPointerDown = (e: PIXI.FederatedPointerEvent) => {
-            if (e.button !== 0) return; // Clic gauche uniquement
+        // --- 3. CLIC ENFONCÉ (POINTER DOWN) ---
+        const onPointerDown = (e: PointerEvent) => {
+            // CLIC DROIT (2) ou MOLETTE (1) = PAN
+            if (e.button === 2 || e.button === 1) {
+                isPanningRef.current = true;
+                lastPanPos.current = { x: e.clientX, y: e.clientY };
+                e.preventDefault();
+                return;
+            }
 
-            const localPos = stage.toLocal(e.global);
-            const gridPos = screenToGrid(localPos.x, localPos.y);
-            const idx = gridPos.y * engine.map.config.size + gridPos.x;
+            // CLIC GAUCHE (0) = ACTION JEU
+            if (e.button === 0) {
+                const rect = app.canvas.getBoundingClientRect();
+                const localPos = stage.toLocal({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                const gridPos = screenToGrid(localPos.x, localPos.y);
+                const idx = gridPos.y * engine.map.config.size + gridPos.x;
 
-            if (viewMode === 'BUILD_ROAD') {
-                isDraggingRef.current = true;
-                startTileRef.current = idx;
-                previewPathRef.current = [idx];
-            } else if (viewMode === 'BULLDOZER') {
-                engine.handleInteraction(idx, viewMode, null, null);
-            } else if (viewMode === 'ZONE') {
-                engine.handleInteraction(idx, viewMode, null, selectedZone);
+                if (viewMode === 'BUILD_ROAD') {
+                    isDraggingRef.current = true;
+                    startTileRef.current = idx;
+                    previewPathRef.current = [idx];
+                } else if (viewMode === 'BULLDOZER') {
+                    engine.handleInteraction(idx, viewMode, null, null);
+                } else if (viewMode === 'ZONE') {
+                    engine.handleInteraction(idx, viewMode, null, selectedZone);
+                }
             }
         };
 
-        // --- RELÂCHEMENT (FIN DRAG & CONSTRUCTION) ---
-        const onPointerUp = () => {
-            if (viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
+        // --- 4. RELÂCHEMENT (POINTER UP) ---
+        const onPointerUp = (e: PointerEvent) => {
+            // Fin du Pan
+            if (e.button === 2 || e.button === 1) {
+                isPanningRef.current = false;
+            }
 
+            // Fin de la Construction
+            if (e.button === 0 && viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
                 const path = previewPathRef.current;
-
                 if (path.length > 0 && isValidBuildRef.current) {
-                    // Construction
                     engine.handleInteraction(0, 'BUILD_ROAD', path, selectedRoad);
                 }
-
-                // Reset
                 isDraggingRef.current = false;
                 startTileRef.current = null;
                 previewPathRef.current = [];
@@ -115,19 +162,21 @@ export function useGameInput(
             }
         };
 
-        stage.eventMode = 'static';
-        stage.hitArea = new PIXI.Rectangle(-5000, -5000, 10000, 10000);
-
-        stage.on('pointermove', onPointerMove);
-        stage.on('pointerdown', onPointerDown);
-        stage.on('pointerup', onPointerUp);
-        stage.on('pointerupoutside', onPointerUp);
+        // --- 5. ATTACHEMENT DES EVENTS (DOM natif pour fiabilité) ---
+        const canvas = app.canvas;
+        canvas.addEventListener('wheel', onWheel, { passive: false });
+        canvas.addEventListener('pointerdown', onPointerDown);
+        window.addEventListener('pointermove', onPointerMove); // Window pour ne pas perdre le drag si on sort
+        window.addEventListener('pointerup', onPointerUp);
+        // Empêcher le menu contextuel sur clic droit
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
         return () => {
-            stage.off('pointermove', onPointerMove);
-            stage.off('pointerdown', onPointerDown);
-            stage.off('pointerup', onPointerUp);
-            stage.off('pointerupoutside', onPointerUp);
+            canvas.removeEventListener('wheel', onWheel);
+            canvas.removeEventListener('pointerdown', onPointerDown);
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            canvas.removeEventListener('contextmenu', (e) => e.preventDefault());
         };
     }, [isReady, viewMode, selectedRoad, selectedZone]);
 }

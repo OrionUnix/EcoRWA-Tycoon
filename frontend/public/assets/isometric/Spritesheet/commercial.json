@@ -1,0 +1,103 @@
+{
+    "category": "COMMERCIAL",
+    "levels": {
+        "1": {
+            "name": "Local Retail",
+            "employees": 2,
+            "requiredPopulation": 50,
+            "requiredRoadQuality": 1,
+            "taxBase": 35,
+            "consumption": {
+                "water": 1,
+                "power": 2
+            },
+            "sprites": [
+                "COMMERCIAL.LVL1_KIOSK_BLUE",
+                "COMMERCIAL.LVL1_SHOP_RED",
+                "COMMERCIAL.LVL1_STORE_ORANGE"
+            ]
+        },
+        "2": {
+            "name": "Neighborhood Plaza",
+            "employees": 12,
+            "requiredPopulation": 250,
+            "requiredRoadQuality": 2,
+            "taxBase": 120,
+            "consumption": {
+                "water": 4,
+                "power": 8
+            },
+            "sprites": [
+                "COMMERCIAL.LVL2_MARKET_VAR1",
+                "COMMERCIAL.LVL2_MARKET_VAR2"
+            ]
+        },
+        "3": {
+            "name": "Professional Center",
+            "employees": 45,
+            "requiredPopulation": 1200,
+            "requiredRoadQuality": 3,
+            "taxBase": 500,
+            "consumption": {
+                "water": 20,
+                "power": 40
+            },
+            "sprites": [
+                "COMMERCIAL.LVL3_OFFICE_GLASS",
+                "COMMERCIAL.LVL3_OFFICE_BRICK"
+            ]
+        },
+        "4": {
+            "name": "Shopping Mall",
+            "employees": 180,
+            "requiredPopulation": 6000,
+            "requiredRoadQuality": 4,
+            "taxBase": 2200,
+            "consumption": {
+                "water": 80,
+                "power": 150
+            },
+            "sprites": [
+                "COMMERCIAL.LVL4_MALL_COMPLEX"
+            ]
+        },
+        "5": {
+            "name": "Corporate District",
+            "employees": 850,
+            "requiredPopulation": 25000,
+            "requiredRoadQuality": 5,
+            "taxBase": 9000,
+            "consumption": {
+                "water": 300,
+                "power": 800
+            },
+            "sprites": [
+                "COMMERCIAL.LVL5_SKY_TOWER"
+            ]
+        }
+    },
+    "states": {
+        "CONSTRUCTION": [
+            "COMMERCIAL.CONSTR_SCAFFOLD_SMALL",
+            "COMMERCIAL.CONSTR_SCAFFOLD_LARGE"
+        ],
+        "ABANDONED": [
+            "COMMERCIAL.ABANDONED_VAR1"
+        ],
+        "RUINED": [
+            "COMMERCIAL.RUIN_DEBRIS",
+            "COMMERCIAL.RUIN_SMOKE"
+        ]
+    },
+    "simulation_rules": {
+        "traffic_bonus_weight": 0.6,
+        "customer_reach_radius": 5,
+        "pollution_penalty_threshold": 0.5
+    },
+    "evolution": {
+        "upgradeThreshold": 0.80,
+        "declineThreshold": 0.45,
+        "abandonThreshold": 0.25,
+        "destructionThreshold": 0.10
+    }
+}

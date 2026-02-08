@@ -1,0 +1,87 @@
+{
+    "category": "INFRASTRUCTURE",
+    "global_thresholds": {
+        "normal": {
+            "max": 0.7,
+            "effect": null,
+            "icon": null
+        },
+        "saturated": {
+            "max": 1.0,
+            "effect": "ORANGE_HALO",
+            "icon": "WARNING"
+        },
+        "overloaded": {
+            "max": 1.3,
+            "effect": "RED_HALO",
+            "icon": "CRITICAL"
+        },
+        "crisis": {
+            "max": 999,
+            "effect": "DARK_SHADER_SMOKE",
+            "icon": "EMERGENCY"
+        }
+    },
+    "services": {
+        "WATER_TOWER": {
+            "name": "Water Tower",
+            "capacity": 500,
+            "cost": 1200,
+            "maintenance": 50,
+            "sprite": "INFRA.WATER_TOWER_CLEAN",
+            "icon_type": "WATER_DROP"
+        },
+        "POWER_PLANT_NUCLEAR": {
+            "name": "Nuclear Plant",
+            "capacity": 5000,
+            "cost": 15000,
+            "maintenance": 800,
+            "pollutionGen": 0.1,
+            "sprite": "INFRA.POWER_NUCLEAR",
+            "icon_type": "LIGHTNING"
+        },
+        "POLICE_STATION": {
+            "name": "Police Station",
+            "capacity": 100,
+            "coverageRadius": 15,
+            "cost": 2500,
+            "maintenance": 150,
+            "sprite": "INFRA.POLICE_MAIN",
+            "icon_type": "POLICE_BADGE"
+        },
+        "FIRE_STATION": {
+            "name": "Fire Department",
+            "capacity": 80,
+            "coverageRadius": 12,
+            "cost": 2300,
+            "maintenance": 140,
+            "sprite": "INFRA.FIRE_MAIN",
+            "icon_type": "FIRE"
+        },
+        "HOSPITAL": {
+            "name": "City Hospital",
+            "capacity": 250,
+            "coverageRadius": 20,
+            "cost": 5000,
+            "maintenance": 450,
+            "sprite": "INFRA.HOSPITAL_MODERN",
+            "icon_type": "HOSPITAL_CROSS"
+        },
+        "SCHOOL": {
+            "name": "Public School",
+            "capacity": 400,
+            "cost": 1800,
+            "maintenance": 100,
+            "sprite": "INFRA.SCHOOL_CLASSIC",
+            "icon_type": "EDUCATION"
+        },
+        "WATER_TREATMENT": {
+            "name": "Treatment Plant",
+            "capacity": 1000,
+            "cost": 3500,
+            "maintenance": 200,
+            "sprite": "INFRA.WATER_PURIFIER",
+            "icon_type": "WATER_POLLUTION"
+        }
+    }
+}

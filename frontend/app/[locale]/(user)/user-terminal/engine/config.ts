@@ -1,5 +1,5 @@
 // 128x128 est le "Sweet Spot" pour un city builder web performant
-export const GRID_SIZE = 64;
+export const GRID_SIZE = 32;
 export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 
 // Configuration de l'affichage

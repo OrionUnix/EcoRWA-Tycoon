@@ -1,0 +1,124 @@
+{
+    "road_system": {
+        "tilesheet": "assets/roads.jpg",
+        "tileSize": 128,
+        "categories": {
+            "dirt_road": {
+                "quality": 1,
+                "boost": 1.1,
+                "maxDensity": 1,
+                "cost": 5,
+                "description": "Chemin de terre pour zones rurales.",
+                "sprites": {
+                    "horizontal": [
+                        0,
+                        0
+                    ],
+                    "vertical": [
+                        0,
+                        1
+                    ],
+                    "corner": [
+                        0,
+                        2
+                    ]
+                }
+            },
+            "standard": {
+                "quality": 2,
+                "boost": 1.3,
+                "maxDensity": 2,
+                "cost": 15,
+                "description": "Route asphaltée classique à deux voies.",
+                "sprites": {
+                    "straight": [
+                        2,
+                        2
+                    ],
+                    "cross": [
+                        1,
+                        0
+                    ],
+                    "intersection_T": [
+                        5,
+                        3
+                    ]
+                }
+            },
+            "avenue": {
+                "quality": 3,
+                "boost": 1.6,
+                "maxDensity": 3,
+                "cost": 40,
+                "description": "Grande avenue avec lampadaires intégrés.",
+                "hasLighting": true,
+                "sprites": {
+                    "straight": [
+                        0,
+                        3
+                    ],
+                    "cross": [
+                        0,
+                        4
+                    ],
+                    "bridge": [
+                        4,
+                        0
+                    ]
+                }
+            },
+            "boulevard": {
+                "quality": 4,
+                "boost": 2.0,
+                "maxDensity": 5,
+                "cost": 100,
+                "description": "Axe majeur avec ponts et haute capacité.",
+                "canBuildOverWater": true,
+                "sprites": {
+                    "straight": [
+                        5,
+                        0
+                    ],
+                    "elevated": [
+                        5,
+                        1
+                    ],
+                    "large_square": [
+                        4,
+                        1
+                    ]
+                }
+            },
+            "cobblestone": {
+                "quality": 5,
+                "boost": 2.5,
+                "maxDensity": 4,
+                "cost": 80,
+                "description": "Rues pavées de luxe pour centres historiques.",
+                "attractivenessBonus": 0.2,
+                "sprites": {
+                    "straight": [
+                        6,
+                        2
+                    ],
+                    "corner": [
+                        6,
+                        0
+                    ],
+                    "square": [
+                        7,
+                        4
+                    ]
+                }
+            }
+        }
+    },
+    "visual_rules": {
+        "show_lamp_glow_at_night": true,
+        "traffic_particle_density": {
+            "low": 0.2,
+            "medium": 0.5,
+            "high": 1.0
+        }
+    }
+}

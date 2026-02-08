@@ -1,0 +1,106 @@
+{
+    "category": "INDUSTRIAL",
+    "levels": {
+        "1": {
+            "name": "Small Workshop",
+            "employees": 5,
+            "taxBase": 25,
+            "pollutionGen": 0.2,
+            "requiredRoadQuality": 1,
+            "consumption": {
+                "water": 2,
+                "power": 3
+            },
+            "sprites": [
+                "IND.LVL1_BRICK_FACTORY",
+                "IND.LVL1_WAREHOUSE"
+            ]
+        },
+        "2": {
+            "name": "Manufacturing Plant",
+            "employees": 20,
+            "taxBase": 100,
+            "pollutionGen": 0.5,
+            "requiredRoadQuality": 2,
+            "consumption": {
+                "water": 8,
+                "power": 15
+            },
+            "sprites": [
+                "IND.LVL2_GREEN_ROOF",
+                "IND.LVL2_SMOKE_STACKS"
+            ]
+        },
+        "3": {
+            "name": "Oil Extraction Well",
+            "employees": 15,
+            "taxBase": 350,
+            "pollutionGen": 0.8,
+            "resourceDependency": "OIL",
+            "requiredRoadQuality": 3,
+            "consumption": {
+                "water": 15,
+                "power": 25
+            },
+            "sprites": [
+                "IND.LVL3_PUMP_VAR1",
+                "IND.LVL3_PUMP_VAR2",
+                "IND.LVL3_REFINERY_SMALL"
+            ]
+        },
+        "4": {
+            "name": "Heavy Steel Mill",
+            "employees": 120,
+            "taxBase": 1200,
+            "pollutionGen": 1.5,
+            "requiredRoadQuality": 4,
+            "consumption": {
+                "water": 60,
+                "power": 120
+            },
+            "sprites": [
+                "IND.LVL4_BLAST_FURNACE",
+                "IND.LVL4_CHEMICAL_PLANT"
+            ]
+        },
+        "5": {
+            "name": "High-Tech Megafactory",
+            "employees": 500,
+            "taxBase": 5500,
+            "pollutionGen": 0.4,
+            "requiredRoadQuality": 5,
+            "consumption": {
+                "water": 150,
+                "power": 450
+            },
+            "sprites": [
+                "IND.LVL5_TECH_HUB",
+                "IND.LVL5_SOLAR_PLANT"
+            ]
+        }
+    },
+    "states": {
+        "CONSTRUCTION": [
+            "IND.CONSTR_PHASE_1",
+            "IND.CONSTR_PHASE_2"
+        ],
+        "ABANDONED": [
+            "IND.STATUS_ABANDONED"
+        ],
+        "RUINED": [
+            "IND.STATUS_RUINED_METAL",
+            "IND.STATUS_RUINED_SMOKE"
+        ]
+    },
+    "simulation_rules": {
+        "pollution_radius": 4,
+        "resource_extraction_rate": 0.15,
+        "land_value_penalty": -0.4
+    },
+    "evolution": {
+        "upgradeThreshold": 0.70,
+        "declineThreshold": 0.30,
+        "abandonThreshold": 0.15,
+        "destructionThreshold": 0.05
+    }
+}

@@ -1,0 +1,72 @@
+{
+    "category": "TERRAIN_BIOME",
+    "biome_type": "MOUNTAIN",
+    "metadata": {
+        "spritesheet": "assets/terrain/mountain_biome.png",
+        "tileSize": 256,
+        "elevation_levels": 5
+    },
+    "terrain_tiles": {
+        "MOUNTAIN_PEAK": {
+            "name": "Sommet rocheux",
+            "buildable": false,
+            "unclutter_cost": 0,
+            "sprites": {
+                "row": 0,
+                "col": 0,
+                "variations": 3
+            }
+        },
+        "CLIFF_FACE": {
+            "name": "Falaise abrupte",
+            "buildable": false,
+            "slope_angle": 90,
+            "sprites": {
+                "row": 1,
+                "col": 0,
+                "variations": 4
+            }
+        },
+        "SLOPE_GRASSY": {
+            "name": "Pente herbeuse",
+            "buildable": true,
+            "construction_cost_multiplier": 2.5,
+            "max_building_size": "2x2",
+            "sprites": {
+                "row": 3,
+                "col": 0,
+                "variations": 2
+            }
+        }
+    },
+    "geological_features": {
+        "ROCK_FORMATION": {
+            "name": "Amas de rochers",
+            "is_obstacle": true,
+            "resource_yield": {
+                "stone": 150
+            },
+            "unclutter_cost": 500,
+            "sprites": {
+                "row": 2,
+                "col": 0,
+                "variations": 3
+            }
+        },
+        "BOULDER_SCATTER": {
+            "name": "Pierrier",
+            "is_obstacle": false,
+            "movement_penalty": 0.5,
+            "sprite": {
+                "row": 2,
+                "col": 4
+            }
+        }
+    },
+    "gameplay_rules": {
+        "tunnel_threshold": 3,
+        "avalanche_risk": 0.05,
+        "wind_power_bonus": 0.3,
+        "erosion_effect": true
+    }
+}
