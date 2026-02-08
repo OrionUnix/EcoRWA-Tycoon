@@ -1,66 +1,72 @@
 import { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 
-export function usePixiApp(containerRef: React.RefObject<HTMLDivElement>) {
+export function usePixiApp(containerRef: React.RefObject<HTMLDivElement | null>) {
     const appRef = useRef<PIXI.Application | null>(null);
     const stageRef = useRef<PIXI.Container | null>(null);
     const [isReady, setIsReady] = useState(false);
 
-    // Protection contre le double-mount de React StrictMode
-    const isInitializedRef = useRef(false);
+    // On utilise un ID unique pour chaque montage
+    const mountId = useRef(Math.random());
 
     useEffect(() => {
-        if (!containerRef.current || isInitializedRef.current) return;
+        if (!containerRef.current) return;
+
+        console.log(`🔌 [PixiApp ${mountId.current.toFixed(4)}] Montage...`);
+        let isMounted = true;
+        let app: PIXI.Application | null = null;
 
         const initPixi = async () => {
-            isInitializedRef.current = true;
-            console.log("🎨 PixiApp: Initialisation...");
+            // Si une app existe déjà, on la tue
+            if (appRef.current) {
+                console.warn("⚠️ Ancienne App détectée, destruction...");
+                appRef.current.destroy(true, { children: true });
+                appRef.current = null;
+            }
 
-            const app = new PIXI.Application();
+            app = new PIXI.Application();
 
-            // 1. Configuration Robuste
             await app.init({
-                resizeTo: containerRef.current!, // S'adapte au div parent
-                backgroundColor: 0x111111,       // GRIS FONCÉ (Pas noir, pour voir le canvas)
+                resizeTo: containerRef.current!,
+                backgroundColor: 0x111111, // ✅ ON REMET LE GRIS (au lieu de 0xFF0000)
                 antialias: true,
                 resolution: window.devicePixelRatio || 1,
                 autoDensity: true,
             });
 
-            // 2. Attachement au DOM
+            if (!isMounted) {
+                console.log("🛑 Composant démonté pendant l'init, on annule.");
+                app.destroy(true);
+                return;
+            }
+
             if (containerRef.current) {
-                // On vide le container au cas où
-                while (containerRef.current.firstChild) {
-                    containerRef.current.removeChild(containerRef.current.firstChild);
-                }
+                // Vide le conteneur HTML
+                containerRef.current.innerHTML = '';
                 containerRef.current.appendChild(app.canvas);
             }
 
-            // 3. Configuration de la Caméra (Stage)
-            // On centre le monde (0,0) au milieu de l'écran
+            // Centrage Caméra
             app.stage.x = app.screen.width / 2;
-            app.stage.y = app.screen.height / 2;
-
-            // On active le tri par profondeur globalement
+            app.stage.y = app.screen.height / 4;
             app.stage.sortableChildren = true;
 
-            // 4. Sauvegarde des références
             appRef.current = app;
             stageRef.current = app.stage;
 
-            console.log("✅ PixiApp: Prêt ! Dimensions:", app.screen.width, "x", app.screen.height);
+            console.log(`✅ [PixiApp ${mountId.current.toFixed(4)}] Prêt.`);
             setIsReady(true);
         };
 
         initPixi();
 
-        // Cleanup
         return () => {
+            console.log(`🗑️ [PixiApp ${mountId.current.toFixed(4)}] Démontage.`);
+            isMounted = false;
+            setIsReady(false);
             if (appRef.current) {
-                console.log("🗑️ PixiApp: Destruction");
                 appRef.current.destroy(true, { children: true });
                 appRef.current = null;
-                isInitializedRef.current = false;
             }
         };
     }, []);

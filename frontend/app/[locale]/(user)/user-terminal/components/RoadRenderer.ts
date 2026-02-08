@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { RoadData, ROAD_SPECS, RoadType } from '../engine/types';
 import { TILE_WIDTH, TILE_HEIGHT } from '../engine/config';
-import { COLORS } from './GameRenderer'; // On réutilise les couleurs
+import { COLORS } from '../engine/constants';
 
 export class RoadRenderer {
     static drawTile(g: PIXI.Graphics, road: RoadData, cx: number, cy: number, isHigh: boolean, isLow: boolean) {
@@ -11,13 +11,13 @@ export class RoadRenderer {
         const baseWidth = specs.width || 8;
         const baseColor = road.isBridge ? COLORS.ROAD_BRIDGE : (specs.color || 0x555555);
 
-        // --- MODE LOW (Vue Satellite) ---
+        // --- MODE LOW ---
         if (isLow) {
             g.circle(cx, cy, baseWidth / 2).fill({ color: baseColor });
             return;
         }
 
-        // --- MODE NORMAL / HIGH ---
+        // --- MODE NORMAL ---
         const n_dx = TILE_WIDTH / 4; const n_dy = -TILE_HEIGHT / 4;
         const s_dx = -TILE_WIDTH / 4; const s_dy = TILE_HEIGHT / 4;
         const e_dx = TILE_WIDTH / 4; const e_dy = TILE_HEIGHT / 4;
@@ -45,18 +45,13 @@ export class RoadRenderer {
             }
         };
 
-        // 1. Pont
         if (road.isBridge) {
             drawConnections(baseWidth + 4, 0x5D4037);
-            if (isHigh) {
-                g.rect(cx - 2, cy, 4, 10).fill({ color: 0x3E2723 });
-            }
+            if (isHigh) g.rect(cx - 2, cy, 4, 10).fill({ color: 0x3E2723 });
         }
 
-        // 2. Asphalte
         drawConnections(baseWidth, baseColor);
 
-        // 3. Marquage (High Detail)
         if (isHigh && road.type === RoadType.HIGHWAY) {
             g.circle(cx, cy, 1.5).fill({ color: 0xFFFFFF });
         }

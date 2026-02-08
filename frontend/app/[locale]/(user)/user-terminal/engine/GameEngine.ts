@@ -3,7 +3,7 @@ import { TrafficSystem } from './systems/TrafficSystem';
 import { RoadManager } from './RoadManager';
 import { ZoneType } from './types';
 
-// Singleton
+// Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
 
 export class GameEngine {
@@ -54,7 +54,7 @@ export class GameEngine {
                     // 2. POSE DE LA ROUTE
                     const existing = this.map.roadLayer[idx];
                     if (!existing || existing.type !== type) {
-                        const isWater = this.map.getLayer(1)[idx] > 0.3;
+                        const isWater = this.map.getLayer(1)[idx] > 0.3; // 1 = Elevation/Water layer usually
                         const roadData = RoadManager.createRoad(type, isWater, false);
 
                         this.map.placeRoad(idx, roadData);
@@ -72,8 +72,7 @@ export class GameEngine {
 
         // --- BULLDOZER ---
         else if (mode === 'BULLDOZER') {
-            const idx = index; // Ici index est simple
-            // Si c'est un path (drag bulldozer), il faudrait une boucle, mais restons simple pour l'instant
+            const idx = index;
 
             if (this.map.roadLayer[idx]) {
                 this.map.removeRoad(idx);
@@ -101,11 +100,47 @@ export class GameEngine {
         }
     }
 
-    // Helpers UI
+    // --- Helpers UI ---
     public getStats() { return this.map.stats; }
     public getResources() { return this.map.resources; }
 
-    // Pour l'input
+    /**
+     * Récupère les infos d'une tuile pour le Tooltip UI
+     */
+    public getResourceAtTile(index: number, viewMode: string): any {
+        if (!this.map || index < 0 || index >= this.map.config.size * this.map.config.size) {
+            return null;
+        }
+
+        const info: any = {
+            biome: this.map.biomes[index],
+            elevation: this.map.heightMap[index],
+        };
+
+        // Infos Ressources
+        if (this.map.resourceMaps) {
+            if (this.map.resourceMaps.oil && this.map.resourceMaps.oil[index] > 0) info.oil = this.map.resourceMaps.oil[index];
+            if (this.map.resourceMaps.coal && this.map.resourceMaps.coal[index] > 0) info.coal = this.map.resourceMaps.coal[index];
+            if (this.map.resourceMaps.iron && this.map.resourceMaps.iron[index] > 0) info.iron = this.map.resourceMaps.iron[index];
+            if (this.map.resourceMaps.wood && this.map.resourceMaps.wood[index] > 0) info.wood = this.map.resourceMaps.wood[index];
+        }
+
+        // Infos Bâtiments / Routes
+        if (this.map.buildingLayer[index]) {
+            info.building = this.map.buildingLayer[index];
+        }
+        if (this.map.roadLayer[index]) {
+            info.road = this.map.roadLayer[index];
+        }
+
+        // Infos Zones
+        if (this.map.zoningLayer[index]) {
+            info.zone = this.map.zoningLayer[index];
+        }
+
+        return info;
+    }
+
     public spawnTraffic() {
         TrafficSystem.spawnVehicle(this.map);
     }
