@@ -1,8 +1,11 @@
 import * as PIXI from 'pixi.js';
 import { BiomeType } from './types';
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 
-// Chemin exact basé sur tes fichiers
-const BASE_PATH = '/assets/isometric/Spritesheet/biome';
+// ✅ CORRECTION ICI : On utilise withBasePath pour générer le bon chemin
+// En prod : "/EcoRWA-Tycoon/assets/isometric/Spritesheet/biome"
+// En dev  : "/assets/isometric/Spritesheet/biome"
+const BASE_PATH = withBasePath('/assets/isometric/Spritesheet/biome');
 
 // Mapping exact de tes fichiers
 const BIOME_FILES: Record<number, string> = {
@@ -19,10 +22,11 @@ const BIOME_FILES: Record<number, string> = {
 const texturesCache = new Map<number, PIXI.Texture[]>();
 
 export async function loadBiomeTextures() {
-    console.log("🔄 Début du chargement des textures...");
+    console.log("🔄 Début du chargement des textures depuis :", BASE_PATH);
 
     const promises = Object.entries(BIOME_FILES).map(async ([key, filename]) => {
         const biome = Number(key);
+        // Le chemin est maintenant correct grâce à la constante modifiée plus haut
         const path = `${BASE_PATH}/${filename}`;
 
         try {
@@ -38,7 +42,10 @@ export async function loadBiomeTextures() {
 
             for (let y = 0; y < rows; y++) {
                 for (let x = 0; x < cols; x++) {
+                    // Création de la texture découpée
                     const rect = new PIXI.Rectangle(x * w, y * h, w, h);
+
+                    // PIXI v8+ syntaxe recommandée (ou v7 compatible)
                     const tex = new PIXI.Texture({
                         source: texture.source,
                         frame: rect
@@ -48,10 +55,8 @@ export async function loadBiomeTextures() {
             }
 
             texturesCache.set(biome, frames);
-            // console.log(`✅ Chargé: ${filename}`);
         } catch (err) {
-            console.error(`❌ ERREUR CHARGEMENT ${filename} :`, err);
-            // On ne met rien dans le cache, le Renderer utilisera le fallback
+            console.error(`❌ ERREUR CHARGEMENT ${filename} à ${path} :`, err);
         }
     });
 
