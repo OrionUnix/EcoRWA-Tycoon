@@ -35,8 +35,8 @@ export class ResourceRenderer {
                 sprite.anchor.set(0.5, 0.85);
                 sprite.animationSpeed = 0.005 + Math.random() * 0.005;
                 sprite.play();
-                sprite.width = 72;
-                sprite.height = 72;
+                sprite.width = 60;
+                sprite.height = 60;
 
                 container.addChild(sprite);
                 resourceCache.set(i, sprite);

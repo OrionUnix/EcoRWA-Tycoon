@@ -42,8 +42,8 @@ export class TerrainRenderer {
 
                     // --- RÈGLES STRICTES "GRID FLATTENER" ---
                     sprite.anchor.set(0.5, 1);
-                    sprite.width = TILE_WIDTH + 14;
-                    sprite.height = TILE_HEIGHT + 14;
+                    sprite.width = TILE_WIDTH + 6;
+                    sprite.height = TILE_HEIGHT + 12;
 
                     container.addChild(sprite);
                     spriteCache.set(i, sprite);
