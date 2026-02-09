@@ -2,11 +2,23 @@ import * as PIXI from 'pixi.js';
 import { ResourceAssets } from './ResourceAssets';
 import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
+import { TILE_HEIGHT } from './config';
 
 // On utilise Sprite simple (pas d'animation)
 const resourceCache = new Map<number, PIXI.Sprite>();
 
 export class ResourceRenderer {
+
+    static removeResourceAt(i: number) {
+        const sprite = resourceCache.get(i);
+        if (sprite) {
+            if (sprite.parent) {
+                sprite.parent.removeChild(sprite);
+            }
+            sprite.destroy();
+            resourceCache.delete(i);
+        }
+    }
     static drawResource(
         container: PIXI.Container,
         engine: MapEngine,
@@ -60,7 +72,12 @@ export class ResourceRenderer {
             // B. MISE À JOUR POSITION
             sprite.visible = true;
             sprite.x = pos.x;
-            sprite.y = pos.y;
+
+            // ✅ CORRECTION CRITIQUE : En isométrique, pos.y est le CENTRE du losange
+            // Le pied de l'arbre doit être au BAS du losange (pos.y + TILE_HEIGHT/2)
+            // Avec anchor.y = 0.9, le point d'ancrage est déjà proche du pied
+            // Donc on positionne le sprite au bas de la tuile
+            sprite.y = pos.y + (TILE_HEIGHT / 2);
 
             // Profondeur : +10 assure qu'il est devant le sol
             sprite.zIndex = pos.y + 10;

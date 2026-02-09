@@ -2,7 +2,7 @@ import { MapEngine } from './MapEngine';
 import { TrafficSystem } from './systems/TrafficSystem';
 import { RoadManager } from './RoadManager';
 import { ZoneType } from './types';
-
+import { ResourceRenderer } from './ResourceRenderer';
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
 
@@ -62,6 +62,8 @@ export class GameEngine {
                         // 3. IMPACT ENVIRONNEMENT & PATHFINDING
                         RoadManager.applyEnvironmentalImpact(this.map, idx);
                         RoadManager.updateConnections(this.map, idx);
+                        // ✅ SUPPRESSION VISUELLE DE L'ARBRE (AJOUT CRUCIAL ICI)
+                        ResourceRenderer.removeResourceAt(idx);
                     }
                 });
 
