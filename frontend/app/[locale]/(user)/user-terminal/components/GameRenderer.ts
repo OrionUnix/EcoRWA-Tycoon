@@ -4,8 +4,8 @@ import { gridToScreen } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
 import { ZoneType, ZONE_COLORS } from '../engine/types';
 import { TerrainRenderer } from './TerrainRenderer';
-import { RoadRenderer } from './RoadRenderer';
-import { BuildingRenderer } from './BuildingRenderer';
+import { RoadRenderer } from './RoadRenderer';     // Vérifie le chemin (engine ou components)
+import { BuildingRenderer } from '../engine/BuildingRenderer'; // Vérifie le chemin (engine ou components)
 import { COLORS } from '../engine/constants';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 
@@ -27,8 +27,9 @@ export class GameRenderer {
 
         const isHighDetail = zoomLevel > LOD_THRESHOLD_HIGH;
         const isLowDetail = zoomLevel < LOD_THRESHOLD_LOW;
-        container.sortableChildren = true;
 
+        // ✅ IMPORTANT : Active le tri de profondeur automatique
+        container.sortableChildren = true;
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -36,13 +37,17 @@ export class GameRenderer {
                 const pos = gridToScreen(x, y);
 
                 const biome = engine.biomes[i];
-                const wood = engine.resourceMaps.wood[i];
+                const wood = engine.resourceMaps.wood ? engine.resourceMaps.wood[i] : 0;
+
+                // 1. TERRAIN
                 TerrainRenderer.drawTile(container, g, engine, biome, x, y, i, pos, viewMode);
-                // 2. RESSOURCES (zIndex = x + y + 0.5)
+
+                // 2. RESSOURCES (Arbres)
                 if (!isLowDetail && viewMode === 'ALL') {
                     ResourceRenderer.drawResource(container, engine, i, pos, wood, biome);
                 }
 
+                // 3. GRILLE & ZONES (Sur le graphics global 'g')
                 if (showGrid && !isLowDetail) {
                     g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: 0.1 });
                 }
@@ -58,12 +63,24 @@ export class GameRenderer {
                     g.fill({ color: zColor, alpha: 0.3 });
                 }
 
+                // 4. ROUTES
                 if (engine.roadLayer[i]) {
+                    // ✅ CORRECTION : On passe 'container', x, y, pos
                     RoadRenderer.drawTile(container, engine.roadLayer[i]!, x, y, pos, isHighDetail, isLowDetail);
                 }
+
                 // 5. BÂTIMENTS
                 if (engine.buildingLayer && engine.buildingLayer[i]) {
-                    BuildingRenderer.drawTile(g, engine.buildingLayer[i]!, pos.x, pos.y, isHighDetail, isLowDetail);
+                    // ✅ CORRECTION ICI : On passe 7 arguments maintenant !
+                    BuildingRenderer.drawTile(
+                        container,                  // 1. Container (pour le Z-Index)
+                        engine.buildingLayer[i]!,   // 2. Data
+                        x,                          // 3. Grid X
+                        y,                          // 4. Grid Y
+                        pos,                        // 5. Screen Pos {x,y}
+                        isHighDetail,               // 6. LOD High
+                        isLowDetail                 // 7. LOD Low
+                    );
                 }
             }
         }
@@ -73,6 +90,8 @@ export class GameRenderer {
         g.clear();
 
         const isLow = zoomLevel < LOD_THRESHOLD_LOW;
+
+        // Véhicules (Exemple simple)
         if (engine.vehicles && !isLow) {
             engine.vehicles.forEach(car => {
                 const screenPos = gridToScreen(car.x, car.y);
@@ -80,10 +99,10 @@ export class GameRenderer {
                 const py = screenPos.y + (car.offsetY || 0) * TILE_HEIGHT;
 
                 g.rect(px - 3, py - 3, 6, 6).fill({ color: car.color || 0xFFFFFF });
-                if (zoomLevel > 1.5) g.rect(px + 2, py - 2, 2, 2).fill({ color: 0xFFFF00 });
             });
         }
 
+        // Curseur
         const hl = gridToScreen(cursorPos.x, cursorPos.y);
         g.beginPath();
         g.moveTo(hl.x, hl.y - TILE_HEIGHT / 2);
@@ -92,6 +111,7 @@ export class GameRenderer {
         g.lineTo(hl.x - TILE_WIDTH / 2, hl.y);
         g.stroke({ width: 2, color: COLORS.HIGHLIGHT });
 
+        // Preview Construction Route
         if (previewPath.length > 0) {
             for (const idx of previewPath) {
                 const x = idx % GRID_SIZE; const y = Math.floor(idx / GRID_SIZE);

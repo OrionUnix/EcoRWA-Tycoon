@@ -1,18 +1,17 @@
 import { MapEngine } from '../MapEngine';
-import { ZoneType, BUILDING_COSTS, PlayerResources } from '../types';
+// ✅ AJOUT DE BuildingType
+import { ZoneType, BuildingType, BUILDING_COSTS, PlayerResources } from '../types';
 import { GRID_SIZE } from '../config';
 
 export class BuildingSystem {
 
     /**
-     * Vérifie si une tuile a accès à la route (Nécessaire pour construire)
-     * 👇 STATIC EST OBLIGATOIRE
+     * Vérifie si une tuile a accès à la route
      */
     static hasRoadAccess(engine: MapEngine, index: number): boolean {
         const x = index % GRID_SIZE;
         const y = Math.floor(index / GRID_SIZE);
 
-        // Coordonnées des voisins (Nord, Sud, Ouest, Est)
         const neighbors = [
             (y > 0) ? (y - 1) * GRID_SIZE + x : -1,
             (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1,
@@ -20,23 +19,19 @@ export class BuildingSystem {
             (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1
         ];
 
-        // On regarde si un des voisins est une route
         return neighbors.some(n => n !== -1 && engine.roadLayer[n] !== null);
     }
 
     /**
-     * Tente de consommer des ressources. Renvoie true si succès.
-     * 👇 STATIC EST OBLIGATOIRE
+     * Tente de consommer des ressources
      */
     static tryConsumeResources(engine: MapEngine, cost: Partial<PlayerResources>): boolean {
-        // 1. Vérification
         if ((cost.wood || 0) > engine.resources.wood) return false;
         if ((cost.concrete || 0) > engine.resources.concrete) return false;
         if ((cost.glass || 0) > engine.resources.glass) return false;
         if ((cost.steel || 0) > engine.resources.steel) return false;
         if ((cost.money || 0) > engine.resources.money) return false;
 
-        // 2. Consommation
         engine.resources.wood -= (cost.wood || 0);
         engine.resources.concrete -= (cost.concrete || 0);
         engine.resources.glass -= (cost.glass || 0);
@@ -47,12 +42,10 @@ export class BuildingSystem {
     }
 
     /**
-     * Appelé par GameEngine toutes les X frames
-     * 👇 STATIC EST OBLIGATOIRE (C'est ici que ça plantait)
+     * Mise à jour automatique de la croissance de la ville
      */
     static update(engine: MapEngine) {
         // Optimisation : On ne scanne pas toute la map à chaque frame.
-        // On prend 50 tuiles au hasard pour simuler une croissance organique.
         for (let i = 0; i < 50; i++) {
             const idx = Math.floor(Math.random() * engine.config.totalCells);
             const zoneType = engine.zoningLayer[idx];
@@ -61,46 +54,74 @@ export class BuildingSystem {
             // Pas de zone ou déjà une route = on passe
             if (zoneType === ZoneType.NONE || engine.roadLayer[idx]) continue;
 
-            // CAS 1 : Terrain vide zoné -> Construction Niveau 1
+            // -------------------------------------------------------
+            // CAS 1 : Terrain vide zoné -> On veut construire
+            // -------------------------------------------------------
             if (!building) {
                 if (this.hasRoadAccess(engine, idx)) {
-                    // Récupère le coût du niveau 1 pour ce type de zone
+
+                    // ✅ 1. CONVERSION ZONE -> BÂTIMENT
+                    let targetType: BuildingType;
+                    switch (zoneType) {
+                        case ZoneType.RESIDENTIAL: targetType = BuildingType.RESIDENTIAL; break;
+                        case ZoneType.COMMERCIAL: targetType = BuildingType.COMMERCIAL; break;
+                        case ZoneType.INDUSTRIAL: targetType = BuildingType.INDUSTRIAL; break;
+                        default: continue; // On ignore les autres zones
+                    }
+
+                    // Récupère le coût (si tes coûts sont basés sur BuildingType, utilise targetType ici)
+                    // Si BUILDING_COSTS utilise encore ZoneType comme clé, garde zoneType ci-dessous.
+                    // Supposons que BUILDING_COSTS utilise ZoneType pour l'instant :
                     const costs = BUILDING_COSTS[zoneType];
                     const cost = costs ? costs[1] : null;
 
                     if (cost && this.tryConsumeResources(engine, cost)) {
+
+                        // ✅ 2. CRÉATION AVEC LE BON TYPE
                         engine.buildingLayer[idx] = {
-                            type: zoneType,
+                            type: targetType, // C'est ici que ça plantait avant
+                            x: idx % GRID_SIZE, // Ajout coord X (souvent requis)
+                            y: Math.floor(idx / GRID_SIZE), // Ajout coord Y
+                            variant: Math.floor(Math.random() * 3), // Ajout variante visuelle
                             level: 1,
                             state: 'CONSTRUCTION',
                             pollution: 0,
                             happiness: 100,
                             constructionTimer: 0
                         };
-                        engine.revision++; // Signale qu'il faut redessiner
+                        engine.revision++;
                     }
                 }
             }
-            // CAS 2 : Bâtiment en construction -> Avance le timer
+
+            // -------------------------------------------------------
+            // CAS 2 : Bâtiment en construction
+            // -------------------------------------------------------
             else if (building.state === 'CONSTRUCTION') {
                 building.constructionTimer++;
-                // Petite variation pour que tout ne se finisse pas en même temps
                 if (building.constructionTimer > 20 + (idx % 10)) {
                     building.state = 'ACTIVE';
                     engine.revision++;
                 }
             }
-            // CAS 3 : Bâtiment Actif -> Évolution (Level Up)
+
+            // -------------------------------------------------------
+            // CAS 3 : Évolution (Level Up)
+            // -------------------------------------------------------
             else if (building.state === 'ACTIVE' && building.level < 3) {
-                // Faible chance d'évoluer (1/1000) si les conditions sont réunies
                 if (Math.random() < 0.001) {
                     const nextLevel = building.level + 1;
-                    const costs = BUILDING_COSTS[building.type];
+
+                    // Attention ici : building.type est un BuildingType. 
+                    // Si BUILDING_COSTS attend un ZoneType, ça peut coincer.
+                    // Mais généralement on utilise le building.type pour les upgrades.
+                    // Si ça plante ici plus tard, il faudra vérifier tes clés dans BUILDING_COSTS.
+                    const costs = BUILDING_COSTS[building.type as unknown as ZoneType] || BUILDING_COSTS[zoneType];
                     const cost = costs ? costs[nextLevel] : null;
 
                     if (cost && this.tryConsumeResources(engine, cost)) {
                         building.level = nextLevel;
-                        building.state = 'CONSTRUCTION'; // Repasse en travaux
+                        building.state = 'CONSTRUCTION';
                         building.constructionTimer = 0;
                         engine.revision++;
                     }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { RoadType, ZoneType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
+// ✅ AJOUT DE BuildingType DANS LES IMPORTS
+import { RoadType, ZoneType, BuildingType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
 import {
     ROADS, LAYERS, formatNumber,
     ResourceItem, ToolButton, ResourceCard, GameTooltip
@@ -115,7 +116,7 @@ export default function GameUI({
                                     key={layer.id}
                                     onClick={() => setViewMode(layer.id)}
                                     className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap border
-                                        ${viewMode === layer.id ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10'}`}
+                                     ${viewMode === layer.id ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10'}`}
                                 >
                                     <span>{layer.icon}</span> <span>{layer.label}</span>
                                 </button>
@@ -144,8 +145,19 @@ export default function GameUI({
                             {/* Choix des SERVICES */}
                             {activeCategory === 'SERVICES' && (
                                 <>
-                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.WIND_TURBINE} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.WIND_TURBINE); setActiveCategory(null); }} label="Wind" icon="🌬️" />
-                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.WATER_PUMP} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.WATER_PUMP); setActiveCategory(null); }} label="Pump" icon="🚰" />
+                                    {/* ✅ CORRECTION : Utilisation de BuildingType pour les bâtiments spécifiques */}
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.POWER_PLANT}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.POWER_PLANT}`);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Power"
+                                        icon="⚡"
+                                    />
+
+                                    {/* J'ai commenté la pompe car WATER_PUMP n'existe pas encore dans tes types */}
+                                    {/* <ToolButton active={false} onClick={() => {}} label="Pump" icon="🚰" /> */}
                                 </>
                             )}
                         </div>

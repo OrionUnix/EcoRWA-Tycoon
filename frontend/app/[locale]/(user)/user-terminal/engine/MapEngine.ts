@@ -18,8 +18,8 @@ export class MapEngine {
         iron: Float32Array;
         wood: Float32Array;
         animals: Float32Array;
-        fish: Float32Array;    // ✅
-        food: Float32Array;    // ✅
+        fish: Float32Array;
+        food: Float32Array;
         stone: Float32Array;
         silver: Float32Array;
         gold: Float32Array;
@@ -61,9 +61,9 @@ export class MapEngine {
             stone: new Float32Array(TOTAL_CELLS),
             silver: new Float32Array(TOTAL_CELLS),
             gold: new Float32Array(TOTAL_CELLS),
-            food: new Float32Array(TOTAL_CELLS),    // Agriculture / Plaines
-            animals: new Float32Array(TOTAL_CELLS), // Gibier / Terre
-            fish: new Float32Array(TOTAL_CELLS),    // Poisson / Eau ✅
+            food: new Float32Array(TOTAL_CELLS),
+            animals: new Float32Array(TOTAL_CELLS),
+            fish: new Float32Array(TOTAL_CELLS),
         };
 
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);

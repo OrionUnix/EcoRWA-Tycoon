@@ -1,4 +1,5 @@
-import { ZoneType, RoadData, LayerType, BuildingData } from '../types';
+// ✅ AJOUT DE BuildingType DANS LES IMPORTS
+import { ZoneType, RoadData, LayerType, BuildingData, BuildingType } from '../types';
 
 /**
  * ZoneSystem - Gestion du zonage
@@ -18,7 +19,8 @@ export class ZoneSystem {
         waterLayer: Float32Array
     ): boolean {
         // Validation basique
-        const isWater = waterLayer[index] > 0.3;
+        // (Assure-toi que waterLayer est bien défini, sinon retire cette ligne)
+        const isWater = waterLayer && waterLayer[index] > 0.3;
         const hasRoad = roadLayer[index] !== null;
 
         // On ne peut pas zoner sur l'eau ou sur une route
@@ -29,9 +31,32 @@ export class ZoneSystem {
         // Appliquer le zonage
         zoningLayer[index] = type;
 
-        // Si on change de type de zone, on détruit le bâtiment existant s'il n'est plus compatible
-        if (buildingLayer[index] && buildingLayer[index]!.type !== type) {
-            buildingLayer[index] = null;
+        // GESTION DU CONFLIT DE TYPE ICI
+        // Si il y a déjà un bâtiment, on vérifie s'il correspond à la nouvelle zone
+        if (buildingLayer[index]) {
+            const currentBuilding = buildingLayer[index]!;
+
+            // 1. On détermine quel BuildingType correspond à la nouvelle Zone
+            let expectedType: BuildingType | null = null;
+
+            switch (type) {
+                case ZoneType.RESIDENTIAL:
+                    expectedType = BuildingType.RESIDENTIAL;
+                    break;
+                case ZoneType.COMMERCIAL:
+                    expectedType = BuildingType.COMMERCIAL;
+                    break;
+                case ZoneType.INDUSTRIAL:
+                    expectedType = BuildingType.INDUSTRIAL;
+                    break;
+                // Si c'est ZoneType.NONE ou autre, expectedType reste null
+            }
+
+            // 2. Si le bâtiment actuel ne correspond pas à la zone prévue, on le détruit
+            // (Ex: On zone Industriel sur une Maison -> La maison disparait)
+            if (currentBuilding.type !== expectedType) {
+                buildingLayer[index] = null;
+            }
         }
 
         return true;

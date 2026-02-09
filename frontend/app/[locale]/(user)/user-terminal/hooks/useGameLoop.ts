@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 import { getGameEngine } from '../engine/GameEngine';
 import { GameRenderer } from '../components/GameRenderer';
-import { ResourceAssets } from '../engine/ResourceAssets'; // ✅ Import de sécurité
+// ✅ Import de sécurité (même si pas utilisé directement ici, utile pour le chargement)
+import { ResourceAssets } from '../engine/ResourceAssets';
 
 export function useGameLoop(
     appRef: React.MutableRefObject<PIXI.Application | null>,
@@ -22,6 +23,37 @@ export function useGameLoop(
     const lastViewModeRef = useRef('FORCE_INIT');
     const lastZoomRef = useRef(1);
 
+    // ✅ EFFET 1 : GESTION DU RESIZE (Redimensionnement)
+    // Cet effet gère uniquement la taille du canvas quand la fenêtre change
+    useEffect(() => {
+        const app = appRef.current;
+        if (!app || !app.renderer) return;
+
+        const handleResize = () => {
+            // On cherche le canvas HTML pour trouver son parent
+            const canvas = app.canvas as HTMLCanvasElement;
+            const parent = canvas?.parentElement;
+
+            if (parent) {
+                const width = parent.clientWidth;
+                const height = parent.clientHeight;
+                app.renderer.resize(width, height);
+                app.render();
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        // Appel initial après un court délai pour laisser le DOM se monter
+        setTimeout(handleResize, 100);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [isReady]); // On le lance quand isReady change (donc quand app est créé)
+
+
+    // ✅ EFFET 2 : LA BOUCLE DE JEU (GAMELOOP)
     useEffect(() => {
         if (!isReady || !appRef.current) return;
 
@@ -35,33 +67,42 @@ export function useGameLoop(
                 return;
             }
 
-            // Exécution de la logique du moteur (déplacement camions, etc.)
-            if (engine.tick) engine.tick();
+            // 1. LOGIQUE DU MOTEUR (Trafic, etc.)
+            // engine.tick() gère le déplacement des camions/voitures
+            // Note: engine est un singleton, donc c'est bien la même instance partagée
+            // Si ta classe GameEngine a une méthode update() ou tick(), appelle-la ici.
+            if (engine['tick']) (engine as any).tick();
 
+
+            // 2. RENDU
             const currentZoom = staticGRef.current.parent?.scale.x || 1.0;
-            const mapData = engine.map;
+            const mapData = engine.map; // mapData est l'instance de MapEngine
 
             if (mapData) {
-                // Détection de changement de Zoom ou de Revision pour redessiner
+                // Détection de changement pour redessiner la couche statique (Lourde)
                 const zoomChanged = Math.abs(currentZoom - lastZoomRef.current) > 0.1;
+
+                // LOD (Level of Detail) : On redessine si on passe un seuil de zoom
                 const lodCrossed =
                     (currentZoom < 0.6 && lastZoomRef.current >= 0.6) ||
                     (currentZoom >= 0.6 && lastZoomRef.current < 0.6) ||
                     (currentZoom > 1.2 && lastZoomRef.current <= 1.2) ||
                     (currentZoom <= 1.2 && lastZoomRef.current > 1.2);
 
-                if (mapData.revision !== lastRevRef.current ||
+                const shouldRenderStatic =
+                    mapData.revision !== lastRevRef.current ||
                     viewMode !== lastViewModeRef.current ||
-                    zoomChanged || lodCrossed) {
+                    zoomChanged ||
+                    lodCrossed;
 
-                    // ✅ LE RENDU STATIQUE (Sol + Arbres)
-                    // On passe le terrainContainerRef.current qui contient les sprites
+                if (shouldRenderStatic) {
+                    // ✅ RENDU STATIQUE (Sol + Arbres + Routes + Bâtiments)
                     GameRenderer.renderStaticLayer(
                         terrainContainerRef.current,
                         staticGRef.current,
                         mapData,
                         viewMode,
-                        false,
+                        false, // showGrid (tu peux passer une prop si tu veux)
                         currentZoom
                     );
 
@@ -70,35 +111,47 @@ export function useGameLoop(
                     lastZoomRef.current = currentZoom;
                 }
 
-                // ✅ LE RENDU DYNAMIQUE (Curseur, Preview)
+                // ✅ RENDU DYNAMIQUE (Curseur, Preview, Véhicules)
+                // On passe le graphics UI (uiGRef) pour dessiner par-dessus tout
                 GameRenderer.renderDynamicLayer(
                     uiGRef.current,
                     mapData,
                     cursorPos,
                     previewPathRef.current,
-                    viewMode,
+                    viewMode, // currentMode
                     isValidBuildRef.current,
                     currentZoom
                 );
             }
 
-            // Mise à jour de l'UI React (toutes les 30 frames environ pour la performance)
-            if (app.ticker && Math.round(app.ticker.lastTime) % 30 < 1) {
-                setFps(Math.round(app.ticker.FPS));
-                if (engine.getResources) setResources({ ...engine.getResources() });
-                else if (mapData && mapData.resources) setResources({ ...mapData.resources });
+            // 3. MISE À JOUR UI (React States)
+            // On ne met à jour React que toutes les 30 frames pour ne pas tuer les perfs
+            // app.ticker.lastTime est en millisecondes, on utilise un compteur simple
 
-                if (engine.getStats) setStats({ ...engine.getStats() });
-                else if (mapData && mapData.stats) setStats({ ...mapData.stats });
+            // Note: Une façon simple de limiter les updates UI
+            if (Math.random() < 0.05) { // ~3 fois par seconde (à 60fps)
+                setFps(Math.round(app.ticker.FPS));
+
+                // Mise à jour des ressources (Argent, Bois, etc.)
+                if (mapData && mapData.resources) {
+                    setResources({ ...mapData.resources });
+                }
+
+                // Mise à jour des stats (Population, Energie...)
+                if (mapData && mapData.stats) {
+                    setStats({ ...mapData.stats });
+                }
             }
         };
 
+        // Ajout à la boucle Pixi
         app.ticker.add(tick);
 
+        // Nettoyage
         return () => {
             if (app.ticker) {
                 app.ticker.remove(tick);
             }
         };
-    }, [isReady, viewMode, cursorPos]);
+    }, [isReady, viewMode, cursorPos]); // Dépendances de l'effet
 }
