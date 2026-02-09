@@ -3,8 +3,6 @@ import { MapEngine } from '../engine/MapEngine';
 import { gridToScreen } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
 import { ZoneType, ZONE_COLORS } from '../engine/types';
-
-// Imports des modules séparés
 import { TerrainRenderer } from './TerrainRenderer';
 import { RoadRenderer } from './RoadRenderer';
 import { BuildingRenderer } from './BuildingRenderer';
@@ -14,13 +12,10 @@ import { ResourceRenderer } from '../engine/ResourceRenderer';
 const LOD_THRESHOLD_LOW = 0.6;
 const LOD_THRESHOLD_HIGH = 1.2;
 
-// ❌ SUPPRIMÉ ICI : biome et woodAmount n'ont rien à faire en global
-
 export class GameRenderer {
 
     static renderStaticLayer(
         container: PIXI.Container,
-
         g: PIXI.Graphics,
         engine: MapEngine,
         viewMode: string,
@@ -32,27 +27,22 @@ export class GameRenderer {
 
         const isHighDetail = zoomLevel > LOD_THRESHOLD_HIGH;
         const isLowDetail = zoomLevel < LOD_THRESHOLD_LOW;
-
         container.sortableChildren = true;
+
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
                 const i = y * GRID_SIZE + x;
                 const pos = gridToScreen(x, y);
 
-                // ✅ DÉPLACÉ ICI : On récupère les données pour CHAQUE case
                 const biome = engine.biomes[i];
                 const wood = engine.resourceMaps.wood[i];
-
-                // 1. TERRAIN (Via TerrainRenderer)
                 TerrainRenderer.drawTile(container, g, engine, biome, x, y, i, pos, viewMode);
-
-                // ✅ 1.5 RESSOURCES ANIMÉES (ARBRES)
+                // 2. RESSOURCES (zIndex = x + y + 0.5)
                 if (!isLowDetail && viewMode === 'ALL') {
                     ResourceRenderer.drawResource(container, engine, i, pos, wood, biome);
                 }
 
-                // 2. GRILLE & ZONES
                 if (showGrid && !isLowDetail) {
                     g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: 0.1 });
                 }
@@ -68,12 +58,10 @@ export class GameRenderer {
                     g.fill({ color: zColor, alpha: 0.3 });
                 }
 
-                // 3. ROUTES
                 if (engine.roadLayer[i]) {
-                    RoadRenderer.drawTile(g, engine.roadLayer[i]!, pos.x, pos.y, isHighDetail, isLowDetail);
+                    RoadRenderer.drawTile(container, engine.roadLayer[i]!, x, y, pos, isHighDetail, isLowDetail);
                 }
-
-                // 4. BÂTIMENTS
+                // 5. BÂTIMENTS
                 if (engine.buildingLayer && engine.buildingLayer[i]) {
                     BuildingRenderer.drawTile(g, engine.buildingLayer[i]!, pos.x, pos.y, isHighDetail, isLowDetail);
                 }
@@ -84,7 +72,6 @@ export class GameRenderer {
     static renderDynamicLayer(g: PIXI.Graphics, engine: MapEngine, cursorPos: { x: number, y: number }, previewPath: number[], currentMode: string, isValidBuild: boolean, zoomLevel: number) {
         g.clear();
 
-        // Véhicules
         const isLow = zoomLevel < LOD_THRESHOLD_LOW;
         if (engine.vehicles && !isLow) {
             engine.vehicles.forEach(car => {
@@ -97,7 +84,6 @@ export class GameRenderer {
             });
         }
 
-        // Curseur
         const hl = gridToScreen(cursorPos.x, cursorPos.y);
         g.beginPath();
         g.moveTo(hl.x, hl.y - TILE_HEIGHT / 2);
@@ -106,7 +92,6 @@ export class GameRenderer {
         g.lineTo(hl.x - TILE_WIDTH / 2, hl.y);
         g.stroke({ width: 2, color: COLORS.HIGHLIGHT });
 
-        // Preview
         if (previewPath.length > 0) {
             for (const idx of previewPath) {
                 const x = idx % GRID_SIZE; const y = Math.floor(idx / GRID_SIZE);
