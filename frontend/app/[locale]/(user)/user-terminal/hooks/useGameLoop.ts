@@ -2,11 +2,11 @@ import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 import { getGameEngine } from '../engine/GameEngine';
 import { GameRenderer } from '../components/GameRenderer';
+import { ResourceAssets } from '../engine/ResourceAssets'; // ✅ Import de sécurité
 
-// ⚠️ LE MOT CLÉ 'export' EST OBLIGATOIRE ICI
 export function useGameLoop(
     appRef: React.MutableRefObject<PIXI.Application | null>,
-    terrainContainerRef: React.MutableRefObject<PIXI.Container | null>, // Ajouté
+    terrainContainerRef: React.MutableRefObject<PIXI.Container | null>,
     staticGRef: React.MutableRefObject<PIXI.Graphics | null>,
     uiGRef: React.MutableRefObject<PIXI.Graphics | null>,
     isReady: boolean,
@@ -28,22 +28,22 @@ export function useGameLoop(
         const app = appRef.current;
         const engine = getGameEngine();
 
-        console.log("🎬 GameLoop: Engine & LOD Ready.");
+        console.log("🎬 GameLoop: Running with Resource Support.");
 
         const tick = () => {
-            // Vérification de sécurité complète
             if (!terrainContainerRef.current || !staticGRef.current || !uiGRef.current) {
                 return;
             }
 
+            // Exécution de la logique du moteur (déplacement camions, etc.)
             if (engine.tick) engine.tick();
 
             const currentZoom = staticGRef.current.parent?.scale.x || 1.0;
             const mapData = engine.map;
 
             if (mapData) {
+                // Détection de changement de Zoom ou de Revision pour redessiner
                 const zoomChanged = Math.abs(currentZoom - lastZoomRef.current) > 0.1;
-
                 const lodCrossed =
                     (currentZoom < 0.6 && lastZoomRef.current >= 0.6) ||
                     (currentZoom >= 0.6 && lastZoomRef.current < 0.6) ||
@@ -54,10 +54,11 @@ export function useGameLoop(
                     viewMode !== lastViewModeRef.current ||
                     zoomChanged || lodCrossed) {
 
-                    // ✅ APPEL CORRIGÉ
+                    // ✅ LE RENDU STATIQUE (Sol + Arbres)
+                    // On passe le terrainContainerRef.current qui contient les sprites
                     GameRenderer.renderStaticLayer(
-                        terrainContainerRef.current, // Container Sprites
-                        staticGRef.current,          // Graphics Vecteurs
+                        terrainContainerRef.current,
+                        staticGRef.current,
                         mapData,
                         viewMode,
                         false,
@@ -69,6 +70,7 @@ export function useGameLoop(
                     lastZoomRef.current = currentZoom;
                 }
 
+                // ✅ LE RENDU DYNAMIQUE (Curseur, Preview)
                 GameRenderer.renderDynamicLayer(
                     uiGRef.current,
                     mapData,
@@ -80,6 +82,7 @@ export function useGameLoop(
                 );
             }
 
+            // Mise à jour de l'UI React (toutes les 30 frames environ pour la performance)
             if (app.ticker && Math.round(app.ticker.lastTime) % 30 < 1) {
                 setFps(Math.round(app.ticker.FPS));
                 if (engine.getResources) setResources({ ...engine.getResources() });

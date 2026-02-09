@@ -85,9 +85,12 @@ export class MapGenerator {
                 // --- GÉNÉRATION RESSOURCES ---
                 const rule = BIOME_SIGNATURES[biome] || BIOME_SIGNATURES[BiomeType.PLAINS];
 
-                const applyRes = (targetMap: Float32Array | undefined, r: ResourceRule | undefined, noiseOffset: number) => {
+                const applyRes = (targetMap: Float32Array | undefined, r: ResourceRule | undefined, noiseOffset: number, resourceType?: string) => {
                     if (!targetMap || !r || r.chance <= 0) return;
-
+                    if (resourceType === 'wood' && biome !== BiomeType.FOREST) {
+                        targetMap[i] = 0;
+                        return;
+                    }
                     const n = resNoise(nx + noiseOffset, ny + noiseOffset);
                     if (n > (1 - r.chance * 2.5)) {
                         const amount = r.intensity * Math.abs(n);
@@ -100,7 +103,7 @@ export class MapGenerator {
                 applyRes(engine.resourceMaps.oil, rule.oil, 10);
                 applyRes(engine.resourceMaps.coal, rule.coal, 20);
                 applyRes(engine.resourceMaps.iron, rule.iron, 30);
-                applyRes(engine.resourceMaps.wood, rule.wood, 40);
+                applyRes(engine.resourceMaps.wood, rule.wood, 40, 'wood');
 
                 // Nouvelles Ressources (Assurez-vous qu'elles existent dans biomeData.ts)
                 applyRes(engine.resourceMaps.stone, (rule as any).stone, 70);
@@ -112,8 +115,15 @@ export class MapGenerator {
                 applyRes(engine.resourceMaps.fish, rule.fish, 60);
 
                 // Cas spécial Food (souvent lié à l'humidité/fertilité des plaines)
-                if (biome === BiomeType.PLAINS && m > 0.4) {
-                    engine.resourceMaps.food[i] = m * 0.5;
+                if (h < 0.45) {
+                    biome = BiomeType.OCEAN; // 👈 Priorité absolue à l'eau
+                } else {
+                    // Les arbres ne sont décidés QUE si on est au-dessus de l'eau
+                    if (m > 0.6) biome = BiomeType.FOREST;
+                    else biome = BiomeType.PLAINS;
+                }
+                if (biome !== BiomeType.FOREST) {
+                    engine.resourceMaps.wood[i] = 0;
                 }
             }
         }

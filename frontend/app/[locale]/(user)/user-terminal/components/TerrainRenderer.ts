@@ -13,6 +13,7 @@ export class TerrainRenderer {
 
     static drawTile(
         container: PIXI.Container,
+
         g: PIXI.Graphics,
         engine: MapEngine,
         biome: number,
@@ -37,12 +38,12 @@ export class TerrainRenderer {
                 const texture = getBiomeTexture(biome, x, y);
 
                 if (texture) {
-                    sprite = new PIXI.Sprite(texture);
+                    sprite = new PIXI.Sprite(texture); sprite.roundPixels = true;
 
                     // --- RÈGLES STRICTES "GRID FLATTENER" ---
-                    sprite.anchor.set(0.5, 0.5);
-                    sprite.width = TILE_WIDTH + 13;
-                    sprite.height = TILE_HEIGHT + 13;
+                    sprite.anchor.set(0.5, 1);
+                    sprite.width = TILE_WIDTH + 14;
+                    sprite.height = TILE_HEIGHT + 14;
 
                     container.addChild(sprite);
                     spriteCache.set(i, sprite);
@@ -52,10 +53,8 @@ export class TerrainRenderer {
             // B. Mise à jour
             if (sprite) {
                 sprite.visible = true;
-                sprite.x = pos.x;
-                sprite.y = pos.y;
-                sprite.zIndex = x + y;
-                hasSprite = true;
+                sprite.x = Math.round(pos.x); sprite.y = Math.round(pos.y);
+                sprite.zIndex = x + y; hasSprite = true;
             }
         } else {
             // ✅ CORRECTION FINAL : CAST EXPLICITE

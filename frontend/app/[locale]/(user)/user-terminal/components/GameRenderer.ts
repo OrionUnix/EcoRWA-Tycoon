@@ -9,14 +9,18 @@ import { TerrainRenderer } from './TerrainRenderer';
 import { RoadRenderer } from './RoadRenderer';
 import { BuildingRenderer } from './BuildingRenderer';
 import { COLORS } from '../engine/constants';
+import { ResourceRenderer } from '../engine/ResourceRenderer';
 
 const LOD_THRESHOLD_LOW = 0.6;
 const LOD_THRESHOLD_HIGH = 1.2;
+
+// ❌ SUPPRIMÉ ICI : biome et woodAmount n'ont rien à faire en global
 
 export class GameRenderer {
 
     static renderStaticLayer(
         container: PIXI.Container,
+
         g: PIXI.Graphics,
         engine: MapEngine,
         viewMode: string,
@@ -24,10 +28,8 @@ export class GameRenderer {
         zoomLevel: number
     ) {
         g.clear();
-
         if (!engine || !engine.biomes) return;
 
-        // ✅ Ces lignes ne planteront plus maintenant
         const isHighDetail = zoomLevel > LOD_THRESHOLD_HIGH;
         const isLowDetail = zoomLevel < LOD_THRESHOLD_LOW;
 
@@ -38,16 +40,17 @@ export class GameRenderer {
                 const i = y * GRID_SIZE + x;
                 const pos = gridToScreen(x, y);
 
+                // ✅ DÉPLACÉ ICI : On récupère les données pour CHAQUE case
+                const biome = engine.biomes[i];
+                const wood = engine.resourceMaps.wood[i];
+
                 // 1. TERRAIN (Via TerrainRenderer)
-                TerrainRenderer.drawTile(
-                    container,
-                    g,
-                    engine,
-                    engine.biomes[i],
-                    x, y, i,
-                    pos,
-                    viewMode
-                );
+                TerrainRenderer.drawTile(container, g, engine, biome, x, y, i, pos, viewMode);
+
+                // ✅ 1.5 RESSOURCES ANIMÉES (ARBRES)
+                if (!isLowDetail && viewMode === 'ALL') {
+                    ResourceRenderer.drawResource(container, engine, i, pos, wood, biome);
+                }
 
                 // 2. GRILLE & ZONES
                 if (showGrid && !isLowDetail) {
@@ -65,12 +68,12 @@ export class GameRenderer {
                     g.fill({ color: zColor, alpha: 0.3 });
                 }
 
-                // 3. ROUTES (Via RoadRenderer)
-                if (engine.roadLayer && engine.roadLayer[i]) {
+                // 3. ROUTES
+                if (engine.roadLayer[i]) {
                     RoadRenderer.drawTile(g, engine.roadLayer[i]!, pos.x, pos.y, isHighDetail, isLowDetail);
                 }
 
-                // 4. BÂTIMENTS (Via BuildingRenderer)
+                // 4. BÂTIMENTS
                 if (engine.buildingLayer && engine.buildingLayer[i]) {
                     BuildingRenderer.drawTile(g, engine.buildingLayer[i]!, pos.x, pos.y, isHighDetail, isLowDetail);
                 }
@@ -82,7 +85,7 @@ export class GameRenderer {
         g.clear();
 
         // Véhicules
-        const isLow = zoomLevel < LOD_THRESHOLD_LOW; // ✅ Utilisation ici aussi
+        const isLow = zoomLevel < LOD_THRESHOLD_LOW;
         if (engine.vehicles && !isLow) {
             engine.vehicles.forEach(car => {
                 const screenPos = gridToScreen(car.x, car.y);

@@ -3,33 +3,36 @@
 import React, { useRef, useState, useEffect } from 'react';
 import * as PIXI from 'pixi.js';
 
-// --- IMPORTS ---
+// --- IMPORTS MOTEUR ---
 import { usePixiApp } from './hooks/usePixiApp';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useGameInput } from './hooks/useGameInput';
 import { getGameEngine } from './engine/GameEngine';
 import { loadBiomeTextures } from './engine/BiomeAssets';
+import { ResourceAssets } from './engine/ResourceAssets'; // ✅ Import ajouté
 import { RoadType, ZoneType } from './engine/types';
+
+// --- IMPORTS UI ---
 import GameUI from './components/GameUI';
+import { ResourceRenderer } from './engine/ResourceRenderer';
 
 export default function UserTerminalGame() {
     // 1. LIENS ET REFS
-    // On attache la ref tout de suite, même si on charge encore
     const containerRef = useRef<HTMLDivElement>(null);
     const { appRef, stageRef, isReady } = usePixiApp(containerRef);
 
-    // Conteneurs Pixi
+    // Conteneurs Pixi (Layers)
     const terrainContainerRef = useRef<PIXI.Container | null>(null);
     const staticGRef = useRef<PIXI.Graphics | null>(null);
     const uiGRef = useRef<PIXI.Graphics | null>(null);
 
-    // 2. ETATS
+    // 2. ÉTATS DE JEU
     const [assetsLoaded, setAssetsLoaded] = useState(false);
     const [viewMode, setViewMode] = useState('ALL');
     const [selectedRoad, setSelectedRoad] = useState(RoadType.DIRT);
     const [selectedZone, setSelectedZone] = useState(ZoneType.RESIDENTIAL);
 
-    // UI Stats
+    // ÉTATS UI (Stats & Feedbacks)
     const [fps, setFps] = useState(0);
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [hoverInfo, setHoverInfo] = useState<any>(null);
@@ -42,91 +45,147 @@ export default function UserTerminalGame() {
     const previewPathRef = useRef<number[]>([]);
     const isValidBuildRef = useRef(true);
 
-    // 3. CHARGEMENT INITIAL
+    // 3. CHARGEMENT INITIAL DES ASSETS
     useEffect(() => {
-        console.log("🚀 Page: Démarrage du chargement...");
-        loadBiomeTextures().then(() => {
-            console.log("✅ Page: Assets chargés.");
-            const engine = getGameEngine();
-            if (engine.map.revision === 0) {
-                engine.map.generateWorld();
-                engine.map.calculateSummary();
-            }
-            setSummary(engine.map.currentSummary);
-            setAssetsLoaded(true);
-        });
+        console.log("🚀 Page: Démarrage du chargement des assets...");
+
+        // On attend que TOUTES les textures soient prêtes
+        Promise.all([
+            loadBiomeTextures(),
+            ResourceAssets.load() // ✅ Chargement des arbres animés
+        ])
+            .then(() => {
+                console.log("✅ Page: Tous les assets sont chargés.");
+
+                const engine = getGameEngine();
+                // Générer le monde si ce n'est pas déjà fait
+                if (engine.map.revision === 0) {
+                    engine.map.generateWorld();
+                    engine.map.calculateSummary();
+                }
+
+                setSummary(engine.map.currentSummary);
+                setAssetsLoaded(true);
+            })
+            .catch(err => {
+                console.error("❌ Page: Erreur lors du chargement des assets:", err);
+            });
     }, []);
 
-    // 4. SETUP DES CALQUES PIXI
+    // 4. CONFIGURATION DES CALQUES PIXI (Layers)
     useEffect(() => {
-        if (isReady && stageRef.current && assetsLoaded && !staticGRef.current) {
-            console.log("🎨 Page: Création des Layers Pixi...");
+        if (isReady && stageRef.current && assetsLoaded && !terrainContainerRef.current) {
+            console.log("🎨 Page: Initialisation des Layers Pixi...");
+
+            const stage = stageRef.current;
+
+            // Layer 1: Terrain & Ressources (Containers pour les Sprites)
             const terrain = new PIXI.Container();
+            terrain.sortableChildren = true; // Crucial pour le zIndex des arbres
+
+            // Layer 2: Vecteurs (Routes, Grilles, Overlays)
             const vectorLayer = new PIXI.Graphics();
+
+            // Layer 3: Interface In-Game (Curseurs, Preview construction)
             const uiLayer = new PIXI.Graphics();
 
-            // Ajout dans l'ordre (Fond -> Dessus)
-            stageRef.current.addChild(terrain);
-            stageRef.current.addChild(vectorLayer);
-            stageRef.current.addChild(uiLayer);
+            // Ajout au stage dans l'ordre de profondeur
+            stage.addChild(terrain);
+            stage.addChild(vectorLayer);
+            stage.addChild(uiLayer);
 
             terrainContainerRef.current = terrain;
             staticGRef.current = vectorLayer;
             uiGRef.current = uiLayer;
 
-            // Force un premier rendu
-            const engine = getGameEngine();
-            engine.map.revision++;
+            // Déclencher un premier rendu
+            getGameEngine().map.revision++;
         }
-    }, [isReady, assetsLoaded]);
+    }, [isReady, assetsLoaded, stageRef]);
 
-    // 5. BOUCLE DE JEU
+    // 5. ACTIVATION DE LA BOUCLE DE JEU (Logic & Render)
     useGameLoop(
-        appRef, terrainContainerRef, staticGRef, uiGRef,
-        isReady && assetsLoaded, viewMode, cursorPos,
-        previewPathRef, isValidBuildRef, setFps, setResources, setStats
+        appRef,
+        terrainContainerRef,
+        staticGRef,
+        uiGRef,
+        isReady && assetsLoaded,
+        viewMode,
+        cursorPos,
+        previewPathRef,
+        isValidBuildRef,
+        setFps,
+        setResources,
+        setStats
     );
 
-    // 6. INPUTS
+    // 6. GESTION DES INPUTS (Souris, Zoom, Pan, Click)
     useGameInput(
-        stageRef, appRef, isReady && assetsLoaded,
-        viewMode, selectedRoad, selectedZone, setCursorPos,
-        setHoverInfo, setTotalCost, setIsValidBuild, previewPathRef, isValidBuildRef
+        stageRef,
+        appRef,
+        isReady && assetsLoaded,
+        viewMode,
+        selectedRoad,
+        selectedZone,
+        setCursorPos,
+        setHoverInfo,
+        setTotalCost,
+        setIsValidBuild,
+        previewPathRef,
+        isValidBuildRef
     );
 
-    const t = (k: string) => k;
     const engine = getGameEngine();
+    const t = (k: string) => k; // Mock translation function
 
     // 7. RENDU FINAL
     return (
-        <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#000', overflow: 'hidden' }}>
+        <div style={{
+            position: 'relative',
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: '#000',
+            overflow: 'hidden'
+        }}>
 
-            {/* A. CONTENEUR PIXI (Z-INDEX 1) - DOIT RECEVOIR LES CLICS */}
+            {/* A. CANVAS PIXI (Reçoit les événements souris) */}
             <div
                 ref={containerRef}
-                style={{ position: 'absolute', inset: 0, zIndex: 1 }}
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 1
+                }}
             />
 
             {/* B. ÉCRAN DE CHARGEMENT */}
             {!assetsLoaded && (
                 <div style={{
-                    position: 'absolute', inset: 0, zIndex: 50,
-                    backgroundColor: '#111', color: 'white',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 50,
+                    backgroundColor: '#111',
+                    color: 'white',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'sans-serif'
                 }}>
-                    <h1>Chargement du Monde...</h1>
+                    <div className="loader"></div> {/* Vous pouvez ajouter un CSS loader ici */}
+                    <h1 style={{ marginTop: '20px' }}>Génération du territoire...</h1>
                 </div>
             )}
 
-            {/* C. UI DU JEU (Z-INDEX 10) - LAISSE PASSER LES CLICS */}
+            {/* C. INTERFACE UTILISATEUR (Calque transparent par-dessus le jeu) */}
             {assetsLoaded && (
                 <div style={{
                     position: 'absolute',
                     inset: 0,
                     zIndex: 10,
-                    pointerEvents: 'none' // 👈 CRUCIAL : Laisse passer les clics au travers du vide
+                    pointerEvents: 'none' // Laisse passer les clics vers Pixi
                 }}>
-                    {/* Le conteneur interne ne doit PAS bloquer les clics partout */}
+                    {/* On réactive les clics uniquement pour les éléments de l'UI */}
                     <div style={{ width: '100%', height: '100%' }}>
                         <GameUI
                             t={t}
@@ -146,8 +205,13 @@ export default function UserTerminalGame() {
                             summary={summary}
                             onSpawnTraffic={() => engine.spawnTraffic()}
                             onRegenerate={() => {
+                                // 1. Vider physiquement tous les sprites d'arbres du container
+                                if (terrainContainerRef.current) {
+                                    ResourceRenderer.clearAll(terrainContainerRef.current);
+                                }
+                                // 2. Créer le nouveau monde
                                 engine.map.generateWorld();
-                                engine.map.revision++;
+                                engine.map.revision++; // Force le rafraîchissement
                             }}
                         />
                     </div>

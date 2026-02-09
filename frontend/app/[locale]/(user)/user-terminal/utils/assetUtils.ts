@@ -3,23 +3,38 @@
  * Indispensable pour la compatibilité GitHub Pages (basePath)
  */
 
+// Détection de l'environnement de production (GitHub Pages)
+// On vérifie NODE_ENV ou si l'on est dans l'environnement Browser de production
 const isProd = process.env.NODE_ENV === 'production';
-const BASE_PATH = isProd ? '/EcoRWA-Tycoon' : '';
+
+// Modifiez '/EcoRWA-Tycoon' par le nom exact de votre dépôt GitHub
+const REPO_NAME = '/EcoRWA-Tycoon';
+const BASE_PATH = isProd ? REPO_NAME : '';
 
 /**
- * Préfixe un chemin d'asset avec le basePath s'il est en production
- * @param path Chemin de l'asset commençant par / (ex: /assets/models/...)
- * @returns Chemin complet avec le préfixe si nécessaire
+ * Préfixe un chemin d'asset avec le basePath si nécessaire.
+ * @param path Chemin de l'asset commençant par / (ex: /assets/...)
+ * @returns Chemin complet (ex: /EcoRWA-Tycoon/assets/... en prod, /assets/... en dev)
  */
 export function withBasePath(path: string): string {
-    if (!path.startsWith('/')) {
-        console.warn('withBasePath: le chemin doit commencer par /', path);
+    // Sécurité : si le chemin est vide ou null
+    if (!path) return '';
+
+    // Si on est en local (BASE_PATH vide), on retourne le chemin tel quel
+    if (!isProd) {
         return path;
     }
 
-    // Évite les doubles slashes si BASE_PATH finit par / ou path commence par /
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    return `${BASE_PATH}/${cleanPath}`;
+    // En production, on nettoie pour éviter les doubles slashes
+    // On s'assure que le path commence par un seul /
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+    // Si BASE_PATH est déjà inclus (cas de ré-appel accidentel), on ne l'ajoute pas
+    if (normalizedPath.startsWith(BASE_PATH)) {
+        return normalizedPath;
+    }
+
+    return `${BASE_PATH}${normalizedPath}`;
 }
 
 /**
