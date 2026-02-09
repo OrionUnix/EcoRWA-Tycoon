@@ -41,9 +41,9 @@ export class TerrainRenderer {
                     sprite = new PIXI.Sprite(texture); sprite.roundPixels = true;
 
                     // --- RÈGLES STRICTES "GRID FLATTENER" ---
-                    sprite.anchor.set(0.5, 1);
-                    sprite.width = TILE_WIDTH + 6;
-                    sprite.height = TILE_HEIGHT + 12;
+                    sprite.anchor.set(0.5, 0.5);
+                    sprite.width = TILE_WIDTH + 8;
+                    sprite.height = TILE_HEIGHT + 14;
 
                     container.addChild(sprite);
                     spriteCache.set(i, sprite);

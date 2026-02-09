@@ -3,7 +3,8 @@ import { ResourceAssets } from './ResourceAssets';
 import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
 
-const resourceCache = new Map<number, PIXI.AnimatedSprite>();
+// On utilise Sprite simple (pas d'animation)
+const resourceCache = new Map<number, PIXI.Sprite>();
 
 export class ResourceRenderer {
     static drawResource(
@@ -14,43 +15,58 @@ export class ResourceRenderer {
         woodAmount: number,
         biome: number
     ) {
-        // 1. D'abord, on récupère le sprite existant dans le cache
         let sprite = resourceCache.get(i);
 
-        // 2. On définit les conditions strictes
+        // --- CONDITIONS STRICTES ---
         const hasRoad = engine.roadLayer && engine.roadLayer[i] !== null;
         const hasBuilding = engine.buildingLayer && engine.buildingLayer[i] !== null;
+
+        // 🔒 Sécurité absolue : Biome Forêt UNIQUEMENT
         const isForest = (biome === BiomeType.FOREST);
 
-        // L'arbre ne s'affiche QUE si c'est une forêt, avec du bois, sans route ni bâtiment
         const shouldShow = isForest && woodAmount > 0.1 && !hasRoad && !hasBuilding;
 
         if (shouldShow) {
+            // A. CRÉATION (Si le sprite n'existe pas encore)
             if (!sprite) {
                 if (ResourceAssets.forestFrames.length === 0) return;
 
-                sprite = new PIXI.AnimatedSprite(ResourceAssets.forestFrames);
+                // 1. Choix d'une image fixe basée sur la position (pseudo-aléatoire stable)
+                // Cela permet d'avoir des arbres différents mais qui ne changent pas quand on bouge la caméra
+                const frameIndex = i % ResourceAssets.forestFrames.length;
 
-                // Ancrage au pied des troncs
-                sprite.anchor.set(0.5, 0.85);
-                sprite.animationSpeed = 0.005 + Math.random() * 0.005;
-                sprite.play();
-                sprite.width = 60;
-                sprite.height = 60;
+                sprite = new PIXI.Sprite(ResourceAssets.forestFrames[frameIndex]);
+
+                // 2. Ancrage précis
+                // 0.5 = Centre horizontal
+                // 0.9 = Le pied de l'arbre est posé sur le centre de la tuile
+                sprite.anchor.set(0.5, 0.9);
+
+                // 3. Variation de taille (Skalé)
+                // On génère une échelle entre 0.85 (petit) et 1.15 (grand)
+                // On utilise 'i' pour que le hasard soit toujours le même pour cet arbre
+                const randomSeed = Math.sin(i) * 10000;
+                const scale = 0.85 + (Math.abs(randomSeed % 1) * 0.3);
+
+                // 4. Application de la taille
+                // On part de 58px pour éviter que l'arbre ne "bave" trop sur les cases voisines
+                sprite.width = 58 * scale;
+                sprite.height = 58 * scale;
 
                 container.addChild(sprite);
                 resourceCache.set(i, sprite);
             }
 
-            // Mise à jour visuelle
+            // B. MISE À JOUR POSITION
             sprite.visible = true;
             sprite.x = pos.x;
             sprite.y = pos.y;
+
+            // Profondeur : +10 assure qu'il est devant le sol
             sprite.zIndex = pos.y + 10;
 
         } else {
-            // 3. Si on ne doit pas afficher (Mauvais biome, route, etc.)
-            // On nettoie le sprite s'il existait
+            // C. NETTOYAGE
             if (sprite) {
                 container.removeChild(sprite);
                 sprite.destroy();
