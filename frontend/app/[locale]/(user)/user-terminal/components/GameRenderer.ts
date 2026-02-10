@@ -4,8 +4,8 @@ import { gridToScreen } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
 import { ZoneType, ZONE_COLORS } from '../engine/types';
 import { TerrainRenderer } from './TerrainRenderer';
-import { RoadRenderer } from './RoadRenderer';     // Vérifie le chemin (engine ou components)
-import { BuildingRenderer } from '../engine/BuildingRenderer'; // Vérifie le chemin (engine ou components)
+import { RoadRenderer } from './RoadRenderer';
+import { BuildingRenderer } from '../engine/BuildingRenderer';
 import { COLORS } from '../engine/constants';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 
@@ -67,6 +67,8 @@ export class GameRenderer {
                 if (engine.roadLayer[i]) {
                     // ✅ CORRECTION : On passe 'container', x, y, pos
                     RoadRenderer.drawTile(container, engine.roadLayer[i]!, x, y, pos, isHighDetail, isLowDetail);
+                } else {
+                    RoadRenderer.removeTile(i);
                 }
 
                 // 5. BÂTIMENTS
