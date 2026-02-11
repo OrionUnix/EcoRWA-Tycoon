@@ -1,7 +1,9 @@
 import { MapEngine } from './MapEngine';
 import { TrafficSystem } from './systems/TrafficSystem';
 import { RoadManager } from './RoadManager';
-import { ZoneType } from './types';
+import { BuildingManager } from './BuildingManager';
+import { ZoneManager } from './ZoneManager';
+import { ZoneType, BuildingType, BUILDING_SPECS } from './types';
 import { ResourceRenderer } from './ResourceRenderer';
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
@@ -93,11 +95,34 @@ export class GameEngine {
 
         // --- ZONAGE ---
         else if (mode === 'ZONE') {
-            const cost = 10;
-            if (this.map.resources.money >= cost) {
-                this.map.setZone(index, type);
-                this.map.resources.money -= cost;
-                this.map.revision++;
+            const result = ZoneManager.placeZone(this.map, index, type);
+
+            if (result.success) {
+                console.log(`✅ Zone ${type} créée avec succès!`);
+            } else {
+                console.error(`❌ Zonage impossible: ${result.message}`);
+            }
+        }
+
+        // --- CONSTRUCTION BUILDING ---
+        else if (mode.startsWith('BUILD_')) {
+            const buildingTypeStr = mode.replace('BUILD_', '');
+            const buildingType = buildingTypeStr as BuildingType;
+
+            // Validation du type de bâtiment
+            if (!Object.values(BuildingType).includes(buildingType)) {
+                console.error(`❌ Type de bâtiment invalide: ${buildingTypeStr}`);
+                return;
+            }
+
+            // Tentative de placement
+            const result = BuildingManager.placeBuilding(this.map, index, buildingType);
+
+            if (result.success) {
+                const specs = BUILDING_SPECS[buildingType];
+                console.log(`✅ ${specs.name} construit avec succès!`);
+            } else {
+                console.error(`❌ Construction impossible: ${result.message}`);
             }
         }
     }

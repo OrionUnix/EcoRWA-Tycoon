@@ -1,5 +1,5 @@
 import { MapEngine } from './MapEngine';
-import { BuildingType, BuildingData, BUILDING_SPECS } from './types';
+import { BuildingType, BuildingData, BUILDING_SPECS, ZoneType } from './types';
 import { GRID_SIZE } from './config';
 import { ResourceRenderer } from './ResourceRenderer';
 
@@ -9,36 +9,57 @@ export class BuildingManager {
      * Vérifie si la construction est possible sur cette case
      */
     static checkBuildValidity(engine: MapEngine, index: number, type: BuildingType): { valid: boolean, reason?: string } {
+        console.log(`🔍 BuildingManager: Vérification placement ${type} à index ${index}`);
+        const specs = BUILDING_SPECS[type];
+
         // 1. Validité de l'index
         if (index < 0 || index >= engine.config.totalCells) {
+            console.log('❌ Validation: Hors carte');
             return { valid: false, reason: "Hors carte" };
         }
 
-        // 2. Case déjà occupée ?
+        // 2. Case déjà occupée par un bâtiment ?
         if (engine.buildingLayer[index]) {
+            console.log('❌ Validation: Bâtiment existant');
             return { valid: false, reason: "Occupé par un bâtiment" };
         }
+
+        // 3. Case déjà occupée par une route ?
         if (engine.roadLayer[index]) {
+            console.log('❌ Validation: Route existante');
             return { valid: false, reason: "Impossible de construire sur la route" };
         }
 
-        // 3. Eau (Vérifie bien que l'index 1 correspond à ton layer d'eau/élévation)
-        const isWater = engine.getLayer(1)[index] > 0.3;
+        // 4. Case déjà occupée par une zone (Residential, Commercial, Industrial) ?
+        if (engine.zoningLayer[index] !== ZoneType.NONE) {
+            console.log('❌ Validation: Zone existante:', engine.zoningLayer[index]);
+            return { valid: false, reason: "Une zone est déjà placée ici (utilisez Bulldozer d'abord)" };
+        }
+
+        // 5. AUCUN bâtiment sur l'eau (règle stricte)
+        const waterLevel = engine.getLayer(1)[index];
+        const isWater = waterLevel > 0.3;
+        console.log(`🌊 Validation: waterLevel=${waterLevel.toFixed(2)}, isWater=${isWater}`);
         if (isWater) {
+            console.log('❌ Validation: Sur l\'eau');
             return { valid: false, reason: "Impossible de construire sur l'eau" };
         }
 
-        // 4. Coût financier
-        const specs = BUILDING_SPECS[type];
+        // 6. Coût financier
         if (engine.resources.money < specs.cost) {
-            return { valid: false, reason: "Fonds insuffisants" };
+            console.log(`❌ Validation: Argent insuffisant (${engine.resources.money}$ < ${specs.cost}$)`);
+            return { valid: false, reason: `Fonds insuffisants (coût: ${specs.cost}$)` };
         }
 
-        // 5. Adjacence Route
-        if (!this.isNextToRoad(engine, index)) {
+        // 7. TOUS LES BÂTIMENTS DOIVENT ÊTRE ADJACENTS À UNE ROUTE (règle stricte)
+        const hasRoad = this.isNextToRoad(engine, index);
+        console.log(`🛣️ Validation: hasAdjacentRoad=${hasRoad}`);
+        if (!hasRoad) {
+            console.log('❌ Validation: Pas de route adjacente');
             return { valid: false, reason: "Doit être adjacent à une route" };
         }
 
+        console.log('✅ Validation: SUCCÈS - placement autorisé');
         return { valid: true };
     }
 

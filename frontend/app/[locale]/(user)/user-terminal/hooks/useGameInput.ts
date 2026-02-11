@@ -3,7 +3,7 @@ import * as PIXI from 'pixi.js';
 import { getGameEngine } from '../engine/GameEngine';
 import { screenToGrid } from '../engine/isometric';
 import { RoadManager } from '../engine/RoadManager';
-import { RoadType, ZoneType } from '../engine/types';
+import { RoadType, ZoneType, BuildingType } from '../engine/types';
 
 export function useGameInput(
     stageRef: React.MutableRefObject<PIXI.Container | null>, // C'est le worldContainer
@@ -12,6 +12,7 @@ export function useGameInput(
     viewMode: string,
     selectedRoad: RoadType,
     selectedZone: ZoneType,
+    selectedBuilding: BuildingType,
     setCursorPos: (pos: { x: number, y: number }) => void,
     setHoverInfo: (info: any) => void,
     setTotalCost: (cost: number) => void,
@@ -138,6 +139,9 @@ export function useGameInput(
                     engine.handleInteraction(idx, viewMode, null, null);
                 } else if (viewMode === 'ZONE') {
                     engine.handleInteraction(idx, viewMode, null, selectedZone);
+                } else if (viewMode.startsWith('BUILD_')) {
+                    // Construction de bâtiment
+                    engine.handleInteraction(idx, viewMode, null, selectedBuilding);
                 }
             }
         };
@@ -178,5 +182,5 @@ export function useGameInput(
             window.removeEventListener('pointerup', onPointerUp);
             canvas.removeEventListener('contextmenu', (e) => e.preventDefault());
         };
-    }, [isReady, viewMode, selectedRoad, selectedZone]);
+    }, [isReady, viewMode, selectedRoad, selectedZone, selectedBuilding]);
 }

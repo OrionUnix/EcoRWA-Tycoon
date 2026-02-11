@@ -14,6 +14,8 @@ interface GameUIProps {
     setSelectedRoadType: (type: RoadType) => void;
     selectedZoneType: ZoneType;
     setSelectedZoneType: (type: ZoneType) => void;
+    selectedBuildingType: BuildingType;
+    setSelectedBuildingType: (type: BuildingType) => void;
     totalCost: number;
     isValidBuild: boolean;
     fps: number;
@@ -30,6 +32,7 @@ export default function GameUI({
     viewMode, setViewMode,
     selectedRoadType, setSelectedRoadType,
     selectedZoneType, setSelectedZoneType,
+    selectedBuildingType, setSelectedBuildingType,
     totalCost, isValidBuild,
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
@@ -145,19 +148,46 @@ export default function GameUI({
                             {/* Choix des SERVICES */}
                             {activeCategory === 'SERVICES' && (
                                 <>
-                                    {/* ✅ CORRECTION : Utilisation de BuildingType pour les bâtiments spécifiques */}
                                     <ToolButton
                                         active={viewMode === `BUILD_${BuildingType.POWER_PLANT}`}
                                         onClick={() => {
                                             setViewMode(`BUILD_${BuildingType.POWER_PLANT}`);
+                                            setSelectedBuildingType(BuildingType.POWER_PLANT);
                                             setActiveCategory(null);
                                         }}
                                         label="Power"
                                         icon="⚡"
                                     />
-
-                                    {/* J'ai commenté la pompe car WATER_PUMP n'existe pas encore dans tes types */}
-                                    {/* <ToolButton active={false} onClick={() => {}} label="Pump" icon="🚰" /> */}
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.WATER_PUMP}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.WATER_PUMP}`);
+                                            setSelectedBuildingType(BuildingType.WATER_PUMP);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Water"
+                                        icon="💧"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.MINE}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.MINE}`);
+                                            setSelectedBuildingType(BuildingType.MINE);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Mine"
+                                        icon="⛏️"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.OIL_RIG}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.OIL_RIG}`);
+                                            setSelectedBuildingType(BuildingType.OIL_RIG);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Oil"
+                                        icon="🛢️"
+                                    />
                                 </>
                             )}
                         </div>

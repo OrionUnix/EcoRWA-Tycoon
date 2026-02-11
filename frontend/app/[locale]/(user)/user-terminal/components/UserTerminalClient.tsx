@@ -11,7 +11,7 @@ import { getGameEngine } from '../engine/GameEngine';
 import { loadBiomeTextures } from '../engine/BiomeAssets';
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { RoadAssets } from '../engine/RoadAssets';
-import { RoadType, ZoneType } from '../engine/types';
+import { RoadType, ZoneType, BuildingType } from '../engine/types';
 
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
@@ -32,6 +32,7 @@ export default function UserTerminalClient() {
     const [viewMode, setViewMode] = useState('ALL');
     const [selectedRoad, setSelectedRoad] = useState(RoadType.DIRT);
     const [selectedZone, setSelectedZone] = useState(ZoneType.RESIDENTIAL);
+    const [selectedBuilding, setSelectedBuilding] = useState(BuildingType.POWER_PLANT);
 
     // ÉTATS UI (Stats & Feedbacks)
     const [fps, setFps] = useState(0);
@@ -129,6 +130,7 @@ export default function UserTerminalClient() {
         viewMode,
         selectedRoad,
         selectedZone,
+        selectedBuilding,
         setCursorPos,
         setHoverInfo,
         setTotalCost,
@@ -197,6 +199,8 @@ export default function UserTerminalClient() {
                             setSelectedRoadType={setSelectedRoad}
                             selectedZoneType={selectedZone}
                             setSelectedZoneType={setSelectedZone}
+                            selectedBuildingType={selectedBuilding}
+                            setSelectedBuildingType={setSelectedBuilding}
                             totalCost={totalCost}
                             isValidBuild={isValidBuild}
                             fps={fps}

@@ -56,7 +56,14 @@ export enum BuildingType {
     RESIDENTIAL = 'RESIDENTIAL',
     COMMERCIAL = 'COMMERCIAL',
     INDUSTRIAL = 'INDUSTRIAL',
-    POWER_PLANT = 'POWER_PLANT'
+    POWER_PLANT = 'POWER_PLANT',
+    WATER_PUMP = 'WATER_PUMP',
+    MINE = 'MINE',
+    OIL_RIG = 'OIL_RIG',
+    CITY_HALL = 'CITY_HALL',
+    PARK = 'PARK',
+    POLICE_STATION = 'POLICE_STATION',
+    FIRE_STATION = 'FIRE_STATION'
 }
 
 // ==================================================================
@@ -197,23 +204,52 @@ export interface BuildingSpecs {
     width: number;
     height: number;
     color: number;
+    requiresRoad: boolean;
 }
 
 export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.RESIDENTIAL]: {
         type: BuildingType.RESIDENTIAL, cost: 50, name: "Zone Résidentielle",
-        description: "Logements pour les citoyens.", width: 1, height: 1, color: 0x00FF00
+        description: "Logements pour les citoyens.", width: 1, height: 1, color: 0x4CAF50, requiresRoad: true
     },
     [BuildingType.COMMERCIAL]: {
         type: BuildingType.COMMERCIAL, cost: 100, name: "Zone Commerciale",
-        description: "Commerces et services.", width: 1, height: 1, color: 0x0000FF
+        description: "Commerces et services.", width: 1, height: 1, color: 0x2196F3, requiresRoad: true
     },
     [BuildingType.INDUSTRIAL]: {
         type: BuildingType.INDUSTRIAL, cost: 150, name: "Zone Industrielle",
-        description: "Usines et production.", width: 1, height: 1, color: 0xFFFF00
+        description: "Usines et production.", width: 1, height: 1, color: 0xFFC107, requiresRoad: true
     },
     [BuildingType.POWER_PLANT]: {
         type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Électrique",
-        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5500
+        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true
+    },
+    [BuildingType.WATER_PUMP]: {
+        type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
+        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true
+    },
+    [BuildingType.MINE]: {
+        type: BuildingType.MINE, cost: 1200, name: "Mine",
+        description: "Extrait des ressources minérales.", width: 1, height: 1, color: 0x795548, requiresRoad: true
+    },
+    [BuildingType.OIL_RIG]: {
+        type: BuildingType.OIL_RIG, cost: 2000, name: "Plateforme Pétrolière",
+        description: "Extrait du pétrole.", width: 1, height: 1, color: 0x424242, requiresRoad: true
+    },
+    [BuildingType.CITY_HALL]: {
+        type: BuildingType.CITY_HALL, cost: 3000, name: "Mairie",
+        description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true
+    },
+    [BuildingType.PARK]: {
+        type: BuildingType.PARK, cost: 200, name: "Parc",
+        description: "Espace vert pour le bonheur des citoyens.", width: 1, height: 1, color: 0x8BC34A, requiresRoad: true
+    },
+    [BuildingType.POLICE_STATION]: {
+        type: BuildingType.POLICE_STATION, cost: 1000, name: "Commissariat",
+        description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true
+    },
+    [BuildingType.FIRE_STATION]: {
+        type: BuildingType.FIRE_STATION, cost: 1000, name: "Caserne de Pompiers",
+        description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true
     }
 };
