@@ -4,6 +4,7 @@ import { getGameEngine } from '../engine/GameEngine';
 import { screenToGrid } from '../engine/isometric';
 import { RoadManager } from '../engine/RoadManager';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
+import { AutoZoneBrush } from '../zoning/AutoZoneBrush';
 
 export function useGameInput(
     stageRef: React.MutableRefObject<PIXI.Container | null>, // C'est le worldContainer
@@ -25,6 +26,7 @@ export function useGameInput(
     const isPanningRef = useRef(false);        // Pour le déplacement (Clic Droit)
     const lastPanPos = useRef({ x: 0, y: 0 }); // Position précédente de la souris pour le Pan
     const startTileRef = useRef<number | null>(null);
+    const lastPaintedTileRef = useRef<number | null>(null); // 🆕 Pour éviter de repeindre la même case
 
     useEffect(() => {
         if (!isReady || !stageRef.current || !appRef.current) return;
@@ -106,7 +108,18 @@ export function useGameInput(
                 setTotalCost(cost);
                 setIsValidBuild(valid);
                 isValidBuildRef.current = valid;
-            } else {
+            }
+            // 🎨 ZONE BRUSH DRAG-PAINTING
+            else if (viewMode === 'ZONE' && isDraggingRef.current) {
+                // Peindre la zone si on change de case
+                if (idx !== lastPaintedTileRef.current) {
+                    const painted = AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
+                    if (painted) {
+                        lastPaintedTileRef.current = idx;
+                    }
+                }
+            }
+            else {
                 if (!isDraggingRef.current) {
                     previewPathRef.current = [];
                     setTotalCost(0);
@@ -138,7 +151,10 @@ export function useGameInput(
                 } else if (viewMode === 'BULLDOZER') {
                     engine.handleInteraction(idx, viewMode, null, null);
                 } else if (viewMode === 'ZONE') {
-                    engine.handleInteraction(idx, viewMode, null, selectedZone);
+                    // 🎨 MODE PINCEAU : Lancer le drag-paint
+                    isDraggingRef.current = true;
+                    lastPaintedTileRef.current = idx;
+                    AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
                 } else if (viewMode.startsWith('BUILD_')) {
                     // Construction de bâtiment
                     engine.handleInteraction(idx, viewMode, null, selectedBuilding);
@@ -163,6 +179,13 @@ export function useGameInput(
                 startTileRef.current = null;
                 previewPathRef.current = [];
                 setTotalCost(0);
+            }
+
+            // 🎨 Fin du Zone Brush Drag
+            if (e.button === 0 && viewMode === 'ZONE' && isDraggingRef.current) {
+                isDraggingRef.current = false;
+                lastPaintedTileRef.current = null;
+                console.log('✅ Zone brush drag terminé');
             }
         };
 
