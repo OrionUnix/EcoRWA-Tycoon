@@ -218,6 +218,20 @@
       "mountain": "Montagne",
       "desert": "Désert",
       "snow": "Neige"
+    },
+    "toolbar": {
+      "budget": "Budget",
+      "population": "Population",
+      "wood": "Bois",
+      "steel": "Acier",
+      "energy": "Énergie",
+      "water": "Eau"
+    },
+    "tooltip": {
+      "coordinates": "Coordonnées",
+      "biome": "Biome",
+      "altitude": "Altitude",
+      "moisture": "Humidité"
     }
   }
 }

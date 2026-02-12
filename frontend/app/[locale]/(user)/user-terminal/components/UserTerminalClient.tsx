@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import * as PIXI from 'pixi.js';
+import { useTranslations } from 'next-intl';
 
 // --- IMPORTS MOTEUR ---
 import { usePixiApp } from '../hooks/usePixiApp';
@@ -140,7 +141,7 @@ export default function UserTerminalClient() {
     );
 
     const engine = getGameEngine();
-    const t = (k: string) => k; // Mock translation function
+    const t = useTranslations(); // ✅ Utiliser les vraies traductions i18n
 
     // 7. RENDU FINAL
     return (
@@ -209,7 +210,6 @@ export default function UserTerminalClient() {
                             resources={resources}
                             stats={stats}
                             summary={summary}
-                            onSpawnTraffic={() => engine.spawnTraffic()}
                             onRegenerate={() => {
                                 // 1. Vider physiquement tous les sprites d'arbres du container
                                 if (terrainContainerRef.current) {

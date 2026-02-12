@@ -5,9 +5,10 @@ import {
     ROADS, LAYERS, formatNumber,
     ResourceItem, ToolButton, ResourceCard, GameTooltip
 } from './ui/GameWidgets';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 interface GameUIProps {
-    t: (key: string) => string;
+    t: any; // ✅ Accepte le retour de useTranslations() de next-intl
     viewMode: string;
     setViewMode: (mode: any) => void;
     selectedRoadType: RoadType;
@@ -24,11 +25,11 @@ interface GameUIProps {
     resources: PlayerResources | null;
     stats: CityStats | null;
     summary: ResourceSummary | null;
-    onSpawnTraffic: () => void;
     onRegenerate: () => void;
 }
 
 export default function GameUI({
+    t, // ✅ Ajout de t dans les props déstructurées
     viewMode, setViewMode,
     selectedRoadType, setSelectedRoadType,
     selectedZoneType, setSelectedZoneType,
@@ -36,7 +37,7 @@ export default function GameUI({
     totalCost, isValidBuild,
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
-    onSpawnTraffic, onRegenerate
+    onRegenerate
 }: GameUIProps) {
     // État pour gérer la catégorie active (VIEWS, ROADS, ZONES, SERVICES)
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -53,13 +54,13 @@ export default function GameUI({
             <div className="pointer-events-auto bg-gray-900/95 text-white p-2 flex justify-between items-center border-b border-white/10 shadow-lg backdrop-blur-md z-50">
                 <div className="flex gap-8 items-center ml-4">
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400 uppercase font-black tracking-wider">Budget</span>
+                        <span className="text-[10px] text-gray-400 uppercase font-black tracking-wider">{t('Game.toolbar.budget')}</span>
                         <span className={`text-lg font-mono font-bold ${(resources?.money || 0) < 0 ? 'text-red-400' : 'text-green-400'}`}>
                             ${formatNumber(resources?.money)}
                         </span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400 uppercase font-black tracking-wider">Population</span>
+                        <span className="text-[10px] text-gray-400 uppercase font-black tracking-wider">{t('Game.toolbar.population')}</span>
                         <span className="text-lg font-mono text-blue-300 font-bold">
                             {formatNumber(stats?.population)}
                         </span>
@@ -67,16 +68,19 @@ export default function GameUI({
                 </div>
 
                 <div className="flex gap-4 text-sm hidden lg:flex">
-                    <ResourceItem label="Wood" value={resources?.wood} color="text-amber-500" />
-                    <ResourceItem label="Steel" value={resources?.steel} color="text-blue-400" />
-                    <ResourceItem label="Energy" value={resources?.energy} color="text-yellow-400" />
-                    <ResourceItem label="Water" value={resources?.water} color="text-cyan-400" />
+                    <ResourceItem label={t('Game.toolbar.wood')} value={resources?.wood} color="text-amber-500" />
+                    <ResourceItem label={t('Game.toolbar.steel')} value={resources?.steel} color="text-blue-400" />
+                    <ResourceItem label={t('Game.toolbar.energy')} value={resources?.energy} color="text-yellow-400" />
+                    <ResourceItem label={t('Game.toolbar.water')} value={resources?.water} color="text-cyan-400" />
                 </div>
 
                 <div className="flex gap-3 mr-4 items-center">
                     <div className="text-[10px] font-mono text-gray-500 bg-black/30 px-2 py-1 rounded">FPS: {fps}</div>
                     <button onClick={onRegenerate} className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/50 px-3 py-1 rounded-md text-xs font-bold transition-all">RESET</button>
-                    <button onClick={onSpawnTraffic} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-md text-xs font-bold shadow-lg transition-all">TRAFFIC</button>
+                    {/* ✅ Remplacement du bouton TRAFFIC par le LanguageSwitcher */}
+                    <div className="pointer-events-auto">
+                        <LanguageSwitcher />
+                    </div>
                 </div>
             </div>
 
@@ -194,7 +198,7 @@ export default function GameUI({
                     )}
 
                     {/* BARRE PRINCIPALE (Catégories) */}
-                    <div className="bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 flex items-center gap-3 shadow-2xl">
+                    <div className="bg-gray-900/95 px-4 py-2 rounded-full border border-white/20 flex items-center gap-3 shadow-2xl">
 
                         {/* Groupe Navigation / Destruction */}
                         <div className="flex gap-1">

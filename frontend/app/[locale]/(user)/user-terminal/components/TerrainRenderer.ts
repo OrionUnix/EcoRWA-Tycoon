@@ -52,9 +52,24 @@ export class TerrainRenderer {
 
             // B. Mise à jour
             if (sprite) {
-                sprite.visible = true;
-                sprite.x = Math.round(pos.x); sprite.y = Math.round(pos.y);
-                sprite.zIndex = x + y; hasSprite = true;
+                // ✅ SÉCURITÉ RENFORCÉE : Vérifier que le sprite est complètement initialisé
+                // Lors du changement de langue, la page se recharge et les sprites peuvent être partiellement détruits
+                try {
+                    if (sprite.destroyed) {
+                        spriteCache.delete(i);
+                        sprite = undefined; // Réinitialiser pour permettre le fallback vectoriel
+                    } else {
+                        sprite.visible = true;
+                        sprite.x = Math.round(pos.x);
+                        sprite.y = Math.round(pos.y);
+                        sprite.zIndex = x + y;
+                        hasSprite = true;
+                    }
+                } catch (e) {
+                    // Si le sprite est dans un état invalide, on le supprime du cache
+                    spriteCache.delete(i);
+                    sprite = undefined; // Permettre le fallback
+                }
             }
         } else {
             // ✅ CORRECTION FINAL : CAST EXPLICITE

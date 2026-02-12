@@ -50,35 +50,59 @@ export class ResourceRenderer {
                 resourceCache.set(i, sprite);
             }
 
-            sprite.visible = true;
-            sprite.x = pos.x;
+            // ✅ SÉCURITÉ : Protection contre les sprites détruits lors du changement de langue
+            try {
+                if (sprite.destroyed) {
+                    resourceCache.delete(i);
+                    sprite = undefined; // Permettre le nettoyage sans sortir de la fonction
+                } else {
+                    sprite.visible = true;
+                    sprite.x = pos.x;
 
-            // Position Y : Bas de la tuile
-            sprite.y = pos.y + (TILE_HEIGHT / 2);
+                    // Position Y : Bas de la tuile
+                    sprite.y = pos.y + (TILE_HEIGHT / 2);
 
-            // ✅ CALCUL Z-INDEX UNIFIÉ
-            // On recalcule x et y depuis i
-            const x = i % GRID_SIZE;
-            const y = Math.floor(i / GRID_SIZE);
+                    // ✅ CALCUL Z-INDEX UNIFIÉ
+                    // On recalcule x et y depuis i
+                    const x = i % GRID_SIZE;
+                    const y = Math.floor(i / GRID_SIZE);
 
-            // Z-Index = x + y + 0.5
-            // 0.5 permet d'être DEVANT la route de la MÊME case (qui est à 0.1)
-            // Mais DERRIÈRE la route de la case suivante (qui sera à x+y+1 + 0.1)
-            sprite.zIndex = x + y + 0.5;
+                    // Z-Index = x + y + 0.5
+                    // 0.5 permet d'être DEVANT la route de la MÊME case (qui est à 0.1)
+                    // Mais DERRIÈRE la route de la case suivante (qui sera à x+y+1 + 0.1)
+                    sprite.zIndex = x + y + 0.5;
+                }
+            } catch (e) {
+                // Si le sprite est dans un état invalide, on le supprime du cache
+                resourceCache.delete(i);
+                sprite = undefined;
+            }
 
         } else {
             if (sprite) {
-                container.removeChild(sprite);
-                sprite.destroy();
-                resourceCache.delete(i);
+                try {
+                    if (!sprite.destroyed) {
+                        container.removeChild(sprite);
+                        sprite.destroy();
+                    }
+                    resourceCache.delete(i);
+                } catch (e) {
+                    resourceCache.delete(i);
+                }
             }
         }
     }
 
     static clearAll(container: PIXI.Container) {
         resourceCache.forEach((sprite) => {
-            if (sprite.parent) sprite.parent.removeChild(sprite);
-            sprite.destroy();
+            try {
+                if (!sprite.destroyed) {
+                    if (sprite.parent) sprite.parent.removeChild(sprite);
+                    sprite.destroy();
+                }
+            } catch (e) {
+                // Sprite déjà détruit, on ignore
+            }
         });
         resourceCache.clear();
     }
