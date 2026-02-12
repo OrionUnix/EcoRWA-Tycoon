@@ -81,7 +81,9 @@ export enum BuildingType {
     CITY_HALL = 'CITY_HALL',
     PARK = 'PARK',
     POLICE_STATION = 'POLICE_STATION',
-    FIRE_STATION = 'FIRE_STATION'
+    FIRE_STATION = 'FIRE_STATION',
+    FISHERMAN = 'FISHERMAN',
+    HUNTER_HUT = 'HUNTER_HUT'
 }
 
 // ==================================================================
@@ -110,6 +112,8 @@ export interface CityStats {
     population: number;
     jobsCommercial: number;
     jobsIndustrial: number;
+    jobs: number;    // ✅ Total jobs
+    workers: number; // ✅ Total availble workers (active population)
     unemployed: number;
     demand: { residential: number; commercial: number; industrial: number; };
     energy: { produced: number; consumed: number };
@@ -143,6 +147,17 @@ export interface Vehicle {
     offsetY?: number;
 }
 
+// Status des bâtiments (Bitflags pour performance)
+export enum BuildingStatus {
+    OK = 0,
+    NO_WATER = 1 << 0,
+    NO_POWER = 1 << 1,
+    NO_FOOD = 1 << 2,
+    NO_JOBS = 1 << 3,
+    UNHAPPY = 1 << 4,
+    ABANDONED = 1 << 5
+}
+
 // ✅ FUSION DE BuildingData (Tu l'avais en double)
 export interface BuildingData {
     type: BuildingType;
@@ -150,10 +165,23 @@ export interface BuildingData {
     y: number;
     variant: number; // Pour varier les sprites
     level: number;   // Niveau 1, 2, 3...
+
+    // État
     state: 'CONSTRUCTION' | 'ACTIVE' | 'ABANDONED';
     constructionTimer: number;
+
+    // Simulation avancée
+    statusFlags: number; // Bitmask de BuildingStatus
+    happiness: number;   // 0-100 (lissé)
+    stability: number;   // -100 à 100 (inertie pour évolution)
     pollution: number;
-    happiness: number;
+
+    // Services (Optionnel pour l'instant)
+    services?: {
+        police: boolean;
+        health: boolean;
+        leisure: boolean;
+    };
 }
 
 /**
@@ -239,6 +267,11 @@ export interface BuildingSpecs {
     height: number;
     color: number;
     requiresRoad: boolean;
+    workersNeeded?: number; // ✅ NOUVEAU : Nombre de travailleurs requis
+    production?: {
+        type: 'WATER' | 'ENERGY' | 'FOOD';
+        amount: number;
+    };
 }
 
 export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
@@ -256,23 +289,25 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     },
     [BuildingType.POWER_PLANT]: {
         type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Électrique",
-        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true
+        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 5,
+        production: { type: 'ENERGY', amount: 100 }
     },
     [BuildingType.WATER_PUMP]: {
         type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
-        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true
+        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 3,
+        production: { type: 'WATER', amount: 100 }
     },
     [BuildingType.MINE]: {
         type: BuildingType.MINE, cost: 1200, name: "Mine",
-        description: "Extrait des ressources minérales.", width: 1, height: 1, color: 0x795548, requiresRoad: true
+        description: "Extrait des ressources minérales.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 8
     },
     [BuildingType.OIL_RIG]: {
         type: BuildingType.OIL_RIG, cost: 2000, name: "Plateforme Pétrolière",
-        description: "Extrait du pétrole.", width: 1, height: 1, color: 0x424242, requiresRoad: true
+        description: "Extrait du pétrole.", width: 1, height: 1, color: 0x424242, requiresRoad: true, workersNeeded: 6
     },
     [BuildingType.CITY_HALL]: {
         type: BuildingType.CITY_HALL, cost: 3000, name: "Mairie",
-        description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true
+        description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true, workersNeeded: 10
     },
     [BuildingType.PARK]: {
         type: BuildingType.PARK, cost: 200, name: "Parc",
@@ -280,10 +315,20 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     },
     [BuildingType.POLICE_STATION]: {
         type: BuildingType.POLICE_STATION, cost: 1000, name: "Commissariat",
-        description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true
+        description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true, workersNeeded: 4
     },
     [BuildingType.FIRE_STATION]: {
         type: BuildingType.FIRE_STATION, cost: 1000, name: "Caserne de Pompiers",
-        description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true
+        description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true, workersNeeded: 4
+    },
+    [BuildingType.FISHERMAN]: {
+        type: BuildingType.FISHERMAN, cost: 300, name: "Cabane de Pêcheur",
+        description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
+        production: { type: 'FOOD', amount: 50 }
+    },
+    [BuildingType.HUNTER_HUT]: {
+        type: BuildingType.HUNTER_HUT, cost: 350, name: "Cabane de Chasseur",
+        description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2,
+        production: { type: 'FOOD', amount: 40 }
     }
 };

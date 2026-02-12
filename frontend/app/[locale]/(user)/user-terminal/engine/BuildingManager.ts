@@ -2,6 +2,7 @@ import { MapEngine } from './MapEngine';
 import { BuildingType, BuildingData, BUILDING_SPECS, ZoneType } from './types';
 import { GRID_SIZE } from './config';
 import { ResourceRenderer } from './ResourceRenderer';
+import { PopulationManager } from './systems/PopulationManager';
 
 export class BuildingManager {
 
@@ -108,11 +109,16 @@ export class BuildingManager {
             state: 'CONSTRUCTION',
             constructionTimer: 0,
             pollution: 0,
-            happiness: 100
+            happiness: 100,
+            statusFlags: 0, // Pas de problème initial
+            stability: 0    // Neutre au départ
         };
 
         engine.buildingLayer[index] = building;
         engine.revision++;
+
+        // 4. Notification PopulationManager (Jobs & Production)
+        PopulationManager.onBuildingPlaced(specs);
 
         return { success: true, message: "Construction terminée." };
     }

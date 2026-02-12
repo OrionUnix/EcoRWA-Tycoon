@@ -1,7 +1,8 @@
 import { MapEngine } from '../MapEngine';
 // ✅ AJOUT DE BuildingType
-import { ZoneType, BuildingType, BUILDING_COSTS, PlayerResources } from '../types';
+import { ZoneType, BuildingType, BUILDING_COSTS, PlayerResources, BuildingStatus } from '../types';
 import { GRID_SIZE } from '../config';
+import { ResidentialRules } from '../rules/ResidentialRules';
 
 export class BuildingSystem {
 
@@ -25,110 +26,132 @@ export class BuildingSystem {
     /**
      * Tente de consommer des ressources
      */
+    /**
+     * Tente de consommer des ressources (Helper)
+     */
     static tryConsumeResources(engine: MapEngine, cost: Partial<PlayerResources>): boolean {
+        // Vérification
         if ((cost.wood || 0) > engine.resources.wood) return false;
         if ((cost.concrete || 0) > engine.resources.concrete) return false;
         if ((cost.glass || 0) > engine.resources.glass) return false;
         if ((cost.steel || 0) > engine.resources.steel) return false;
         if ((cost.money || 0) > engine.resources.money) return false;
+        if ((cost.stone || 0) > engine.resources.stone) return false; // Ajout pierre
 
+        // Consommation
         engine.resources.wood -= (cost.wood || 0);
         engine.resources.concrete -= (cost.concrete || 0);
         engine.resources.glass -= (cost.glass || 0);
         engine.resources.steel -= (cost.steel || 0);
         engine.resources.money -= (cost.money || 0);
+        engine.resources.stone -= (cost.stone || 0);
 
         return true;
     }
 
     /**
-     * Mise à jour automatique de la croissance de la ville
+     * Mise à jour du système de bâtiments (Staggered)
+     * @param engine Moteur
+     * @param currentTick Tick actuel de la simulation (pour le staggering)
      */
-    static update(engine: MapEngine) {
-        // Optimisation : On ne scanne pas toute la map à chaque frame.
-        for (let i = 0; i < 50; i++) {
-            const idx = Math.floor(Math.random() * engine.config.totalCells);
-            const zoneData = engine.zoningLayer[idx];
+    static update(engine: MapEngine, currentTick: number) {
+
+        // 1. Calcul du Job Pool Global (Offre / Demande)
+        // Optimisation : On pourrait le calculer moins souvent, mais c'est des additions simples
+        // Workers = Somme population (simplifié)
+        // Jobs = Somme capacités (Commercial + Industriel)
+        const totalWorkers = engine.stats.population;
+        const totalJobs = engine.stats.jobsCommercial + engine.stats.jobsIndustrial;
+        const jobRatio = totalWorkers > 0 ? totalJobs / totalWorkers : 1;
+
+        // 2. Staggering : On traite une portion de la carte à chaque tick
+        // 10000 cases / 60 ticks = ~166 cases par tick pour tout couvrir en 1 seconde
+        // On prend large : 200 cases par tick
+        const BATCH_SIZE = 200;
+        const totalCells = engine.config.totalCells;
+
+        const startIdx = (currentTick * BATCH_SIZE) % totalCells;
+        let endIdx = startIdx + BATCH_SIZE;
+
+        // Gestion du bouclage si on dépasse la fin du tableau
+        const overflow = endIdx > totalCells ? endIdx - totalCells : 0;
+        if (endIdx > totalCells) endIdx = totalCells;
+
+        // Traitement du premier segment
+        this.processRange(engine, startIdx, endIdx, jobRatio);
+
+        // Traitement du reste (bouclage)
+        if (overflow > 0) {
+            this.processRange(engine, 0, overflow, jobRatio);
+        }
+    }
+
+    private static processRange(engine: MapEngine, start: number, end: number, jobRatio: number) {
+        for (let idx = start; idx < end; idx++) {
             const building = engine.buildingLayer[idx];
+            const zoneData = engine.zoningLayer[idx];
 
-            // Pas de zone ou déjà une route = on passe
-            if (!zoneData || engine.roadLayer[idx]) continue;
+            // ----------------------------------------------------------------
+            // LOGIQUE 1 : CONSTRUCTION AUTOMATIQUE SUR ZONE VIDE
+            // ----------------------------------------------------------------
+            if (!building && zoneData && !engine.roadLayer[idx]) {
+                this.tryAutoConstruct(engine, idx, zoneData.type);
+            }
 
-            const zoneType = zoneData.type;
-
-            // -------------------------------------------------------
-            // CAS 1 : Terrain vide zoné -> On veut construire
-            // -------------------------------------------------------
-            if (!building) {
-                if (this.hasRoadAccess(engine, idx)) {
-
-                    // ✅ 1. CONVERSION ZONE -> BÂTIMENT
-                    let targetType: BuildingType;
-                    switch (zoneType) {
-                        case ZoneType.RESIDENTIAL: targetType = BuildingType.RESIDENTIAL; break;
-                        case ZoneType.COMMERCIAL: targetType = BuildingType.COMMERCIAL; break;
-                        case ZoneType.INDUSTRIAL: targetType = BuildingType.INDUSTRIAL; break;
-                        default: continue; // On ignore les autres zones
-                    }
-
-                    // Récupère le coût (si tes coûts sont basés sur BuildingType, utilise targetType ici)
-                    // Si BUILDING_COSTS utilise encore ZoneType comme clé, garde zoneType ci-dessous.
-                    // Supposons que BUILDING_COSTS utilise ZoneType pour l'instant :
-                    const costs = BUILDING_COSTS[zoneType];
-                    const cost = costs ? costs[1] : null;
-
-                    if (cost && this.tryConsumeResources(engine, cost)) {
-
-                        // ✅ 2. CRÉATION AVEC LE BON TYPE
-                        engine.buildingLayer[idx] = {
-                            type: targetType, // C'est ici que ça plantait avant
-                            x: idx % GRID_SIZE, // Ajout coord X (souvent requis)
-                            y: Math.floor(idx / GRID_SIZE), // Ajout coord Y
-                            variant: Math.floor(Math.random() * 3), // Ajout variante visuelle
-                            level: 1,
-                            state: 'CONSTRUCTION',
-                            pollution: 0,
-                            happiness: 100,
-                            constructionTimer: 0
-                        };
+            // ----------------------------------------------------------------
+            // LOGIQUE 2 : SIMULATION & ÉVOLUTION (Bâtiments existants)
+            // ----------------------------------------------------------------
+            else if (building) {
+                if (building.state === 'CONSTRUCTION') {
+                    // Construction (rapide)
+                    building.constructionTimer++;
+                    if (building.constructionTimer > 20) {
+                        building.state = 'ACTIVE';
                         engine.revision++;
                     }
                 }
-            }
-
-            // -------------------------------------------------------
-            // CAS 2 : Bâtiment en construction
-            // -------------------------------------------------------
-            else if (building.state === 'CONSTRUCTION') {
-                building.constructionTimer++;
-                if (building.constructionTimer > 20 + (idx % 10)) {
-                    building.state = 'ACTIVE';
-                    engine.revision++;
-                }
-            }
-
-            // -------------------------------------------------------
-            // CAS 3 : Évolution (Level Up)
-            // -------------------------------------------------------
-            else if (building.state === 'ACTIVE' && building.level < 3) {
-                if (Math.random() < 0.001) {
-                    const nextLevel = building.level + 1;
-
-                    // Attention ici : building.type est un BuildingType. 
-                    // Si BUILDING_COSTS attend un ZoneType, ça peut coincer.
-                    // Mais généralement on utilise le building.type pour les upgrades.
-                    // Si ça plante ici plus tard, il faudra vérifier tes clés dans BUILDING_COSTS.
-                    const costs = BUILDING_COSTS[building.type as unknown as ZoneType] || BUILDING_COSTS[zoneType];
-                    const cost = costs ? costs[nextLevel] : null;
-
-                    if (cost && this.tryConsumeResources(engine, cost)) {
-                        building.level = nextLevel;
-                        building.state = 'CONSTRUCTION';
-                        building.constructionTimer = 0;
-                        engine.revision++;
+                else if (building.state === 'ACTIVE') {
+                    // Simulation Résidentielle
+                    if (building.type === BuildingType.RESIDENTIAL) {
+                        ResidentialRules.update(building, engine, jobRatio);
+                        // ResidentialRules s'occupe de l'évolution via tryEvolve
                     }
+
+                    // TODO: Simulation Commerciale / Industrielle simplifiée ici si besoin
                 }
             }
+        }
+    }
+
+    private static tryAutoConstruct(engine: MapEngine, idx: number, zoneType: ZoneType) {
+        if (!this.hasRoadAccess(engine, idx)) return;
+
+        let targetType: BuildingType;
+        switch (zoneType) {
+            case ZoneType.RESIDENTIAL: targetType = BuildingType.RESIDENTIAL; break;
+            case ZoneType.COMMERCIAL: targetType = BuildingType.COMMERCIAL; break;
+            case ZoneType.INDUSTRIAL: targetType = BuildingType.INDUSTRIAL; break;
+            default: return;
+        }
+
+        // Mapping simple pour les coûts initiaux (Niveau 1)
+        const costConfig = BUILDING_COSTS[zoneType]?.[1];
+
+        if (costConfig && this.tryConsumeResources(engine, costConfig)) {
+            engine.buildingLayer[idx] = {
+                type: targetType,
+                x: idx % GRID_SIZE,
+                y: Math.floor(idx / GRID_SIZE),
+                variant: Math.floor(Math.random() * 3),
+                level: 1,
+                state: 'CONSTRUCTION',
+                constructionTimer: 0,
+                pollution: 0,
+                happiness: 100,
+                statusFlags: 0,
+                stability: 0
+            };
+            engine.revision++;
         }
     }
 }

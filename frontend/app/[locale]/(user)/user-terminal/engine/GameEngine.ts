@@ -37,13 +37,38 @@ export class GameEngine {
         // 2. POPULATION & NEEDS (Every 30 ticks)
         if (this.tickCount % 30 === 0) {
             const population = PopulationManager.getTotalPopulation();
-            const needs = NeedsCalculator.calculateNeeds(population);
+            const jobs = PopulationManager.getTotalJobs();
+            const capacity = PopulationManager.getProductionCapacity();
+
             this.map.stats.population = population;
+            this.map.stats.jobs = jobs;
+            this.map.stats.workers = Math.floor(population * 0.6);
+            this.map.stats.unemployed = Math.max(0, this.map.stats.workers - jobs);
+
+            // EFFICACITÉ GLOBALE (Ratio Travailleurs / Jobs)
+            // Si jobs > 0, ratio = workers / jobs (max 1.0)
+            // Si jobs = 0, ratio = 0 (ou 1 si on veut être gentil au début ?)
+            // Disons que si jobs = 0, pas d'industrie donc pas de prod
+            let workerEfficiency = 0;
+            if (jobs > 0) {
+                workerEfficiency = Math.min(1.0, this.map.stats.workers / jobs);
+            } else {
+                // Si aucun job n'est demandé, on assume que tout fonctionne (ex: éolienne sans worker needed)
+                // Mais ici nos bâtiments demandent des workers.
+                workerEfficiency = 1.0;
+            }
+
+            // PRODUCTION RÉELLE
+            this.map.stats.water.produced = Math.floor(capacity.water * workerEfficiency);
+            this.map.stats.energy.produced = Math.floor(capacity.energy * workerEfficiency);
+            this.map.stats.food.produced = Math.floor(capacity.food * workerEfficiency);
+
+            const needs = NeedsCalculator.calculateNeeds(population);
             this.map.stats.needs = needs;
         }
 
         // 3. EVOLUTION DES BATIMENTS (Nouveau)
-        BuildingSystem.update(this.map);
+        BuildingSystem.update(this.map, this.tickCount);
 
         // 4. JOBS (Nouveau stub)
         // JobSystem.update(this.map); // Peut être décommenté quand implémenté
@@ -76,6 +101,13 @@ export class GameEngine {
                 path.forEach(idx => {
                     // 1. AUTO-BULLDOZER (Nettoyage)
                     if (this.map.buildingLayer[idx]) {
+                        const building = this.map.buildingLayer[idx];
+                        if (building) {
+                            const specs = BUILDING_SPECS[building.type];
+                            if (specs) {
+                                PopulationManager.onBuildingRemoved(specs);
+                            }
+                        }
                         this.map.buildingLayer[idx] = null;
                     }
                     if (this.map.zoningLayer[idx] !== null) {
@@ -117,6 +149,13 @@ export class GameEngine {
                 RoadManager.updateConnections(this.map, idx); // Update voisins + Pathfinding
             }
             if (this.map.buildingLayer[idx]) {
+                const building = this.map.buildingLayer[idx];
+                if (building) {
+                    const specs = BUILDING_SPECS[building.type];
+                    if (specs) {
+                        PopulationManager.onBuildingRemoved(specs);
+                    }
+                }
                 this.map.buildingLayer[idx] = null;
                 this.map.revision++;
             }

@@ -81,6 +81,7 @@ export class MapEngine {
         };
         this.stats = {
             population: 0, jobsCommercial: 0, jobsIndustrial: 0, unemployed: 0,
+            jobs: 0, workers: 0,
             demand: { residential: 50, commercial: 50, industrial: 50 },
             energy: { produced: 0, consumed: 0 },
             water: { produced: 0, consumed: 0 },
