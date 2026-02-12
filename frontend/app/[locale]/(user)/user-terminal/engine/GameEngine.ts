@@ -3,7 +3,7 @@ import { TrafficSystem } from './systems/TrafficSystem';
 import { RoadManager } from './RoadManager';
 import { BuildingManager } from './BuildingManager';
 import { ZoneManager } from './ZoneManager';
-import { ZoneType, BuildingType, BUILDING_SPECS } from './types';
+import { ZoneType, BuildingType, BUILDING_SPECS, getBiomeName } from './types';
 import { ResourceRenderer } from './ResourceRenderer';
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
@@ -140,16 +140,42 @@ export class GameEngine {
         }
 
         const info: any = {
-            biome: this.map.biomes[index],
+            biome: getBiomeName(this.map.biomes[index]), // ✅ Nom lisible au lieu du numéro
             elevation: this.map.heightMap[index],
         };
 
-        // Infos Ressources
+        // Infos Ressources (regroupées dans un objet 'resources')
+        const resources: any = {};
+
         if (this.map.resourceMaps) {
-            if (this.map.resourceMaps.oil && this.map.resourceMaps.oil[index] > 0) info.oil = this.map.resourceMaps.oil[index];
-            if (this.map.resourceMaps.coal && this.map.resourceMaps.coal[index] > 0) info.coal = this.map.resourceMaps.coal[index];
-            if (this.map.resourceMaps.iron && this.map.resourceMaps.iron[index] > 0) info.iron = this.map.resourceMaps.iron[index];
-            if (this.map.resourceMaps.wood && this.map.resourceMaps.wood[index] > 0) info.wood = this.map.resourceMaps.wood[index];
+            // Ressources minérales
+            if (this.map.resourceMaps.oil && this.map.resourceMaps.oil[index] > 0)
+                resources.oil = this.map.resourceMaps.oil[index];
+            if (this.map.resourceMaps.coal && this.map.resourceMaps.coal[index] > 0)
+                resources.coal = this.map.resourceMaps.coal[index];
+            if (this.map.resourceMaps.iron && this.map.resourceMaps.iron[index] > 0)
+                resources.iron = this.map.resourceMaps.iron[index];
+            if (this.map.resourceMaps.wood && this.map.resourceMaps.wood[index] > 0)
+                resources.wood = this.map.resourceMaps.wood[index];
+
+            // ✅ Nouvelles ressources
+            if (this.map.resourceMaps.gold && this.map.resourceMaps.gold[index] > 0)
+                resources.gold = this.map.resourceMaps.gold[index];
+            if (this.map.resourceMaps.silver && this.map.resourceMaps.silver[index] > 0)
+                resources.silver = this.map.resourceMaps.silver[index];
+            if (this.map.resourceMaps.stone && this.map.resourceMaps.stone[index] > 0)
+                resources.stone = this.map.resourceMaps.stone[index];
+
+            // ✅ Ressources vivantes (gibier et poisson)
+            if (this.map.resourceMaps.animals && this.map.resourceMaps.animals[index] > 0)
+                resources.gibier = this.map.resourceMaps.animals[index];
+            if (this.map.resourceMaps.fish && this.map.resourceMaps.fish[index] > 0)
+                resources.poisson = this.map.resourceMaps.fish[index];
+        }
+
+        // Ajouter les ressources seulement si au moins une existe
+        if (Object.keys(resources).length > 0) {
+            info.resources = resources;
         }
 
         // Infos Bâtiments / Routes

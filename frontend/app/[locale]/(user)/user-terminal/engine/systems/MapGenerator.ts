@@ -114,7 +114,11 @@ export class MapGenerator {
                 applyRes(engine.resourceMaps.animals, rule.animals, 50);
                 applyRes(engine.resourceMaps.fish, rule.fish, 60);
 
+                // ✅ MAPPING FOOD: Combine animals (terre) et fish (eau)
+                engine.resourceMaps.food[i] = (engine.resourceMaps.animals[i] || 0) + (engine.resourceMaps.fish[i] || 0);
+
                 // Cas spécial Food (souvent lié à l'humidité/fertilité des plaines)
+
                 if (h < 0.45) {
                     biome = BiomeType.OCEAN; // 👈 Priorité absolue à l'eau
                 } else {
