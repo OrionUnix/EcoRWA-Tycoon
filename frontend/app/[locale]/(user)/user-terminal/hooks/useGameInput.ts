@@ -4,7 +4,6 @@ import { getGameEngine } from '../engine/GameEngine';
 import { screenToGrid } from '../engine/isometric';
 import { RoadManager } from '../engine/RoadManager';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
-import { AutoZoneBrush } from '../zoning/AutoZoneBrush';
 
 export function useGameInput(
     stageRef: React.MutableRefObject<PIXI.Container | null>, // C'est le worldContainer
@@ -113,10 +112,10 @@ export function useGameInput(
             else if (viewMode === 'ZONE' && isDraggingRef.current) {
                 // Peindre la zone si on change de case
                 if (idx !== lastPaintedTileRef.current) {
-                    const painted = AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
-                    if (painted) {
-                        lastPaintedTileRef.current = idx;
-                    }
+                    // const painted = AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
+                    // Remplacé par handleInteraction
+                    engine.handleInteraction(idx, 'ZONE', null, selectedZone);
+                    lastPaintedTileRef.current = idx;
                 }
             }
             else {
@@ -154,7 +153,9 @@ export function useGameInput(
                     // 🎨 MODE PINCEAU : Lancer le drag-paint
                     isDraggingRef.current = true;
                     lastPaintedTileRef.current = idx;
-                    AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
+                    // AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
+                    // Remplacé par handleInteraction pour passer par le GameEngine
+                    engine.handleInteraction(idx, 'ZONE', null, selectedZone);
                 } else if (viewMode.startsWith('BUILD_')) {
                     // Construction de bâtiment
                     engine.handleInteraction(idx, viewMode, null, selectedBuilding);

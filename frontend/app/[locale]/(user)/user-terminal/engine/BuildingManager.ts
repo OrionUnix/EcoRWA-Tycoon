@@ -31,7 +31,7 @@ export class BuildingManager {
         }
 
         // 4. Case déjà occupée par une zone (Residential, Commercial, Industrial) ?
-        if (engine.zoningLayer[index] !== ZoneType.NONE) {
+        if (engine.zoningLayer[index]) {
             console.log('❌ Validation: Zone existante:', engine.zoningLayer[index]);
             return { valid: false, reason: "Une zone est déjà placée ici (utilisez Bulldozer d'abord)" };
         }

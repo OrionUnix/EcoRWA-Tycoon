@@ -48,11 +48,13 @@ export class BuildingSystem {
         // Optimisation : On ne scanne pas toute la map à chaque frame.
         for (let i = 0; i < 50; i++) {
             const idx = Math.floor(Math.random() * engine.config.totalCells);
-            const zoneType = engine.zoningLayer[idx];
+            const zoneData = engine.zoningLayer[idx];
             const building = engine.buildingLayer[idx];
 
             // Pas de zone ou déjà une route = on passe
-            if (zoneType === ZoneType.NONE || engine.roadLayer[idx]) continue;
+            if (!zoneData || engine.roadLayer[idx]) continue;
+
+            const zoneType = zoneData.type;
 
             // -------------------------------------------------------
             // CAS 1 : Terrain vide zoné -> On veut construire

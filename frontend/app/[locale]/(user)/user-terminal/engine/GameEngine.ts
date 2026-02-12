@@ -2,36 +2,65 @@ import { MapEngine } from './MapEngine';
 import { TrafficSystem } from './systems/TrafficSystem';
 import { RoadManager } from './RoadManager';
 import { BuildingManager } from './BuildingManager';
+import { BuildingSystem } from './systems/BuildingSystem';
 import { ZoneManager } from './ZoneManager';
 import { ZoneType, BuildingType, BUILDING_SPECS, getBiomeName } from './types';
 import { ResourceRenderer } from './ResourceRenderer';
+import { PopulationManager } from './systems/PopulationManager';
+import { NeedsCalculator } from './systems/NeedsCalculator';
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
 
 export class GameEngine {
     public map: MapEngine;
     public isPaused: boolean = false;
+    public speed: number = 1; // 1x, 2x, 4x
     private tickCount: number = 0;
 
     constructor() {
         console.log("🚀 GameEngine: Démarrage...");
         this.map = new MapEngine();
         this.map.generateWorld();
+
+        // Initialize population tracking
+        PopulationManager.initialize(this.map);
+    }
+
+    public togglePause() { this.isPaused = !this.isPaused; }
+    public setSpeed(s: number) { this.speed = s; }
+
+    // ✅ Nouvelle méthode de simulation (1 pas de temps)
+    public simulationStep() {
+        // 1. TRAFIC (Vite)
+        TrafficSystem.update(this.map);
+
+        // 2. POPULATION & NEEDS (Every 30 ticks)
+        if (this.tickCount % 30 === 0) {
+            const population = PopulationManager.getTotalPopulation();
+            const needs = NeedsCalculator.calculateNeeds(population);
+            this.map.stats.population = population;
+            this.map.stats.needs = needs;
+        }
+
+        // 3. EVOLUTION DES BATIMENTS (Nouveau)
+        BuildingSystem.update(this.map);
+
+        // 4. JOBS (Nouveau stub)
+        // JobSystem.update(this.map); // Peut être décommenté quand implémenté
+
+        // 5. RESSOURCES (Lent)
+        if (this.tickCount % 60 === 0) this.map.calculateSummary();
+
+        this.tickCount++;
     }
 
     public tick() {
         if (this.isPaused) return;
 
-        // 1. TRAFIC (Vite)
-        TrafficSystem.update(this.map);
-
-        // 2. BÂTIMENTS (Moyen)
-        // if (this.tickCount % 10 === 0) BuildingSystem.update(this.map);
-
-        // 3. RESSOURCES (Lent)
-        if (this.tickCount % 60 === 0) this.map.calculateSummary();
-
-        this.tickCount++;
+        // On exécute la boucle X fois selon la vitesse
+        for (let i = 0; i < this.speed; i++) {
+            this.simulationStep();
+        }
     }
 
     public handleInteraction(index: number, mode: string, path: number[] | null, type: any) {
@@ -49,8 +78,12 @@ export class GameEngine {
                     if (this.map.buildingLayer[idx]) {
                         this.map.buildingLayer[idx] = null;
                     }
-                    if (this.map.zoningLayer[idx] !== ZoneType.NONE) {
-                        this.map.zoningLayer[idx] = ZoneType.NONE;
+                    if (this.map.zoningLayer[idx] !== null) {
+                        const zoneData = this.map.zoningLayer[idx];
+                        if (zoneData) {
+                            PopulationManager.onZoneRemoved(zoneData);
+                        }
+                        this.map.zoningLayer[idx] = null;
                     }
 
                     // 2. POSE DE LA ROUTE
@@ -87,8 +120,12 @@ export class GameEngine {
                 this.map.buildingLayer[idx] = null;
                 this.map.revision++;
             }
-            if (this.map.zoningLayer[idx] !== ZoneType.NONE) {
-                this.map.zoningLayer[idx] = ZoneType.NONE;
+            if (this.map.zoningLayer[idx] !== null) {
+                const zoneData = this.map.zoningLayer[idx];
+                if (zoneData) {
+                    PopulationManager.onZoneRemoved(zoneData);
+                }
+                this.map.zoningLayer[idx] = null;
                 this.map.revision++;
             }
         }
@@ -98,6 +135,9 @@ export class GameEngine {
             const result = ZoneManager.placeZone(this.map, index, type);
 
             if (result.success) {
+                if (result.zoneData) {
+                    PopulationManager.onZonePlaced(result.zoneData);
+                }
                 console.log(`✅ Zone ${type} créée avec succès!`);
             } else {
                 console.error(`❌ Zonage impossible: ${result.message}`);

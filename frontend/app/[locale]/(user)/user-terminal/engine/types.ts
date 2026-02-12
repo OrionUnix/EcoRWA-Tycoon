@@ -115,6 +115,12 @@ export interface CityStats {
     energy: { produced: number; consumed: number };
     water: { produced: number; consumed: number };
     food: { produced: number; consumed: number };
+    needs: {
+        food: number;
+        water: number;
+        electricity: number;
+        jobs: number;
+    };
 }
 
 export interface RoadData {
@@ -148,6 +154,16 @@ export interface BuildingData {
     constructionTimer: number;
     pollution: number;
     happiness: number;
+}
+
+/**
+ * ZoneData - Stored directly in zoningLayer[index]
+ * Tracks zone type, evolution level, and population
+ */
+export interface ZoneData {
+    type: ZoneType;
+    level: number;        // Zone evolution level (1-4)
+    population: number;   // Current population for this zone
 }
 
 // ==================================================================
@@ -205,9 +221,9 @@ export const BUILDING_COSTS: Record<string, Record<number, Partial<PlayerResourc
 
 export const ZONE_COLORS: Record<ZoneType, number> = {
     [ZoneType.NONE]: 0x000000,
-    [ZoneType.RESIDENTIAL]: 0x4CAF50,
-    [ZoneType.COMMERCIAL]: 0x2196F3,
-    [ZoneType.INDUSTRIAL]: 0xFFC107,
+    [ZoneType.RESIDENTIAL]: 0x00FF00, // Vivid Green
+    [ZoneType.COMMERCIAL]: 0x0000FF,  // Vivid Blue
+    [ZoneType.INDUSTRIAL]: 0xFFFF00,  // Vivid Yellow
     [ZoneType.WIND_TURBINE]: 0xE0E0E0,
     [ZoneType.COAL_PLANT]: 0x3E2723,
     [ZoneType.WATER_PUMP]: 0x0288D1,

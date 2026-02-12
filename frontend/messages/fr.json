@@ -227,6 +227,19 @@
       "energy": "Énergie",
       "water": "Eau"
     },
+    "needs": {
+      "title": "Demandes",
+      "population": "Population",
+      "food": "Nourriture",
+      "water": "Eau",
+      "electricity": "Électricité",
+      "jobs": "Emplois",
+      "status": {
+        "ok": "OK",
+        "warning": "ATTENTION",
+        "danger": "DANGER"
+      }
+    },
     "tooltip": {
       "coordinates": "Coordonnées",
       "biome": "Biome",

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { RoadType, ZoneType, BuildingType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
 import {
     ROADS, LAYERS, formatNumber,
-    ResourceItem, ToolButton, ResourceCard, GameTooltip
+    ResourceItem, ToolButton, ResourceCard, GameTooltip, NeedsDisplay
 } from './ui/GameWidgets';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
@@ -26,6 +26,10 @@ interface GameUIProps {
     stats: CityStats | null;
     summary: ResourceSummary | null;
     onRegenerate: () => void;
+    speed: number;
+    paused: boolean;
+    onSetSpeed: (s: number) => void;
+    onTogglePause: () => void;
 }
 
 export default function GameUI({
@@ -37,7 +41,8 @@ export default function GameUI({
     totalCost, isValidBuild,
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
-    onRegenerate
+    onRegenerate,
+    speed, paused, onSetSpeed, onTogglePause
 }: GameUIProps) {
     // État pour gérer la catégorie active (VIEWS, ROADS, ZONES, SERVICES)
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -67,6 +72,11 @@ export default function GameUI({
                     </div>
                 </div>
 
+                {/* ✅ Needs Display */}
+                <div className="hidden xl:flex ml-8">
+                    <NeedsDisplay stats={stats} />
+                </div>
+
                 <div className="flex gap-4 text-sm hidden lg:flex">
                     <ResourceItem label={t('Game.toolbar.wood')} value={resources?.wood} color="text-amber-500" />
                     <ResourceItem label={t('Game.toolbar.steel')} value={resources?.steel} color="text-blue-400" />
@@ -76,6 +86,26 @@ export default function GameUI({
 
                 <div className="flex gap-3 mr-4 items-center">
                     <div className="text-[10px] font-mono text-gray-500 bg-black/30 px-2 py-1 rounded">FPS: {fps}</div>
+
+                    {/* TIME CONTROLS */}
+                    <div className="flex bg-black/40 rounded-lg p-1 gap-1 border border-white/10">
+                        <button
+                            onClick={onTogglePause}
+                            className={`px-2 py-1 rounded text-xs font-bold transition-all ${paused ? 'bg-red-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            ⏸
+                        </button>
+                        {[1, 2, 4].map(s => (
+                            <button
+                                key={s}
+                                onClick={() => onSetSpeed(s)}
+                                className={`px-2 py-1 rounded text-xs font-bold transition-all ${speed === s && !paused ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                {s}x
+                            </button>
+                        ))}
+                    </div>
+
                     <button onClick={onRegenerate} className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/50 px-3 py-1 rounded-md text-xs font-bold transition-all">RESET</button>
                     {/* ✅ Remplacement du bouton TRAFFIC par le LanguageSwitcher */}
                     <div className="pointer-events-auto">

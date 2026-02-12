@@ -1,5 +1,5 @@
 import { MapEngine } from './MapEngine';
-import { ZoneType } from './types';
+import { ZoneType, ZoneData } from './types';
 import { GRID_SIZE } from './config';
 
 /**
@@ -48,7 +48,7 @@ export class ZoneManager {
         }
 
         // 4. Case déjà zonée ?
-        if (engine.zoningLayer[index] !== ZoneType.NONE) {
+        if (engine.zoningLayer[index] !== null) {
             console.log('❌ Validation: Zone existante:', engine.zoningLayer[index]);
             return { valid: false, reason: "Une zone est déjà placée ici" };
         }
@@ -77,7 +77,7 @@ export class ZoneManager {
     /**
      * Place une zone après validation
      */
-    static placeZone(engine: MapEngine, index: number, type: ZoneType): { success: boolean, message?: string } {
+    static placeZone(engine: MapEngine, index: number, type: ZoneType): { success: boolean, message?: string, zoneData?: ZoneData } {
         const check = this.checkZoneValidity(engine, index, type);
 
         if (!check.valid) {
@@ -95,10 +95,17 @@ export class ZoneManager {
         // Déduction du coût
         engine.resources.money -= cost;
 
+        // Création des données de zone avec population initiale
+        const zoneData: ZoneData = {
+            type: type,
+            level: 1,
+            population: type === ZoneType.RESIDENTIAL ? 5 : 0
+        };
+
         // Placement de la zone
-        engine.setZone(index, type);
+        engine.setZone(index, zoneData);
 
         console.log(`✅ ZoneManager: Zone ${type} placée à index ${index}`);
-        return { success: true, message: `Zone ${type} créée.` };
+        return { success: true, message: `Zone ${type} créée.`, zoneData: zoneData };
     }
 }

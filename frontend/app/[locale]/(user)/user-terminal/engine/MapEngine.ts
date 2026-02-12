@@ -1,4 +1,4 @@
-import { LayerType, GridConfig, ResourceSummary, RoadData, Vehicle, ZoneType, PlayerResources, BuildingData, CityStats } from './types';
+import { LayerType, GridConfig, ResourceSummary, RoadData, Vehicle, ZoneType, ZoneData, PlayerResources, BuildingData, CityStats } from './types';
 import { RoadGraph } from './Pathfinding';
 import { GRID_SIZE, TOTAL_CELLS } from './config';
 import { MapGenerator } from './systems/MapGenerator';
@@ -32,7 +32,7 @@ export class MapEngine {
     public nextVehicleId = 1;
     public revision: number = 0;
 
-    public zoningLayer: ZoneType[];
+    public zoningLayer: (ZoneData | null)[];
     public buildingLayer: (BuildingData | null)[];
     public resources: PlayerResources;
     public stats: CityStats;
@@ -68,7 +68,7 @@ export class MapEngine {
 
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
         this.roadGraph = new RoadGraph();
-        this.zoningLayer = new Array(TOTAL_CELLS).fill(ZoneType.NONE);
+        this.zoningLayer = new Array(TOTAL_CELLS).fill(null);
         this.buildingLayer = new Array(TOTAL_CELLS).fill(null);
 
         // Valeurs par défaut stats
@@ -84,7 +84,8 @@ export class MapEngine {
             demand: { residential: 50, commercial: 50, industrial: 50 },
             energy: { produced: 0, consumed: 0 },
             water: { produced: 0, consumed: 0 },
-            food: { produced: 0, consumed: 0 }
+            food: { produced: 0, consumed: 0 },
+            needs: { food: 0, water: 0, electricity: 0, jobs: 0 }
         };
         this.currentSummary = {
             oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0,
@@ -155,8 +156,8 @@ export class MapEngine {
         this.revision++;
     }
     public removeRoad(idx: number) { this.roadLayer[idx] = null; this.revision++; }
-    public setZone(idx: number, type: ZoneType) { this.zoningLayer[idx] = type; this.revision++; }
-    public removeZone(idx: number) { this.zoningLayer[idx] = ZoneType.NONE; this.revision++; }
+    public setZone(idx: number, zoneData: ZoneData) { this.zoningLayer[idx] = zoneData; this.revision++; }
+    public removeZone(idx: number) { this.zoningLayer[idx] = null; this.revision++; }
 }
 
 // Singleton Robuste

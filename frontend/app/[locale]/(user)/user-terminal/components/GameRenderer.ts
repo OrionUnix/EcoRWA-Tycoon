@@ -52,9 +52,9 @@ export class GameRenderer {
                     g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: 0.1 });
                 }
 
-                const zone = engine.zoningLayer[i];
-                if (zone !== ZoneType.NONE) {
-                    const zColor = ZONE_COLORS[zone] || 0xFF00FF;
+                const zoneData = engine.zoningLayer[i];
+                if (zoneData) {
+                    const zColor = ZONE_COLORS[zoneData.type] || 0xFF00FF;
                     g.beginPath();
                     g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
                     g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ZoneType, RoadType, BuildingType } from '../../engine/types';
+import { ZoneType, RoadType, BuildingType, CityStats } from '../../engine/types';
 import { useTranslations } from 'next-intl';
 
 // --- CONSTANTES ---
@@ -164,6 +164,54 @@ export function ResourceCard({ icon, value, label, description, color = "bg-blue
                     </span>
                 </div>
             </div>
+        </div>
+    );
+}
+
+/**
+ * Affiche les besoins de la population (Nourriture, Eau, Électricité, Emplois)
+ */
+export function NeedsDisplay({ stats }: { stats: CityStats | null }) {
+    const t = useTranslations('Game.needs');
+
+    if (!stats || !stats.needs) return null;
+
+    const getStatus = (demand: number, supply: number) => {
+        if (supply >= demand) return 'OK';
+        if (supply >= demand * 0.7) return 'WARNING';
+        return 'DANGER';
+    };
+
+    const getStatusColor = (status: string) => {
+        if (status === 'OK') return 'text-green-400';
+        if (status === 'WARNING') return 'text-yellow-400';
+        return 'text-red-400';
+    };
+
+    const renderNeed = (key: string, demand: number, supply: number, icon: string) => {
+        const status = getStatus(demand, supply);
+        const color = getStatusColor(status);
+        const statusText = t(`status.${status.toLowerCase()}`);
+
+        return (
+            <div className="flex items-center gap-2 text-xs bg-black/40 px-2 py-1 rounded border border-white/5">
+                <span className="text-base">{icon}</span>
+                <div className="flex flex-col leading-tight">
+                    <span className="text-[9px] text-gray-500 uppercase font-black">{t(key)}</span>
+                    <span className={`font-mono font-bold ${color}`}>
+                        {demand} / {supply} <span className="text-[9px] opacity-70">({statusText})</span>
+                    </span>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="flex gap-2">
+            {renderNeed('food', stats.needs.food, stats.food.produced, '🍞')}
+            {renderNeed('water', stats.needs.water, stats.water.produced, '💧')}
+            {renderNeed('electricity', stats.needs.electricity, stats.energy.produced, '⚡')}
+            {renderNeed('jobs', stats.needs.jobs, stats.jobsCommercial + stats.jobsIndustrial, '🛠️')}
         </div>
     );
 }

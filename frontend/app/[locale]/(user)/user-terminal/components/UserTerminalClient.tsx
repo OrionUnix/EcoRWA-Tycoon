@@ -44,6 +44,8 @@ export default function UserTerminalClient() {
     const [resources, setResources] = useState<any>(null);
     const [stats, setStats] = useState<any>(null);
     const [summary, setSummary] = useState<any>(null);
+    const [speed, setSpeed] = useState(1);
+    const [paused, setPaused] = useState(false);
 
     const previewPathRef = useRef<number[]>([]);
     const isValidBuildRef = useRef(true);
@@ -218,6 +220,17 @@ export default function UserTerminalClient() {
                                 // 2. Créer le nouveau monde
                                 engine.map.generateWorld();
                                 engine.map.revision++; // Force le rafraîchissement
+                            }}
+                            speed={speed}
+                            paused={paused}
+                            onSetSpeed={(s: number) => {
+                                setSpeed(s);
+                                engine.setSpeed(s);
+                            }}
+                            onTogglePause={() => {
+                                const newPaused = !paused;
+                                setPaused(newPaused);
+                                engine.isPaused = newPaused;
                             }}
                         />
                     </div>
