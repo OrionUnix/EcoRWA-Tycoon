@@ -3,8 +3,8 @@ export const GRID_SIZE = 32;
 export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 
 // Configuration de l'affichage
-export const TILE_WIDTH = 32; // Largeur isométrique
-export const TILE_HEIGHT = 16; // Hauteur isométrique
+export const TILE_WIDTH = 256; // Largeur isométrique
+export const TILE_HEIGHT = 128; // Hauteur isométrique
 
 // Zoom par défaut (Réduit pour voir plus de carte)
 export const INITIAL_ZOOM = 1.0;

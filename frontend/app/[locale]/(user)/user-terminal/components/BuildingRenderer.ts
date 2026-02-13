@@ -27,16 +27,26 @@ export class BuildingRenderer {
         const index = y * GRID_SIZE + x;
         let g = buildingCache.get(index);
 
+        // ✅ Sécurité : Si le graphique est détruit (suite à un hot reload ou changement de page), on le vire
+        if (g && g.destroyed) {
+            buildingCache.delete(index);
+            g = undefined;
+        }
+
         // Créer le graphique s'il n'existe pas
         if (!g) {
             g = new PIXI.Graphics();
             container.addChild(g);
             buildingCache.set(index, g);
+        } else if (g.parent !== container) {
+            // Si le parent a changé (nouveau container mais graphique mis en cache), on le réattache
+            container.addChild(g);
         }
 
         // Nettoyer et redessiner
         g.clear();
 
+        // (Reste du code identique)
         const specs = BUILDING_SPECS[building.type];
         const color = specs.color;
         const w = TILE_WIDTH;
@@ -86,20 +96,21 @@ export class BuildingRenderer {
     static removeBuildingAt(index: number) {
         const g = buildingCache.get(index);
         if (g) {
-            if (g.parent) g.parent.removeChild(g);
-            g.destroy();
+            if (!g.destroyed && g.parent) g.parent.removeChild(g);
+            if (!g.destroyed) g.destroy();
             buildingCache.delete(index);
         }
     }
 
     /**
      * Nettoie tous les bâtiments du cache
-     * @param container Conteneur parent
      */
-    static clearAll(container: PIXI.Container) {
+    static clearCache() {
         buildingCache.forEach((g) => {
-            if (g.parent) container.removeChild(g);
-            g.destroy();
+            if (!g.destroyed) {
+                if (g.parent) g.parent.removeChild(g);
+                g.destroy();
+            }
         });
         buildingCache.clear();
     }

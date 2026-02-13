@@ -14,11 +14,12 @@ import { ResourceAssets } from '../engine/ResourceAssets';
 import { RoadAssets } from '../engine/RoadAssets';
 import { VehicleAssets } from '../engine/VehicleAssets';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
-
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 import { VehicleRenderer } from '../components/VehicleRenderer';
+import { BuildingRenderer } from '../components/BuildingRenderer'; // ✅ Import
+import { useECS } from '../hooks/useECS'; // ✅ Import ECS
 
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
@@ -60,14 +61,17 @@ export default function UserTerminalClient() {
             // 🧹 NETTOYAGE PRÉVENTIF 🧹 
             // On vide TOUT avant de charger pour garantir un contexte frais
             clearBiomeTextures();
-            ResourceAssets.clear(); // ✅ NOUVEAU
-            RoadAssets.clear();     // ✅ NOUVEAU
-            VehicleAssets.clear();  // ✅ NOUVEAU
+            ResourceAssets.clear();
+            RoadAssets.clear();
+            VehicleAssets.clear();
+            BuildingRenderer.clearCache(); // ✅ NOUVEAU
 
             try {
                 console.log("🚀 Page: Démarrage du chargement des assets...");
+                if (!appRef.current) throw new Error("App Pixi non initialisée"); // Sécurité
+
                 await Promise.all([
-                    loadBiomeTextures(),
+                    loadBiomeTextures(appRef.current), // ✅ Correction: Passage de l'app
                     ResourceAssets.load(),
                     RoadAssets.load(),
                     VehicleAssets.load()
@@ -103,6 +107,7 @@ export default function UserTerminalClient() {
             setAssetsLoaded(false);
             // On vide aussi à la destruction pour être propre
             clearBiomeTextures();
+            BuildingRenderer.clearCache(); // ✅ NOUVEAU
         };
     }, [isReady]); // Dangers: isReady change quand l'app Pixi est recréée
 
@@ -188,6 +193,11 @@ export default function UserTerminalClient() {
     }, []);
 
     // 5. ACTIVATION DE LA BOUCLE DE JEU (Logic & Render)
+    // 5. ACTIVATION DE LA BOUCLE DE JEU (Logic & Render)
+
+    // ✅ Initialisation ECS
+    const { updateECS } = useECS(isReady);
+
     useGameLoop(
         appRef,
         terrainContainerRef,
@@ -200,7 +210,8 @@ export default function UserTerminalClient() {
         isValidBuildRef,
         setFps,
         setResources,
-        setStats
+        setStats,
+        updateECS // ✅ Injection de la boucle ECS
     );
 
     // 6. GESTION DES INPUTS (Souris, Zoom, Pan, Click)

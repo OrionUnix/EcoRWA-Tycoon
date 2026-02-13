@@ -4,6 +4,8 @@ import { gridToScreen } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
 import { ZoneType, ZONE_COLORS } from '../engine/types';
 import { TerrainRenderer } from './TerrainRenderer';
+import { TerrainTilemap } from './TerrainTilemap';
+// import { DebugTerrainTilemap as TerrainTilemap } from '../implant/DebugTerrainTilemap';
 import { RoadRenderer } from './RoadRenderer';
 import { BuildingRenderer } from './BuildingRenderer';
 import { COLORS } from '../engine/constants';
@@ -12,6 +14,10 @@ import { VehicleAssets } from '../engine/VehicleAssets';
 
 const LOD_THRESHOLD_LOW = 0.6;
 const LOD_THRESHOLD_HIGH = 1.2;
+
+// Instance unique pour le tilemap (Singleton-like ou géré par le composant parent ?)
+// Pour l'instant on le stocke en static pour simplifier, mais idéalement instance.
+const terrainTilemap = new TerrainTilemap();
 
 export class GameRenderer {
 
@@ -32,6 +38,13 @@ export class GameRenderer {
         // ✅ IMPORTANT : Active le tri de profondeur automatique
         container.sortableChildren = true;
 
+        // 0. TERRAIN (TILEMAP) - Optimized
+        // On rend le tilemap une seule fois
+        terrainTilemap.render(engine, viewMode);
+        const tilemapContainer = terrainTilemap.getContainer();
+        tilemapContainer.zIndex = -100; // Toujours derrière
+        container.addChild(tilemapContainer);
+
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
                 const i = y * GRID_SIZE + x;
@@ -40,8 +53,11 @@ export class GameRenderer {
                 const biome = engine.biomes[i];
                 const wood = engine.resourceMaps.wood ? engine.resourceMaps.wood[i] : 0;
 
-                // 1. TERRAIN
-                TerrainRenderer.drawTile(container, g, engine, biome, x, y, i, pos, viewMode);
+                // 1. TERRAIN (Overlays only)
+                if (viewMode !== 'ALL') {
+                    TerrainRenderer.drawOverlays(g, engine, biome, i, pos, viewMode);
+                }
+
 
                 // 2. RESSOURCES (Arbres)
                 if (!isLowDetail && viewMode === 'ALL') {

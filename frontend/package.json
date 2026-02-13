@@ -24,7 +24,7 @@
     "@react-three/postprocessing": "^3.0.4",
     "@tanstack/react-query": "^5.62.11",
     "@types/seedrandom": "^3.0.8",
-    "bitecs": "^0.4.0",
+    "bitecs": "^0.3.40",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "easystarjs": "^0.4.4",

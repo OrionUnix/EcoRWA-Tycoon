@@ -24,3 +24,6 @@ export const COLORS = {
     // Fallback Erreur
     ERROR: 0xFF00FF
 };
+
+// 0x + 40 chars (standard Ethereum address)
+export const FAKE_WALLET_ADDRESS = "0x742d35Cc6634C0532924a388a270656D42d764A2";

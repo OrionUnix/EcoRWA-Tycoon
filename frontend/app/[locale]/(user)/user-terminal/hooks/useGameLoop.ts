@@ -18,7 +18,8 @@ export function useGameLoop(
     isValidBuildRef: React.MutableRefObject<boolean>,
     setFps: (fps: number) => void,
     setResources: (res: any) => void,
-    setStats: (stats: any) => void
+    setStats: (stats: any) => void,
+    updateECS?: (delta: number, elapsed: number) => void // ✅ NOUVEAU: Callback ECS
 ) {
     const lastRevRef = useRef(-2);
     const lastViewModeRef = useRef('FORCE_INIT');
@@ -67,9 +68,18 @@ export function useGameLoop(
 
         console.log("🎬 GameLoop: Running with Resource Support.");
 
-        const tick = () => {
+        const tick = (ticker: PIXI.Ticker) => {
             if (!terrainContainerRef.current || !staticGRef.current || !uiGRef.current) {
                 return;
+            }
+
+            // 0. MISE À JOUR ECS
+            if (updateECS) {
+                // ticker.deltaTime est en frames corrigées (1 = 60fps), 
+                // ticker.lastTime est en ms
+                const delta = ticker.deltaTime;
+                const elapsed = ticker.lastTime;
+                updateECS(delta, elapsed);
             }
 
             // 1. LOGIQUE DU MOTEUR (Trafic, etc.)
@@ -162,5 +172,5 @@ export function useGameLoop(
                 app.ticker.remove(tick);
             }
         };
-    }, [isReady, viewMode, cursorPos]); // Dépendances de l'effet
+    }, [isReady, viewMode, cursorPos, updateECS]); // ✅ updateECS ajouté aux dépendances
 }

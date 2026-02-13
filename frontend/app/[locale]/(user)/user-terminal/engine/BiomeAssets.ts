@@ -1,19 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { BiomeType } from './types';
-import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
+import { ProceduralTiles } from './ProceduralTiles'; // ✅ NOUVEAU
+import { TILE_WIDTH, TILE_HEIGHT } from './config';
 
-const BASE_PATH = withBasePath('/assets/isometric/Spritesheet/biome');
-
-const BIOME_FILES: Record<number, string> = {
-    [BiomeType.PLAINS]: 'plains.png',
-    [BiomeType.DESERT]: 'desert.png',
-    [BiomeType.BEACH]: 'beach.png',
-    [BiomeType.SNOW]: 'snow.png',
-    [BiomeType.FOREST]: 'forest.png',
-    [BiomeType.OCEAN]: 'ocean.png',
-    [BiomeType.DEEP_OCEAN]: 'deepocean.png',
-    [BiomeType.MOUNTAIN]: 'mountain.png',
-};
 
 // Store frames
 const texturesCache = new Map<number, PIXI.Texture[]>();
@@ -29,69 +18,51 @@ export function clearBiomeTextures() {
     });
     texturesCache.clear();
 
-    // 2. Unload from Pixi Global Cache
-    Object.values(BIOME_FILES).forEach(filename => {
-        const path = `${BASE_PATH}/${filename}`;
-        if (PIXI.Assets.cache.has(path)) {
-            PIXI.Assets.unload(path);
-        }
-    });
+    // 2. Unload from Pixi Global Cache (Plus besoin car procédural)
+    // Les textures sont maintenant gérées par ProceduralTiles et le cache local.
 
     // 3. Invalidate context
     currentContextId++;
 }
 
-export async function loadBiomeTextures() {
-    // Determine which file to check
-    const firstBiome = Number(Object.keys(BIOME_FILES)[0]);
+export async function loadBiomeTextures(app: PIXI.Application) {
+    // Si déjà généré, on ignore
+    if (texturesCache.size > 0) return true;
 
-    // STRICT CHECK: The texture must exist, have a source, width > 1, AND valid resource
-    const hasValidCache = texturesCache.has(firstBiome) &&
-        texturesCache.get(firstBiome)?.[0]?.source?.resource;
+    console.log("🔄 Génération procédurale des textures biomes...");
 
-    if (hasValidCache) {
-        console.log("🎨 Textures found in cache (Valid).");
-        return true;
-    }
+    // On définit l'épaisseur de la terre
+    const DEPTH = 64;
 
-    console.log(`🔄 Loading Biome Textures (Context ${currentContextId})...`);
+    // Helper pour générer et stocker
+    const gen = (biome: BiomeType, color: number, dirtColor?: number) => {
+        const tex = ProceduralTiles.generateBlock(app, TILE_WIDTH, TILE_HEIGHT, DEPTH, color, dirtColor);
+        texturesCache.set(biome, [tex]);
+    };
 
-    // Safety clear before load
-    texturesCache.clear();
+    // 1. PLAINE (Herbe verte)
+    gen(BiomeType.PLAINS, 0x4CAF50);
+    // 2. DESERT (Sable)
+    gen(BiomeType.DESERT, 0xEEDD82, 0xD7CCC8);
+    // 3. OCEAN (Eau bleue plate, pas de profondeur de terre)
+    // Pour l'eau, on réduit le depth ou on le met bleu sombre
+    const oceanTex = ProceduralTiles.generateBlock(app, TILE_WIDTH, TILE_HEIGHT, DEPTH, 0x2196F3, 0x1565C0);
+    texturesCache.set(BiomeType.OCEAN, [oceanTex]);
 
-    const promises = Object.entries(BIOME_FILES).map(async ([key, filename]) => {
-        const biome = Number(key);
-        const path = `${BASE_PATH}/${filename}`;
+    // 4. DEEP OCEAN (Eau profonde)
+    const deepOceanTex = ProceduralTiles.generateBlock(app, TILE_WIDTH, TILE_HEIGHT, DEPTH, 0x1565C0, 0x0D47A1);
+    texturesCache.set(BiomeType.DEEP_OCEAN, [deepOceanTex]);
 
-        try {
-            // Force load
-            const texture = await PIXI.Assets.load(path);
-            texture.source.scaleMode = 'nearest';
+    // 5. MOUNTAIN (Gris/Neige)
+    gen(BiomeType.MOUNTAIN, 0x9E9E9E, 0x616161);
+    // 6. SNOW (Blanc)
+    gen(BiomeType.SNOW, 0xFFFFFF, 0xE0E0E0);
+    // 7. FOREST (Vert foncé)
+    gen(BiomeType.FOREST, 0x2E7D32, 0x1B5E20);
+    // 8. BEACH (Sable plus clair)
+    gen(BiomeType.BEACH, 0xFFE082, 0xD7CCC8);
 
-            // Slicing logic
-            const frames: PIXI.Texture[] = [];
-            const cols = 4;
-            const rows = 2;
-            const w = Math.floor(texture.width / cols);
-            const h = Math.floor(texture.height / rows);
-
-            for (let y = 0; y < rows; y++) {
-                for (let x = 0; x < cols; x++) {
-                    const rect = new PIXI.Rectangle(x * w, y * h, w, h);
-                    const tex = new PIXI.Texture({
-                        source: texture.source,
-                        frame: rect
-                    });
-                    frames.push(tex);
-                }
-            }
-            texturesCache.set(biome, frames);
-        } catch (err) {
-            console.error(`❌ Error loading ${filename}:`, err);
-        }
-    });
-
-    await Promise.all(promises);
+    console.log("✅ Toutes les textures procédurales sont générées.");
     return true;
 }
 

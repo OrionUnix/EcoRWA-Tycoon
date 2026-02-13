@@ -166,6 +166,7 @@ export interface BuildingData {
     type: BuildingType;
     x: number;
     y: number;
+    eid?: number; // ✅ ID de l'entité ECS associée
     variant: number; // Pour varier les sprites
     level: number;   // Niveau 1, 2, 3...
 

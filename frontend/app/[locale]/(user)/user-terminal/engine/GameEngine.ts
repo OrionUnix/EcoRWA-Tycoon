@@ -10,6 +10,13 @@ import { PopulationManager } from './systems/PopulationManager';
 import { NeedsCalculator } from './systems/NeedsCalculator';
 import { JobSystem } from './systems/JobSystem';
 import { ResourceSystem } from './systems/ResourceSystem';
+import { FAKE_WALLET_ADDRESS } from './constants'; // ✅ Import Fake Wallet
+// ✅ ECS Imports
+import { addEntity, addComponent, removeEntity } from 'bitecs';
+import { globalWorld } from './ecs/world';
+import { Building } from './ecs/components/Building';
+import { Position } from './ecs/components/Position';
+
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
 
@@ -26,7 +33,7 @@ export class GameEngine {
     constructor() {
         console.log("🚀 GameEngine: Démarrage...");
         this.map = new MapEngine();
-        this.map.generateWorld();
+        this.map.generateWorld(FAKE_WALLET_ADDRESS); // ✅ Seed Injection
 
         // Initialize population tracking
         PopulationManager.initialize(this.map);
@@ -172,6 +179,11 @@ export class GameEngine {
                     if (specs) {
                         PopulationManager.onBuildingRemoved(specs);
                     }
+                    // ✅ ECS REMOVAL
+                    if (building.eid !== undefined) {
+                        removeEntity(globalWorld, building.eid);
+                        console.log(`🗑️ ECS Entity ${building.eid} removed.`);
+                    }
                 }
                 this.map.buildingLayer[idx] = null;
                 this.map.revision++;
@@ -217,6 +229,32 @@ export class GameEngine {
             if (result.success) {
                 const specs = BUILDING_SPECS[buildingType];
                 console.log(`✅ ${specs.name} construit avec succès!`);
+
+                // 🌟 INTÉGRATION ECS 🌟
+                // Une fois le bâtiment placé visuellement (MapEngine), on crée son Entité logique.
+                const eid = addEntity(globalWorld);
+                addComponent(globalWorld, Building, eid);
+                addComponent(globalWorld, Position, eid);
+
+                // Initialisation des données ECS
+                Building.typeId[eid] = Object.values(BuildingType).indexOf(buildingType); // Simple mapping index
+                Building.status[eid] = 1; // CONSTRUCTION
+                Building.progress[eid] = 0.0;
+
+                // Position (Grid coordinates)
+                const x = index % this.map.config.size;
+                const y = Math.floor(index / this.map.config.size);
+                Position.x[eid] = x;
+                Position.y[eid] = y;
+
+                // On lie l'Entity ID aux données du jeu (BuildingData)
+                // Attention: BuildingManager.placeBuilding a déjà créé le buildingData dans buildingLayer[index]
+                if (this.map.buildingLayer[index]) {
+                    this.map.buildingLayer[index]!.eid = eid;
+                }
+
+                console.log(`⚙️ ECS Entity ${eid} created for Building.`);
+
             } else {
                 console.error(`❌ Construction impossible: ${result.message}`);
             }
