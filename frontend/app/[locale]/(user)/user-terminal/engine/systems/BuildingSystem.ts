@@ -60,9 +60,11 @@ export class BuildingSystem {
         // Optimisation : On pourrait le calculer moins souvent, mais c'est des additions simples
         // Workers = Somme population (simplifié)
         // Jobs = Somme capacités (Commercial + Industriel)
-        const totalWorkers = engine.stats.population;
-        const totalJobs = engine.stats.jobsCommercial + engine.stats.jobsIndustrial;
-        const jobRatio = totalWorkers > 0 ? totalJobs / totalWorkers : 1;
+        // 1. Calcul du Job Pool Global (Désormais géré par JobSystem et GameEngine stats)
+        // On garde juste la structure
+        // const totalWorkers = engine.stats.population;
+        // const totalJobs = engine.stats.jobsCommercial + engine.stats.jobsIndustrial;
+        // const jobRatio = totalWorkers > 0 ? totalJobs / totalWorkers : 1;
 
         // 2. Staggering : On traite une portion de la carte à chaque tick
         // 10000 cases / 60 ticks = ~166 cases par tick pour tout couvrir en 1 seconde
@@ -78,15 +80,15 @@ export class BuildingSystem {
         if (endIdx > totalCells) endIdx = totalCells;
 
         // Traitement du premier segment
-        this.processRange(engine, startIdx, endIdx, jobRatio);
+        this.processRange(engine, startIdx, endIdx);
 
         // Traitement du reste (bouclage)
         if (overflow > 0) {
-            this.processRange(engine, 0, overflow, jobRatio);
+            this.processRange(engine, 0, overflow);
         }
     }
 
-    private static processRange(engine: MapEngine, start: number, end: number, jobRatio: number) {
+    private static processRange(engine: MapEngine, start: number, end: number) {
         for (let idx = start; idx < end; idx++) {
             const building = engine.buildingLayer[idx];
             const zoneData = engine.zoningLayer[idx];
@@ -113,7 +115,7 @@ export class BuildingSystem {
                 else if (building.state === 'ACTIVE') {
                     // Simulation Résidentielle
                     if (building.type === BuildingType.RESIDENTIAL) {
-                        ResidentialRules.update(building, engine, jobRatio);
+                        ResidentialRules.update(building, engine);
                         // ResidentialRules s'occupe de l'évolution via tryEvolve
                     }
 
@@ -135,23 +137,31 @@ export class BuildingSystem {
         }
 
         // Mapping simple pour les coûts initiaux (Niveau 1)
+        // const costConfig = BUILDING_COSTS[zoneType]?.[1];
+        // FIX: Utiliser BUILDING_SPECS pour le coût de base si BUILDING_COSTS est complexe
+        // Ou assumer coût 0 pour auto-build résidentiel/commercial (croissance organique)
+        // Pour l'instant on garde la logique de coût, mais on log si ça fail
+
         const costConfig = BUILDING_COSTS[zoneType]?.[1];
 
-        if (costConfig && this.tryConsumeResources(engine, costConfig)) {
-            engine.buildingLayer[idx] = {
-                type: targetType,
-                x: idx % GRID_SIZE,
-                y: Math.floor(idx / GRID_SIZE),
-                variant: Math.floor(Math.random() * 3),
-                level: 1,
-                state: 'CONSTRUCTION',
-                constructionTimer: 0,
-                pollution: 0,
-                happiness: 100,
-                statusFlags: 0,
-                stability: 0
-            };
-            engine.revision++;
+        if (costConfig) {
+            if (this.tryConsumeResources(engine, costConfig)) {
+                engine.buildingLayer[idx] = {
+                    type: targetType,
+                    x: idx % GRID_SIZE,
+                    y: Math.floor(idx / GRID_SIZE),
+                    variant: Math.floor(Math.random() * 3),
+                    level: 1,
+                    state: 'CONSTRUCTION',
+                    constructionTimer: 0,
+                    pollution: 0,
+                    happiness: 100,
+                    statusFlags: 0,
+                    stability: 0, // NEW
+                    jobsAssigned: 0 // NEW
+                };
+                engine.revision++;
+            }
         }
     }
 }

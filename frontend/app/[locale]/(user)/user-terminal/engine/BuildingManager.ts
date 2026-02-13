@@ -33,17 +33,54 @@ export class BuildingManager {
 
         // 4. Case déjà occupée par une zone (Residential, Commercial, Industrial) ?
         if (engine.zoningLayer[index]) {
-            console.log('❌ Validation: Zone existante:', engine.zoningLayer[index]);
-            return { valid: false, reason: "Une zone est déjà placée ici (utilisez Bulldozer d'abord)" };
+            // EXCEPTION : Si on construit une Mine ou un Puits de pétrole, on peut écraser la zone (auto-clear)
+            // Mais pour l'instant, checkBuildValidity doit retourner true/false.
+            // On va dire que c'est valide SI c'est une mine, car on gérera le nettoyage dans placeBuilding.
+            const isResourceExtractor = (type === BuildingType.MINE || type === BuildingType.OIL_RIG);
+
+            if (!isResourceExtractor) {
+                console.log('❌ Validation: Zone existante:', engine.zoningLayer[index]);
+                return { valid: false, reason: "Une zone est déjà placée ici (utilisez Bulldozer d'abord)" };
+            }
         }
 
         // 5. AUCUN bâtiment sur l'eau (règle stricte)
         const waterLevel = engine.getLayer(1)[index];
         const isWater = waterLevel > 0.3;
-        console.log(`🌊 Validation: waterLevel=${waterLevel.toFixed(2)}, isWater=${isWater}`);
-        if (isWater) {
-            console.log('❌ Validation: Sur l\'eau');
-            return { valid: false, reason: "Impossible de construire sur l'eau" };
+
+        // EXCEPTION : OIL_RIG doit être sur l'eau (ou proche bord ?) - Simplification : OIL_RIG sur terre ou eau ?
+        // D'après les resources "oil", c'est souvent sur terre dans ce jeu ?
+        // Vérifions le sprite/logique. Si c'est "Plateforme Pétrolière", c'est souvent en mer.
+        // Mais "Oil Pump" sur terre.
+        // Le type s'appelle OIL_RIG. Disons qu'il peut aller sur l'eau.
+
+        if (type === BuildingType.OIL_RIG) {
+            // Oil Rig peut (et devrait ?) être sur l'eau si le pétrole y est.
+            // Pas de restriction "Pas d'eau".
+        } else {
+            if (isWater) {
+                console.log('❌ Validation: Sur l\'eau');
+                return { valid: false, reason: "Impossible de construire sur l'eau" };
+            }
+        }
+
+        // Check Ressource Spécifique (MINE / OIL_RIG)
+        if (type === BuildingType.MINE) {
+            // Doit être sur Charbon, Fer, Or, Pierre
+            const hasCoal = engine.resourceMaps.coal && engine.resourceMaps.coal[index] > 0;
+            const hasIron = engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0;
+            const hasStone = engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0;
+            const hasGold = engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0;
+
+            if (!hasCoal && !hasIron && !hasStone && !hasGold) {
+                return { valid: false, reason: "Doit être placé sur un gisement (Charbon, Fer, Or, Pierre)" };
+            }
+        }
+        else if (type === BuildingType.OIL_RIG) {
+            const hasOil = engine.resourceMaps.oil && engine.resourceMaps.oil[index] > 0;
+            if (!hasOil) {
+                return { valid: false, reason: "Doit être placé sur un gisement de Pétrole" };
+            }
         }
 
         // 6. Coût financier
@@ -53,6 +90,8 @@ export class BuildingManager {
         }
 
         // 7. TOUS LES BÂTIMENTS DOIVENT ÊTRE ADJACENTS À UNE ROUTE (règle stricte)
+        // Exception : OIL_RIG en mer n'a pas besoin de route ? (Ou pont ?)
+        // Pour simplifier, exigeons route pour tout le monde pour l'instant (Workers need access)
         const hasRoad = this.isNextToRoad(engine, index);
         console.log(`🛣️ Validation: hasAdjacentRoad=${hasRoad}`);
         if (!hasRoad) {
@@ -99,6 +138,24 @@ export class BuildingManager {
         if (engine.resourceMaps.wood) engine.resourceMaps.wood[index] = 0;
         ResourceRenderer.removeResourceAt(index);
 
+        // 2b. Nettoyage Zone (Auto-clear pour les mines)
+        if (engine.zoningLayer[index]) {
+            PopulationManager.onZoneRemoved(engine.zoningLayer[index]!); // "!" car on a vérifié
+            engine.zoningLayer[index] = null;
+        }
+
+        // Préparation des données minières
+        let miningData: { resource: any; amount: number } | undefined;
+        if (type === BuildingType.MINE) {
+            if (engine.resourceMaps.coal && engine.resourceMaps.coal[index] > 0) miningData = { resource: 'COAL', amount: 1000 };
+            else if (engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0) miningData = { resource: 'IRON', amount: 800 };
+            else if (engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0) miningData = { resource: 'STONE', amount: 2000 };
+            else if (engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0) miningData = { resource: 'GOLD', amount: 500 };
+        }
+        else if (type === BuildingType.OIL_RIG) {
+            if (engine.resourceMaps.oil && engine.resourceMaps.oil[index] > 0) miningData = { resource: 'OIL', amount: 5000 };
+        }
+
         // 3. Création Données
         const building: BuildingData = {
             type: type, // Ici on utilise direct le type passé par le bouton
@@ -111,7 +168,9 @@ export class BuildingManager {
             pollution: 0,
             happiness: 100,
             statusFlags: 0, // Pas de problème initial
-            stability: 0    // Neutre au départ
+            stability: 0,    // Neutre au départ
+            jobsAssigned: 0,
+            mining: miningData
         };
 
         engine.buildingLayer[index] = building;

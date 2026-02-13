@@ -16,8 +16,9 @@ export class ResidentialRules {
     private static readonly BONUS_PARK = 10;
 
     // Seuil d'évolution
-    private static readonly EVOLUTION_THRESHOLD = 50;
-    private static readonly REGRESSION_THRESHOLD = -50;
+    private static readonly EVOLUTION_THRESHOLD = 30; // 30 ticks positifs
+    private static readonly REGRESSION_THRESHOLD = -30; // 30 ticks négatifs
+    private static readonly EVOLUTION_COOLDOWN = 300; // 300 ticks d'attente
 
     // Inertie du bonheur (Lerp factor)
     private static readonly HAPPINESS_LERP = 0.1;
@@ -41,9 +42,11 @@ export class ResidentialRules {
      * Mise à jour complète d'un bâtiment résidentiel
      * @param building Le bâtiment à mettre à jour
      * @param engine Le moteur du jeu
-     * @param globalJobPool Ratio emplois/travailleurs (0.0 à 1.0+)
+     * Mise à jour complète d'un bâtiment résidentiel
+     * @param building Le bâtiment à mettre à jour
+     * @param engine Le moteur du jeu
      */
-    static update(building: BuildingData, engine: MapEngine, globalJobPool: number): void {
+    static update(building: BuildingData, engine: MapEngine): void {
         const index = building.y * GRID_SIZE + building.x;
 
         // 1. Si Abandonné, on ne verifie que la possibilité de réhabilitation (via parcs/services proches qui remontent le bonheur théorique)
@@ -78,9 +81,15 @@ export class ResidentialRules {
             newStatus = this.addFlag(newStatus, BuildingStatus.NO_FOOD);
         }
 
-        // Travail (Global Pool)
-        // Si ratio < 1, chance d'être au chômage
-        if (globalJobPool < 0.9 && Math.random() > globalJobPool) {
+        // Travail (Basé sur le taux de chômage réel)
+        const totalWorkers = engine.stats.workers;
+        const unemployed = engine.stats.unemployed;
+        const unemploymentRate = totalWorkers > 0 ? unemployed / totalWorkers : 0;
+
+        // Si chômage élevé, chance d'être sans emploi
+        // On rend la chance un peu plus faible que le taux brut pour ne pas punir tout le monde instantanément
+        // Ex: 20% chômage -> 20% chance d'avoir le flag NO_JOBS
+        if (Math.random() < unemploymentRate) {
             newStatus = this.addFlag(newStatus, BuildingStatus.NO_JOBS);
         }
 
@@ -168,6 +177,11 @@ export class ResidentialRules {
     }
 
     private static updateStabilityAndEvolution(building: BuildingData, engine: MapEngine): void {
+        // Gestion du Cooldown
+        if (building.evolutionCooldown && building.evolutionCooldown > 0) {
+            building.evolutionCooldown--;
+        }
+
         // Si bonheur élevé et besoins comblés -> Stabilité monte
         if (building.happiness > 70 && building.statusFlags === 0) {
             building.stability += 1;
@@ -182,13 +196,16 @@ export class ResidentialRules {
         if (building.stability < -100) building.stability = -100;
 
         // ÉVOLUTION (Level Up)
-        if (building.stability > this.EVOLUTION_THRESHOLD && building.level < 4) {
+        // Vérification Cooldown
+        const canEvolve = (!building.evolutionCooldown || building.evolutionCooldown <= 0);
+
+        if (building.stability > this.EVOLUTION_THRESHOLD && building.level < 4 && canEvolve) {
             this.tryEvolve(building, engine);
         }
 
         // RÉGRESSION (Abandon)
         if (building.stability < this.REGRESSION_THRESHOLD) {
-            // Si la stabilité est critique (< -50), le bâtiment devient abandonné
+            // Si la stabilité est critique (< -30), le bâtiment devient abandonné
             // Il ne consomme plus de ressources mais reste visible comme "ruine"
             // Pour le réhabiliter, il faudra remonter le bonheur ou le détruire
             building.statusFlags = this.addFlag(building.statusFlags, BuildingStatus.ABANDONED);
@@ -237,6 +254,7 @@ export class ResidentialRules {
             // Level Up
             building.level++;
             building.stability = 0; // Reset stabilité après évolution
+            building.evolutionCooldown = this.EVOLUTION_COOLDOWN; // Set Cooldown
             building.variant = Math.floor(Math.random() * 3); // Nouvelle apparence
 
             // Effet visuel ou notification console

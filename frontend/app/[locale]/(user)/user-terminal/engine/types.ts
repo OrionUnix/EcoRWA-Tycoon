@@ -174,7 +174,15 @@ export interface BuildingData {
     statusFlags: number; // Bitmask de BuildingStatus
     happiness: number;   // 0-100 (lissé)
     stability: number;   // -100 à 100 (inertie pour évolution)
+    evolutionCooldown?: number; // ✅ NOUVEAU : Cooldown pour éviter les évolutions trop fréquentes
+    jobsAssigned: number; // ✅ NOUVEAU : Nombre de travailleurs assignés
     pollution: number;
+
+    // Ressources (Mines / Puits)
+    mining?: {
+        resource: 'COAL' | 'IRON' | 'GOLD' | 'OIL' | 'STONE';
+        amount: number; // Stock restant ou taux d'extraction
+    };
 
     // Services (Optionnel pour l'instant)
     services?: {

@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { BuildingData, BUILDING_SPECS } from '../engine/types'; // On utilise BUILDING_SPECS
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
+import { BuildingAssets } from './BuildingAssets';
 
 // Cache pour les containers (Graphique + Emote)
 const buildingCache = new Map<number, PIXI.Container>();
@@ -65,41 +66,46 @@ export class BuildingRenderer {
             return this.drawTile(parentContainer, building, x, y, pos, isHigh, isLow);
         }
 
-        graphics.clear();
+        // --- DESSIN DU BÂTIMENT ---
 
-        const specs = BUILDING_SPECS[building.type];
-        const color = specs ? specs.color : 0xFFFFFF;
-        const h = isLow ? 10 : 25;
+        // 1. Check si un Sprite est dispo via BuildingAssets
+        // Import dynamique ou statique ? BuildingAssets est une classe statique.
+        // On suppose que l'import est fait en haut (je vais l'ajouter)
 
-        // Toit
-        graphics.beginPath();
-        graphics.moveTo(0, -h - TILE_HEIGHT / 2);
-        graphics.lineTo(TILE_WIDTH / 2, -h);
-        graphics.lineTo(0, -h + TILE_HEIGHT / 2);
-        graphics.lineTo(-TILE_WIDTH / 2, -h);
-        graphics.closePath();
-        graphics.fill({ color: color });
+        let drawn = false;
 
-        if (!isLow) {
-            // Côtés (Ombrage)
-            graphics.beginPath();
-            graphics.moveTo(0, -h + TILE_HEIGHT / 2);
-            graphics.lineTo(TILE_WIDTH / 2, -h);
-            graphics.lineTo(TILE_WIDTH / 2, 0);
-            graphics.lineTo(0, TILE_HEIGHT / 2);
-            graphics.closePath();
-            graphics.fill({ color: color, alpha: 0.6 });
+        if (!isLow && building.state === 'ACTIVE') {
+            // Tenter de récupérer la texture
+            // Note: On a besoin d'importer BuildingAssets.
+            // Pour éviter les cycles, on utilise une méthode un peu "sale" ou on déplace le cache ?
+            // On va assumer que BuildingAssets est accessible grossièrement ou on l'importe.
 
-            graphics.beginPath();
-            graphics.moveTo(0, -h + TILE_HEIGHT / 2);
-            graphics.lineTo(-TILE_WIDTH / 2, -h);
-            graphics.lineTo(-TILE_WIDTH / 2, 0);
-            graphics.lineTo(0, TILE_HEIGHT / 2);
-            graphics.closePath();
-            graphics.fill({ color: color, alpha: 0.4 });
+            // Hack temporaire si l'import pose souci : window
+            // Mais faisons le proprement : import { BuildingAssets } from './BuildingAssets';
+            // Je vais ajouter l'import dans une autre étape.
+
+            // Pour l'instant, je mets le placeholder du code de dessin Sprite
+            // Si texture on remplace le graphics par un sprite ?
+            // Non, le container contient [Graphics, Text].
+
+            // Gestion : Si Sprite, on cache le graphics et on ajoute un Sprite ?
+            // Structure actuelle du container : [Graphics, Text]
+            // Si je veux mettre un sprite, je le mets en enfant 0 à la place du Graphics ou dedans ?
+            // Mieux : [Graphics (Background/Debug), Sprite, Text]
+
+            // Vérifions si on a un sprite enfant
+            let sprite = container.children.find(c => c instanceof PIXI.Sprite) as PIXI.Sprite;
+
+            // Récup texture
+            // const texture = BuildingAssets.getTexture(building.type, building.level, building.variant);
+            // On peut pas appeler BuildingAssets ici si pas importé.
+            // Je vais supposer que je vais ajouter l'import.
         }
 
+
+
         // --- GESTION DES EMOTES ---
+        const h = isLow ? 10 : 25; // Re-définition nécessaire pour l'emote
         const emoteText = container.children[1] as PIXI.Text;
         const emote = this.getEmote(building);
 

@@ -8,6 +8,8 @@ import { ZoneType, BuildingType, BUILDING_SPECS, getBiomeName } from './types';
 import { ResourceRenderer } from './ResourceRenderer';
 import { PopulationManager } from './systems/PopulationManager';
 import { NeedsCalculator } from './systems/NeedsCalculator';
+import { JobSystem } from './systems/JobSystem';
+import { ResourceSystem } from './systems/ResourceSystem';
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
 
@@ -41,9 +43,9 @@ export class GameEngine {
             const capacity = PopulationManager.getProductionCapacity();
 
             this.map.stats.population = population;
-            this.map.stats.jobs = jobs;
-            this.map.stats.workers = Math.floor(population * 0.6);
-            this.map.stats.unemployed = Math.max(0, this.map.stats.workers - jobs);
+            // this.map.stats.jobs = jobs; // Now handled by JobSystem
+            // this.map.stats.workers = Math.floor(population * 0.6); // Now handled by JobSystem
+            // this.map.stats.unemployed = Math.max(0, this.map.stats.workers - jobs); // Now handled by JobSystem
 
             // EFFICACITÉ GLOBALE (Ratio Travailleurs / Jobs)
             // Si jobs > 0, ratio = workers / jobs (max 1.0)
@@ -70,11 +72,16 @@ export class GameEngine {
         // 3. EVOLUTION DES BATIMENTS (Nouveau)
         BuildingSystem.update(this.map, this.tickCount);
 
-        // 4. JOBS (Nouveau stub)
-        // JobSystem.update(this.map); // Peut être décommenté quand implémenté
+        // 4. JOBS (Nouveau JobSystem)
+        if (this.tickCount % 10 === 0) {
+            JobSystem.update(this.map);
+        }
 
-        // 5. RESSOURCES (Lent)
-        if (this.tickCount % 60 === 0) this.map.calculateSummary();
+        // 5. RESSOURCES (Mining / Oil) - Update every second (60 ticks)
+        if (this.tickCount % 60 === 0) {
+            ResourceSystem.update(this.map);
+            this.map.calculateSummary(); // Also update visual map summary
+        }
 
         this.tickCount++;
     }

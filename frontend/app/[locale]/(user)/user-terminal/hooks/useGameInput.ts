@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
+import { Viewport } from 'pixi-viewport';
 import { getGameEngine } from '../engine/GameEngine';
 import { screenToGrid } from '../engine/isometric';
 import { RoadManager } from '../engine/RoadManager';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
 
 export function useGameInput(
-    stageRef: React.MutableRefObject<PIXI.Container | null>, // C'est le worldContainer
+    viewportRef: React.MutableRefObject<Viewport | null>, // ✅ Viewport au lieu de stage
     appRef: React.MutableRefObject<PIXI.Application | null>,
     isReady: boolean,
     viewMode: string,
@@ -21,76 +22,108 @@ export function useGameInput(
     isValidBuildRef: React.MutableRefObject<boolean>
 ) {
     // Refs pour la logique interne
-    const isDraggingRef = useRef(false);       // Pour la construction (Clic Gauche)
-    const isPanningRef = useRef(false);        // Pour le déplacement (Clic Droit)
-    const lastPanPos = useRef({ x: 0, y: 0 }); // Position précédente de la souris pour le Pan
+    const isDraggingRef = useRef(false);
     const startTileRef = useRef<number | null>(null);
-    const lastPaintedTileRef = useRef<number | null>(null); // 🆕 Pour éviter de repeindre la même case
+    const lastPaintedTileRef = useRef<number | null>(null);
+    const keysPressed = useRef<{ [key: string]: boolean }>({});
 
+    // --- 1. GESTION CLAVIER (DÉPLACEMENT CAMÉRA) ---
     useEffect(() => {
-        if (!isReady || !stageRef.current || !appRef.current) return;
+        if (!isReady || !viewportRef.current || !appRef.current) return;
 
-        const stage = stageRef.current; // Le worldContainer
-        const app = appRef.current;     // L'application Pixi
-        const engine = getGameEngine();
+        const viewport = viewportRef.current;
+        const app = appRef.current;
+        const BASE_SPEED = 15;
 
-        // --- 1. GESTION DU ZOOM (MOLETTE) ---
-        const onWheel = (e: WheelEvent) => {
-            e.preventDefault();
+        // Listeners Clavier
+        const onKeyDown = (e: KeyboardEvent) => { keysPressed.current[e.key] = true; };
+        const onKeyUp = (e: KeyboardEvent) => { keysPressed.current[e.key] = false; };
 
-            const scaleFactor = 1.1;
-            const direction = e.deltaY > 0 ? (1 / scaleFactor) : scaleFactor;
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('keyup', onKeyUp);
 
-            let newScale = stage.scale.x * direction;
+        // Ticker pour fluidité
+        const moveTicker = () => {
+            const scale = viewport.scale.x || 1;
+            const speed = BASE_SPEED / scale; // ⚡ Vitesse dynamique selon le zoom
 
-            // Limites du zoom (Min: 0.2, Max: 3.0)
-            if (newScale < 0.2) newScale = 0.2;
-            if (newScale > 3.0) newScale = 3.0;
-
-            // Zoom centré sur la souris (Calculs mathématiques)
-            // 1. Position de la souris avant zoom (local au monde)
-            const mouseGlobal = { x: e.clientX, y: e.clientY };
-            const worldPos = stage.toLocal(mouseGlobal);
-
-            // 2. Appliquer le zoom
-            stage.scale.set(newScale);
-
-            // 3. Ajuster la position du monde pour que la souris reste au même endroit
-            const newWorldPos = stage.toGlobal(worldPos);
-            stage.x += (mouseGlobal.x - newWorldPos.x);
-            stage.y += (mouseGlobal.y - newWorldPos.y);
+            if (keysPressed.current['ArrowUp'] || keysPressed.current['z'] || keysPressed.current['w']) {
+                viewport.moveCenter(viewport.center.x, viewport.center.y - speed);
+            }
+            if (keysPressed.current['ArrowDown'] || keysPressed.current['s']) {
+                viewport.moveCenter(viewport.center.x, viewport.center.y + speed);
+            }
+            if (keysPressed.current['ArrowLeft'] || keysPressed.current['q'] || keysPressed.current['a']) {
+                viewport.moveCenter(viewport.center.x - speed, viewport.center.y);
+            }
+            if (keysPressed.current['ArrowRight'] || keysPressed.current['d']) {
+                viewport.moveCenter(viewport.center.x + speed, viewport.center.y);
+            }
         };
 
-        // --- 2. GESTION DU MOUVEMENT (POINTER MOVE) ---
-        const onPointerMove = (e: PointerEvent) => {
-            // A. GESTION DU PAN (Déplacement Caméra - Clic Droit)
-            if (isPanningRef.current) {
-                const dx = e.clientX - lastPanPos.current.x;
-                const dy = e.clientY - lastPanPos.current.y;
+        app.ticker.add(moveTicker);
 
-                stage.x += dx;
-                stage.y += dy;
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('keyup', onKeyUp);
+            if (app.ticker) app.ticker.remove(moveTicker);
+        };
+    }, [isReady]);
 
-                lastPanPos.current = { x: e.clientX, y: e.clientY };
-                return; // Si on bouge la caméra, on ne fait rien d'autre
-            }
 
-            // B. GESTION DU CURSEUR (Calcul case grille)
-            // On transforme la position souris écran -> position locale dans le monde zoomé
-            // Attention : e.clientX est relatif à la fenêtre, il faut utiliser les events Pixi ou compenser
-            // Ici on utilise l'event natif DOM ajouté sur le canvas, donc il faut le bounding rect si besoin
-            // Mais Pixi gère 'toLocal' depuis le global (screen).
+    // --- 2. GESTION DES MODES (DRAG PAUSE) ---
+    useEffect(() => {
+        if (!viewportRef.current) return;
+        const viewport = viewportRef.current;
 
+        // Si on est en mode construction (Dragnécessaire), on bloque le drag caméra
+        const isConstructionMode = viewMode.startsWith('BUILD_') || viewMode === 'ZONE';
+
+        if (isConstructionMode) {
+            viewport.plugins.pause('drag');
+        } else {
+            viewport.plugins.resume('drag');
+        }
+    }, [viewMode, isReady]);
+
+
+    // --- 3. GESTION SOURIS (INTERACTIONS JEU) ---
+    useEffect(() => {
+        if (!isReady || !viewportRef.current || !appRef.current) return;
+
+        const viewport = viewportRef.current;
+        const app = appRef.current;
+        const engine = getGameEngine();
+
+        // Plus besoin de wheel ou pan manuel, pixi-viewport gère.
+        // On se concentre sur les clics de jeu.
+
+        const getGridPos = (globalX: number, globalY: number) => {
+            // Pour être sûr, on prend le point global client et on le convertit dans le monde (viewport)
+            // viewport.toLocal gère la transformation (zoom/pan)
             const rect = app.canvas.getBoundingClientRect();
-            const globalX = e.clientX - rect.left;
-            const globalY = e.clientY - rect.top;
+            // Coordonnées relatives au canvas
+            const canvasX = globalX - rect.left;
+            const canvasY = globalY - rect.top;
 
-            const localPos = stage.toLocal({ x: globalX, y: globalY });
-            const gridPos = screenToGrid(localPos.x, localPos.y);
+            // Transformation vers le monde
+            const worldPos = viewport.toLocal({ x: canvasX, y: canvasY });
+            return screenToGrid(worldPos.x, worldPos.y);
+        };
 
+        const onPointerMove = (e: PointerEvent) => {
+            // A. CULLING HOOK (Si besoin futur)
+            // viewport.on('moved') est mieux pour ça, mais ici on track le curseur
+
+            // B. CURSEUR
+            // Contrairement à avant, on ne bloque pas si 'isPanning', car le panning est géré par viewport
+            // Mais attention : si viewport drag, on veut peut-être éviter de construire ?
+            // Pixi-viewport gère le drag, donc 'pointermove' continue de fire.
+
+            const gridPos = getGridPos(e.clientX, e.clientY);
             setCursorPos(gridPos);
 
-            // C. TOOLTIP & CONSTRUCTION
+            // C. LOGIQUE JEU (Preview, Tooltip...)
             const idx = gridPos.y * engine.map.config.size + gridPos.x;
 
             // Info Tooltip
@@ -110,10 +143,7 @@ export function useGameInput(
             }
             // 🎨 ZONE BRUSH DRAG-PAINTING
             else if (viewMode === 'ZONE' && isDraggingRef.current) {
-                // Peindre la zone si on change de case
                 if (idx !== lastPaintedTileRef.current) {
-                    // const painted = AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
-                    // Remplacé par handleInteraction
                     engine.handleInteraction(idx, 'ZONE', null, selectedZone);
                     lastPaintedTileRef.current = idx;
                 }
@@ -126,81 +156,57 @@ export function useGameInput(
             }
         };
 
-        // --- 3. CLIC ENFONCÉ (POINTER DOWN) ---
         const onPointerDown = (e: PointerEvent) => {
-            // CLIC DROIT (2) ou MOLETTE (1) = PAN
-            if (e.button === 2 || e.button === 1) {
-                isPanningRef.current = true;
-                lastPanPos.current = { x: e.clientX, y: e.clientY };
-                e.preventDefault();
-                return;
-            }
+            // CLIC DROIT / MOLETTE gérés par Viewport (Pan/Zoom)
+            if (e.button !== 0) return;
 
-            // CLIC GAUCHE (0) = ACTION JEU
-            if (e.button === 0) {
-                const rect = app.canvas.getBoundingClientRect();
-                const localPos = stage.toLocal({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-                const gridPos = screenToGrid(localPos.x, localPos.y);
-                const idx = gridPos.y * engine.map.config.size + gridPos.x;
+            // CLIC GAUCHE = ACTION JEU
+            const gridPos = getGridPos(e.clientX, e.clientY);
+            const idx = gridPos.y * engine.map.config.size + gridPos.x;
 
-                if (viewMode === 'BUILD_ROAD') {
-                    isDraggingRef.current = true;
-                    startTileRef.current = idx;
-                    previewPathRef.current = [idx];
-                } else if (viewMode === 'BULLDOZER') {
-                    engine.handleInteraction(idx, viewMode, null, null);
-                } else if (viewMode === 'ZONE') {
-                    // 🎨 MODE PINCEAU : Lancer le drag-paint
-                    isDraggingRef.current = true;
-                    lastPaintedTileRef.current = idx;
-                    // AutoZoneBrush.paintZone(engine.map, idx, selectedZone);
-                    // Remplacé par handleInteraction pour passer par le GameEngine
-                    engine.handleInteraction(idx, 'ZONE', null, selectedZone);
-                } else if (viewMode.startsWith('BUILD_')) {
-                    // Construction de bâtiment
-                    engine.handleInteraction(idx, viewMode, null, selectedBuilding);
-                }
+            if (viewMode === 'BUILD_ROAD') {
+                isDraggingRef.current = true;
+                startTileRef.current = idx;
+                previewPathRef.current = [idx];
+            } else if (viewMode === 'BULLDOZER') {
+                engine.handleInteraction(idx, viewMode, null, null);
+            } else if (viewMode === 'ZONE') {
+                isDraggingRef.current = true;
+                lastPaintedTileRef.current = idx;
+                engine.handleInteraction(idx, 'ZONE', null, selectedZone);
+            } else if (viewMode.startsWith('BUILD_')) {
+                engine.handleInteraction(idx, viewMode, null, selectedBuilding);
             }
         };
 
-        // --- 4. RELÂCHEMENT (POINTER UP) ---
         const onPointerUp = (e: PointerEvent) => {
-            // Fin du Pan
-            if (e.button === 2 || e.button === 1) {
-                isPanningRef.current = false;
-            }
+            if (e.button !== 0) return;
 
-            // Fin de la Construction
-            if (e.button === 0 && viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
+            if (viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
                 const path = previewPathRef.current;
                 if (path.length > 0 && isValidBuildRef.current) {
                     engine.handleInteraction(0, 'BUILD_ROAD', path, selectedRoad);
                 }
-                isDraggingRef.current = false;
-                startTileRef.current = null;
-                previewPathRef.current = [];
-                setTotalCost(0);
             }
 
-            // 🎨 Fin du Zone Brush Drag
-            if (e.button === 0 && viewMode === 'ZONE' && isDraggingRef.current) {
-                isDraggingRef.current = false;
-                lastPaintedTileRef.current = null;
-                console.log('✅ Zone brush drag terminé');
-            }
+            // Reset commun
+            isDraggingRef.current = false;
+            startTileRef.current = null;
+            previewPathRef.current = [];
+            lastPaintedTileRef.current = null;
+            setTotalCost(0);
         };
 
-        // --- 5. ATTACHEMENT DES EVENTS (DOM natif pour fiabilité) ---
+        // Attach Events
         const canvas = app.canvas;
-        canvas.addEventListener('wheel', onWheel, { passive: false });
+        // On écoute sur canvas pour down, mais window pour move/up (drag fiable)
         canvas.addEventListener('pointerdown', onPointerDown);
-        window.addEventListener('pointermove', onPointerMove); // Window pour ne pas perdre le drag si on sort
+        window.addEventListener('pointermove', onPointerMove);
         window.addEventListener('pointerup', onPointerUp);
-        // Empêcher le menu contextuel sur clic droit
+        // Context menu bloqué
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
         return () => {
-            canvas.removeEventListener('wheel', onWheel);
             canvas.removeEventListener('pointerdown', onPointerDown);
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);

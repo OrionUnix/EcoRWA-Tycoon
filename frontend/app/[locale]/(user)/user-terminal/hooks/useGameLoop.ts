@@ -60,6 +60,10 @@ export function useGameLoop(
         const app = appRef.current;
         const engine = getGameEngine();
 
+        // Chargement des Assets (Routes + Bâtiments)
+        ResourceAssets.load(); // Au cas où
+        import('../engine/BuildingAssets').then(m => m.BuildingAssets.load());
+
         console.log("🎬 GameLoop: Running with Resource Support.");
 
         const tick = () => {

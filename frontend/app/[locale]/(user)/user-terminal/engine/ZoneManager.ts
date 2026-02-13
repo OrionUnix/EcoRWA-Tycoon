@@ -20,6 +20,30 @@ export class ZoneManager {
             (x > 0) ? y * GRID_SIZE + (x - 1) : -1              // W
         ];
 
+        // Debug neighbors
+        neighbors.forEach((nVal, i) => {
+            if (nVal !== -1) {
+                const hasRoad = engine.roadLayer[nVal] !== null;
+                // console.log(`Neighbor ${i} (idx ${nVal}): Road=${hasRoad ? 'YES' : 'NO'}`);
+            }
+        });
+
+        // Console log seulement si pas de route trouvée pour ne pas spammer, ou sur demande
+        // On va loguer si return false alors que le user insiste (via l'appelant)
+        // Pour l'instant on décommente pour le debug session
+        neighbors.forEach((nVal, i) => {
+            if (nVal !== -1) {
+                // console.log(`Neighbor ${i} (idx ${nVal}): Road=${engine.roadLayer[nVal] ? 'YES' : 'NO'}`);
+            }
+        });
+
+        // VRAI DEBUG
+        const valid = neighbors.some(nIdx => nIdx !== -1 && engine.roadLayer[nIdx] !== null);
+        if (!valid) {
+            console.log(`🛣️ ZoneManager Check: Index ${index} (x:${x}, y:${y}). Neighbors: ${neighbors.map(n => n === -1 ? 'OUT' : `${n}(${engine.roadLayer[n] ? 'R' : '_'})`).join(', ')}`);
+        }
+        return valid;
+
         return neighbors.some(nIdx => nIdx !== -1 && engine.roadLayer[nIdx] !== null);
     }
 

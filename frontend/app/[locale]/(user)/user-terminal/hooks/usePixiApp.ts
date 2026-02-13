@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
+import { Viewport } from 'pixi-viewport';
+import { GRID_SIZE, TILE_WIDTH, TILE_HEIGHT } from '../engine/config';
 
 export function usePixiApp(containerRef: React.RefObject<HTMLDivElement | null>) {
     const appRef = useRef<PIXI.Application | null>(null);
+    const viewportRef = useRef<Viewport | null>(null);
     const stageRef = useRef<PIXI.Container | null>(null);
     const [isReady, setIsReady] = useState(false);
-
-    // On utilise un ID unique pour chaque montage
     const mountId = useRef(Math.random());
 
     useEffect(() => {
@@ -15,61 +16,72 @@ export function usePixiApp(containerRef: React.RefObject<HTMLDivElement | null>)
         console.log(`🔌 [PixiApp ${mountId.current.toFixed(4)}] Montage...`);
         let isMounted = true;
         let app: PIXI.Application | null = null;
+        let viewport: Viewport | null = null;
 
         const initPixi = async () => {
-            // Si une app existe déjà, on la tue
             if (appRef.current) {
-                console.warn("⚠️ Ancienne App détectée, destruction...");
                 appRef.current.destroy(true, { children: true });
                 appRef.current = null;
             }
 
             app = new PIXI.Application();
-
             await app.init({
                 resizeTo: containerRef.current!,
-                backgroundColor: 0x111111, // ✅ ON REMET LE GRIS (au lieu de 0xFF0000)
+                backgroundColor: 0x111111,
                 antialias: true,
                 resolution: window.devicePixelRatio || 1,
                 autoDensity: true,
             });
 
-            if (!isMounted) {
-                console.log("🛑 Composant démonté pendant l'init, on annule.");
-                app.destroy(true);
-                return;
-            }
+            if (!isMounted || !app.renderer) return;
 
             if (containerRef.current) {
-                // Vide le conteneur HTML
                 containerRef.current.innerHTML = '';
                 containerRef.current.appendChild(app.canvas);
             }
 
-            // Centrage Caméra
-            app.stage.x = app.screen.width / 2;
-            app.stage.y = app.screen.height / 4;
-            app.stage.sortableChildren = true;
+            // --- CONFIGURATION VIEWPORT ---
+
+            const WORLD_WIDTH = GRID_SIZE * TILE_WIDTH;
+            const WORLD_HEIGHT = GRID_SIZE * TILE_HEIGHT;
+
+            viewport = new Viewport({
+                screenWidth: app.screen.width,
+                screenHeight: app.screen.height,
+                worldWidth: WORLD_WIDTH,
+                worldHeight: WORLD_HEIGHT,
+                events: app.renderer.events,
+            });
+
+            app.stage.addChild(viewport);
+
+            viewport
+                .drag()
+                .pinch()
+                .wheel()
+                .decelerate()
+                .clampZoom({ minScale: 0.2, maxScale: 3.0 });
 
             appRef.current = app;
+            viewportRef.current = viewport;
             stageRef.current = app.stage;
 
-            console.log(`✅ [PixiApp ${mountId.current.toFixed(4)}] Prêt.`);
+            console.log(`✅ [PixiApp] Prêt.`);
             setIsReady(true);
         };
 
         initPixi();
 
         return () => {
-            console.log(`🗑️ [PixiApp ${mountId.current.toFixed(4)}] Démontage.`);
             isMounted = false;
             setIsReady(false);
             if (appRef.current) {
                 appRef.current.destroy(true, { children: true });
                 appRef.current = null;
+                viewportRef.current = null;
             }
         };
     }, []);
 
-    return { appRef, stageRef, isReady };
+    return { appRef, viewportRef, stageRef, isReady };
 }

@@ -21,7 +21,7 @@ import { ResourceRenderer } from '../engine/ResourceRenderer';
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
     const containerRef = useRef<HTMLDivElement>(null);
-    const { appRef, stageRef, isReady } = usePixiApp(containerRef);
+    const { appRef, viewportRef, stageRef, isReady } = usePixiApp(containerRef);
 
     // Conteneurs Pixi (Layers)
     const terrainContainerRef = useRef<PIXI.Container | null>(null);
@@ -80,25 +80,31 @@ export default function UserTerminalClient() {
 
     // 4. CONFIGURATION DES CALQUES PIXI (Layers)
     useEffect(() => {
-        if (isReady && stageRef.current && assetsLoaded && !terrainContainerRef.current) {
+        if (isReady && stageRef.current && viewportRef.current && assetsLoaded && !terrainContainerRef.current) {
             console.log("🎨 Page: Initialisation des Layers Pixi...");
 
+            const viewport = viewportRef.current;
             const stage = stageRef.current;
 
             // Layer 1: Terrain & Ressources (Containers pour les Sprites)
             const terrain = new PIXI.Container();
             terrain.sortableChildren = true; // Crucial pour le zIndex des arbres
 
-            // Layer 2: Vecteurs (Routes, Grilles, Overlays)
+            // Layer 2: Vecteurs (Routes, Grilles, Overlays STATIC)
+            // On les met dans le viewport pour qu'ils bougent avec le monde
             const vectorLayer = new PIXI.Graphics();
 
             // Layer 3: Interface In-Game (Curseurs, Preview construction)
+            // Ceux-ci doivent aussi être dans le viewport pour suivre le curseur monde
             const uiLayer = new PIXI.Graphics();
 
-            // Ajout au stage dans l'ordre de profondeur
-            stage.addChild(terrain);
-            stage.addChild(vectorLayer);
-            stage.addChild(uiLayer);
+            // Ajout au VIEWPORT (et non au stage direct) pour bénéficier du zoom/pan
+            viewport.addChild(terrain);
+            viewport.addChild(vectorLayer);
+            viewport.addChild(uiLayer);
+
+            // Note: Si on veut une UI statique (HUD), on l'ajoute à 'stage' après 'viewport'
+            // Exemple : stage.addChild(hudContainer);
 
             terrainContainerRef.current = terrain;
             staticGRef.current = vectorLayer;
@@ -106,8 +112,41 @@ export default function UserTerminalClient() {
 
             // Déclencher un premier rendu
             getGameEngine().map.revision++;
+
+            // --- CENTRAGE AUTOMATIQUE ROBUSTE ---
+            let attempts = 0;
+            const MAX_ATTEMPTS = 60; // Abandonne après ~1 seconde si vide
+
+            const attemptCentering = () => {
+                // Si le composant est démonté ou refs nulles, on arrête
+                if (!viewport || terrain.destroyed) return;
+
+                const bounds = terrain.getLocalBounds();
+
+                // On vérifie si le terrain a une "matière" (largeur > 0)
+                if (bounds && bounds.width > 0) {
+                    const centerX = bounds.x + bounds.width / 2;
+                    const centerY = bounds.y + bounds.height / 2;
+
+                    console.log(`🎯 Centrage réussi (Tentative ${attempts}) :`, centerX, centerY);
+
+                    viewport.moveCenter(centerX, centerY);
+                    viewport.setZoom(1.0); // Ajuste selon tes goûts
+                } else {
+                    // Si le terrain est encore vide, on réessaie à la prochaine frame
+                    attempts++;
+                    if (attempts < MAX_ATTEMPTS) {
+                        requestAnimationFrame(attemptCentering);
+                    } else {
+                        console.warn("⚠️ Impossible de centrer : Terrain vide après timeout.");
+                    }
+                }
+            };
+
+            // Lance la tentative
+            requestAnimationFrame(attemptCentering);
         }
-    }, [isReady, assetsLoaded, stageRef]);
+    }, [isReady, assetsLoaded, stageRef, viewportRef]);
 
     // 5. ACTIVATION DE LA BOUCLE DE JEU (Logic & Render)
     useGameLoop(
@@ -126,8 +165,9 @@ export default function UserTerminalClient() {
     );
 
     // 6. GESTION DES INPUTS (Souris, Zoom, Pan, Click)
+    // 6. GESTION DES INPUTS (Souris, Zoom, Pan, Click)
     useGameInput(
-        stageRef,
+        viewportRef, // ✅ Utilisation du Viewport pour les inputs monde
         appRef,
         isReady && assetsLoaded,
         viewMode,
