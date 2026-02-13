@@ -1,5 +1,5 @@
 import React from 'react';
-import { ZoneType, RoadType, BuildingType, CityStats } from '../../engine/types';
+import { ZoneType, RoadType, BuildingType, CityStats, BiomeType } from '../../engine/types';
 import { useTranslations } from 'next-intl';
 
 // --- CONSTANTES ---
@@ -70,6 +70,14 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
     const t = useTranslations();
     if (!hoverInfo) return null;
 
+    // Traduction dynamique du biome
+    // hoverInfo.biome est maintenant un number (enum). On récupère la clé string (ex: 'PLAINS') -> lowercase -> 'plains'
+    // ex: t('Game.biomes.plains')
+    const biomeKey = typeof hoverInfo.biome === 'number'
+        ? BiomeType[hoverInfo.biome]?.toLowerCase()
+        : 'plains';
+    const biomeName = t(`Game.biomes.${biomeKey}`);
+
     return (
         <div className="absolute top-24 left-6 bg-gray-900/95 text-white p-4 rounded-2xl border border-white/10 shadow-2xl w-64 pointer-events-none z-50 backdrop-blur-xl animate-in fade-in slide-in-from-left-2">
             <div className="flex justify-between items-start border-b border-white/10 pb-2 mb-3">
@@ -79,7 +87,7 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
                 </div>
                 <div className="text-right">
                     <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">{t('Game.tooltip.biome')}</h3>
-                    <p className="text-sm font-bold">{hoverInfo.biome}</p>
+                    <p className="text-sm font-bold">{biomeName}</p>
                 </div>
             </div>
 

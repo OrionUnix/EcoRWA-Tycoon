@@ -48,15 +48,8 @@ export class BuildingManager {
         const waterLevel = engine.getLayer(1)[index];
         const isWater = waterLevel > 0.3;
 
-        // EXCEPTION : OIL_RIG doit être sur l'eau (ou proche bord ?) - Simplification : OIL_RIG sur terre ou eau ?
-        // D'après les resources "oil", c'est souvent sur terre dans ce jeu ?
-        // Vérifions le sprite/logique. Si c'est "Plateforme Pétrolière", c'est souvent en mer.
-        // Mais "Oil Pump" sur terre.
-        // Le type s'appelle OIL_RIG. Disons qu'il peut aller sur l'eau.
-
         if (type === BuildingType.OIL_RIG) {
-            // Oil Rig peut (et devrait ?) être sur l'eau si le pétrole y est.
-            // Pas de restriction "Pas d'eau".
+
         } else {
             if (isWater) {
                 console.log('❌ Validation: Sur l\'eau');
@@ -158,7 +151,7 @@ export class BuildingManager {
 
         // 3. Création Données
         const building: BuildingData = {
-            type: type, // Ici on utilise direct le type passé par le bouton
+            type: type,
             x: index % GRID_SIZE,
             y: Math.floor(index / GRID_SIZE),
             variant: Math.floor(Math.random() * 3),
@@ -167,8 +160,8 @@ export class BuildingManager {
             constructionTimer: 0,
             pollution: 0,
             happiness: 100,
-            statusFlags: 0, // Pas de problème initial
-            stability: 0,    // Neutre au départ
+            statusFlags: 0,
+            stability: 0,
             jobsAssigned: 0,
             mining: miningData
         };

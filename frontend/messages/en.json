@@ -184,11 +184,17 @@
     "layers": {
       "satellite": "Satellite",
       "forests": "Forests",
+      "wood": "Forests",
       "food": "Food",
       "water": "Aquifers",
+      "groundwater": "Groundwater",
       "oil": "Oil",
       "coal": "Coal",
-      "iron": "Ores"
+      "iron": "Ores",
+      "stone": "Stone",
+      "silver": "Silver",
+      "gold": "Gold",
+      "all": "Normal"
     },
     "resources": {
       "oil": "Crude Oil",
@@ -227,6 +233,17 @@
       "energy": "Energy",
       "water": "Water"
     },
+    "tools": {
+      "views": "Views",
+      "bulldose": "Bulldoze",
+      "roads": "Roads",
+      "zoning": "Zoning",
+      "services": "Energy",
+      "power": "Power",
+      "water": "Water",
+      "mine": "Mine",
+      "oil": "Oil"
+    },
     "needs": {
       "title": "Demands",
       "population": "Population",
@@ -245,6 +262,60 @@
       "biome": "Biome",
       "altitude": "Altitude",
       "moisture": "Moisture"
+    },
+    "buildings": {
+      "RESIDENTIAL": {
+        "name": "Residential Zone",
+        "desc": "Housing for citizens."
+      },
+      "COMMERCIAL": {
+        "name": "Commercial Zone",
+        "desc": "Shops and services."
+      },
+      "INDUSTRIAL": {
+        "name": "Industrial Zone",
+        "desc": "Factories and production."
+      },
+      "POWER_PLANT": {
+        "name": "Power Plant",
+        "desc": "Produces energy."
+      },
+      "WATER_PUMP": {
+        "name": "Water Pump",
+        "desc": "Pumps water for the city."
+      },
+      "MINE": {
+        "name": "Mine",
+        "desc": "Extracts mineral resources."
+      },
+      "OIL_RIG": {
+        "name": "Oil Rig",
+        "desc": "Extracts oil."
+      },
+      "CITY_HALL": {
+        "name": "City Hall",
+        "desc": "Administrative center of the city."
+      },
+      "PARK": {
+        "name": "Park",
+        "desc": "Green space for citizen happiness."
+      },
+      "POLICE_STATION": {
+        "name": "Police Station",
+        "desc": "Maintains law and order."
+      },
+      "FIRE_STATION": {
+        "name": "Fire Station",
+        "desc": "Protects against fires."
+      },
+      "FISHERMAN": {
+        "name": "Fisherman's Hut",
+        "desc": "Produces food (Fish)."
+      },
+      "HUNTER_HUT": {
+        "name": "Hunter's Hut",
+        "desc": "Produces food (Game)."
+      }
     }
   }
 }

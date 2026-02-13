@@ -184,11 +184,17 @@
     "layers": {
       "satellite": "Satellite",
       "forests": "Forêts",
+      "wood": "Forêts",
       "food": "Vivres",
       "water": "Nappes",
+      "groundwater": "Nappes Phréatiques",
       "oil": "Pétrole",
       "coal": "Charbon",
-      "iron": "Minerais"
+      "iron": "Minerais",
+      "stone": "Pierre",
+      "silver": "Argent",
+      "gold": "Or",
+      "all": "Normal"
     },
     "resources": {
       "oil": "Pétrole Brut",
@@ -227,6 +233,17 @@
       "energy": "Énergie",
       "water": "Eau"
     },
+    "tools": {
+      "views": "Vues",
+      "bulldose": "Rasé",
+      "roads": "Routes",
+      "zoning": "Zonage",
+      "services": "Énergie",
+      "power": "Power",
+      "water": "Water",
+      "mine": "Mine",
+      "oil": "Oil"
+    },
     "needs": {
       "title": "Demandes",
       "population": "Population",
@@ -245,6 +262,60 @@
       "biome": "Biome",
       "altitude": "Altitude",
       "moisture": "Humidité"
+    },
+    "buildings": {
+      "RESIDENTIAL": {
+        "name": "Zone Résidentielle",
+        "desc": "Logements pour les citoyens."
+      },
+      "COMMERCIAL": {
+        "name": "Zone Commerciale",
+        "desc": "Commerces et services."
+      },
+      "INDUSTRIAL": {
+        "name": "Zone Industrielle",
+        "desc": "Usines et production."
+      },
+      "POWER_PLANT": {
+        "name": "Centrale Électrique",
+        "desc": "Produit de l'énergie."
+      },
+      "WATER_PUMP": {
+        "name": "Station de Pompage",
+        "desc": "Pompe de l'eau pour la ville."
+      },
+      "MINE": {
+        "name": "Mine",
+        "desc": "Extrait des ressources minérales."
+      },
+      "OIL_RIG": {
+        "name": "Plateforme Pétrolière",
+        "desc": "Extrait du pétrole."
+      },
+      "CITY_HALL": {
+        "name": "Mairie",
+        "desc": "Centre administratif de la ville."
+      },
+      "PARK": {
+        "name": "Parc",
+        "desc": "Espace vert pour le bonheur des citoyens."
+      },
+      "POLICE_STATION": {
+        "name": "Commissariat",
+        "desc": "Maintient l'ordre et la sécurité."
+      },
+      "FIRE_STATION": {
+        "name": "Caserne de Pompiers",
+        "desc": "Protège contre les incendies."
+      },
+      "FISHERMAN": {
+        "name": "Cabane de Pêcheur",
+        "desc": "Produit de la nourriture (Poisson)."
+      },
+      "HUNTER_HUT": {
+        "name": "Cabane de Chasseur",
+        "desc": "Produit de la nourriture (Gibier)."
+      }
     }
   }
 }

@@ -64,9 +64,12 @@ export default function UserTerminalClient() {
                 console.log("✅ Page: Tous les assets sont chargés.");
 
                 const engine = getGameEngine();
-                // Générer le monde si ce n'est pas déjà fait
+                // Pour le moment (Test) - Simulation Wallet
+                const fakeWallet = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+
+                // Générer le monde si ce n'est pas déjà fait (avec Seed unique)
                 if (engine.map.revision === 0) {
-                    engine.map.generateWorld();
+                    engine.map.generateWorld(fakeWallet);
                     engine.map.calculateSummary();
                 }
 
@@ -185,6 +188,7 @@ export default function UserTerminalClient() {
     const engine = getGameEngine();
     const t = useTranslations(); // ✅ Utiliser les vraies traductions i18n
 
+
     // 7. RENDU FINAL
     return (
         <div style={{
@@ -257,8 +261,9 @@ export default function UserTerminalClient() {
                                 if (terrainContainerRef.current) {
                                     ResourceRenderer.clearAll(terrainContainerRef.current);
                                 }
-                                // 2. Créer le nouveau monde
-                                engine.map.generateWorld();
+                                // 2. Créer le nouveau monde (On simule un nouveau wallet pour le refresh)
+                                const randomWallet = "0x" + Math.floor(Math.random() * 1e16).toString(16);
+                                engine.map.generateWorld(randomWallet);
                                 engine.map.revision++; // Force le rafraîchissement
                             }}
                             speed={speed}

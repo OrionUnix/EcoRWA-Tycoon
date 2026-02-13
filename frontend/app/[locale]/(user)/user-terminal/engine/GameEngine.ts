@@ -4,7 +4,7 @@ import { RoadManager } from './RoadManager';
 import { BuildingManager } from './BuildingManager';
 import { BuildingSystem } from './systems/BuildingSystem';
 import { ZoneManager } from './ZoneManager';
-import { ZoneType, BuildingType, BUILDING_SPECS, getBiomeName } from './types';
+import { ZoneType, BuildingType, BUILDING_SPECS } from './types';
 import { ResourceRenderer } from './ResourceRenderer';
 import { PopulationManager } from './systems/PopulationManager';
 import { NeedsCalculator } from './systems/NeedsCalculator';
@@ -226,7 +226,7 @@ export class GameEngine {
         }
 
         const info: any = {
-            biome: getBiomeName(this.map.biomes[index]), // ✅ Nom lisible au lieu du numéro
+            biome: this.map.biomes[index], // ✅ Renvoie l'enum (number) pour traduction côté UI
             elevation: this.map.heightMap[index],
         };
 

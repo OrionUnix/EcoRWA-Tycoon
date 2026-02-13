@@ -39,22 +39,7 @@ export enum BiomeType {
     SNOW = 7
 }
 
-/**
- * Convertit un BiomeType en nom lisible (français)
- */
-export function getBiomeName(biome: BiomeType | number): string {
-    switch (biome) {
-        case BiomeType.DEEP_OCEAN: return 'Océan Profond';
-        case BiomeType.OCEAN: return 'Océan';
-        case BiomeType.BEACH: return 'Plage';
-        case BiomeType.PLAINS: return 'Plaines';
-        case BiomeType.FOREST: return 'Forêt';
-        case BiomeType.DESERT: return 'Désert';
-        case BiomeType.MOUNTAIN: return 'Montagne';
-        case BiomeType.SNOW: return 'Neige';
-        default: return `Biome ${biome}`;
-    }
-}
+// getBiomeName removed for i18n
 
 
 export enum TrafficLightState {

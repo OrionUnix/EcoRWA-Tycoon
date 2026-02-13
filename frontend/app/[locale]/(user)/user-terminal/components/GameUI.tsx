@@ -155,7 +155,7 @@ export default function GameUI({
                                     className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap border
                                      ${viewMode === layer.id ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10'}`}
                                 >
-                                    <span>{layer.icon}</span> <span>{layer.label}</span>
+                                    <span>{layer.icon}</span> <span>{t(`Game.layers.${layer.id.toLowerCase()}`)}</span>
                                 </button>
                             ))}
 
@@ -165,7 +165,7 @@ export default function GameUI({
                                     key={r}
                                     active={viewMode === 'BUILD_ROAD' && selectedRoadType === r}
                                     onClick={() => { setViewMode('BUILD_ROAD'); setSelectedRoadType(r); setActiveCategory(null); }}
-                                    label={r.toLowerCase()}
+                                    label={t(`Game.roads.${r.toLowerCase()}`)}
                                     icon="🛣️"
                                 />
                             ))}
@@ -173,9 +173,9 @@ export default function GameUI({
                             {/* Choix des ZONES */}
                             {activeCategory === 'ZONES' && (
                                 <>
-                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.RESIDENTIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.RESIDENTIAL); setActiveCategory(null); }} label="Res" icon="🏠" color="bg-green-600/30" />
-                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.COMMERCIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.COMMERCIAL); setActiveCategory(null); }} label="Com" icon="🏢" color="bg-blue-600/30" />
-                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.INDUSTRIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.INDUSTRIAL); setActiveCategory(null); }} label="Ind" icon="🏭" color="bg-yellow-600/30" />
+                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.RESIDENTIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.RESIDENTIAL); setActiveCategory(null); }} label={t('Game.zones_short.RESIDENTIAL')} icon="🏠" color="bg-green-600/30" />
+                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.COMMERCIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.COMMERCIAL); setActiveCategory(null); }} label={t('Game.zones_short.COMMERCIAL')} icon="🏢" color="bg-blue-600/30" />
+                                    <ToolButton active={viewMode === 'ZONE' && selectedZoneType === ZoneType.INDUSTRIAL} onClick={() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.INDUSTRIAL); setActiveCategory(null); }} label={t('Game.zones_short.INDUSTRIAL')} icon="🏭" color="bg-yellow-600/30" />
                                 </>
                             )}
 
@@ -189,7 +189,7 @@ export default function GameUI({
                                             setSelectedBuildingType(BuildingType.POWER_PLANT);
                                             setActiveCategory(null);
                                         }}
-                                        label="Power"
+                                        label={t('Game.tools.power')}
                                         icon="⚡"
                                     />
                                     <ToolButton
@@ -199,7 +199,7 @@ export default function GameUI({
                                             setSelectedBuildingType(BuildingType.WATER_PUMP);
                                             setActiveCategory(null);
                                         }}
-                                        label="Water"
+                                        label={t('Game.tools.water')}
                                         icon="💧"
                                     />
                                     <ToolButton
@@ -209,7 +209,7 @@ export default function GameUI({
                                             setSelectedBuildingType(BuildingType.MINE);
                                             setActiveCategory(null);
                                         }}
-                                        label="Mine"
+                                        label={t('Game.tools.mine')}
                                         icon="⛏️"
                                     />
                                     <ToolButton
@@ -219,7 +219,7 @@ export default function GameUI({
                                             setSelectedBuildingType(BuildingType.OIL_RIG);
                                             setActiveCategory(null);
                                         }}
-                                        label="Oil"
+                                        label={t('Game.tools.oil')}
                                         icon="🛢️"
                                     />
                                 </>
@@ -235,12 +235,12 @@ export default function GameUI({
                             <ToolButton
                                 active={activeCategory === 'VIEWS'}
                                 onClick={() => setActiveCategory(activeCategory === 'VIEWS' ? null : 'VIEWS')}
-                                label="Vues" icon="🗺️" variant="circle"
+                                label={t('Game.tools.views')} icon="🗺️" variant="circle"
                             />
                             <ToolButton
                                 active={viewMode === 'BULLDOZER'}
                                 onClick={() => { setViewMode('BULLDOZER'); setActiveCategory(null); }}
-                                label="Rasé" icon="🧨" color="bg-red-500/10" variant="circle"
+                                label={t('Game.tools.bulldose')} icon="🧨" color="bg-red-500/10" variant="circle"
                             />
                         </div>
 
@@ -251,17 +251,17 @@ export default function GameUI({
                             <ToolButton
                                 active={activeCategory === 'ROADS'}
                                 onClick={() => setActiveCategory(activeCategory === 'ROADS' ? null : 'ROADS')}
-                                label="Routes" icon="🛣️" variant="circle"
+                                label={t('Game.tools.roads')} icon="🛣️" variant="circle"
                             />
                             <ToolButton
                                 active={activeCategory === 'ZONES'}
                                 onClick={() => setActiveCategory(activeCategory === 'ZONES' ? null : 'ZONES')}
-                                label="Zonage" icon="🏗️" variant="circle"
+                                label={t('Game.tools.zoning')} icon="🏗️" variant="circle"
                             />
                             <ToolButton
                                 active={activeCategory === 'SERVICES'}
                                 onClick={() => setActiveCategory(activeCategory === 'SERVICES' ? null : 'SERVICES')}
-                                label="Énergie" icon="⚡" variant="circle"
+                                label={t('Game.tools.services')} icon="⚡" variant="circle"
                             />
                         </div>
                     </div>

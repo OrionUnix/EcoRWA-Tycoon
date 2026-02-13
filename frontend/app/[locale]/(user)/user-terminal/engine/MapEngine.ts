@@ -106,9 +106,9 @@ export class MapEngine {
         return this.layers[layer];
     }
 
-    public generateWorld(): void {
+    public generateWorld(walletAddress?: string): void {
         console.log("🌍 MapEngine: Génération du monde...");
-        MapGenerator.generate(this);
+        MapGenerator.generate(this, walletAddress);
         console.log("🌍 MapEngine: Monde généré !");
     }
 
