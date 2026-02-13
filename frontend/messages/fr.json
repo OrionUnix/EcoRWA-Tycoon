@@ -207,6 +207,12 @@
       "altitude": "Altitude",
       "none": "Terrain Vierge"
     },
+    "roads": {
+      "dirt": "Chemin de Terre",
+      "asphalt": "Route Asphaltée",
+      "avenue": "Grande Avenue",
+      "highway": "Autoroute"
+    },
     "units": {
       "barrel": "Barils",
       "ton": "Tonnes",

@@ -6,6 +6,12 @@ export class RoadAssets {
     private static _loaded = false;
     public static textures: Map<string, PIXI.Texture> = new Map();
 
+    static clear() {
+        this.textures.forEach(tex => tex.destroy(true));
+        this.textures.clear();
+        this._loaded = false;
+    }
+
     static async load() {
         if (this._loaded) return;
 
@@ -24,9 +30,9 @@ export class RoadAssets {
             'roadEW': 'roadEW.png',
             'roadNE': 'roadNE.png',
             'roadNW': 'roadNW.png',
-            'roadES': 'roadES.png', 
+            'roadES': 'roadES.png',
             'roadSW': 'roadSW.png',
-            'roadTE': 'crossroadNES.png', 
+            'roadTE': 'crossroadNES.png',
             'roadTN': 'crossroadNEW.png',
             'roadTS': 'crossroadESW.png',
             'roadTW': 'crossroadNSW.png',
@@ -41,13 +47,13 @@ export class RoadAssets {
 
         // 3. Boucle sur chaque type de route (Dirt, Asphalt...)
         for (const [type, folderName] of Object.entries(TYPE_DIRS)) {
-            
+
             // Boucle sur chaque fichier (NS, EW...)
             for (const [key, filename] of Object.entries(files)) {
-                
+
                 // Chemin : /assets/isometric/Spritesheet/roads/Dirt/roadNS.png
                 const path = asset(`/assets/isometric/Spritesheet/roads/${folderName}/${filename}`);
-                
+
                 // Clé unique pour le cache : "DIRT_roadNS", "ASPHALT_roadNS", etc.
                 const uniqueKey = `${type}_${key}`;
 

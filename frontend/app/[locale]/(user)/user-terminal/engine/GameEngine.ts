@@ -19,6 +19,10 @@ export class GameEngine {
     public speed: number = 1; // 1x, 2x, 4x
     private tickCount: number = 0;
 
+    // ✅ NOUVEAU : Persistance de la caméra
+    public lastCameraPosition: { x: number, y: number } | null = null;
+    public lastZoom: number = 1.0;
+
     constructor() {
         console.log("🚀 GameEngine: Démarrage...");
         this.map = new MapEngine();
@@ -26,6 +30,12 @@ export class GameEngine {
 
         // Initialize population tracking
         PopulationManager.initialize(this.map);
+    }
+
+    // ✅ NOUVEAU : Méthode pour sauver l'état
+    public saveCameraState(x: number, y: number, zoom: number) {
+        this.lastCameraPosition = { x, y };
+        this.lastZoom = zoom;
     }
 
     public togglePause() { this.isPaused = !this.isPaused; }

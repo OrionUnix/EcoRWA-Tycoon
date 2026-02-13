@@ -121,15 +121,33 @@ export interface RoadData {
     connections: { n: boolean, s: boolean, e: boolean, w: boolean }; // Typage précis
 }
 
+// ✅ TYPES DE VÉHICULES
+export enum VehicleType {
+    CIVILIAN_CAR = 'CIVILIAN_CAR',
+    CITY_BUS = 'CITY_BUS',
+    GARBAGE_TRUCK = 'GARBAGE_TRUCK',
+    POLICE_CRUISER = 'POLICE_CRUISER',
+    AMBULANCE = 'AMBULANCE',
+    FIRE_TRUCK = 'FIRE_TRUCK',
+    OIL_TANKER = 'OIL_TANKER',
+    FREIGHT_TRAIN = 'FREIGHT_TRAIN'
+}
+
 export interface Vehicle {
     id: number;
     x: number; y: number;
     path: number[];
     targetIndex: number;
     speed: number;
-    color: number;
+    // color: number; // REMOVED: Managed by VehicleType
     offsetX?: number;
     offsetY?: number;
+
+    // ✅ NOUNEAU: Gestion des Sprites
+    type: VehicleType;
+    direction: number; // 0: UP_RIGHT, 1: DOWN_RIGHT, 2: UP_LEFT, 3: DOWN_LEFT
+    variant: number;   // 0-N
+    frameIndex: number; // Pour l'animation
 }
 
 // Status des bâtiments (Bitflags pour performance)

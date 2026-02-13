@@ -38,7 +38,7 @@ export class TerrainRenderer {
                 const texture = getBiomeTexture(biome, x, y);
 
                 if (texture) {
-                    sprite = new PIXI.Sprite(texture); sprite.roundPixels = true;
+                    sprite = new PIXI.Sprite(texture); sprite.roundPixels = false;
 
                     // --- RÈGLES STRICTES "GRID FLATTENER" ---
                     sprite.anchor.set(0.5, 0.5);

@@ -4,6 +4,7 @@ import { getGameEngine } from '../engine/GameEngine';
 import { GameRenderer } from '../components/GameRenderer';
 // ✅ Import de sécurité (même si pas utilisé directement ici, utile pour le chargement)
 import { ResourceAssets } from '../engine/ResourceAssets';
+import { VehicleRenderer } from '../components/VehicleRenderer';
 
 export function useGameLoop(
     appRef: React.MutableRefObject<PIXI.Application | null>,
@@ -126,6 +127,10 @@ export function useGameLoop(
                     isValidBuildRef.current,
                     currentZoom
                 );
+
+                // ✅ RENDU VÉHICULES (Sprites)
+                // Doit être fait à chaque frame pour l'animation et le mouvement
+                VehicleRenderer.drawVehicles(terrainContainerRef.current, mapData, currentZoom);
             }
 
             // 3. MISE À JOUR UI (React States)

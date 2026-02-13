@@ -1,7 +1,7 @@
 import { MapEngine } from '../MapEngine';
 import { GRID_SIZE } from '../config';
 
-import { RoadData, RoadType, ROAD_SPECS, Vehicle, TrafficLightState, PriorityType, LayerType } from '../types';
+import { RoadData, RoadType, ROAD_SPECS, Vehicle, TrafficLightState, PriorityType, LayerType, VehicleType } from '../types';
 
 export class TrafficSystem {
     private static MAX_VEHICLES = 300;
@@ -77,10 +77,24 @@ export class TrafficSystem {
                 // Injection dans l'objet (cast any pour éviter erreur TS stricte si Vehicle n'a pas offsetX)
                 (car as any).offsetX = perpX * (laneOffset + variation);
                 (car as any).offsetY = perpY * (laneOffset + variation);
+
+                // --- ROTATION (Calculée à chaque frame pour réactivité) ---
+                // 0: UP_RIGHT (dx>0, dy<0)
+                // 1: DOWN_RIGHT (dx>0, dy>0)
+                // 2: UP_LEFT (dx<0, dy<0)
+                // 3: DOWN_LEFT (dx<0, dy>0)
+                if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+                    if (dx > 0 && dy < 0) car.direction = 0;
+                    else if (dx > 0 && dy > 0) car.direction = 1;
+                    else if (dx < 0 && dy < 0) car.direction = 2;
+                    else car.direction = 3;
+                }
+
+                // Animation
+                car.frameIndex = (car.frameIndex + 0.2) % 4;
             }
         }
     }
-
 
     static spawnVehicle(engine: MapEngine) {
         const roads: number[] = [];
@@ -99,17 +113,26 @@ export class TrafficSystem {
             const sx = start % GRID_SIZE;
             const sy = Math.floor(start / GRID_SIZE);
 
+            // Random Type
+            const types = Object.values(VehicleType).filter(t => typeof t === 'string');
+            const type = types[Math.floor(Math.random() * types.length)] as VehicleType;
+
+            // Random Variant (Pour Civilian Car uniquement max 1, sinon 0)
+            const variant = (type === VehicleType.CIVILIAN_CAR) ? Math.floor(Math.random() * 2) : 0;
+
             engine.vehicles.push({
                 id: engine.nextVehicleId++,
                 x: sx,
                 y: sy,
-                path: path, // ✅ Une seule fois !
+                path: path,
                 targetIndex: 0,
                 speed: 0,
-                color: Math.random() > 0.5 ? 0xCCCCCC : 0xFFFFFF, // Voitures Blanches/Grises
-                // On initialise les offsets pour éviter des soucis de type 'any' plus tard
                 offsetX: 0,
-                offsetY: 0
+                offsetY: 0,
+                type: type,
+                direction: 1, // Default
+                variant: variant,
+                frameIndex: 0
             });
         }
     }

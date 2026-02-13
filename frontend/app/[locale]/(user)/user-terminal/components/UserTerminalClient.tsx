@@ -9,14 +9,16 @@ import { usePixiApp } from '../hooks/usePixiApp';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGameInput } from '../hooks/useGameInput';
 import { getGameEngine } from '../engine/GameEngine';
-import { loadBiomeTextures } from '../engine/BiomeAssets';
+import { loadBiomeTextures, clearBiomeTextures } from '../engine/BiomeAssets';
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { RoadAssets } from '../engine/RoadAssets';
+import { VehicleAssets } from '../engine/VehicleAssets';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
 
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
+import { VehicleRenderer } from '../components/VehicleRenderer';
 
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
@@ -50,106 +52,140 @@ export default function UserTerminalClient() {
     const previewPathRef = useRef<number[]>([]);
     const isValidBuildRef = useRef(true);
 
-    // 3. CHARGEMENT INITIAL DES ASSETS
+    // 3. CHARGEMENT INITIAL DES ASSETS (Robuste)
     useEffect(() => {
-        console.log("🚀 Page: Démarrage du chargement des assets...");
+        let active = true;
 
-        // On attend que TOUTES les textures soient prêtes
-        Promise.all([
-            loadBiomeTextures(),
-            ResourceAssets.load(),
-            RoadAssets.load()
-        ])
-            .then(() => {
-                console.log("✅ Page: Tous les assets sont chargés.");
+        const initAssets = async () => {
+            // 🧹 NETTOYAGE PRÉVENTIF 🧹 
+            // On vide TOUT avant de charger pour garantir un contexte frais
+            clearBiomeTextures();
+            ResourceAssets.clear(); // ✅ NOUVEAU
+            RoadAssets.clear();     // ✅ NOUVEAU
+            VehicleAssets.clear();  // ✅ NOUVEAU
 
-                const engine = getGameEngine();
-                // Pour le moment (Test) - Simulation Wallet
-                const fakeWallet = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+            try {
+                console.log("🚀 Page: Démarrage du chargement des assets...");
+                await Promise.all([
+                    loadBiomeTextures(),
+                    ResourceAssets.load(),
+                    RoadAssets.load(),
+                    VehicleAssets.load()
+                ]);
 
-                // Générer le monde si ce n'est pas déjà fait (avec Seed unique)
-                if (engine.map.revision === 0) {
-                    engine.map.generateWorld(fakeWallet);
-                    engine.map.calculateSummary();
+                if (active) {
+                    console.log("✅ Page: Tous les assets sont chargés.");
+                    const engine = getGameEngine();
+
+                    // Pour le moment (Test) - Simulation Wallet
+                    const fakeWallet = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+
+                    // Générer le monde si ce n'est pas déjà fait
+                    if (engine.map.revision === 0) {
+                        engine.map.generateWorld(fakeWallet);
+                        engine.map.calculateSummary();
+                    }
+
+                    setSummary(engine.map.currentSummary);
+                    setAssetsLoaded(true);
                 }
-
-                setSummary(engine.map.currentSummary);
-                setAssetsLoaded(true);
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error("❌ Page: Erreur lors du chargement des assets:", err);
-            });
-    }, []);
+            }
+        };
+
+        if (isReady) {
+            initAssets();
+        }
+
+        return () => {
+            active = false;
+            setAssetsLoaded(false);
+            // On vide aussi à la destruction pour être propre
+            clearBiomeTextures();
+        };
+    }, [isReady]); // Dangers: isReady change quand l'app Pixi est recréée
 
     // 4. CONFIGURATION DES CALQUES PIXI (Layers)
     useEffect(() => {
-        if (isReady && stageRef.current && viewportRef.current && assetsLoaded && !terrainContainerRef.current) {
+        if (isReady && viewportRef.current && assetsLoaded && !terrainContainerRef.current) {
             console.log("🎨 Page: Initialisation des Layers Pixi...");
 
             const viewport = viewportRef.current;
-            const stage = stageRef.current;
+            const engine = getGameEngine();
 
-            // Layer 1: Terrain & Ressources (Containers pour les Sprites)
+            // Layer 1: Terrain
             const terrain = new PIXI.Container();
-            terrain.sortableChildren = true; // Crucial pour le zIndex des arbres
+            terrain.sortableChildren = true;
 
-            // Layer 2: Vecteurs (Routes, Grilles, Overlays STATIC)
-            // On les met dans le viewport pour qu'ils bougent avec le monde
+            // Layer 2: Vecteurs
             const vectorLayer = new PIXI.Graphics();
 
-            // Layer 3: Interface In-Game (Curseurs, Preview construction)
-            // Ceux-ci doivent aussi être dans le viewport pour suivre le curseur monde
+            // Layer 3: UI
             const uiLayer = new PIXI.Graphics();
 
-            // Ajout au VIEWPORT (et non au stage direct) pour bénéficier du zoom/pan
             viewport.addChild(terrain);
             viewport.addChild(vectorLayer);
             viewport.addChild(uiLayer);
-
-            // Note: Si on veut une UI statique (HUD), on l'ajoute à 'stage' après 'viewport'
-            // Exemple : stage.addChild(hudContainer);
 
             terrainContainerRef.current = terrain;
             staticGRef.current = vectorLayer;
             uiGRef.current = uiLayer;
 
-            // Déclencher un premier rendu
-            getGameEngine().map.revision++;
+            engine.map.revision++;
 
-            // --- CENTRAGE AUTOMATIQUE ROBUSTE ---
-            let attempts = 0;
-            const MAX_ATTEMPTS = 60; // Abandonne après ~1 seconde si vide
+            // --- POSITIONNEMENT CAMÉRA ---
 
-            const attemptCentering = () => {
-                // Si le composant est démonté ou refs nulles, on arrête
-                if (!viewport || terrain.destroyed) return;
+            // Cas A : Restauration (Retour de changement de langue)
+            if (engine.lastCameraPosition) {
+                console.log("🔄 Restauration de la caméra...", engine.lastCameraPosition);
+                viewport.moveCenter(engine.lastCameraPosition.x, engine.lastCameraPosition.y);
+                viewport.setZoom(engine.lastZoom);
+            }
+            // Cas B : Centrage Initial
+            else {
+                let attempts = 0;
+                const MAX_ATTEMPTS = 60;
 
-                const bounds = terrain.getLocalBounds();
+                const attemptCentering = () => {
+                    if (!viewport || terrain.destroyed) return;
+                    const bounds = terrain.getLocalBounds();
 
-                // On vérifie si le terrain a une "matière" (largeur > 0)
-                if (bounds && bounds.width > 0) {
-                    const centerX = bounds.x + bounds.width / 2;
-                    const centerY = bounds.y + bounds.height / 2;
-
-                    console.log(`🎯 Centrage réussi (Tentative ${attempts}) :`, centerX, centerY);
-
-                    viewport.moveCenter(centerX, centerY);
-                    viewport.setZoom(1.0); // Ajuste selon tes goûts
-                } else {
-                    // Si le terrain est encore vide, on réessaie à la prochaine frame
-                    attempts++;
-                    if (attempts < MAX_ATTEMPTS) {
-                        requestAnimationFrame(attemptCentering);
+                    if (bounds && bounds.width > 0) {
+                        const centerX = bounds.x + bounds.width / 2;
+                        const centerY = bounds.y + bounds.height / 2;
+                        viewport.moveCenter(centerX, centerY);
+                        viewport.setZoom(1.0);
                     } else {
-                        console.warn("⚠️ Impossible de centrer : Terrain vide après timeout.");
+                        attempts++;
+                        if (attempts < MAX_ATTEMPTS) {
+                            requestAnimationFrame(attemptCentering);
+                        }
                     }
-                }
-            };
+                };
+                requestAnimationFrame(attemptCentering);
 
-            // Lance la tentative
-            requestAnimationFrame(attemptCentering);
+                // --- PERSISTANCE CONTINUE (TOUJOURS ACTIVE) ---
+                viewport.off('moved'); // Évite les doublons
+                viewport.on('moved', () => {
+                    const center = viewport.center;
+                    getGameEngine().saveCameraState(center.x, center.y, viewport.scaled);
+                });
+            }
         }
-    }, [isReady, assetsLoaded, stageRef, viewportRef]);
+    }, [isReady, assetsLoaded]);
+
+    // 5. SAUVEGARDE DE LA CAMÉRA (Sur démontage)
+    useEffect(() => {
+        return () => {
+            if (viewportRef.current) {
+                const center = viewportRef.current.center;
+                const zoom = viewportRef.current.scaled;
+                console.log("💾 Sauvegarde position avant démontage:", center);
+                getGameEngine().saveCameraState(center.x, center.y, zoom);
+            }
+        };
+    }, []);
 
     // 5. ACTIVATION DE LA BOUCLE DE JEU (Logic & Render)
     useGameLoop(
@@ -260,6 +296,7 @@ export default function UserTerminalClient() {
                                 // 1. Vider physiquement tous les sprites d'arbres du container
                                 if (terrainContainerRef.current) {
                                     ResourceRenderer.clearAll(terrainContainerRef.current);
+                                    VehicleRenderer.clearAll();
                                 }
                                 // 2. Créer le nouveau monde (On simule un nouveau wallet pour le refresh)
                                 const randomWallet = "0x" + Math.floor(Math.random() * 1e16).toString(16);

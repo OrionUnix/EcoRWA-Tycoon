@@ -207,6 +207,12 @@
       "altitude": "Elevation",
       "none": "Barren Land"
     },
+    "roads": {
+      "dirt": "Dirt Road",
+      "asphalt": "Asphalt Road",
+      "avenue": "Avenue",
+      "highway": "Highway"
+    },
     "units": {
       "barrel": "Barrels",
       "ton": "Tons",

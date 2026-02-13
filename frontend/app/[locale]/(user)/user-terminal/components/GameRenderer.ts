@@ -8,6 +8,7 @@ import { RoadRenderer } from './RoadRenderer';
 import { BuildingRenderer } from './BuildingRenderer';
 import { COLORS } from '../engine/constants';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
+import { VehicleAssets } from '../engine/VehicleAssets';
 
 const LOD_THRESHOLD_LOW = 0.6;
 const LOD_THRESHOLD_HIGH = 1.2;
@@ -93,16 +94,8 @@ export class GameRenderer {
 
         const isLow = zoomLevel < LOD_THRESHOLD_LOW;
 
-        // Véhicules (Exemple simple)
-        if (engine.vehicles && !isLow) {
-            engine.vehicles.forEach(car => {
-                const screenPos = gridToScreen(car.x, car.y);
-                const px = screenPos.x + (car.offsetX || 0) * TILE_WIDTH;
-                const py = screenPos.y + (car.offsetY || 0) * TILE_HEIGHT;
+        // Curseur (moved up for clarity, or just kept here)
 
-                g.rect(px - 3, py - 3, 6, 6).fill({ color: car.color || 0xFFFFFF });
-            });
-        }
 
         // Curseur
         const hl = gridToScreen(cursorPos.x, cursorPos.y);

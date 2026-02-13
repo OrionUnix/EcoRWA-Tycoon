@@ -5,6 +5,12 @@ export class ResourceAssets {
     public static forestFrames: PIXI.Texture[] = [];
     private static isLoaded = false;
 
+    static clear() {
+        this.forestFrames.forEach(tex => tex.destroy(true));
+        this.forestFrames = [];
+        this.isLoaded = false;
+    }
+
     static async load() {
         if (this.isLoaded) return;
 
