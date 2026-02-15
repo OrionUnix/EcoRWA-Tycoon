@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { getGameEngine } from '../engine/GameEngine';
-import { screenToGrid } from '../engine/isometric';
+import { screenToGrid, gridToScreen } from '../engine/isometric';
 import { RoadManager } from '../engine/RoadManager';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
+import { ParticleSystem } from '../engine/systems/ParticleSystem';
 
 export function useGameInput(
     viewportRef: React.MutableRefObject<Viewport | null>, // ✅ Viewport au lieu de stage
@@ -176,6 +177,8 @@ export function useGameInput(
                 engine.handleInteraction(idx, 'ZONE', null, selectedZone);
             } else if (viewMode.startsWith('BUILD_')) {
                 engine.handleInteraction(idx, viewMode, null, selectedBuilding);
+                const { x, y } = gridToScreen(gridPos.x, gridPos.y);
+                // ParticleSystem.spawnPlacementDust(x, y);
             }
         };
 
@@ -186,6 +189,12 @@ export function useGameInput(
                 const path = previewPathRef.current;
                 if (path.length > 0 && isValidBuildRef.current) {
                     engine.handleInteraction(0, 'BUILD_ROAD', path, selectedRoad);
+                    // part-effect sur le dernier point
+                    // const lastIdx = path[path.length - 1];
+                    // const gx = lastIdx % engine.map.config.size;
+                    // const gy = Math.floor(lastIdx / engine.map.config.size);
+                    // const { x, y } = gridToScreen(gx, gy);
+                    // ParticleSystem.spawnPlacementDust(x, y);
                 }
             }
 

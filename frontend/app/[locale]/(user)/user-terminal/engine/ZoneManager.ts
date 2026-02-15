@@ -29,8 +29,7 @@ export class ZoneManager {
         });
 
         // Console log seulement si pas de route trouvée pour ne pas spammer, ou sur demande
-        // On va loguer si return false alors que le user insiste (via l'appelant)
-        // Pour l'instant on décommente pour le debug session
+
         neighbors.forEach((nVal, i) => {
             if (nVal !== -1) {
                 // console.log(`Neighbor ${i} (idx ${nVal}): Road=${engine.roadLayer[nVal] ? 'YES' : 'NO'}`);

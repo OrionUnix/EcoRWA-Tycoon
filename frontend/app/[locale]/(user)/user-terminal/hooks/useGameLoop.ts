@@ -5,6 +5,7 @@ import { GameRenderer } from '../components/GameRenderer';
 // ✅ Import de sécurité (même si pas utilisé directement ici, utile pour le chargement)
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { VehicleRenderer } from '../components/VehicleRenderer';
+import { ParticleSystem } from '../engine/systems/ParticleSystem'; // ✅ Import
 
 export function useGameLoop(
     appRef: React.MutableRefObject<PIXI.Application | null>,
@@ -12,6 +13,7 @@ export function useGameLoop(
     staticGRef: React.MutableRefObject<PIXI.Graphics | null>,
     uiGRef: React.MutableRefObject<PIXI.Graphics | null>,
     isReady: boolean,
+    isReloading: boolean, // ✅ NOUVEAU : Bloque la boucle si rechargement
     viewMode: string,
     cursorPos: { x: number, y: number },
     previewPathRef: React.MutableRefObject<number[]>,
@@ -69,7 +71,11 @@ export function useGameLoop(
         console.log("🎬 GameLoop: Running with Resource Support.");
 
         const tick = (ticker: PIXI.Ticker) => {
-            if (!terrainContainerRef.current || !staticGRef.current || !uiGRef.current) {
+            // ✅ SÉCURITÉ : Arrêt immédiat si l'app ou les refs sont détruites
+            if (!app || (app.renderer as any)?.destroyed || !terrainContainerRef.current || !staticGRef.current || !uiGRef.current) {
+                return;
+            }
+            if (terrainContainerRef.current.destroyed || staticGRef.current.destroyed || uiGRef.current.destroyed) {
                 return;
             }
 
@@ -141,6 +147,17 @@ export function useGameLoop(
                 // ✅ RENDU VÉHICULES (Sprites)
                 // Doit être fait à chaque frame pour l'animation et le mouvement
                 VehicleRenderer.drawVehicles(terrainContainerRef.current, mapData, currentZoom);
+
+                // ✅ SYSTÈME DE PARTICULES
+                // Initialisation si nécessaire (Idempotent)
+                if (terrainContainerRef.current) {
+                    // On pourrait le faire ailleurs, mais ici on est sûr d'avoir le conteneur
+                    // ParticleSystem.init vérifie s'il est déjà init ou pas
+                    // Mais ParticleSystem.init(container) réinitialise tout...
+                    // On va le faire une fois via un flag ou dans UserTerminalClient ?
+                    // Plus simple : On l'update juste ici. L'init doit être fait ailleurs.
+                    // ParticleSystem.update();
+                }
             }
 
             // 3. MISE À JOUR UI (React States)

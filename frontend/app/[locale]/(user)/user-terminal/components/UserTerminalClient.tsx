@@ -14,11 +14,14 @@ import { ResourceAssets } from '../engine/ResourceAssets';
 import { RoadAssets } from '../engine/RoadAssets';
 import { VehicleAssets } from '../engine/VehicleAssets';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
+import { gridToScreen } from '../engine/isometric'; // ✅ Import
+import { GRID_SIZE } from '../engine/config'; // ✅ Import
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 import { VehicleRenderer } from '../components/VehicleRenderer';
 import { BuildingRenderer } from '../components/BuildingRenderer'; // ✅ Import
+import { GameRenderer, resetGameRenderer } from '../components/GameRenderer'; // ✅ Import GameRenderer & Reset
 import { useECS } from '../hooks/useECS'; // ✅ Import ECS
 
 export default function UserTerminalClient() {
@@ -33,6 +36,7 @@ export default function UserTerminalClient() {
 
     // 2. ÉTATS DE JEU
     const [assetsLoaded, setAssetsLoaded] = useState(false);
+    const [isReloading, setIsReloading] = useState(false); // ✅ NOUVEAU
     const [viewMode, setViewMode] = useState('ALL');
     const [selectedRoad, setSelectedRoad] = useState(RoadType.DIRT);
     const [selectedZone, setSelectedZone] = useState(ZoneType.RESIDENTIAL);
@@ -58,21 +62,33 @@ export default function UserTerminalClient() {
         let active = true;
 
         const initAssets = async () => {
+            // 💾 SAUVEGARDE CAMÉRA AVANT RELOAD (Fix Offset)
+            if (viewportRef.current) {
+                const center = viewportRef.current.center;
+                const zoom = viewportRef.current.scaled;
+                getGameEngine().saveCameraState(center.x, center.y, zoom);
+            }
+
             // 🧹 NETTOYAGE PRÉVENTIF 🧹 
-            // On vide TOUT avant de charger pour garantir un contexte frais
+            setIsReloading(true); // ✅ ON BLOQUE TOUT (Render & Input) 
+
             clearBiomeTextures();
             ResourceAssets.clear();
             RoadAssets.clear();
             VehicleAssets.clear();
-            BuildingRenderer.clearCache(); // ✅ NOUVEAU
+            BuildingRenderer.clearCache();
+            // ✅ On vide le cache des ressources (Arbres/Minerais) pour forcer le redessin
+            ResourceRenderer.clearAll(terrainContainerRef.current);
+
+            resetGameRenderer(); // ✅ RESET COMPLET (Fix Black Map)
 
             try {
                 console.log("🚀 Page: Démarrage du chargement des assets...");
                 if (!appRef.current) throw new Error("App Pixi non initialisée"); // Sécurité
 
                 await Promise.all([
-                    loadBiomeTextures(appRef.current), // ✅ Correction: Passage de l'app
-                    ResourceAssets.load(),
+                    loadBiomeTextures(appRef.current),
+                    ResourceAssets.load(appRef.current), // ✅ Correction: Passage de l'app
                     RoadAssets.load(),
                     VehicleAssets.load()
                 ]);
@@ -92,9 +108,11 @@ export default function UserTerminalClient() {
 
                     setSummary(engine.map.currentSummary);
                     setAssetsLoaded(true);
+                    setIsReloading(false); // ✅ ON DÉBLOQUE
                 }
             } catch (err) {
                 console.error("❌ Page: Erreur lors du chargement des assets:", err);
+                setIsReloading(false); // Safety
             }
         };
 
@@ -109,7 +127,7 @@ export default function UserTerminalClient() {
             clearBiomeTextures();
             BuildingRenderer.clearCache(); // ✅ NOUVEAU
         };
-    }, [isReady]); // Dangers: isReady change quand l'app Pixi est recréée
+    }, [isReady]);
 
     // 4. CONFIGURATION DES CALQUES PIXI (Layers)
     useEffect(() => {
@@ -137,6 +155,11 @@ export default function UserTerminalClient() {
             staticGRef.current = vectorLayer;
             uiGRef.current = uiLayer;
 
+            // ✅ INITIALISATION PARTICULES (DÉSACTIVÉ POUR CRASH FIX)
+            // import('../engine/systems/ParticleSystem').then(({ ParticleSystem }) => {
+            //     ParticleSystem.init(terrain);
+            // });
+
             engine.map.revision++;
 
             // --- POSITIONNEMENT CAMÉRA ---
@@ -147,28 +170,16 @@ export default function UserTerminalClient() {
                 viewport.moveCenter(engine.lastCameraPosition.x, engine.lastCameraPosition.y);
                 viewport.setZoom(engine.lastZoom);
             }
-            // Cas B : Centrage Initial
+            // Cas B : Centrage Initial (Déterminisme Mathématique)
             else {
-                let attempts = 0;
-                const MAX_ATTEMPTS = 60;
+                // On calcule le centre exact de la grille (32x32)
+                const centerGridX = GRID_SIZE / 2;
+                const centerGridY = GRID_SIZE / 2;
+                const centerPos = gridToScreen(centerGridX, centerGridY);
 
-                const attemptCentering = () => {
-                    if (!viewport || terrain.destroyed) return;
-                    const bounds = terrain.getLocalBounds();
-
-                    if (bounds && bounds.width > 0) {
-                        const centerX = bounds.x + bounds.width / 2;
-                        const centerY = bounds.y + bounds.height / 2;
-                        viewport.moveCenter(centerX, centerY);
-                        viewport.setZoom(1.0);
-                    } else {
-                        attempts++;
-                        if (attempts < MAX_ATTEMPTS) {
-                            requestAnimationFrame(attemptCentering);
-                        }
-                    }
-                };
-                requestAnimationFrame(attemptCentering);
+                console.log("📍 Centrage initial sur :", centerPos);
+                viewport.moveCenter(centerPos.x, centerPos.y);
+                viewport.setZoom(1.0); // Zoom par défaut
 
                 // --- PERSISTANCE CONTINUE (TOUJOURS ACTIVE) ---
                 viewport.off('moved'); // Évite les doublons
@@ -204,6 +215,7 @@ export default function UserTerminalClient() {
         staticGRef,
         uiGRef,
         isReady && assetsLoaded,
+        isReloading, // ✅ Passage du flag
         viewMode,
         cursorPos,
         previewPathRef,

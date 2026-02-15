@@ -17,18 +17,31 @@ export class MapGenerator {
         return (value + 1) * 0.5; // Normalise entre 0 et 1
     }
 
-    // ✅ NOUVEAU : Crée un masque pour forcer une île au centre
-    private static getIslandMask(x: number, y: number): number {
+    // ✅ NOUVEAU : Crée un masque pour forcer une île au centre (DÉSACTIVÉ: Mode Continent)
+    /*
+    private static getIslandMask(x: number, y: number, noiseVal: number): number {
         // Distance par rapport au centre (0 à 1)
         const cx = x / GRID_SIZE - 0.5;
         const cy = y / GRID_SIZE - 0.5;
-        const d = Math.sqrt(cx * cx + cy * cy) * 2; // *2 pour que les bords soient à 1.0
 
-        // On inverse : 1 au centre, 0 aux bords.
-        // On utilise une puissance (Math.pow) pour rendre le "plateau" central plus large
-        // Modifié pour moins d'effet "Archipel" : plus de terre
-        return Math.max(0, 1 - Math.pow(d, 2.5)); // 1.5 -> 2.5 (Plateau plus large)
+        // Perturbation du cercle avec le bruit (Noise)
+        // Distortion TRÈS aggressive (1.5) et basée sur radius
+        // noiseVal est entre -0.5 et 0.5
+
+        // On module le rayon effectif du cercle selon l'angle via le noise map 2D
+        // Si noiseVal est positif, le "bord" est repoussé (Terre plus loin)
+        // Si négatif, le "bord" est rapproché (Baie creusée)
+        const radiusMod = 1.0 + (noiseVal * 2.0); // Varie de 0.0 à 2.0
+
+        // Distance modifiée
+        const d = Math.sqrt(cx * cx + cy * cy) * 2 / radiusMod;
+
+        // On inverse : 1 si d < 1, falloff rapide ensuite
+        // Smoothstep inversé pour un bord net mais antialiased
+        const circle = Math.max(0, 1.2 - d); // 1.2 pour laisser une marge avant le falloff
+        return Math.min(1, circle);
     }
+    */
 
     // Un algorithme simple (Mulberry32) pour générer des nombres aléatoires à partir d'une graine
     private static createSeededRandom(seedStr: string): () => number {
@@ -80,10 +93,11 @@ export class MapGenerator {
         resLayer.fill(0);
         Object.values(engine.resourceMaps).forEach(map => map.fill(0));
 
-        // 🔧 RÉGLAGES IMPORTANTS
-        // Scale réduit (0.015 -> 0.006) pour des continents plus vastes et moins fragmentés
-        const scale = 0.006;
-        const riverScale = 0.02;
+        // 🔧 RÉGLAGES IMPORTANTS (ADAPTÉ POUR GRID_SIZE = 32)
+        // Scale augmenté (0.006 -> 0.15) pour avoir du détail sur une petite carte
+        // Sinon c'est juste une pente douce unique (Gradient)
+        const scale = 0.15;
+        const riverScale = 0.3; // Augmenté aussi
         const offsetX = rng() * 1000;
         const offsetY = rng() * 1000;
 
@@ -98,13 +112,22 @@ export class MapGenerator {
                 let h = this.fbm(nx, ny, 6, terrainNoise);
                 const m = this.fbm(nx, ny, 2, moistureNoise);
 
-                // 2. ✅ APPLIQUER LE MASQUE D'ÎLE
-                const mask = this.getIslandMask(x, y);
-                // Moins d'influence du masque (0.4 -> 0.25) pour laisser le bruit naturel s'exprimer
-                h = (h * 0.75) + (mask * 0.25);
+                // 2. ✅ GÉNÉRATION CÔTIÈRE (Bord de mer)
+                // On ajoute du bruit au gradient pour que la côte soit irrégulière
+                const coastalNoise = this.fbm(nx * 0.5, ny * 0.5, 2, terrainNoise); // Bruit basse fréquence
+                const gradient = 1.0 - (y / GRID_SIZE); // 1 en haut, 0 en bas
 
-                // Si le masque est trop faible, on baisse doucement au lieu de forcer 0.1
-                if (mask < 0.1) h *= mask * 10;
+                // On tord le gradient avec le bruit
+                // Si coastalNoise est fort, on repousse la mer
+                const mask = Math.min(1, Math.max(0, gradient + (coastalNoise - 0.5) * 0.8));
+
+                // Mélange :
+
+                // On utilise un smoothstep pour une transition plus franche de la côte
+                h = h * mask;
+
+                // Pour s'assurer qu'il y a bien de l'eau en bas, on force un peu le falloff
+                if (y > GRID_SIZE * 0.85) h *= 0.5;
 
                 // 3. ✅ GÉNÉRATION DES RIVIÈRES
                 const rVal = Math.abs(riverNoise(x * riverScale, y * riverScale));

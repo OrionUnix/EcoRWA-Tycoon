@@ -30,6 +30,8 @@ export class TerrainTilemap {
             this.tilemap = new CompositeTilemap();
         }
 
+        // ✅ CHANGEMENT ICI : Nettoyage agressif
+
         this.tilemap.clear();
 
         // Iterate over the grid
@@ -43,25 +45,32 @@ export class TerrainTilemap {
                 // Get texture from BiomeAssets
                 const texture = getBiomeTexture(biome, x, y);
 
-                if (texture) {
+                if (texture && !texture.source?.destroyed && !texture.destroyed) {
                     // Calculate position
-                    // ANCHOR LOGIC:
-                    // La texture fait TILE_HEIGHT (128) + DEPTH (64) = 192px (environ)
-                    // Le "centre" isométrique (le bas du losange de surface) est à TILE_HEIGHT
-                    // Donc l'anchor Y est TILE_HEIGHT / texture.height
+                    // Calculate position
+                    // ANCHOR LOGIC CORRIGÉE:
+                    // Le sprite contient le bloc entier (Haut + Côtés).
+                    // pos.x, pos.y est le centre de la face DU DESSUS (Top Face).
+                    // Dans ProceduralTiles, le bloc est dessiné de (0,0) (Top) vers le bas.
+                    // Le centre de la face du dessus est à (width / 2, height / 2) DANS la partie 'Surface'.
+                    // La texture totale a une hauteur = TILE_HEIGHT + DEPTH.
 
+                    // On veut que le point (pos.x, pos.y) corresponde au centre de la face du dessus.
                     const ANCHOR_X = 0.5;
-                    const ANCHOR_Y = TILE_HEIGHT / texture.height;
+
+                    // L'origine Y de la texture est le haut absolu du sprite (pointe nord du losange).
+                    // pos.y est le centre du losange.
+                    // Donc l'offset Y doit être la moitié de la hauteur DU LOSANGE (TILE_HEIGHT/2).
 
                     const offsetX = texture.width * ANCHOR_X;
-                    const offsetY = texture.height * ANCHOR_Y;
+                    const offsetY = TILE_HEIGHT / 2; // On aligne le centre du losange
+
                     let depthOffset = 0;
 
                     // Ajustement pour l'eau (qui est plate ou plus basse)
                     // BiomeType.DEEP_OCEAN = 0, BiomeType.OCEAN = 1
                     if (biome === 0 || biome === 1) {
                         // L'eau n'a pas de DEPTH (ou très peu), donc l'anchor logic reste valide
-                        // mais on veut peut-être la décaler un peu visuellement
                         depthOffset = 0;
                     }
 

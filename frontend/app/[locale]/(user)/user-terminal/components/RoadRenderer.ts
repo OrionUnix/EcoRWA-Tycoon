@@ -1,122 +1,96 @@
 import * as PIXI from 'pixi.js';
-import { RoadData, RoadType } from '../engine/types';
-import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
+import { MapEngine } from '../engine/MapEngine';
+import { GRID_SIZE, TILE_WIDTH, TILE_HEIGHT } from '../engine/config';
+import { gridToScreen } from '../engine/isometric';
 import { RoadAssets } from '../engine/RoadAssets';
 
-// REGLAGES FINAUX (Ceux qui marchent chez toi)
-const WIDTH_MULTIPLIER = 0.65;
-const OFFSET_Y = 0;
-
-const tileCache = new Map<number, PIXI.Container>();
+// Instance pour le rendu des routes (Sprite Caching)
 
 export class RoadRenderer {
+    private container: PIXI.Container;
+    private roadCache: Map<number, PIXI.Sprite>; // Cache par index de tuile
 
-    // ... (getTextureConfig reste identique à ce qui fonctionnait avant) ...
-    static getTextureConfig(conns: { n: boolean, s: boolean, e: boolean, w: boolean }): string {
-        const { n, s, e, w } = conns;
-
-        // 1. Croisement
-        if (n && s && e && w) return 'crossroad';
-
-        // 2. T-Intersections (Rotation horaire)
-        if (n && e && w && !s) return 'roadTE';
-        if (n && e && s && !w) return 'roadTS';
-        if (s && e && w && !n) return 'roadTW';
-        if (n && s && w && !e) return 'roadTN';
-
-        // 3. Virages (Inversés pour correction visuelle)
-        if (n && e) return 'roadES';
-        if (s && e) return 'roadSW';
-        if (s && w) return 'roadNW';
-        if (n && w) return 'roadNE';
-
-        // 4. Lignes droites (Inversées)
-        if (n || s) return 'roadEW';
-        if (e || w) return 'roadNS';
-
-        // 5. Culs-de-sac
-        if (n) return 'endE';
-        if (e) return 'endS';
-        if (s) return 'endW';
-        if (w) return 'endN';
-
-        return 'roadEW';
+    constructor() {
+        this.container = new PIXI.Container();
+        this.container.label = "RoadRenderer";
+        this.container.zIndex = 10;
+        this.container.sortableChildren = true;
+        this.roadCache = new Map();
     }
 
-    static drawTile(
-        container: PIXI.Container,
-        road: RoadData,
-        x: number,
-        y: number,
-        pos: { x: number, y: number },
-        isHigh: boolean,
-        isLow: boolean
-    ) {
-        const i = y * GRID_SIZE + x;
-        let tileContainer = tileCache.get(i);
+    getContainer(): PIXI.Container {
+        return this.container;
+    }
 
-        if (!tileContainer || tileContainer.destroyed) {
-            tileContainer = new PIXI.Container();
-            tileContainer.label = `road_${i}`;
-            tileContainer.sortableChildren = true;
-            container.addChild(tileContainer);
-            tileCache.set(i, tileContainer);
-        }
+    render(engine: MapEngine) {
+        if (this.container.destroyed) return;
 
-        tileContainer.visible = true;
-        tileContainer.x = pos.x;
-        tileContainer.y = pos.y;
-        tileContainer.zIndex = x + y;
+        // On parcourt tout le calque de routes
+        for (let i = 0; i < engine.config.totalCells; i++) {
+            const roadData = engine.roadLayer[i];
 
-        const conns = road.connections || { n: false, s: false, e: false, w: false };
+            if (roadData) {
+                // 1. Récupération / Création du Sprite
+                let sprite = this.roadCache.get(i);
 
-        // 1. On récupère le nom de la forme (ex: 'roadNS')
-        const shapeName = this.getTextureConfig(conns);
+                // Texture correcte selon les connexions
+                const texture = RoadAssets.getTexture(roadData.type, roadData.connections);
 
-        // 2. On demande à RoadAssets la texture pour ce TYPE précis (ex: DIRT + roadNS)
-        const texture = RoadAssets.getTexture(road.type, shapeName);
+                if (!texture) continue; // Pas de texture générée ?
 
-        tileContainer.removeChildren();
+                if (!sprite) {
+                    sprite = new PIXI.Sprite(texture);
+                    sprite.anchor.set(0.5, 0.5); // Centre parfait
 
-        if (texture) {
-            const sprite = new PIXI.Sprite(texture);
-            sprite.anchor.set(0.5, 0.5);
+                    // Position ISO
+                    const x = i % GRID_SIZE;
+                    const y = Math.floor(i / GRID_SIZE);
+                    const pos = gridToScreen(x, y);
 
-            // Calcul échelle
-            const targetWidth = TILE_WIDTH * 2.0 * WIDTH_MULTIPLIER;
-            const scale = targetWidth / texture.width;
-            sprite.scale.set(scale);
+                    // Ajustement Hauteur (Surface)
+                    // Les routes sont posées "sur" le bloc.
+                    // pos.y est le centre de la face du dessus.
+                    sprite.x = pos.x;
+                    sprite.y = pos.y;
 
-            sprite.y = OFFSET_Y;
-            tileContainer.addChild(sprite);
-        } else {
-            this.drawFallback(tileContainer, road);
+                    this.container.addChild(sprite);
+                    this.roadCache.set(i, sprite);
+                }
+
+                // Mise à jour continue (au cas où la texture change : connexion mise à jour)
+                if (sprite.texture !== texture) {
+                    sprite.texture = texture;
+                }
+
+                // Ré-attachement si nécessaire (Clean-Redraw)
+                if (sprite.parent !== this.container) {
+                    this.container.addChild(sprite);
+                }
+
+                sprite.visible = true;
+                sprite.zIndex = i; // Tri basique par index (suffisant pour sol plat)
+
+            } else {
+                // Pas de route ici, supprimer le sprite s'il existe
+                const sprite = this.roadCache.get(i);
+                if (sprite) {
+                    if (sprite.parent) sprite.parent.removeChild(sprite);
+                    sprite.destroy();
+                    this.roadCache.delete(i);
+                }
+            }
         }
     }
 
-    static drawFallback(container: PIXI.Container, road: RoadData) {
-        container.removeChildren();
-        const g = new PIXI.Graphics();
-
-        // Couleur différente selon le type pour debug si l'image manque
-        let color = 0x8B4513; // Marron (Dirt)
-        if (road.type === RoadType.ASPHALT) color = 0x333333; // Gris foncé
-        if (road.type === RoadType.HIGHWAY) color = 0x555555; // Gris clair
-
-        g.rect(-5, -5, 10, 10).fill({ color });
-        container.addChild(g);
+    destroy() {
+        this.roadCache.forEach(s => s.destroy());
+        this.roadCache.clear();
+        this.container.destroy({ children: true });
     }
 
-    static removeTile(index: number) {
-        const visual = tileCache.get(index);
-        if (visual) {
-            visual.destroy({ children: true });
-            tileCache.delete(index);
-        }
-    }
-
-    static clearCache() {
-        tileCache.forEach(c => c.destroy({ children: true }));
-        tileCache.clear();
-    }
+    // Méthodes legacy (vides pour compatibilité)
+    static drawTile() { }
+    static removeTile() { }
+    static clearCache() { }
 }
+

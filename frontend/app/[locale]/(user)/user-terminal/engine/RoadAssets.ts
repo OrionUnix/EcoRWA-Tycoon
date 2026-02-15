@@ -1,9 +1,11 @@
 import * as PIXI from 'pixi.js';
-import { asset } from '../utils/assetUtils';
-import { RoadType } from './types'; // Assure-toi d'importer l'enum RoadType
+import { RoadType } from './types';
+import { ProceduralRoads } from './ProceduralRoads';
 
 export class RoadAssets {
     private static _loaded = false;
+    // Map: "TYPE_BITMASK" -> Texture
+    // Bitmask: N=1, S=2, E=4, W=8
     public static textures: Map<string, PIXI.Texture> = new Map();
 
     static clear() {
@@ -12,74 +14,43 @@ export class RoadAssets {
         this._loaded = false;
     }
 
-    static async load() {
-        if (this._loaded) return;
+    static async load(app?: PIXI.Application) {
+        if (this._loaded || !app) return;
 
-        // 1. Définition des dossiers pour chaque type de route
-        // Clé = RoadType (enum), Valeur = Nom du dossier dans /public/assets/...
-        const TYPE_DIRS: Record<string, string> = {
-            [RoadType.DIRT]: 'Dirt',         // Dossier "Dirt"
-            [RoadType.ASPHALT]: 'asphalt',   // Dossier "asphalt" (minuscule selon ton info)
-            [RoadType.AVENUE]: 'Avenue',     // Dossier "Avenue"
-            [RoadType.HIGHWAY]: 'Autoroute'  // Dossier "Autoroute"
-        };
+        console.log("🛣️ RoadAssets: Génération procédurale...");
 
-        // 2. Liste des fichiers communs à tous les dossiers
-        const files: Record<string, string> = {
-            'roadNS': 'roadNS.png',
-            'roadEW': 'roadEW.png',
-            'roadNE': 'roadNE.png',
-            'roadNW': 'roadNW.png',
-            'roadES': 'roadES.png',
-            'roadSW': 'roadSW.png',
-            'roadTE': 'crossroadNES.png',
-            'roadTN': 'crossroadNEW.png',
-            'roadTS': 'crossroadESW.png',
-            'roadTW': 'crossroadNSW.png',
-            'crossroad': 'crossroad.png',
-            'endN': 'endN.png',
-            'endS': 'endS.png',
-            'endE': 'endE.png',
-            'endW': 'endW.png'
-        };
+        const types = [RoadType.DIRT, RoadType.ASPHALT, RoadType.AVENUE, RoadType.HIGHWAY];
 
-        const promises: Promise<void>[] = [];
+        for (const type of types) {
+            // Générer les 16 combinaisons (0 à 15)
+            for (let i = 0; i < 16; i++) {
+                const n = (i & 1) !== 0; // Bit 0
+                const s = (i & 2) !== 0; // Bit 1
+                const e = (i & 4) !== 0; // Bit 2
+                const w = (i & 8) !== 0; // Bit 3
 
-        // 3. Boucle sur chaque type de route (Dirt, Asphalt...)
-        for (const [type, folderName] of Object.entries(TYPE_DIRS)) {
+                const tex = ProceduralRoads.generateRoadSquare(app, type, { n, s, e, w });
 
-            // Boucle sur chaque fichier (NS, EW...)
-            for (const [key, filename] of Object.entries(files)) {
-
-                // Chemin : /assets/isometric/Spritesheet/roads/Dirt/roadNS.png
-                const path = asset(`/assets/isometric/Spritesheet/roads/${folderName}/${filename}`);
-
-                // Clé unique pour le cache : "DIRT_roadNS", "ASPHALT_roadNS", etc.
-                const uniqueKey = `${type}_${key}`;
-
-                const p = PIXI.Assets.load(path).then(texture => {
-                    if (texture) {
-                        this.textures.set(uniqueKey, texture);
-                    }
-                }).catch(e => {
-                    console.warn(`⚠️ Texture manquante : ${folderName}/${filename}`);
-                });
-
-                promises.push(p);
+                const key = `${type}_${i}`;
+                this.textures.set(key, tex);
             }
         }
 
-        await Promise.all(promises);
         this._loaded = true;
-        console.log("✅ All Road Types Loaded");
+        console.log("✅ Road Assets Generated (16 variants per type)");
     }
 
     /**
-     * Récupère une texture spécifique selon le type de route et la forme.
-     * ex: getTexture(RoadType.DIRT, 'roadNS')
+     * Récupère la texture pour une configuration donnée
      */
-    static getTexture(type: RoadType, name: string): PIXI.Texture | undefined {
-        const key = `${type}_${name}`;
+    static getTexture(type: RoadType, conns: { n: boolean, s: boolean, e: boolean, w: boolean }): PIXI.Texture | undefined {
+        let mask = 0;
+        if (conns.n) mask |= 1;
+        if (conns.s) mask |= 2;
+        if (conns.e) mask |= 4;
+        if (conns.w) mask |= 8;
+
+        const key = `${type}_${mask}`;
         return this.textures.get(key);
     }
 }

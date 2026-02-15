@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { ResourceAssets } from './ResourceAssets';
 import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
-import { TILE_HEIGHT, GRID_SIZE } from './config'; // Ajout GRID_SIZE
+import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH } from './config'; // Ajout GRID_SIZE, TILE_WIDTH
 
 const resourceCache = new Map<number, PIXI.Sprite>();
 
@@ -29,56 +29,122 @@ export class ResourceRenderer {
 
         const hasRoad = engine.roadLayer && engine.roadLayer[i] !== null;
         const hasBuilding = engine.buildingLayer && engine.buildingLayer[i] !== null;
-        const isForest = (biome === BiomeType.FOREST);
-        const shouldShow = isForest && woodAmount > 0.1 && !hasRoad && !hasBuilding;
+
+        // DÉTECTION DU TYPE DE RESSOURCE DOMINANTE
+        let resType = 'NONE';
+        if (engine.resourceMaps.oil[i] > 0.5) resType = 'OIL';
+        else if (engine.resourceMaps.gold[i] > 0.5) resType = 'GOLD';
+        else if (engine.resourceMaps.iron[i] > 0.5) resType = 'IRON';
+        else if (engine.resourceMaps.coal[i] > 0.5) resType = 'COAL';
+        else if (engine.resourceMaps.stone[i] > 0.5) resType = 'STONE';
+        else if (woodAmount > 0.1 && biome === BiomeType.FOREST) {
+            resType = 'WOOD';
+        } else if (woodAmount > 0.1) {
+            // DEBUG: Pourquoi du bois ici si ce n'est pas une forêt ?
+            // console.warn(`🌲 Wood found on non-forest tile ${i} (Biome: ${biome})`);
+            // On force le type WOOD uniquement si on est sûr (ou on le laisse à NONE pour masquer)
+            resType = 'NONE';
+        }
+
+        const shouldShow = resType !== 'NONE' && !hasRoad && !hasBuilding;
 
         if (shouldShow) {
             if (!sprite) {
-                if (ResourceAssets.forestFrames.length === 0) return;
-                const frameIndex = i % ResourceAssets.forestFrames.length;
-                sprite = new PIXI.Sprite(ResourceAssets.forestFrames[frameIndex]);
+                // SÉLECTION DE LA TEXTURE SELON LE TYPE
+                let texture: PIXI.Texture | null = null;
 
-                // Ancrage pour que les pieds de l'arbre soient au bas de l'image
+                let tint = 0xFFFFFF;
+
+                if (resType === 'WOOD' && ResourceAssets.forestFrames.length > 0) {
+                    const frameIndex = i % ResourceAssets.forestFrames.length;
+                    texture = ResourceAssets.forestFrames[frameIndex];
+                } else if (resType === 'OIL' && ResourceAssets.oilFrames.length > 0) {
+                    texture = ResourceAssets.oilFrames[0];
+                } else if (ResourceAssets.rockFrames.length > 0) {
+                    // MAPPING DES ROCHERS AVEC FALLBACK
+                    let rockIndex = 0; // Stone par défaut
+
+                    // Si on a les frames spécifiques, on les utilise (si tu les as générées)
+                    // Sinon on fallback sur la frame 0 (Stone) et on Teinte
+
+                    if (resType === 'COAL') {
+                        rockIndex = 1;
+                        if (!ResourceAssets.rockFrames[1]) { rockIndex = 0; tint = 0x555555; }
+                    }
+                    if (resType === 'IRON') {
+                        rockIndex = 2;
+                        if (!ResourceAssets.rockFrames[2]) { rockIndex = 0; tint = 0xBCAAA4; } // Rouille
+                    }
+                    if (resType === 'GOLD') {
+                        rockIndex = 3;
+                        if (!ResourceAssets.rockFrames[3]) { rockIndex = 0; tint = 0xFFD700; } // Or
+                    }
+
+                    if (ResourceAssets.rockFrames[rockIndex]) {
+                        texture = ResourceAssets.rockFrames[rockIndex];
+                    } else {
+                        // Fallback ultime : Pierre de base
+                        texture = ResourceAssets.rockFrames[0];
+                    }
+                }
+
+                if (!texture) return; // Pas de texture dispo
+
+                sprite = new PIXI.Sprite(texture);
+
+                // Ancrage pour que les pieds de l'objet soient au bas de l'image
                 sprite.anchor.set(0.5, 0.9);
+                sprite.tint = tint; // ✅ Application de la teinte (si fallback)
 
+                // Variation de taille légère
+                // Variation de taille légère
                 const randomSeed = Math.sin(i) * 10000;
                 const scale = 0.85 + (Math.abs(randomSeed % 1) * 0.3);
-                sprite.width = 58 * scale;
-                sprite.height = 58 * scale;
+
+                // ✅ ADAPTATION DYNAMIQUE (Scale relative à TILE_WIDTH)
+                // Ratio basé sur une tuile de 256px
+                const ratio = TILE_WIDTH / 64;
+
+                // Taille de base des assets originaux (32x32 ou 32x64)
+                const baseW = (resType === 'WOOD' ? 32 : 24);
+                const baseH = (resType === 'WOOD' ? 64 : 24);
+
+                sprite.width = baseW * ratio * scale;
+                sprite.height = baseH * ratio * scale;
 
                 container.addChild(sprite);
                 resourceCache.set(i, sprite);
             }
 
-            // ✅ SÉCURITÉ : Protection contre les sprites détruits lors du changement de langue
+            // ✅ SÉCURITÉ : Protection contre les sprites détruits
             try {
                 if (sprite.destroyed) {
                     resourceCache.delete(i);
-                    sprite = undefined; // Permettre le nettoyage sans sortir de la fonction
+                    sprite = undefined;
                 } else {
                     sprite.visible = true;
-                    sprite.x = pos.x;
 
+                    // ✅ RE-ATTACHEMENT (Crucial pour le mode Clean-Redraw)
+                    if (sprite.parent !== container) {
+                        container.addChild(sprite);
+                    }
+
+                    sprite.x = pos.x;
                     // Position Y : Bas de la tuile
                     sprite.y = pos.y + (TILE_HEIGHT / 2);
 
                     // ✅ CALCUL Z-INDEX UNIFIÉ
-                    // On recalcule x et y depuis i
                     const x = i % GRID_SIZE;
                     const y = Math.floor(i / GRID_SIZE);
-
-                    // Z-Index = x + y + 0.5
-                    // 0.5 permet d'être DEVANT la route de la MÊME case (qui est à 0.1)
-                    // Mais DERRIÈRE la route de la case suivante (qui sera à x+y+1 + 0.1)
                     sprite.zIndex = x + y + 0.5;
                 }
             } catch (e) {
-                // Si le sprite est dans un état invalide, on le supprime du cache
                 resourceCache.delete(i);
                 sprite = undefined;
             }
 
         } else {
+            // Nettoyage si plus nécessaire
             if (sprite) {
                 try {
                     if (!sprite.destroyed) {
@@ -93,11 +159,15 @@ export class ResourceRenderer {
         }
     }
 
-    static clearAll(container: PIXI.Container) {
+    static clearAll(container?: PIXI.Container | null) {
         resourceCache.forEach((sprite) => {
             try {
                 if (!sprite.destroyed) {
-                    if (sprite.parent) sprite.parent.removeChild(sprite);
+                    if (container && sprite.parent === container) {
+                        container.removeChild(sprite);
+                    } else if (sprite.parent) {
+                        sprite.parent.removeChild(sprite);
+                    }
                     sprite.destroy();
                 }
             } catch (e) {
