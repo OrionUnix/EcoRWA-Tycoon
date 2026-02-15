@@ -57,9 +57,8 @@ export class BuildingManager {
             }
         }
 
-        // Check Ressource Spécifique (MINE / OIL_RIG)
+        // Check Ressource Spécifique
         if (type === BuildingType.MINE) {
-            // Doit être sur Charbon, Fer, Or, Pierre
             const hasCoal = engine.resourceMaps.coal && engine.resourceMaps.coal[index] > 0;
             const hasIron = engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0;
             const hasStone = engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0;
@@ -73,6 +72,56 @@ export class BuildingManager {
             const hasOil = engine.resourceMaps.oil && engine.resourceMaps.oil[index] > 0;
             if (!hasOil) {
                 return { valid: false, reason: "Doit être placé sur un gisement de Pétrole" };
+            }
+        }
+        else if (type === BuildingType.HUNTER_HUT) {
+            const hasAnimals = engine.resourceMaps.animals && engine.resourceMaps.animals[index] > 0;
+            const isForest = engine.biomes[index] === 4; // 4 = FOREST
+            console.log(`Checking HUNTER_HUT at ${index}: hasAnimals=${hasAnimals}, isForest=${isForest}`);
+
+            if (!hasAnimals && !isForest) {
+                return { valid: false, reason: "Doit être placé sur du Gibier ou une Forêt" };
+            }
+        }
+        else if (type === BuildingType.FISHERMAN) {
+            const neighbors = [
+                (Math.floor(index / GRID_SIZE) > 0) ? index - GRID_SIZE : -1,
+                (Math.floor(index / GRID_SIZE) < GRID_SIZE - 1) ? index + GRID_SIZE : -1,
+                (index % GRID_SIZE < GRID_SIZE - 1) ? index + 1 : -1,
+                (index % GRID_SIZE > 0) ? index - 1 : -1
+            ];
+
+            const hasWaterNeighbor = neighbors.some(n => n !== -1 && engine.getLayer(1)[n] > 0.3);
+            if (!hasWaterNeighbor) {
+                return { valid: false, reason: "Doit être adjacent à l'EAU" };
+            }
+        }
+        else if (type === BuildingType.LUMBER_HUT) {
+            // Check self and neighbors for Forest or Wood
+            const checkIndices = [index];
+            const x = index % GRID_SIZE;
+            const y = Math.floor(index / GRID_SIZE);
+
+            // Add 8 neighbors
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+                        checkIndices.push(ny * GRID_SIZE + nx);
+                    }
+                }
+            }
+
+            const hasForestOrWood = checkIndices.some(idx => {
+                const isForest = engine.biomes[idx] === 4; // FOREST
+                const hasWood = engine.resourceMaps.wood && engine.resourceMaps.wood[idx] > 0;
+                return isForest || hasWood;
+            });
+
+            if (!hasForestOrWood) {
+                return { valid: false, reason: "Doit être près d'une FORÊT" };
             }
         }
 

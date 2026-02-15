@@ -1,6 +1,7 @@
 import { MapEngine } from './MapEngine';
 import { RoadType, RoadData, LayerType, ROAD_SPECS } from './types';
 import { GRID_SIZE } from './config';
+import { GridPathfinder } from './Pathfinding'; // ✅ Import Pathfinder
 
 export class RoadManager {
 
@@ -152,41 +153,22 @@ export class RoadManager {
         engine.roadGraph.addNode(index, connections, speed);
     }
 
+
     /**
-     * Calcule le chemin en "L" pour la prévisualisation (Drag & Drop)
+     * Calcule le chemin pour la prévisualisation (Drag & Drop)
+     * Utilise le Pathfinder pour contourner les obstacles si possible
      */
-    static getPreviewPath(startIdx: number, endIdx: number): number[] {
-        const path: number[] = [];
-        const x1 = startIdx % GRID_SIZE;
-        const y1 = Math.floor(startIdx / GRID_SIZE);
-        const x2 = endIdx % GRID_SIZE;
-        const y2 = Math.floor(endIdx / GRID_SIZE);
+    static getPreviewPath(engine: MapEngine, startIdx: number, endIdx: number): number[] {
+        // ✅ NOUVEAU : Utilisation du Pathfinder A*
+        const path = GridPathfinder.findConstructionPath(engine, startIdx, endIdx);
 
-        // 1. Axe X (Horizontal d'abord)
-        const stepX = x2 >= x1 ? 1 : -1;
-        if (x1 !== x2) {
-            for (let x = x1; x !== x2 + stepX; x += stepX) {
-                path.push(y1 * GRID_SIZE + x);
-            }
+        // Si le pathfinder échoue (pas de chemin), on retourne un tableau vide ou juste les points extrêmes ?
+        // Pour l'UX, mieux vaut ne rien afficher (rouge) si impossible.
+        if (!path) {
+            return [];
         }
 
-        // 2. Axe Y (Vertical ensuite)
-        const stepY = y2 >= y1 ? 1 : -1;
-        if (y1 !== y2) {
-            // Petite logique pour ne pas ajouter le coin deux fois si on a déjà fait du X
-            const startY = (path.length > 0) ? y1 + stepY : y1;
-            for (let y = startY; y !== y2 + stepY; y += stepY) {
-                path.push(y * GRID_SIZE + x2); // Note: on utilise x2 ici pour descendre droit
-            }
-        }
-
-        // Cas clic simple (start = end)
-        if (path.length === 0 && startIdx === endIdx) {
-            path.push(startIdx);
-        }
-
-        // Nettoyage des doublons éventuels
-        return [...new Set(path)];
+        return path;
     }
 
     /**

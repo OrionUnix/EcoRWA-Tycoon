@@ -73,10 +73,15 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
     // Traduction dynamique du biome
     // hoverInfo.biome est maintenant un number (enum). On récupère la clé string (ex: 'PLAINS') -> lowercase -> 'plains'
     // ex: t('Game.biomes.plains')
+    // Traduction dynamique du biome
     const biomeKey = typeof hoverInfo.biome === 'number'
         ? BiomeType[hoverInfo.biome]?.toLowerCase()
         : 'plains';
     const biomeName = t(`Game.biomes.${biomeKey}`);
+
+    const building = hoverInfo.building;
+    // Traduction nom bâtiment
+    const buildingName = building ? t(`Game.buildings.${building.type}.name`) : '';
 
     return (
         <div className="absolute top-24 left-6 bg-gray-900/95 text-white p-4 rounded-2xl border border-white/10 shadow-2xl w-64 pointer-events-none z-50 backdrop-blur-xl animate-in fade-in slide-in-from-left-2">
@@ -85,21 +90,57 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
                     <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">{t('Game.tooltip.coordinates')}</h3>
                     <p className="font-mono text-sm text-blue-400">{cursorPos.x}, {cursorPos.y}</p>
                 </div>
+                {/* Si bâtiment, on affiche son nom en priorité sur le biome */}
                 <div className="text-right">
-                    <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">{t('Game.tooltip.biome')}</h3>
-                    <p className="text-sm font-bold">{biomeName}</p>
+                    <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">
+                        {building ? t('Game.tooltip.status') : t('Game.tooltip.biome')}
+                    </h3>
+                    <p className="text-sm font-bold text-amber-400">
+                        {building ? buildingName : biomeName}
+                    </p>
                 </div>
             </div>
 
             <div className="space-y-2 text-xs">
-                {hoverInfo.elevation !== undefined && (
+                {/* 🏗️ INFO BÂTIMENT */}
+                {building && (
+                    <div className="mb-3 pb-3 border-b border-white/10 space-y-1">
+                        <div className="flex justify-between">
+                            <span className="text-gray-400">{t('Game.tooltip.level')}:</span>
+                            <span className="font-mono font-bold text-white">{building.level}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-400">{t('Game.tooltip.workers')}:</span>
+                            <span className="font-mono font-bold text-white">{building.jobsAssigned} / {building.workersNeeded || 0}</span>
+                        </div>
+                        {building.production && (
+                            <div className="flex justify-between text-green-400">
+                                <span>{t('Game.tooltip.production')}:</span>
+                                <span className="font-mono font-bold">
+                                    {building.production.amount} {building.production.type}
+                                </span>
+                            </div>
+                        )}
+                        {/* Ressource Minière Restante (si applicable) */}
+                        {building.mining && (
+                            <div className="flex justify-between text-yellow-400">
+                                <span>Stock {building.mining.resource}:</span>
+                                <span className="font-mono font-bold">{Math.floor(building.mining.amount)}</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 🌍 INFO TERRAIN (Toujours utile) */}
+                {hoverInfo.elevation !== undefined && !building && (
                     <div className="flex justify-between">
                         <span className="text-gray-400">{t('Game.tooltip.altitude')}:</span>
                         <span className="font-mono">{(hoverInfo.elevation * 100).toFixed(0)}m</span>
                     </div>
                 )}
 
-                {hoverInfo.moisture > 0 && (
+                {/* ... (Existing moisture & resource code) ... */}
+                {hoverInfo.moisture > 0 && !building && (
                     <div className="flex justify-between text-cyan-400">
                         <span>💧 {t('Game.tooltip.moisture')}:</span>
                         <span className="font-mono">{(hoverInfo.moisture * 100).toFixed(0)}%</span>
@@ -116,7 +157,7 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
                         if (key === 'wood') textColor = "text-green-400";
 
                         return (
-                            <div key={key} className={`flex justify - between ${textColor} `}>
+                            <div key={key} className={`flex justify-between ${textColor}`}>
                                 <span className="capitalize">{key}:</span>
                                 <span className="font-mono font-bold">{tons} t</span>
                             </div>
@@ -219,7 +260,38 @@ export function NeedsDisplay({ stats }: { stats: CityStats | null }) {
             {renderNeed('food', stats.needs.food, stats.food.produced, '🍞')}
             {renderNeed('water', stats.needs.water, stats.water.produced, '💧')}
             {renderNeed('electricity', stats.needs.electricity, stats.energy.produced, '⚡')}
-            {renderNeed('jobs', stats.needs.jobs, stats.jobsCommercial + stats.jobsIndustrial, '🛠️')}
+
+            {/* ✅ Custom Job Display */}
+            {(() => {
+                const workforce = stats.needs.jobs; // People looking for work
+                const totalJobs = stats.jobs || 0;  // Total job slots
+                const workers = Math.min(workforce, totalJobs);
+                const unemployed = Math.max(0, workforce - totalJobs);
+                const vacancies = Math.max(0, totalJobs - workforce);
+
+                let status = 'OK';
+                let color = 'text-green-400';
+
+                if (unemployed > 0) {
+                    status = 'CHÔMAGE'; // Unemployment
+                    color = 'text-red-400';
+                } else if (vacancies > 0) {
+                    status = 'POSTES LIBRES'; // Vacancies
+                    color = 'text-blue-400';
+                }
+
+                return (
+                    <div className="flex items-center gap-2 text-xs bg-black/40 px-2 py-1 rounded border border-white/5">
+                        <span className="text-base">🛠️</span>
+                        <div className="flex flex-col leading-tight">
+                            <span className="text-[9px] text-gray-500 uppercase font-black">{t('jobs')}</span>
+                            <span className={`font-mono font-bold ${color}`}>
+                                {workers} / {totalJobs} <span className="text-[9px] opacity-70">({vacancies > 0 ? `+${vacancies} Libres` : `-${unemployed} Chômeurs`})</span>
+                            </span>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

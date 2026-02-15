@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { VehicleAssets } from '../engine/VehicleAssets';
 import { MapEngine } from '../engine/MapEngine';
 import { gridToScreen } from '../engine/isometric';
-import { TILE_WIDTH, TILE_HEIGHT } from '../engine/config';
+import { TILE_WIDTH, TILE_HEIGHT, SURFACE_Y_OFFSET, VEHICLE_SCALE } from '../engine/config';
 
 const vehicleCache = new Map<number, PIXI.Sprite>();
 
@@ -11,6 +11,11 @@ export class VehicleRenderer {
     static drawVehicles(container: PIXI.Container, engine: MapEngine, zoomLevel: number) {
         if (!engine.vehicles) return;
 
+        // DEBUG: Vérifier le nombre de véhicules (1x/sec environ)
+        if (Math.random() < 0.01) {
+            console.log(`🚗 [VehicleRenderer] Drawing ${engine.vehicles.length} vehicles on container`, container.label || "Unnamed");
+        }
+
         // 1. Mark all as unused (to detect deletions)
         const activeIds = new Set<number>();
 
@@ -18,24 +23,29 @@ export class VehicleRenderer {
             activeIds.add(car.id);
             let sprite = vehicleCache.get(car.id);
 
-            // CREATE
-            if (!sprite) {
+            // CREATE or RESET if destroyed
+            if (!sprite || sprite.destroyed) {
                 sprite = new PIXI.Sprite();
                 sprite.anchor.set(0.5, 0.7); // Anchor at bottom centerish
-                const scale = 0.5; // Adjust based on visual preference
-                sprite.scale.set(scale);
+                // ✅ FORCE SCALE (Fix Gigantic Cars)
+                sprite.scale.set(0.75);
                 container.addChild(sprite);
                 vehicleCache.set(car.id, sprite);
             }
 
             // UPDATE
-            if (sprite) {
+            if (sprite && !sprite.destroyed) {
+                // Ensure parent is correct (fix for re-mount/reload)
+                if (sprite.parent !== container) {
+                    container.addChild(sprite);
+                }
+
                 const screenPos = gridToScreen(car.x, car.y);
                 const px = screenPos.x + (car.offsetX || 0) * TILE_WIDTH;
                 const py = screenPos.y + (car.offsetY || 0) * TILE_HEIGHT;
 
                 sprite.x = px;
-                sprite.y = py;
+                sprite.y = py + (SURFACE_Y_OFFSET); // ✅ Correction Verticale
 
                 // Z-Index Sorting
                 // Car Z should be roughly x + y + small offset to sit above roads
@@ -49,10 +59,16 @@ export class VehicleRenderer {
                     car.variant || 0 // ✅ Support Variant
                 );
 
-                if (texture) {
+                if (texture) { // ✅ Correction TS : retrait de .valid
                     sprite.texture = texture;
-                    // Reset anchor/scale if texture dimensions vary? 
-                    // Assuming all are 128x128 from VehicleAssets
+                    sprite.tint = 0xFFFFFF; // Reset tint
+                } else {
+                    // 🚨 FALLBACK VISUALIZATION (Carré Rouge si pas de texture)
+                    // console.warn(`🚗 Texture manquante pour véhicule ${car.id}, utilisation fallback.`);
+                    sprite.texture = PIXI.Texture.WHITE;
+                    sprite.tint = 0xFF0000;
+                    sprite.width = 16;
+                    sprite.height = 16;
                 }
             }
         });

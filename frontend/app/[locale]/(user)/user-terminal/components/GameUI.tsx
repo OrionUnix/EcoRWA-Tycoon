@@ -80,8 +80,7 @@ export default function GameUI({
                 <div className="flex gap-4 text-sm hidden lg:flex">
                     <ResourceItem label={t('Game.toolbar.wood')} value={resources?.wood} color="text-amber-500" />
                     <ResourceItem label={t('Game.toolbar.steel')} value={resources?.steel} color="text-blue-400" />
-                    <ResourceItem label={t('Game.toolbar.energy')} value={resources?.energy} color="text-yellow-400" />
-                    <ResourceItem label={t('Game.toolbar.water')} value={resources?.water} color="text-cyan-400" />
+
                 </div>
 
                 <div className="flex gap-3 mr-4 items-center">
@@ -203,24 +202,34 @@ export default function GameUI({
                                         icon="💧"
                                     />
                                     <ToolButton
-                                        active={viewMode === `BUILD_${BuildingType.MINE}`}
+                                        active={viewMode === `BUILD_${BuildingType.HUNTER_HUT}`}
                                         onClick={() => {
-                                            setViewMode(`BUILD_${BuildingType.MINE}`);
-                                            setSelectedBuildingType(BuildingType.MINE);
+                                            setViewMode(`BUILD_${BuildingType.HUNTER_HUT}`);
+                                            setSelectedBuildingType(BuildingType.HUNTER_HUT);
                                             setActiveCategory(null);
                                         }}
-                                        label={t('Game.tools.mine')}
-                                        icon="⛏️"
+                                        label={t('Game.tools.hunter')}
+                                        icon="🏹"
                                     />
                                     <ToolButton
-                                        active={viewMode === `BUILD_${BuildingType.OIL_RIG}`}
+                                        active={viewMode === `BUILD_${BuildingType.FISHERMAN}`}
                                         onClick={() => {
-                                            setViewMode(`BUILD_${BuildingType.OIL_RIG}`);
-                                            setSelectedBuildingType(BuildingType.OIL_RIG);
+                                            setViewMode(`BUILD_${BuildingType.FISHERMAN}`);
+                                            setSelectedBuildingType(BuildingType.FISHERMAN);
                                             setActiveCategory(null);
                                         }}
-                                        label={t('Game.tools.oil')}
-                                        icon="🛢️"
+                                        label={t('Game.tools.fisherman')}
+                                        icon="🎣"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.LUMBER_HUT}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.LUMBER_HUT}`);
+                                            setSelectedBuildingType(BuildingType.LUMBER_HUT);
+                                            setActiveCategory(null);
+                                        }}
+                                        label={t('Game.tools.lumberjack')}
+                                        icon="🪓"
                                     />
                                 </>
                             )}

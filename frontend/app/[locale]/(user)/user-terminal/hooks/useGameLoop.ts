@@ -11,6 +11,7 @@ export function useGameLoop(
     appRef: React.MutableRefObject<PIXI.Application | null>,
     terrainContainerRef: React.MutableRefObject<PIXI.Container | null>,
     staticGRef: React.MutableRefObject<PIXI.Graphics | null>,
+
     uiGRef: React.MutableRefObject<PIXI.Graphics | null>,
     isReady: boolean,
     isReloading: boolean, // ✅ NOUVEAU : Bloque la boucle si rechargement
@@ -118,7 +119,7 @@ export function useGameLoop(
 
                 if (shouldRenderStatic) {
                     // ✅ RENDU STATIQUE (Sol + Arbres + Routes + Bâtiments)
-                    GameRenderer.renderStaticLayer(
+                    const success = GameRenderer.renderStaticLayer(
                         terrainContainerRef.current,
                         staticGRef.current,
                         mapData,
@@ -127,9 +128,14 @@ export function useGameLoop(
                         currentZoom
                     );
 
-                    lastRevRef.current = mapData.revision;
-                    lastViewModeRef.current = viewMode;
-                    lastZoomRef.current = currentZoom;
+                    // ✅ PROTECTION RACE CONDITION
+                    // On ne valide la révision QUE si le rendu a réussi (Assets chargés)
+                    // Sinon, shouldRenderStatic restera true à la prochaine frame
+                    if (success) {
+                        lastRevRef.current = mapData.revision;
+                        lastViewModeRef.current = viewMode;
+                        lastZoomRef.current = currentZoom;
+                    }
                 }
 
                 // ✅ RENDU DYNAMIQUE (Curseur, Preview, Véhicules)
@@ -146,7 +152,10 @@ export function useGameLoop(
 
                 // ✅ RENDU VÉHICULES (Sprites)
                 // Doit être fait à chaque frame pour l'animation et le mouvement
-                VehicleRenderer.drawVehicles(terrainContainerRef.current, mapData, currentZoom);
+                // Maintenant on dessine dans le terrainContainer pour le tri Z (Occlusion)
+                if (terrainContainerRef.current) {
+                    VehicleRenderer.drawVehicles(terrainContainerRef.current, mapData, currentZoom);
+                }
 
                 // ✅ SYSTÈME DE PARTICULES
                 // Initialisation si nécessaire (Idempotent)

@@ -248,7 +248,10 @@
       "power": "Power",
       "water": "Water",
       "mine": "Mine",
-      "oil": "Oil"
+      "oil": "Oil",
+      "hunter": "Chasseur",
+      "fisherman": "Pêcheur",
+      "lumberjack": "Bûcheron"
     },
     "needs": {
       "title": "Demandes",
@@ -267,7 +270,11 @@
       "coordinates": "Coordonnées",
       "biome": "Biome",
       "altitude": "Altitude",
-      "moisture": "Humidité"
+      "moisture": "Humidité",
+      "production": "Production",
+      "workers": "Travailleurs",
+      "status": "État",
+      "level": "Niveau"
     },
     "buildings": {
       "RESIDENTIAL": {
@@ -321,6 +328,10 @@
       "HUNTER_HUT": {
         "name": "Cabane de Chasseur",
         "desc": "Produit de la nourriture (Gibier)."
+      },
+      "LUMBER_HUT": {
+        "name": "Cabane de Bûcheron",
+        "desc": "Produit du bois (Forêt requise)."
       }
     }
   }

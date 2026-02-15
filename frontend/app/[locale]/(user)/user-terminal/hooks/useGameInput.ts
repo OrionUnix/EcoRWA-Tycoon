@@ -135,7 +135,8 @@ export function useGameInput(
 
             // Preview Construction (Drag Gauche)
             if (viewMode === 'BUILD_ROAD' && isDraggingRef.current && startTileRef.current !== null) {
-                const path = RoadManager.getPreviewPath(startTileRef.current, idx);
+                // ✅ PASSAGE DU MOTEUR AU PATHFINDER
+                const path = RoadManager.getPreviewPath(engine.map, startTileRef.current, idx);
                 previewPathRef.current = path;
                 const { cost, valid } = RoadManager.calculateCost(engine.map, path, selectedRoad);
                 setTotalCost(cost);

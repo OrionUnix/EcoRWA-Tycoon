@@ -13,6 +13,7 @@ export class ResidentialRules {
     private static readonly PENALTY_NO_FOOD = 40;
     private static readonly PENALTY_NO_POWER = 20;
     private static readonly PENALTY_NO_JOB = 10;
+    private static readonly PENALTY_NO_COMMERCIAL = 15; // ✅ Malus si pas de commerce proche
     private static readonly BONUS_PARK = 10;
 
     // Seuil d'évolution
@@ -107,6 +108,11 @@ export class ResidentialRules {
         const pollutionPenalty = this.calculatePollutionImpact(engine, index) * 10;
         targetHappiness -= pollutionPenalty;
 
+        // ✅ Proximité Commerciale
+        if (!this.hasCommercialNearby(engine, index)) {
+            targetHappiness -= this.PENALTY_NO_COMMERCIAL;
+        }
+
         // Bonus Parc
         if (this.hasParkNearby(engine, index)) {
             targetHappiness += this.BONUS_PARK;
@@ -157,6 +163,32 @@ export class ResidentialRules {
             }
         }
         return maxImpact;
+    }
+
+    private static hasCommercialNearby(engine: MapEngine, index: number): boolean {
+        // Rayon 10 pour les commerces (assez large)
+        const x = index % GRID_SIZE;
+        const y = Math.floor(index / GRID_SIZE);
+        const radius = 10;
+
+        // Optimisation : On pourrait scanner en spirale ou juste checker un bounding box
+        // Pour l'instant, scan simple
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const nx = x + dx;
+                const ny = y + dy;
+
+                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+                    const nIdx = ny * GRID_SIZE + nx;
+                    // Check Zone ou Bâtiment
+                    if (engine.buildingLayer[nIdx]?.type === BuildingType.COMMERCIAL ||
+                        engine.zoningLayer[nIdx]?.type === ZoneType.COMMERCIAL) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private static hasParkNearby(engine: MapEngine, index: number): boolean {

@@ -181,6 +181,17 @@
       "tech_req": "Tech Req.",
       "hint": "Right Click + Drag • Scroll Zoom"
     },
+    "zones_short": {
+      "RESIDENTIAL": "Res.",
+      "COMMERCIAL": "Com.",
+      "INDUSTRIAL": "Ind.",
+      "POWER_PLANT": "Power",
+      "WATER_PUMP": "Water",
+      "PARK": "Park",
+      "MINE": "Mine",
+      "OIL_RIG": "Oil",
+      "CITY_HALL": "Gov."
+    },
     "layers": {
       "satellite": "Satellite",
       "forests": "Forests",
@@ -247,8 +258,9 @@
       "services": "Energy",
       "power": "Power",
       "water": "Water",
-      "mine": "Mine",
-      "oil": "Oil"
+      "hunter": "Hunter",
+      "fisherman": "Fisherman",
+      "lumberjack": "Lumberjack"
     },
     "needs": {
       "title": "Demands",
@@ -267,7 +279,11 @@
       "coordinates": "Coordinates",
       "biome": "Biome",
       "altitude": "Altitude",
-      "moisture": "Moisture"
+      "moisture": "Moisture",
+      "production": "Production",
+      "workers": "Workers",
+      "status": "Status",
+      "level": "Level"
     },
     "buildings": {
       "RESIDENTIAL": {
@@ -321,6 +337,10 @@
       "HUNTER_HUT": {
         "name": "Hunter's Hut",
         "desc": "Produces food (Game)."
+      },
+      "LUMBER_HUT": {
+        "name": "Lumberjack Hut",
+        "desc": "Produces wood (Requires Forest)."
       }
     }
   }

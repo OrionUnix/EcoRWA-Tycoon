@@ -1,16 +1,18 @@
 import * as PIXI from 'pixi.js';
 import { MapEngine } from '../engine/MapEngine';
 import { gridToScreen } from '../engine/isometric';
-import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE, CURSOR_DEPTH_OFFSET } from '../engine/config';
+import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE, CURSOR_DEPTH_OFFSET, SURFACE_Y_OFFSET } from '../engine/config';
 import { ZoneType, ZONE_COLORS } from '../engine/types';
 import { TerrainRenderer } from './TerrainRenderer';
 import { TerrainTilemap } from './TerrainTilemap';
 // import { DebugTerrainTilemap as TerrainTilemap } from '../implant/DebugTerrainTilemap';
 import { RoadRenderer } from './RoadRenderer';
-import { BuildingRenderer } from './BuildingRenderer';
+import { BuildingRenderer } from '../engine/BuildingRenderer'; // ✅ Import depuis ENGINE
 import { COLORS } from '../engine/constants';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
+import { ResourceAssets } from '../engine/ResourceAssets'; // ✅ Import ajouté
 import { VehicleAssets } from '../engine/VehicleAssets';
+import { WorkerRenderer } from '../engine/WorkerRenderer'; // ✅ Import WorkerRenderer
 
 const LOD_THRESHOLD_LOW = 0.6;
 const LOD_THRESHOLD_HIGH = 1.2;
@@ -18,9 +20,7 @@ const LOD_THRESHOLD_HIGH = 1.2;
 // Instance unique pour le tilemap (Singleton-like ou géré par le composant parent ?)
 // Pour l'instant on le stocke en static pour simplifier, mais idéalement instance.
 const terrainTilemap = new TerrainTilemap();
-const resourceContainer = new PIXI.Container(); // ✅ Conteneur dédié aux ressources
-resourceContainer.label = "resources";
-resourceContainer.sortableChildren = true; // Pour le Z-Sorting des arbres
+
 
 export class GameRenderer {
 
@@ -33,37 +33,52 @@ export class GameRenderer {
         viewMode: string,
         showGrid: boolean,
         zoomLevel: number
-    ) {
+    ): boolean { // ✅ Retourne true si succès, false si assets manquants
         // ✅ SÉCURITÉ : Si l'un des objets est détruit, on arrête tout pour éviter le crash
-        if (container.destroyed || g.destroyed) return;
+        if (container.destroyed || g.destroyed) return false;
+
+        // ✅ CHECK ASSETS : Si les ressources ne sont pas prêtes, on annule le rendu statique
+        // Cela permet au GameLoop de ne pas valider cette frame et de réessayer au prochain tick
+        if (!ResourceAssets.isReady || ResourceAssets.forestFrames.length === 0) {
+            // console.warn("⏳ [GameRenderer] Attente des assets ressources...");
+            return false;
+        }
+
+        // ✅ ACTIVATION DU TRI Z-INDEX
+        container.sortableChildren = true;
 
         g.clear();
-        if (!engine || !engine.biomes) return;
+        if (!engine || !engine.biomes) return false;
 
         const isHighDetail = zoomLevel > LOD_THRESHOLD_HIGH;
         const isLowDetail = zoomLevel < LOD_THRESHOLD_LOW;
 
-        // ✅ RENDU GLOBAL DES ROUTES (Optimisé) - zIndex 10
+        // ✅ RENDU GLOBAL DES ROUTES (Optimisé) - zIndex 0.5 (Juste au dessus du sol)
         if (!this.roadRenderer) {
             this.roadRenderer = new RoadRenderer();
         }
 
-        // On s'assure qu'il est dans le container
         const roadContainer = this.roadRenderer.getContainer();
+        roadContainer.zIndex = 0.5; // Au dessus du tilemap (0), en dessous des objets (1+)
         if (roadContainer.parent !== container) {
             container.addChild(roadContainer);
         }
 
-        this.roadRenderer.render(engine);
+        try {
+            this.roadRenderer.render(engine);
+        } catch (error) {
+            console.error("🚨 [GameRenderer] RoadRenderer error:", error);
+        }
 
         // ✅ RENDU DU TERRAIN (Tilemap) - zIndex 0
         terrainTilemap.render(engine, viewMode);
-        container.addChild(terrainTilemap.getContainer());
+        const tilemapContainer = terrainTilemap.getContainer();
+        tilemapContainer.zIndex = 0;
+        if (tilemapContainer.parent !== container) {
+            container.addChild(tilemapContainer);
+        }
 
-        // ✅ GESTION DU CONTENEUR RESSOURCES - zIndex 50
-        resourceContainer.removeChildren();
-        resourceContainer.zIndex = 50;
-        container.addChild(resourceContainer);
+        // REMOVED: resourceContainer logic (Flattened)
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -78,11 +93,10 @@ export class GameRenderer {
                     TerrainRenderer.drawOverlays(g, engine, biome, i, pos, viewMode);
                 }
 
-
-                // 2. RESSOURCES (Arbres)
+                // 2. RESSOURCES (Arbres) - DIRECT RENDER
                 if (!isLowDetail && viewMode === 'ALL') {
-                    // On dessine dans le sous-conteneur dédié
-                    ResourceRenderer.drawResource(resourceContainer, engine, i, pos, wood, biome);
+                    // ✅ MODIFICATION: On dessine directement dans le conteneur principal pour le tri Z
+                    ResourceRenderer.drawResource(container, engine, i, pos, wood, biome);
                 }
 
                 // 3. GRILLE & ZONES (Sur le graphics global 'g')
@@ -101,12 +115,8 @@ export class GameRenderer {
                     g.fill({ color: zColor, alpha: 0.3 });
                 }
 
-                // 4. ROUTES (Géré globalement via renderAll)
-
-
                 // 5. BÂTIMENTS
                 if (engine.buildingLayer && engine.buildingLayer[i]) {
-                    // ✅ CORRECTION ICI : On passe 7 arguments maintenant !
                     BuildingRenderer.drawTile(
                         container,                  // 1. Container (pour le Z-Index)
                         engine.buildingLayer[i]!,   // 2. Data
@@ -119,6 +129,11 @@ export class GameRenderer {
                 }
             }
         }
+
+        // 6. WORKERS
+        WorkerRenderer.render(container, zoomLevel);
+
+        return true;
     }
 
     static renderDynamicLayer(g: PIXI.Graphics, engine: MapEngine, cursorPos: { x: number, y: number }, previewPath: number[], currentMode: string, isValidBuild: boolean, zoomLevel: number) {
@@ -130,7 +145,7 @@ export class GameRenderer {
         const hl = gridToScreen(cursorPos.x, cursorPos.y);
 
         // ✅ CORRECTION OFFSET (Descendre le curseur au niveau du sol)
-        hl.y += CURSOR_DEPTH_OFFSET;
+        hl.y += CURSOR_DEPTH_OFFSET + SURFACE_Y_OFFSET;
 
         g.beginPath();
         g.moveTo(hl.x, hl.y - TILE_HEIGHT / 2);
@@ -147,7 +162,7 @@ export class GameRenderer {
                 const pos = gridToScreen(x, y);
 
                 // ✅ OFFSET AUSSI SUR LA PREVIEW
-                pos.y += CURSOR_DEPTH_OFFSET;
+                pos.y += CURSOR_DEPTH_OFFSET + SURFACE_Y_OFFSET;
 
                 const color = isValidBuild ? COLORS.ROAD_PREVIEW_VALID : COLORS.ROAD_PREVIEW_INVALID;
                 g.beginPath();
@@ -172,5 +187,6 @@ export const resetGameRenderer = () => {
         GameRenderer['roadRenderer'] = null;
     }
 
-    resourceContainer.removeChildren();
+    WorkerRenderer.clear();
+
 };

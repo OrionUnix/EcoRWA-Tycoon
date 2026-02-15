@@ -1,10 +1,13 @@
-// 128x128 est le "Sweet Spot" pour un city builder web performant
 export const GRID_SIZE = 32;
 export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 
 // Configuration de l'affichage
 export const TILE_WIDTH = 64;
 export const TILE_HEIGHT = 32;
+export const TILE_DEPTH = 4;
+export const SURFACE_Y_OFFSET = 2; // ✅ Léger offset positif pour l'ancrage
+export const RESOURCE_SCALE = 1.5; // ✅ Echelle Arbres/Ressources
+export const VEHICLE_SCALE = 1.1;  // ✅ Echelle Véhicules (Plus petite selon demande)
 export const CURSOR_DEPTH_OFFSET = 0;
 
 // Zoom par défaut (Réduit pour voir plus de carte)

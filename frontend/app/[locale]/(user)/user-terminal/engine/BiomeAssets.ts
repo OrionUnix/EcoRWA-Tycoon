@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { ProceduralTiles } from './ProceduralTiles';
 import { BiomeType } from './types';
-import { TILE_WIDTH, TILE_HEIGHT } from './config';
+import { TILE_WIDTH, TILE_HEIGHT, TILE_DEPTH } from './config';
 
 const texturesCache = new Map<number, PIXI.Texture[]>();
 
@@ -19,8 +19,7 @@ export async function loadBiomeTextures(app: PIXI.Application) {
     console.log("🔄 Génération textures Minecraft Isometric...");
 
     // Profondeur des blocs (Proportionnelle à la hauteur)
-    // ✅ MODIF: On réduit drastiquement la hauteur pour éviter le "flickering" et l'overlap
-    const DEPTH = 4; // TILE_HEIGHT; // C'était 64, on passe à 4 pour un effet "Tuile Plate"
+    const DEPTH = TILE_DEPTH; // ✅ Utilise la config globale
     const VARIATIONS = 3; // 3 variantes de texture par biome
 
     // Couleurs directes (Setup)

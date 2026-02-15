@@ -20,19 +20,14 @@ export class JobSystem {
         let tickJobsRequired = 0;
         let tickJobsAssigned = 0;
 
-        // Reset assignments for all valid buildings first? 
-        // Or do it in one pass. A single pass is fine if we just distribute available workers.
-
-        // To be fair, maybe shuffle buildings? For now, linear scan.
-        // We need to iterate ALL buildings to check for jobs. 
-        // engine.buildingLayer might be sparse or use `forEach` if it was a Map, but it's an Array.
-        // We should iterate only active buildings if we had a list, but iterating the array is okay for 100x100.
-
         for (let i = 0; i < engine.buildingLayer.length; i++) {
             const building = engine.buildingLayer[i];
             if (!building) continue;
 
             // Only commercial, industrial, and service buildings need workers
+            // ✅ Revert: On autorise l'affectation même en construction pour éviter de bloquer le chômage trop longtemps
+            // if (building.state !== 'ACTIVE') continue;
+
             const specs = BUILDING_SPECS[building.type];
             if (!specs) continue;
 
@@ -61,14 +56,9 @@ export class JobSystem {
             // 2. Check Road Access
             // Use BuildingSystem helper
             if (!BuildingSystem.hasRoadAccess(engine, i)) {
+                console.warn(`JobSystem: Building ${building.type} at ${i} has NO ROAD ACCESS -> 0 jobs`);
                 building.jobsAssigned = 0;
                 building.statusFlags = JobSystem.addFlag(building.statusFlags, BuildingStatus.NO_JOBS);
-                // NO_JOBS here means "Cannot work here" which is weird for a workplace.
-                // Usually NO_JOBS on a house means "Unemployed".
-                // On a workplace, it might mean "Not enough workers"?
-                // Let's use it as "Functional Issue" -> "Crossed out tools"?
-                // The user prompt said: "Icône 🛠️ “Pas assez de travailleurs”"
-                // So yes, if 0 assigned, show icon.
                 continue;
             }
 

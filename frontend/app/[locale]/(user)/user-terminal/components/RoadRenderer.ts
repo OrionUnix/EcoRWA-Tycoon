@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { MapEngine } from '../engine/MapEngine';
-import { GRID_SIZE, TILE_WIDTH, TILE_HEIGHT } from '../engine/config';
+import { GRID_SIZE, TILE_WIDTH, TILE_HEIGHT, SURFACE_Y_OFFSET } from '../engine/config';
 import { gridToScreen } from '../engine/isometric';
 import { RoadAssets } from '../engine/RoadAssets';
 
@@ -22,63 +22,81 @@ export class RoadRenderer {
         return this.container;
     }
 
+    private hasLoggedError: boolean = false; // ✅ Le flag anti-spam
+
     render(engine: MapEngine) {
         if (this.container.destroyed) return;
 
-        // On parcourt tout le calque de routes
-        for (let i = 0; i < engine.config.totalCells; i++) {
-            const roadData = engine.roadLayer[i];
+        try {
+            // On parcourt tout le calque de routes
+            for (let i = 0; i < engine.config.totalCells; i++) {
+                const roadData = engine.roadLayer[i];
 
-            if (roadData) {
-                // 1. Récupération / Création du Sprite
-                let sprite = this.roadCache.get(i);
+                if (roadData) {
+                    // 1. Récupération / Création du Sprite
+                    let sprite = this.roadCache.get(i);
 
-                // Texture correcte selon les connexions
-                const texture = RoadAssets.getTexture(roadData.type, roadData.connections);
+                    // Texture correcte selon les connexions
+                    const texture = RoadAssets.getTexture(roadData.type, roadData.connections);
 
-                if (!texture) continue; // Pas de texture générée ?
+                    if (!texture) {
+                        // Si la texture est invalide, on skip ce tile sans crasher
+                        continue;
+                    }
 
-                if (!sprite) {
-                    sprite = new PIXI.Sprite(texture);
-                    sprite.anchor.set(0.5, 0.5); // Centre parfait
+                    if (!sprite) {
+                        sprite = new PIXI.Sprite(texture);
+                        sprite.anchor.set(0.5, 0.5); // Centre parfait
 
-                    // Position ISO
-                    const x = i % GRID_SIZE;
-                    const y = Math.floor(i / GRID_SIZE);
-                    const pos = gridToScreen(x, y);
+                        // Position ISO
+                        const x = i % GRID_SIZE;
+                        const y = Math.floor(i / GRID_SIZE);
+                        const pos = gridToScreen(x, y);
 
-                    // Ajustement Hauteur (Surface)
-                    // Les routes sont posées "sur" le bloc.
-                    // pos.y est le centre de la face du dessus.
-                    sprite.x = pos.x;
-                    sprite.y = pos.y;
+                        // Ajustement Hauteur (Surface)
+                        if (isNaN(pos.y)) {
+                            console.error(`🚨 [RoadRenderer] NaN detected for tile ${i} (x:${x}, y:${y})`);
+                            continue;
+                        }
 
-                    this.container.addChild(sprite);
-                    this.roadCache.set(i, sprite);
-                }
+                        sprite.x = pos.x;
+                        sprite.y = pos.y + (SURFACE_Y_OFFSET); // ✅ Application de l'offset 3D
 
-                // Mise à jour continue (au cas où la texture change : connexion mise à jour)
-                if (sprite.texture !== texture) {
-                    sprite.texture = texture;
-                }
+                        this.container.addChild(sprite);
+                        this.roadCache.set(i, sprite);
+                    }
 
-                // Ré-attachement si nécessaire (Clean-Redraw)
-                if (sprite.parent !== this.container) {
-                    this.container.addChild(sprite);
-                }
+                    // Mise à jour continue (au cas où la texture change : connexion mise à jour)
+                    if (sprite.texture !== texture) {
+                        sprite.texture = texture;
+                    }
 
-                sprite.visible = true;
-                sprite.zIndex = i; // Tri basique par index (suffisant pour sol plat)
+                    // Ré-attachement si nécessaire (Clean-Redraw)
+                    if (sprite.parent !== this.container) {
+                        this.container.addChild(sprite);
+                    }
 
-            } else {
-                // Pas de route ici, supprimer le sprite s'il existe
-                const sprite = this.roadCache.get(i);
-                if (sprite) {
-                    if (sprite.parent) sprite.parent.removeChild(sprite);
-                    sprite.destroy();
-                    this.roadCache.delete(i);
+                    sprite.visible = true;
+                    sprite.zIndex = i; // Tri basique par index (suffisant pour sol plat)
+
+                } else {
+                    // Pas de route ici, supprimer le sprite s'il existe
+                    const sprite = this.roadCache.get(i);
+                    if (sprite) {
+                        if (sprite.parent) sprite.parent.removeChild(sprite);
+                        sprite.destroy();
+                        this.roadCache.delete(i);
+                    }
                 }
             }
+        } catch (error) {
+            // ✅ On ne logue l'erreur qu'une seule fois !
+            if (!this.hasLoggedError) {
+                console.error("🚨 [RoadRenderer] CRASH ISOLÉ pendant le rendu :", error);
+                this.hasLoggedError = true;
+            }
+            // ✅ Nettoyage des artefacts corrompus (sécurité visuelle)
+            // this.container.removeChildren(); // ⚠️ Trop agressif, on garde ce qui a marché
         }
     }
 

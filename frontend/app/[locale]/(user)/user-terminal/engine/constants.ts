@@ -19,6 +19,8 @@ export const COLORS = {
     GOLD: 0xFFD700,    // Or
     SILVER: 0xC0C0C0,  // Argent
     STONE: 0x808080,   // Pierre
+    ANIMALS: 0x8D6E63, // Marron (Gibier)
+    FISH: 0x00BCD4,    // Cyan (Poisson)
 
     DEEP_WATER: 0x000033,
     // Fallback Erreur

@@ -7,6 +7,7 @@ import { JobSystem } from './systems/JobSystem';
 import { ResourceSystem } from './systems/ResourceSystem';
 import { InteractionSystem } from './systems/InteractionSystem';
 import { FAKE_WALLET_ADDRESS } from './constants'; // ✅ Import Fake Wallet
+import { BUILDING_SPECS } from './types';
 // ✅ ECS Imports
 // ✅ ECS Imports
 // ECS logic moved to InteractionSystem
@@ -54,6 +55,7 @@ export class GameEngine {
             const capacity = PopulationManager.getProductionCapacity();
 
             this.map.stats.population = population;
+            this.map.stats.jobs = jobs; // ✅ Fix: Update stats for UI
 
             let workerEfficiency = 0;
             if (jobs > 0) {
@@ -153,9 +155,20 @@ export class GameEngine {
             info.resources = resources;
         }
 
+
+
+        // ... (existing imports)
+
         // Infos Bâtiments / Routes
         if (this.map.buildingLayer[index]) {
-            info.building = this.map.buildingLayer[index];
+            const b = this.map.buildingLayer[index];
+            const specs = BUILDING_SPECS[b.type];
+            // On enrichit l'objet pour l'UI (qui a besoin de production / workersNeeded)
+            info.building = {
+                ...b,
+                production: specs?.production,
+                workersNeeded: specs?.workersNeeded
+            };
         }
         if (this.map.roadLayer[index]) {
             info.road = this.map.roadLayer[index];

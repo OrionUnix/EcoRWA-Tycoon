@@ -15,12 +15,12 @@ import { RoadAssets } from '../engine/RoadAssets';
 import { VehicleAssets } from '../engine/VehicleAssets';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
 import { gridToScreen } from '../engine/isometric'; // ✅ Import
-import { GRID_SIZE } from '../engine/config'; // ✅ Import
+import { GRID_SIZE, TILE_HEIGHT } from '../engine/config'; // ✅ Import
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 import { VehicleRenderer } from '../components/VehicleRenderer';
-import { BuildingRenderer } from '../components/BuildingRenderer'; // ✅ Import
+import { BuildingRenderer } from '../engine/BuildingRenderer'; // ✅ Import depuis ENGINE
 import { GameRenderer, resetGameRenderer } from '../components/GameRenderer'; // ✅ Import GameRenderer & Reset
 import { useECS } from '../hooks/useECS'; // ✅ Import ECS
 
@@ -76,6 +76,7 @@ export default function UserTerminalClient() {
             ResourceAssets.clear();
             RoadAssets.clear();
             VehicleAssets.clear();
+            VehicleRenderer.clearAll(); // ✅ FIX: Nettoyage impératif pour éviter le crash (Sprite destroy)
             BuildingRenderer.clearCache();
             // ✅ On vide le cache des ressources (Arbres/Minerais) pour forcer le redessin
             ResourceRenderer.clearAll(terrainContainerRef.current);
@@ -89,11 +90,12 @@ export default function UserTerminalClient() {
                 await Promise.all([
                     loadBiomeTextures(appRef.current),
                     ResourceAssets.load(appRef.current), // ✅ Correction: Passage de l'app
-                    RoadAssets.load(),
-                    VehicleAssets.load()
+                    RoadAssets.load(appRef.current),     // ✅ FIX: Passage de l'app
+                    VehicleAssets.load(appRef.current)  // ✅ FIX: Passage de l'app
                 ]);
 
                 if (active) {
+
                     console.log("✅ Page: Tous les assets sont chargés.");
                     const engine = getGameEngine();
 
@@ -108,6 +110,9 @@ export default function UserTerminalClient() {
 
                     setSummary(engine.map.currentSummary);
                     setAssetsLoaded(true);
+
+                    engine.map.revision++; // ✅ FORCE UPDATE REQUESTED BY USER
+
                     setIsReloading(false); // ✅ ON DÉBLOQUE
                 }
             } catch (err) {
@@ -137,15 +142,23 @@ export default function UserTerminalClient() {
             const viewport = viewportRef.current;
             const engine = getGameEngine();
 
+            viewport.sortableChildren = true; // ✅ ESSENTIEL pour que le Z-index fonctionne entre les layers
+
             // Layer 1: Terrain
             const terrain = new PIXI.Container();
             terrain.sortableChildren = true;
+            terrain.zIndex = 1;
+            terrain.label = "terrain";
+
+
 
             // Layer 2: Vecteurs
             const vectorLayer = new PIXI.Graphics();
+            vectorLayer.zIndex = 100;
 
             // Layer 3: UI
             const uiLayer = new PIXI.Graphics();
+            uiLayer.zIndex = 200;
 
             viewport.addChild(terrain);
             viewport.addChild(vectorLayer);
@@ -155,12 +168,18 @@ export default function UserTerminalClient() {
             staticGRef.current = vectorLayer;
             uiGRef.current = uiLayer;
 
-            // ✅ INITIALISATION PARTICULES (DÉSACTIVÉ POUR CRASH FIX)
             // import('../engine/systems/ParticleSystem').then(({ ParticleSystem }) => {
             //     ParticleSystem.init(terrain);
             // });
 
             engine.map.revision++;
+
+            // ✅ FORCE REDRAW (Fix Ghost Render Check)
+            // On force une nouvelle révision après un court délai pour être sûr que tout est prêt
+            setTimeout(() => {
+                console.log("🔄 Force Redraw Initial...");
+                engine.map.revision++;
+            }, 200);
 
             // --- POSITIONNEMENT CAMÉRA ---
 
@@ -172,13 +191,14 @@ export default function UserTerminalClient() {
             }
             // Cas B : Centrage Initial (Déterminisme Mathématique)
             else {
-                // On calcule le centre exact de la grille (32x32)
-                const centerGridX = GRID_SIZE / 2;
-                const centerGridY = GRID_SIZE / 2;
-                const centerPos = gridToScreen(centerGridX, centerGridY);
+                // ✅ FORMULE UTILISATEUR (Centrage sur le bas du losange)
+                // Le sommet est en (0,0), le bas est en (0, GRID_SIZE * TILE_HEIGHT)
+                // Le milieu est donc (0, (GRID_SIZE * TILE_HEIGHT) / 2)
+                const targetX = 0;
+                const targetY = (GRID_SIZE * TILE_HEIGHT) / 2;
 
-                console.log("📍 Centrage initial sur :", centerPos);
-                viewport.moveCenter(centerPos.x, centerPos.y);
+                console.log(`📍 Centrage initial sur : x=${targetX}, y=${targetY}`);
+                viewport.moveCenter(targetX, targetY);
                 viewport.setZoom(1.0); // Zoom par défaut
 
                 // --- PERSISTANCE CONTINUE (TOUJOURS ACTIVE) ---

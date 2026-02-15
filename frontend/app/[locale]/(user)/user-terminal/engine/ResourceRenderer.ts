@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { ResourceAssets } from './ResourceAssets';
 import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
-import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH } from './config'; // Ajout GRID_SIZE, TILE_WIDTH
+import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH, SURFACE_Y_OFFSET, RESOURCE_SCALE } from './config'; // Ajout GRID_SIZE, TILE_WIDTH
 
 const resourceCache = new Map<number, PIXI.Sprite>();
 
@@ -88,7 +88,12 @@ export class ResourceRenderer {
                     }
                 }
 
-                if (!texture) return; // Pas de texture dispo
+                if (!texture) {
+                    // ✅ ECHEC CRITIQUE : Si on devait afficher une ressource mais qu'on a pas de texture
+                    // On log pour info, mais surtout on s'assure que le système sache qu'il manque des trucs.
+                    // (Note: La gestion du retry se fait dans GameRenderer qui check ResourceAssets.isReady)
+                    return;
+                }
 
                 sprite = new PIXI.Sprite(texture);
 
@@ -101,16 +106,8 @@ export class ResourceRenderer {
                 const randomSeed = Math.sin(i) * 10000;
                 const scale = 0.85 + (Math.abs(randomSeed % 1) * 0.3);
 
-                // ✅ ADAPTATION DYNAMIQUE (Scale relative à TILE_WIDTH)
-                // Ratio basé sur une tuile de 256px
-                const ratio = TILE_WIDTH / 64;
-
-                // Taille de base des assets originaux (32x32 ou 32x64)
-                const baseW = (resType === 'WOOD' ? 32 : 24);
-                const baseH = (resType === 'WOOD' ? 64 : 24);
-
-                sprite.width = baseW * ratio * scale;
-                sprite.height = baseH * ratio * scale;
+                // ✅ APPLICATION DE L'ÉCHELLE DEMANDÉE (x4)
+                sprite.scale.set(RESOURCE_SCALE);
 
                 container.addChild(sprite);
                 resourceCache.set(i, sprite);
@@ -129,9 +126,12 @@ export class ResourceRenderer {
                         container.addChild(sprite);
                     }
 
+                    // ✅ ISOMÉTRIQUE CONFIRMÉ
+                    // const pos = gridToScreen(x, y) est déjà passé en argument via 'pos'
+
                     sprite.x = pos.x;
-                    // Position Y : Bas de la tuile
-                    sprite.y = pos.y + (TILE_HEIGHT / 2);
+                    // Position Y : Bas de la tuile + Offset 3D (Remontée pour sortir du sol)
+                    sprite.y = pos.y + SURFACE_Y_OFFSET;
 
                     // ✅ CALCUL Z-INDEX UNIFIÉ
                     const x = i % GRID_SIZE;
@@ -139,6 +139,7 @@ export class ResourceRenderer {
                     sprite.zIndex = x + y + 0.5;
                 }
             } catch (e) {
+                console.error(`🚨 [ResourceRenderer] Error drawing resource ${i}:`, e);
                 resourceCache.delete(i);
                 sprite = undefined;
             }

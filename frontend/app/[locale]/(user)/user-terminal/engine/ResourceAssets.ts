@@ -8,6 +8,10 @@ export class ResourceAssets {
 
     private static isLoaded = false;
 
+    static get isReady() {
+        return this.isLoaded;
+    }
+
     static clear() {
         this.forestFrames.forEach(tex => tex.destroy(true));
         this.rockFrames.forEach(tex => tex.destroy(true));

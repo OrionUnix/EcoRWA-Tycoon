@@ -1,0 +1,243 @@
+import { defineSystem, defineQuery, addEntity, addComponent, removeComponent, hasComponent, IWorld } from 'bitecs';
+import { GameWorld } from '../world';
+import { Building } from '../components/Building';
+import { Position } from '../components/Position';
+import { Worker, WorkerState, WorkerType } from '../components/Worker';
+import { MoveTo } from '../components/MoveTo';
+import { Renderable } from '../components/Renderable';
+import { BuildingType } from '../../types';
+import { GRID_SIZE } from '../../config';
+import { getGameEngine } from '../../GameEngine'; // Pour accéder à la map (Biomes/Ressources)
+
+// Configuration
+const WORKER_SPEED = 0.05; // Vitesse de déplacement (cases par tick)
+const GATHER_TIME = 2.0; // Temps de récolte en secondes
+
+export const createWorkerSystem = (world: GameWorld) => {
+    // Queries
+    const buildingQuery = defineQuery([Building, Position]);
+    const workerQuery = defineQuery([Worker, Position, Renderable]);
+    const movingQuery = defineQuery([MoveTo, Position]);
+
+    return defineSystem((w: IWorld) => {
+        const gameWorld = w as GameWorld;
+        const dt = gameWorld.time.delta;
+        const elapsed = gameWorld.time.elapsed / 1000; // en secondes
+
+        // 1. GESTION DES DÉPLACEMENTS (Système séparé idéalement, mais intégré pour simplicité)
+        const movingEntities = movingQuery(w);
+        for (let i = 0; i < movingEntities.length; i++) {
+            const eid = movingEntities[i];
+
+            const dx = MoveTo.targetX[eid] - Position.x[eid];
+            const dy = MoveTo.targetY[eid] - Position.y[eid];
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // Vitesse adaptée au delta time (approx 60fps)
+            // WORKER_SPEED est par tick fixe, si dt varie on devrait multiplier
+            // Ici on assume dt ~ 1.0
+
+            if (dist < WORKER_SPEED) {
+                // Arrivé !
+                Position.x[eid] = MoveTo.targetX[eid];
+                Position.y[eid] = MoveTo.targetY[eid];
+                removeComponent(w, MoveTo, eid); // Stop movement
+            } else {
+                // On avance
+                const ratio = WORKER_SPEED / dist;
+                Position.x[eid] += dx * ratio;
+                Position.y[eid] += dy * ratio;
+            }
+        }
+
+        // 2. LOGIQUE DES TRAVAILLEURS
+        const workers = workerQuery(w);
+        const engine = getGameEngine();
+
+        // Map pour retrouver la position des bâtiments (optimisation possible: stocker dans un hashMap)
+        // Pour l'instant on le fait à la volée ou on stocke HomeX/Y
+
+        for (let i = 0; i < workers.length; i++) {
+            const eid = workers[i];
+            const state = Worker.state[eid];
+
+            // A. IDLE -> Chercher Ressource
+            if (state === WorkerState.IDLE) {
+                const target = findNearestResource(engine, Position.x[eid], Position.y[eid], Worker.type[eid]);
+                if (target) {
+                    Worker.targetResourceId[eid] = target.index;
+                    Worker.state[eid] = WorkerState.MOVING_TO_RESOURCE;
+
+                    addComponent(w, MoveTo, eid);
+                    MoveTo.targetX[eid] = target.x;
+                    MoveTo.targetY[eid] = target.y;
+                    MoveTo.speed[eid] = WORKER_SPEED;
+                }
+            }
+            // B. EN MOUVEMENT (Géré par Render/MoveTo, on attend juste la fin du MoveTo)
+            else if (state === WorkerState.MOVING_TO_RESOURCE) {
+                if (!hasComponent(w, MoveTo, eid)) {
+                    // Arrivé
+                    Worker.state[eid] = WorkerState.GATHERING;
+                    Worker.timer[eid] = GATHER_TIME;
+                }
+            }
+            // C. RÉCOLTE
+            else if (state === WorkerState.GATHERING) {
+                Worker.timer[eid] -= 0.016;
+                if (Worker.timer[eid] <= 0) {
+                    // Fini -> Retour Maison
+                    Worker.state[eid] = WorkerState.MOVING_HOME;
+
+                    // Trouver la pos de la maison via HomeID
+                    // On doit chercher dans les entités Building
+                    // Optimisation: On va stocker les coords de la maison dans une map temporaire ou chercher brute force
+                    // Comme on a peu de bâtiments, brute search dans buildingQuery est OK
+                    const buildings = buildingQuery(w);
+                    let homeX = Position.x[eid]; // Fallback
+                    let homeY = Position.y[eid];
+
+                    for (let b = 0; b < buildings.length; b++) {
+                        if (buildings[b] === Worker.homeBuildingId[eid]) {
+                            homeX = Position.x[buildings[b]];
+                            homeY = Position.y[buildings[b]];
+                            break;
+                        }
+                    }
+
+                    addComponent(w, MoveTo, eid);
+                    MoveTo.targetX[eid] = homeX + 0.5; // Centre
+                    MoveTo.targetY[eid] = homeY + 0.5;
+                    MoveTo.speed[eid] = WORKER_SPEED;
+                }
+            }
+            // D. RETOUR MAISON
+            else if (state === WorkerState.MOVING_HOME) {
+                if (!hasComponent(w, MoveTo, eid)) {
+                    // Arrivé
+                    Worker.state[eid] = WorkerState.DEPOSITING;
+                    Worker.timer[eid] = 1.0; // 1s pour déposer
+                }
+            }
+            // E. DÉPÔT
+            else if (state === WorkerState.DEPOSITING) {
+                Worker.timer[eid] -= 0.016;
+                if (Worker.timer[eid] <= 0) {
+                    // Cycle fini
+                    Worker.state[eid] = WorkerState.IDLE;
+                }
+            }
+        }
+
+        // 3. SPAWN DES TRAVAILLEURS (Toutes les 1s check)
+        // On utilise un timer global stocké quelque part ou modulo
+        if (Math.round(elapsed * 60) % 60 === 0) { // Approx 1x par sec
+            const buildings = buildingQuery(w);
+
+            for (let i = 0; i < buildings.length; i++) {
+                const bid = buildings[i];
+                const typeId = Building.typeId[bid]; // Attention il faut mapper l'enum
+
+                // On doit mapper l'ID type du building vers WorkerType
+                // BuildingType est string dans Types.ts mais ui8 dans ECS... 
+                // Il faut une map de conversion.
+                // Simplification: On va assumer que Building.typeId est correct (stocké à la création)
+
+                // On cheche si un worker existe déjà pour ce building
+                let hasWorker = false;
+                for (let k = 0; k < workers.length; k++) {
+                    if (Worker.homeBuildingId[workers[k]] === bid) {
+                        hasWorker = true;
+                        break;
+                    }
+                }
+
+                if (!hasWorker) {
+                    // Check type et spawn
+                    // On a besoin du "vrai" type string pour savoir
+                    // TODO: Passer le type string dans le composant ou une map externe
+                    // Pour l'instant on ne peut pas savoir le type exact via ECS seul si on a juste un ui8
+                    // On va utiliser engine.buildingLayer pour récupérer le vrai type via coords
+
+                    const bx = Math.floor(Position.x[bid]);
+                    const by = Math.floor(Position.y[bid]);
+                    const idx = by * GRID_SIZE + bx;
+                    const bData = engine.map.buildingLayer[idx];
+
+                    if (bData && bData.statusFlags !== 0) { // Si construit
+                        let wType = -1;
+                        if (bData.type === BuildingType.HUNTER_HUT) wType = WorkerType.HUNTER;
+                        else if (bData.type === BuildingType.FISHERMAN) wType = WorkerType.FISHERMAN;
+                        else if (bData.type === BuildingType.LUMBER_HUT) wType = WorkerType.LUMBERJACK;
+
+                        if (wType !== -1) {
+                            // Spawn Worker
+                            const wid = addEntity(w);
+                            addComponent(w, Position, wid);
+                            addComponent(w, Renderable, wid);
+                            addComponent(w, Worker, wid);
+
+                            Position.x[wid] = bx + 0.5;
+                            Position.y[wid] = by + 0.5;
+
+                            Worker.type[wid] = wType;
+                            Worker.homeBuildingId[wid] = bid;
+                            Worker.state[wid] = WorkerState.IDLE;
+
+                            Renderable.scale[wid] = 1.0;
+                            Renderable.visible[wid] = 1;
+                            Renderable.layer[wid] = 3; // Unit layer
+
+                            console.log(`👷 Spawn Worker ${wType} pour Bâtiment ${bid}`);
+                        }
+                    }
+                }
+            }
+        }
+
+        return w;
+    });
+};
+
+function findNearestResource(engine: any, x: number, y: number, type: number): { x: number, y: number, index: number } | null {
+    // Rayon de recherche
+    const RADIUS = 15;
+    let nearestDist = Infinity;
+    let target = null;
+
+    const startX = Math.floor(x);
+    const startY = Math.floor(y);
+
+    for (let dy = -RADIUS; dy <= RADIUS; dy++) {
+        for (let dx = -RADIUS; dx <= RADIUS; dx++) {
+            const cx = startX + dx;
+            const cy = startY + dy;
+
+            if (cx < 0 || cx >= GRID_SIZE || cy < 0 || cy >= GRID_SIZE) continue;
+            const index = cy * GRID_SIZE + cx;
+            const dist = dx * dx + dy * dy;
+
+            if (dist > nearestDist) continue;
+
+            let valid = false;
+
+            if (type === WorkerType.HUNTER) {
+                // Chercher Animal ou Forêt
+                if (engine.resourceMaps.animals && engine.resourceMaps.animals[index] > 0) valid = true;
+            } else if (type === WorkerType.FISHERMAN) {
+                // Chercher Eau (avec Poisson si possible, mais eau suffit pour anim)
+                if (engine.getLayer(1)[index] > 0.3) valid = true;
+            } else if (type === WorkerType.LUMBERJACK) {
+                // Chercher Forêt ou Bois
+                if (engine.biomes[index] === 4) valid = true; // FOREST
+                if (engine.resourceMaps.wood && engine.resourceMaps.wood[index] > 0) valid = true;
+            }
+
+            if (valid) {
+                nearestDist = dist;
+                target = { x: cx + 0.5, y: cy + 0.5, index }; // Centre de la case
+            }
+        }
+    }
+    return target;
+}

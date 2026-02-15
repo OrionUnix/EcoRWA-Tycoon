@@ -31,6 +31,17 @@ export class TerrainRenderer {
             else if (viewMode === 'STONE' && engine.resourceMaps.stone[i] > 0.1) overlayColor = COLORS.STONE;
             else if (viewMode === 'FOOD' && engine.resourceMaps.food[i] > 0.1) overlayColor = COLORS.FOOD;
 
+            // ✅ HUNTER HUT: Montre les Animaux OU les Forêts (car placement autorisé en forêt)
+            else if ((viewMode === 'ANIMALS' || viewMode === 'BUILD_HUNTER_HUT') &&
+                (engine.resourceMaps.animals[i] > 0.1 || biome === 4)) { // 4 = FOREST
+                overlayColor = COLORS.ANIMALS;
+            }
+            // ✅ FISHERMAN: Montre les Poissons
+            else if ((viewMode === 'FISH' || viewMode === 'BUILD_FISHERMAN') &&
+                engine.resourceMaps.fish[i] > 0.1) {
+                overlayColor = COLORS.FISH;
+            }
+
             if (overlayColor !== -1) {
                 g.beginPath();
                 g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);

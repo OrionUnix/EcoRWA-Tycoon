@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { globalWorld, createGameWorld, GameWorld } from '../engine/ecs/world';
 import { createTimeSystem } from '../engine/ecs/systems/TimeSystem';
 import { createBuildingSystem } from '../engine/ecs/systems/BuildingSystem'; // ✅ Import
+import { createWorkerSystem } from '../engine/ecs/systems/WorkerSystem';
 import { System } from 'bitecs';
 
 export function useECS(isReady: boolean) {
@@ -16,7 +17,8 @@ export function useECS(isReady: boolean) {
         // Initialisation des Systèmes
         systemsRef.current = [
             createTimeSystem(worldRef.current),
-            createBuildingSystem(worldRef.current) // ✅ Ajout du système
+            createBuildingSystem(worldRef.current), // ✅ Ajout du système
+            createWorkerSystem(worldRef.current) // ✅ Ajout du système Worker
             // Ajouter d'autres systèmes ici (Movement, Render, etc.)
         ];
 

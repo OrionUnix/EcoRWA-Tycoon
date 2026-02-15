@@ -51,6 +51,18 @@ export class RoadAssets {
         if (conns.w) mask |= 8;
 
         const key = `${type}_${mask}`;
-        return this.textures.get(key);
+        const tex = this.textures.get(key);
+
+        if (tex) {
+            if (tex.destroyed || (tex.source && tex.source.destroyed)) {
+                console.error(`💀 [RoadAssets] ZOMBIE TEXTURE détectée pour le type: ${key}`);
+                return undefined;
+            }
+        } else {
+            // Optional: Warn if missing (but might be normal for some incomplete sets)
+            // console.warn(`⚠️ [RoadAssets] Texture introuvable pour le type: ${key}`);
+        }
+
+        return tex;
     }
 }

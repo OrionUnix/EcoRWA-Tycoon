@@ -68,7 +68,8 @@ export enum BuildingType {
     POLICE_STATION = 'POLICE_STATION',
     FIRE_STATION = 'FIRE_STATION',
     FISHERMAN = 'FISHERMAN',
-    HUNTER_HUT = 'HUNTER_HUT'
+    HUNTER_HUT = 'HUNTER_HUT',
+    LUMBER_HUT = 'LUMBER_HUT'
 }
 
 // ==================================================================
@@ -281,7 +282,7 @@ export interface BuildingSpecs {
     requiresRoad: boolean;
     workersNeeded?: number; // ✅ NOUVEAU : Nombre de travailleurs requis
     production?: {
-        type: 'WATER' | 'ENERGY' | 'FOOD';
+        type: 'WATER' | 'ENERGY' | 'FOOD' | 'WOOD';
         amount: number;
     };
 }
@@ -301,21 +302,21 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     },
     [BuildingType.POWER_PLANT]: {
         type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Électrique",
-        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 5,
+        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4, // ✅ Fix: 4 Travailleurs
         production: { type: 'ENERGY', amount: 100 }
     },
     [BuildingType.WATER_PUMP]: {
         type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
-        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 3,
+        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2, // ✅ Fix: 2 Travailleurs
         production: { type: 'WATER', amount: 100 }
     },
     [BuildingType.MINE]: {
-        type: BuildingType.MINE, cost: 1200, name: "Mine",
-        description: "Extrait des ressources minérales.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 8
+        type: BuildingType.MINE, cost: 99999, name: "Mine (Désactivé)",
+        description: "Bâtiment désactivé.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 0
     },
     [BuildingType.OIL_RIG]: {
-        type: BuildingType.OIL_RIG, cost: 2000, name: "Plateforme Pétrolière",
-        description: "Extrait du pétrole.", width: 1, height: 1, color: 0x424242, requiresRoad: true, workersNeeded: 6
+        type: BuildingType.OIL_RIG, cost: 99999, name: "Pétrole (Désactivé)",
+        description: "Bâtiment désactivé.", width: 1, height: 1, color: 0x424242, requiresRoad: true, workersNeeded: 0
     },
     [BuildingType.CITY_HALL]: {
         type: BuildingType.CITY_HALL, cost: 3000, name: "Mairie",
@@ -342,5 +343,10 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         type: BuildingType.HUNTER_HUT, cost: 350, name: "Cabane de Chasseur",
         description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2,
         production: { type: 'FOOD', amount: 40 }
+    },
+    [BuildingType.LUMBER_HUT]: {
+        type: BuildingType.LUMBER_HUT, cost: 150, name: "Cabane de Bûcheron",
+        description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2,
+        production: { type: 'WOOD', amount: 40 }
     }
 };
