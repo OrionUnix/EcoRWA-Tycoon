@@ -6,11 +6,9 @@ import { NeedsCalculator } from './systems/NeedsCalculator';
 import { JobSystem } from './systems/JobSystem';
 import { ResourceSystem } from './systems/ResourceSystem';
 import { InteractionSystem } from './systems/InteractionSystem';
-import { FAKE_WALLET_ADDRESS } from './constants'; // ✅ Import Fake Wallet
-import { BUILDING_SPECS } from './types';
-// ✅ ECS Imports
-// ✅ ECS Imports
-// ECS logic moved to InteractionSystem
+import { EconomySystem } from './systems/EconomySystem'; // ✅ Import EconomySystem
+import { FAKE_WALLET_ADDRESS } from './constants';
+import { BUILDING_SPECS, BuildingType } from './types'; // ✅ BuildingType for Market check
 
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
@@ -48,20 +46,25 @@ export class GameEngine {
         // 1. TRAFIC (Vite)
         TrafficSystem.update(this.map);
 
-        // 2. POPULATION & NEEDS (Every 30 ticks)
+        // 2. ECONOMY (Every 60 ticks - ~1 sec at 1x)
+        if (this.tickCount % 60 === 0) {
+            EconomySystem.update(this.map);
+        }
+
+        // 3. POPULATION & NEEDS (Every 30 ticks)
         if (this.tickCount % 30 === 0) {
+            // ... (Population logic unchanged)
             const population = PopulationManager.getTotalPopulation();
             const jobs = PopulationManager.getTotalJobs();
             const capacity = PopulationManager.getProductionCapacity();
 
             this.map.stats.population = population;
-            this.map.stats.jobs = jobs; // ✅ Fix: Update stats for UI
+            this.map.stats.jobs = jobs;
 
             let workerEfficiency = 0;
             if (jobs > 0) {
                 workerEfficiency = Math.min(1.0, this.map.stats.workers / jobs);
             } else {
-
                 workerEfficiency = 1.0;
             }
 
@@ -74,18 +77,18 @@ export class GameEngine {
             this.map.stats.needs = needs;
         }
 
-        // 3. EVOLUTION DES BATIMENTS (Nouveau)
+        // 4. EVOLUTION DES BATIMENTS
         BuildingSystem.update(this.map, this.tickCount);
 
-        // 4. JOBS (Nouveau JobSystem)
+        // 5. JOBS
         if (this.tickCount % 10 === 0) {
             JobSystem.update(this.map);
         }
 
-        // 5. RESSOURCES (Mining / Oil) - Update every second (60 ticks)
+        // 6. RESSOURCES
         if (this.tickCount % 60 === 0) {
             ResourceSystem.update(this.map);
-            this.map.calculateSummary(); // Also update visual map summary
+            this.map.calculateSummary();
         }
 
         this.tickCount++;
@@ -100,8 +103,8 @@ export class GameEngine {
         }
     }
 
-    public handleInteraction(index: number, mode: string, path: number[] | null, type: any) {
-        InteractionSystem.handleInteraction(this.map, index, mode, path, type);
+    public handleInteraction(index: number, mode: string, path: number[] | null, type: any): { success: boolean, placedType?: string } {
+        return InteractionSystem.handleInteraction(this.map, index, mode, path, type);
     }
 
     // --- Helpers UI ---
@@ -117,7 +120,7 @@ export class GameEngine {
         }
 
         const info: any = {
-            biome: this.map.biomes[index], // ✅ Renvoie l'enum (number) pour traduction côté UI
+            biome: this.map.biomes[index],
             elevation: this.map.heightMap[index],
         };
 
@@ -125,25 +128,24 @@ export class GameEngine {
         const resources: any = {};
 
         if (this.map.resourceMaps) {
-            // Ressources minérales
+            // ❌ CLEANUP: On cache les minerais souterrains du Tooltip curseur
+            // (Le joueur doit utiliser les calques de vue pour voir ça)
+            /*
             if (this.map.resourceMaps.oil && this.map.resourceMaps.oil[index] > 0)
                 resources.oil = this.map.resourceMaps.oil[index];
             if (this.map.resourceMaps.coal && this.map.resourceMaps.coal[index] > 0)
                 resources.coal = this.map.resourceMaps.coal[index];
             if (this.map.resourceMaps.iron && this.map.resourceMaps.iron[index] > 0)
                 resources.iron = this.map.resourceMaps.iron[index];
-            if (this.map.resourceMaps.wood && this.map.resourceMaps.wood[index] > 0)
-                resources.wood = this.map.resourceMaps.wood[index];
-
-            // ✅ Nouvelles ressources
             if (this.map.resourceMaps.gold && this.map.resourceMaps.gold[index] > 0)
                 resources.gold = this.map.resourceMaps.gold[index];
-            if (this.map.resourceMaps.silver && this.map.resourceMaps.silver[index] > 0)
-                resources.silver = this.map.resourceMaps.silver[index];
             if (this.map.resourceMaps.stone && this.map.resourceMaps.stone[index] > 0)
                 resources.stone = this.map.resourceMaps.stone[index];
+            */
 
-            // ✅ Ressources vivantes (gibier et poisson)
+            // ✅ Ressources de surface (Gibier, Poisson, Bois) restent visibles
+            if (this.map.resourceMaps.wood && this.map.resourceMaps.wood[index] > 0)
+                resources.wood = this.map.resourceMaps.wood[index];
             if (this.map.resourceMaps.animals && this.map.resourceMaps.animals[index] > 0)
                 resources.gibier = this.map.resourceMaps.animals[index];
             if (this.map.resourceMaps.fish && this.map.resourceMaps.fish[index] > 0)
@@ -155,19 +157,17 @@ export class GameEngine {
             info.resources = resources;
         }
 
-
-
-        // ... (existing imports)
-
         // Infos Bâtiments / Routes
         if (this.map.buildingLayer[index]) {
             const b = this.map.buildingLayer[index];
             const specs = BUILDING_SPECS[b.type];
-            // On enrichit l'objet pour l'UI (qui a besoin de production / workersNeeded)
+            // On enrichit l'objet pour l'UI
             info.building = {
                 ...b,
                 production: specs?.production,
-                workersNeeded: specs?.workersNeeded
+                workersNeeded: specs?.workersNeeded,
+                maintenance: specs?.maintenance, // ✅ Cout Entretien
+                activeContracts: b.activeContracts // ✅ Contrats (Marché)
             };
         }
         if (this.map.roadLayer[index]) {
@@ -176,7 +176,52 @@ export class GameEngine {
 
         // Infos Zones
         if (this.map.zoningLayer[index]) {
-            info.zone = this.map.zoningLayer[index];
+            const z = this.map.zoningLayer[index];
+            const tax = EconomySystem.getTaxEstimate(z);
+
+            // ✅ DONNÉES RÉSIDENTIELLES DÉTAILLÉES
+            let residentialInfo = null;
+            if (z.type === 'RESIDENTIAL' && this.map.buildingLayer[index]) {
+                const b = this.map.buildingLayer[index];
+                const maxPop = PopulationManager.getCapacityForLevel(z.type, z.level);
+
+                // Calcul Emploi
+                // Si le flag NO_JOBS est présent, on estime que 50% sont au chômage (simulation)
+                // Sinon 100% emploi
+                const hasJobIssue = (b.statusFlags & 8) !== 0; // 8 = NO_JOBS
+                const employed = hasJobIssue ? Math.floor(z.population * 0.5) : z.population;
+
+                residentialInfo = {
+                    maxPop,
+                    employed,
+                    unemployed: z.population - employed,
+                    needs: {
+                        water: (b.statusFlags & 1) === 0, // 1 = NO_WATER
+                        power: (b.statusFlags & 2) === 0, // 2 = NO_POWER
+                        food: (b.statusFlags & 4) === 0,  // 4 = NO_FOOD
+                        jobs: !hasJobIssue
+                    },
+                    happiness: Math.floor(b.happiness)
+                };
+            }
+
+            info.zone = {
+                ...z,
+                taxEstimate: tax,
+                residential: residentialInfo // ✅ Attaché à l'objet zone
+            };
+        }
+
+        // ... (Preview Yield logic unchanged)
+        if (viewMode && viewMode.startsWith('BUILD_')) {
+            const bType = viewMode.replace('BUILD_', '') as import('./types').BuildingType;
+            if (Object.values(BUILDING_SPECS).some(s => s.type === bType)) {
+                const { BuildingManager } = require('./BuildingManager');
+                const yieldData = BuildingManager.calculatePotentialYield(this.map, index, bType);
+                if (yieldData.amount > 0) {
+                    info.potentialYield = yieldData;
+                }
+            }
         }
 
         return info;

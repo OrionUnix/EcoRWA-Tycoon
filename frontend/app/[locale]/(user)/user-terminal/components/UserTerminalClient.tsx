@@ -229,6 +229,13 @@ export default function UserTerminalClient() {
     // ✅ Initialisation ECS
     const { updateECS } = useECS(isReady);
 
+    const selectedBuildingTypeRef = useRef(BuildingType.POWER_PLANT); // ✅ Ref pour le GameLoop
+
+    // Synchro state -> ref
+    useEffect(() => {
+        selectedBuildingTypeRef.current = selectedBuilding;
+    }, [selectedBuilding]);
+
     useGameLoop(
         appRef,
         terrainContainerRef,
@@ -243,6 +250,7 @@ export default function UserTerminalClient() {
         setFps,
         setResources,
         setStats,
+        selectedBuildingTypeRef, // ✅ Passage de la ref
         updateECS // ✅ Injection de la boucle ECS
     );
 
@@ -253,6 +261,7 @@ export default function UserTerminalClient() {
         appRef,
         isReady && assetsLoaded,
         viewMode,
+        setViewMode, // ✅ Passé pour l'auto-deselect
         selectedRoad,
         selectedZone,
         selectedBuilding,

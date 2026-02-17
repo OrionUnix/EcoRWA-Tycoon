@@ -58,11 +58,40 @@ export default function GameUI({
             {/* ======================= */}
             <div className="pointer-events-auto bg-gray-900/95 text-white p-2 flex justify-between items-center border-b border-white/10 shadow-lg backdrop-blur-md z-50">
                 <div className="flex gap-8 items-center ml-4">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col group relative cursor-help">
                         <span className="text-[10px] text-gray-400 uppercase font-black tracking-wider">{t('Game.toolbar.budget')}</span>
                         <span className={`text-lg font-mono font-bold ${(resources?.money || 0) < 0 ? 'text-red-400' : 'text-green-400'}`}>
                             ${formatNumber(resources?.money)}
                         </span>
+
+                        {/* ✅ BUDGET TOOLTIP */}
+                        {stats?.budget && (
+                            <div className="absolute top-full left-0 mt-2 bg-gray-900 border border-white/10 p-3 rounded-lg shadow-xl w-48 hidden group-hover:block z-50">
+                                <div className="text-xs text-gray-300 space-y-1">
+                                    <div className="flex justify-between text-green-400">
+                                        <span>Revenus:</span> <span>+{stats.budget.income}$</span>
+                                    </div>
+                                    <div className="pl-2 border-l border-white/10">
+                                        <div className="flex justify-between"><span>Impôts Rés.:</span> <span>{stats.budget.taxIncome.residential}</span></div>
+                                        <div className="flex justify-between"><span>Impôts Com.:</span> <span>{stats.budget.taxIncome.commercial}</span></div>
+                                        <div className="flex justify-between"><span>Impôts Ind.:</span> <span>{stats.budget.taxIncome.industrial}</span></div>
+                                        <div className="flex justify-between text-orange-300"><span>Export:</span> <span>{stats.budget.tradeIncome}</span></div>
+                                    </div>
+                                    <div className="flex justify-between text-red-400 mt-2 pt-2 border-t border-white/10">
+                                        <span>Dépenses:</span> <span>-{stats.budget.expenses}$</span>
+                                    </div>
+                                    <div className="pl-2 border-l border-white/10 text-red-300">
+                                        <div className="flex justify-between"><span>Maintenance:</span> <span>{stats.budget.maintenance}</span></div>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-white mt-2 pt-2 border-t border-white/20">
+                                        <span>Net:</span>
+                                        <span className={(stats.budget.income - stats.budget.expenses) >= 0 ? 'text-green-500' : 'text-red-500'}>
+                                            {(stats.budget.income - stats.budget.expenses) >= 0 ? '+' : ''}{stats.budget.income - stats.budget.expenses}$
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex flex-col">
                         <span className="text-[10px] text-gray-400 uppercase font-black tracking-wider">{t('Game.toolbar.population')}</span>
@@ -230,6 +259,17 @@ export default function GameUI({
                                         }}
                                         label={t('Game.tools.lumberjack')}
                                         icon="🪓"
+                                    />
+                                    {/* ✅ NOVEAU : MARCHÉ */}
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.FOOD_MARKET}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.FOOD_MARKET}`);
+                                            setSelectedBuildingType(BuildingType.FOOD_MARKET);
+                                            setActiveCategory(null);
+                                        }}
+                                        label={t('Game.tools.market')}
+                                        icon="🏪"
                                     />
                                 </>
                             )}

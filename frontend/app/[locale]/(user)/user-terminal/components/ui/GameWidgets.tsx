@@ -113,6 +113,28 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
                             <span className="text-gray-400">{t('Game.tooltip.workers')}:</span>
                             <span className="font-mono font-bold text-white">{building.jobsAssigned} / {building.workersNeeded || 0}</span>
                         </div>
+
+                        {/* MAINTENANCE */}
+                        {building.maintenance && (
+                            <div className="flex justify-between text-red-400 text-xs font-mono">
+                                <span>Maintenance:</span>
+                                <span>-{building.maintenance}$/sem</span>
+                            </div>
+                        )}
+
+                        {/* CONTRATS (MARCHÉ) */}
+                        {building.activeContracts && building.activeContracts.length > 0 && (
+                            <div className="mt-2 text-xs pt-2 border-t border-white/5">
+                                <div className="text-orange-300 font-bold mb-1">Contrats Export:</div>
+                                {building.activeContracts.map((c: any, i: number) => (
+                                    <div key={i} className={`flex justify-between ${c.active ? 'text-white' : 'text-gray-500'}`}>
+                                        <span>{c.amountPerTick} {c.resource}</span>
+                                        <span className="text-green-400">+{c.amountPerTick * c.pricePerUnit}$</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         {building.production && (
                             <div className="flex justify-between text-green-400">
                                 <span>{t('Game.tooltip.production')}:</span>
@@ -131,11 +153,89 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
                     </div>
                 )}
 
+                {/* 🏙️ ZONE Info & Tax */}
+                {hoverInfo.zone && !building && (
+                    <div className="mb-3 pb-3 border-b border-white/10 space-y-1">
+                        {/* HEADER ZONE */}
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-blue-400 text-sm">
+                                {hoverInfo.zone.type === 'RESIDENTIAL' ? 'Habitations' : hoverInfo.zone.type}
+                                <span className="text-gray-500 text-xs ml-1">(Lvl {hoverInfo.zone.level})</span>
+                            </span>
+                            {hoverInfo.zone.residential?.happiness !== undefined && (
+                                <span className={`text-xs font-bold ${hoverInfo.zone.residential.happiness > 80 ? 'text-green-400' : hoverInfo.zone.residential.happiness > 40 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                    {hoverInfo.zone.residential.happiness}% 😊
+                                </span>
+                            )}
+                        </div>
+
+                        {/* POPULATION & EMPLOI (Si Résidentiel) */}
+                        {hoverInfo.zone.residential ? (
+                            <div className="bg-white/5 p-2 rounded mb-2">
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="text-gray-400">Habitants:</span>
+                                    <span className="font-mono text-white">
+                                        <span className="font-bold">{hoverInfo.zone.population}</span>
+                                        <span className="text-gray-500"> / {hoverInfo.zone.residential.maxPop}</span>
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-gray-400">Emploi:</span>
+                                    <span className="font-mono">
+                                        <span className={hoverInfo.zone.residential.employed === hoverInfo.zone.population ? 'text-green-400' : 'text-yellow-400'}>
+                                            {hoverInfo.zone.residential.employed}
+                                        </span>
+                                        <span className="text-gray-500"> actifs</span>
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Population:</span>
+                                <span className="font-mono font-bold text-cyan-300">{hoverInfo.zone.population}</span>
+                            </div>
+                        )}
+
+                        {/* BESOINS (Si Résidentiel) */}
+                        {hoverInfo.zone.residential && hoverInfo.zone.residential.needs && (
+                            <div className="flex gap-2 justify-center py-2 bg-black/20 rounded mb-1">
+                                <span title="Eau" className={hoverInfo.zone.residential.needs.water ? "grayscale-0" : "grayscale opacity-30 text-red-500"}>💧</span>
+                                <span title="Électricité" className={hoverInfo.zone.residential.needs.power ? "grayscale-0" : "grayscale opacity-30 text-red-500"}>⚡</span>
+                                <span title="Nourriture" className={hoverInfo.zone.residential.needs.food ? "grayscale-0" : "grayscale opacity-30 text-red-500"}>🍞</span>
+                                <span title="Emploi" className={hoverInfo.zone.residential.needs.jobs ? "grayscale-0" : "grayscale opacity-30 text-red-500"}>💼</span>
+                            </div>
+                        )}
+
+                        {/* TAXE ESTIMÉE */}
+                        {hoverInfo.zone.taxEstimate !== undefined && (
+                            <div className="flex justify-between text-green-400 text-xs font-mono mt-1 pt-1 border-t border-white/5">
+                                <span>Taxe / Semaine:</span>
+                                <span>+{hoverInfo.zone.taxEstimate}$</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* 🌍 INFO TERRAIN (Toujours utile) */}
                 {hoverInfo.elevation !== undefined && !building && (
                     <div className="flex justify-between">
                         <span className="text-gray-400">{t('Game.tooltip.altitude')}:</span>
                         <span className="font-mono">{(hoverInfo.elevation * 100).toFixed(0)}m</span>
+                    </div>
+                )}
+
+                {/* ✅ PREVIEW RENDEMENT (Pour le placement) */}
+                {hoverInfo.potentialYield && hoverInfo.potentialYield.amount > 0 && (
+                    <div className="mb-3 py-2 border-y border-white/20 bg-green-900/30 rounded px-2">
+                        <div className="text-[10px] uppercase font-black text-green-300 mb-1">
+                            {t('Game.tooltip.estimated_yield')}
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-white text-xs">{hoverInfo.potentialYield.label} (Est.)</span>
+                            <span className="font-mono font-bold text-green-400 text-sm">
+                                +{hoverInfo.potentialYield.amount}
+                            </span>
+                        </div>
                     </div>
                 )}
 

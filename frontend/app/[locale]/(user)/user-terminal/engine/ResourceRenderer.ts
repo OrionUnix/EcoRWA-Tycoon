@@ -37,12 +37,18 @@ export class ResourceRenderer {
         else if (engine.resourceMaps.iron[i] > 0.5) resType = 'IRON';
         else if (engine.resourceMaps.coal[i] > 0.5) resType = 'COAL';
         else if (engine.resourceMaps.stone[i] > 0.5) resType = 'STONE';
-        else if (woodAmount > 0.1 && biome === BiomeType.FOREST) {
-            resType = 'WOOD';
-        } else if (woodAmount > 0.1) {
-            // DEBUG: Pourquoi du bois ici si ce n'est pas une forêt ?
-            // console.warn(`🌲 Wood found on non-forest tile ${i} (Biome: ${biome})`);
-            // On force le type WOOD uniquement si on est sûr (ou on le laisse à NONE pour masquer)
+
+        // ✅ NETTOYAGE VISUEL: On garde le BOIS (Arbres)
+        // Mais on masque les minerais ("trucs noirs")
+        if (woodAmount > 0.1 && biome === BiomeType.FOREST) {
+            resType = 'WOOD'; // On force le bois
+        }
+
+        // Note: Si on avait des animaux, on les masquerait aussi ici.
+
+        // Si ce n'est PAS du bois, on masque (Minerais, Pétrole...)
+        // L'utilisateur ne veut pas de "trucs noirs" à l'écran
+        if (resType !== 'WOOD') {
             resType = 'NONE';
         }
 

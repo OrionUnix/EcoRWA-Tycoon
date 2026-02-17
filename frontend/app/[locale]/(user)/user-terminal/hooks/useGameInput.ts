@@ -12,6 +12,7 @@ export function useGameInput(
     appRef: React.MutableRefObject<PIXI.Application | null>,
     isReady: boolean,
     viewMode: string,
+    setViewMode: (mode: string) => void, // ✅ AJOUT
     selectedRoad: RoadType,
     selectedZone: ZoneType,
     selectedBuilding: BuildingType,
@@ -77,10 +78,11 @@ export function useGameInput(
         if (!viewportRef.current) return;
         const viewport = viewportRef.current;
 
-        // Si on est en mode construction (Dragnécessaire), on bloque le drag caméra
-        const isConstructionMode = viewMode.startsWith('BUILD_') || viewMode === 'ZONE';
+        // Si on est en mode construction (Drag nécessaire POUR LA SOURIS SUR LE JEU), on bloque le drag caméra
+        // ✅ FIX: On autorise le drag caméra pour les bâtiments simples (click simple)
+        const isDragConstruction = viewMode === 'BUILD_ROAD' || viewMode === 'ZONE';
 
-        if (isConstructionMode) {
+        if (isDragConstruction) {
             viewport.plugins.pause('drag');
         } else {
             viewport.plugins.resume('drag');
@@ -177,8 +179,15 @@ export function useGameInput(
                 lastPaintedTileRef.current = idx;
                 engine.handleInteraction(idx, 'ZONE', null, selectedZone);
             } else if (viewMode.startsWith('BUILD_')) {
-                engine.handleInteraction(idx, viewMode, null, selectedBuilding);
+                const result = engine.handleInteraction(idx, viewMode, null, selectedBuilding);
                 const { x, y } = gridToScreen(gridPos.x, gridPos.y);
+
+                // ✅ AUTO-DESELECT (Si construction réussie)
+                if (result && result.success) {
+                    // Reset vers mode sélection
+                    // (Sauf si Shift enfoncé - feature future)
+                    setViewMode('ALL');
+                }
                 // ParticleSystem.spawnPlacementDust(x, y);
             }
         };

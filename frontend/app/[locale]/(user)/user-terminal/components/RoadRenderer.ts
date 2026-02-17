@@ -47,6 +47,8 @@ export class RoadRenderer {
                     if (!sprite) {
                         sprite = new PIXI.Sprite(texture);
                         sprite.anchor.set(0.5, 0.5); // Centre parfait
+                        // ✅ UP SCALE (Routes plus larges)
+                        sprite.scale.set(1.1); // +10% de taille
 
                         // Position ISO
                         const x = i % GRID_SIZE;

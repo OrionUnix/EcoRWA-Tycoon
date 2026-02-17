@@ -28,7 +28,7 @@ export class VehicleRenderer {
                 sprite = new PIXI.Sprite();
                 sprite.anchor.set(0.5, 0.7); // Anchor at bottom centerish
                 // ✅ FORCE SCALE (Fix Gigantic Cars)
-                sprite.scale.set(0.75);
+                sprite.scale.set(0.45); // Réduit de 0.75 à 0.45
                 container.addChild(sprite);
                 vehicleCache.set(car.id, sprite);
             }

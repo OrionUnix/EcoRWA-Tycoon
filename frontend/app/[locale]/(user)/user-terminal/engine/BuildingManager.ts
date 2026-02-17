@@ -74,54 +74,13 @@ export class BuildingManager {
                 return { valid: false, reason: "Doit être placé sur un gisement de Pétrole" };
             }
         }
-        else if (type === BuildingType.HUNTER_HUT) {
-            const hasAnimals = engine.resourceMaps.animals && engine.resourceMaps.animals[index] > 0;
-            const isForest = engine.biomes[index] === 4; // 4 = FOREST
-            console.log(`Checking HUNTER_HUT at ${index}: hasAnimals=${hasAnimals}, isForest=${isForest}`);
-
-            if (!hasAnimals && !isForest) {
-                return { valid: false, reason: "Doit être placé sur du Gibier ou une Forêt" };
-            }
-        }
-        else if (type === BuildingType.FISHERMAN) {
-            const neighbors = [
-                (Math.floor(index / GRID_SIZE) > 0) ? index - GRID_SIZE : -1,
-                (Math.floor(index / GRID_SIZE) < GRID_SIZE - 1) ? index + GRID_SIZE : -1,
-                (index % GRID_SIZE < GRID_SIZE - 1) ? index + 1 : -1,
-                (index % GRID_SIZE > 0) ? index - 1 : -1
-            ];
-
-            const hasWaterNeighbor = neighbors.some(n => n !== -1 && engine.getLayer(1)[n] > 0.3);
-            if (!hasWaterNeighbor) {
-                return { valid: false, reason: "Doit être adjacent à l'EAU" };
-            }
-        }
-        else if (type === BuildingType.LUMBER_HUT) {
-            // Check self and neighbors for Forest or Wood
-            const checkIndices = [index];
-            const x = index % GRID_SIZE;
-            const y = Math.floor(index / GRID_SIZE);
-
-            // Add 8 neighbors
-            for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                    if (dx === 0 && dy === 0) continue;
-                    const nx = x + dx;
-                    const ny = y + dy;
-                    if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
-                        checkIndices.push(ny * GRID_SIZE + nx);
-                    }
-                }
-            }
-
-            const hasForestOrWood = checkIndices.some(idx => {
-                const isForest = engine.biomes[idx] === 4; // FOREST
-                const hasWood = engine.resourceMaps.wood && engine.resourceMaps.wood[idx] > 0;
-                return isForest || hasWood;
-            });
-
-            if (!hasForestOrWood) {
-                return { valid: false, reason: "Doit être près d'une FORÊT" };
+        else if (type === BuildingType.HUNTER_HUT || type === BuildingType.FISHERMAN || type === BuildingType.LUMBER_HUT) {
+            // ✅ NOUVELLE LOGIQUE: Check Yield dans le radius au lieu de la case exacte
+            const yieldData = this.calculatePotentialYield(engine, index, type);
+            if (yieldData.amount <= 0) {
+                if (type === BuildingType.HUNTER_HUT) return { valid: false, reason: "Aucune forêt ou gibier à proximité" };
+                if (type === BuildingType.FISHERMAN) return { valid: false, reason: "Aucune eau à proximité" };
+                if (type === BuildingType.LUMBER_HUT) return { valid: false, reason: "Aucune forêt à proximité" };
             }
         }
 
@@ -143,6 +102,49 @@ export class BuildingManager {
 
         console.log('✅ Validation: SUCCÈS - placement autorisé');
         return { valid: true };
+    }
+
+    /**
+     * Calcule le rendement potentiel autour d'un point
+     */
+    static calculatePotentialYield(engine: MapEngine, index: number, type: BuildingType): { amount: number, label: string } {
+        const cx = index % GRID_SIZE;
+        const cy = Math.floor(index / GRID_SIZE);
+        const radius = 5; // Rayon de 5 cases
+        let count = 0;
+        let label = "Ressources";
+
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const nx = cx + dx;
+                const ny = cy + dy;
+
+                if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) continue;
+                // Cercle approximatif
+                if (dx * dx + dy * dy > radius * radius) continue;
+
+                const idx = ny * GRID_SIZE + nx;
+
+                if (type === BuildingType.HUNTER_HUT) {
+                    label = "Gibier/Forêt";
+                    // Compte Forêt (4) ou Animals map
+                    if (engine.biomes[idx] === 4) count += 1;
+                    if (engine.resourceMaps.animals && engine.resourceMaps.animals[idx] > 0) count += 5; // Bonus pour animaux
+                }
+                else if (type === BuildingType.LUMBER_HUT) {
+                    label = "Bois";
+                    if (engine.biomes[idx] === 4) count += 10; // Arbre = 10 bois
+                    if (engine.resourceMaps.wood && engine.resourceMaps.wood[idx] > 0) count += 5;
+                }
+                else if (type === BuildingType.FISHERMAN) {
+                    label = "Zone de Pêche";
+                    // Compte Eau
+                    if (engine.getLayer(1)[idx] > 0.3) count += 1;
+                }
+            }
+        }
+
+        return { amount: count, label };
     }
 
     /**
@@ -214,6 +216,13 @@ export class BuildingManager {
             jobsAssigned: 0,
             mining: miningData
         };
+
+        // ✅ INITIALISATION DES CONTRATS (Marché)
+        if (type === BuildingType.FOOD_MARKET) {
+            building.activeContracts = [
+                { resource: 'FOOD', amountPerTick: 10, pricePerUnit: 5, active: true } // Vente de 10 bouffe / tick
+            ];
+        }
 
         engine.buildingLayer[index] = building;
         engine.revision++;

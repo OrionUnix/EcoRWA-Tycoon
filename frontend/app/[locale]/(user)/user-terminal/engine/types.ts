@@ -69,7 +69,8 @@ export enum BuildingType {
     FIRE_STATION = 'FIRE_STATION',
     FISHERMAN = 'FISHERMAN',
     HUNTER_HUT = 'HUNTER_HUT',
-    LUMBER_HUT = 'LUMBER_HUT'
+    LUMBER_HUT = 'LUMBER_HUT',
+    FOOD_MARKET = 'FOOD_MARKET' // ✅ NOUVEAU: Marché Alimentaire
 }
 
 // ==================================================================
@@ -110,6 +111,13 @@ export interface CityStats {
         water: number;
         electricity: number;
         jobs: number;
+    };
+    budget: { // ✅ NOUVEAU: Budget Global
+        income: number;
+        expenses: number;
+        taxIncome: { residential: number; commercial: number; industrial: number };
+        tradeIncome: number; // Export
+        maintenance: number;
     };
 }
 
@@ -162,6 +170,14 @@ export enum BuildingStatus {
     ABANDONED = 1 << 5
 }
 
+// ✅ NOUVEAU: Contrat Commercial
+export interface TradeContract {
+    resource: 'WOOD' | 'FOOD' | 'COAL' | 'OIL' | 'IRON';
+    amountPerTick: number; // Quantité vendue par cycle
+    pricePerUnit: number;  // Prix unitaire
+    active: boolean;
+}
+
 // ✅ FUSION DE BuildingData (Tu l'avais en double)
 export interface BuildingData {
     type: BuildingType;
@@ -195,6 +211,9 @@ export interface BuildingData {
         health: boolean;
         leisure: boolean;
     };
+
+    // ✅ NOUVEAU: Contrats (Pour les Marchés)
+    activeContracts?: TradeContract[];
 }
 
 /**
@@ -281,6 +300,7 @@ export interface BuildingSpecs {
     color: number;
     requiresRoad: boolean;
     workersNeeded?: number; // ✅ NOUVEAU : Nombre de travailleurs requis
+    maintenance?: number; // ✅ NOUVEAU : Coût d'entretien hebdomadaire
     production?: {
         type: 'WATER' | 'ENERGY' | 'FOOD' | 'WOOD';
         amount: number;
@@ -348,5 +368,9 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         type: BuildingType.LUMBER_HUT, cost: 150, name: "Cabane de Bûcheron",
         description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2,
         production: { type: 'WOOD', amount: 40 }
+    },
+    [BuildingType.FOOD_MARKET]: { // ✅ NOUVEAU: Marché
+        type: BuildingType.FOOD_MARKET, cost: 500, name: "Marché Alimentaire",
+        description: "Exporte vos surplus de nourriture.", width: 2, height: 2, color: 0xFF9800, requiresRoad: true, workersNeeded: 4, maintenance: 50
     }
 };

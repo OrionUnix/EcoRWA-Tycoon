@@ -54,30 +54,40 @@ export const createWorkerSystem = (world: GameWorld) => {
         const workers = workerQuery(w);
         const engine = getGameEngine();
 
-        // Map pour retrouver la position des bâtiments (optimisation possible: stocker dans un hashMap)
-        // Pour l'instant on le fait à la volée ou on stocke HomeX/Y
+        // 🏗️ Building Map Cache (Optimisation)
+        const buildings = buildingQuery(w);
+        const buildingPosMap = new Map<number, { x: number, y: number }>();
+        for (let i = 0; i < buildings.length; i++) {
+            const bid = buildings[i];
+            buildingPosMap.set(bid, { x: Position.x[bid], y: Position.y[bid] });
+        }
 
         for (let i = 0; i < workers.length; i++) {
             const eid = workers[i];
             const state = Worker.state[eid];
 
-            // A. IDLE -> Chercher Ressource
+            // A. IDLE -> Chercher Ressource DANS LE RADIUS DU BÂTIMENT
             if (state === WorkerState.IDLE) {
-                const target = findNearestResource(engine, Position.x[eid], Position.y[eid], Worker.type[eid]);
-                if (target) {
-                    Worker.targetResourceId[eid] = target.index;
-                    Worker.state[eid] = WorkerState.MOVING_TO_RESOURCE;
+                const homeId = Worker.homeBuildingId[eid];
+                const homePos = buildingPosMap.get(homeId);
 
-                    addComponent(w, MoveTo, eid);
-                    MoveTo.targetX[eid] = target.x;
-                    MoveTo.targetY[eid] = target.y;
-                    MoveTo.speed[eid] = WORKER_SPEED;
+                if (homePos) {
+                    // Recherche autour de la MAISON, pas du travailleur
+                    const target = findNearestResource(engine, homePos.x, homePos.y, Worker.type[eid]);
+                    if (target) {
+                        Worker.targetResourceId[eid] = target.index;
+                        Worker.state[eid] = WorkerState.MOVING_TO_RESOURCE;
+
+                        addComponent(w, MoveTo, eid);
+                        MoveTo.targetX[eid] = target.x;
+                        MoveTo.targetY[eid] = target.y;
+                        MoveTo.speed[eid] = WORKER_SPEED;
+                    }
                 }
             }
-            // B. EN MOUVEMENT (Géré par Render/MoveTo, on attend juste la fin du MoveTo)
+            // B. EN MOUVEMENT
             else if (state === WorkerState.MOVING_TO_RESOURCE) {
                 if (!hasComponent(w, MoveTo, eid)) {
-                    // Arrivé
                     Worker.state[eid] = WorkerState.GATHERING;
                     Worker.timer[eid] = GATHER_TIME;
                 }
@@ -86,44 +96,34 @@ export const createWorkerSystem = (world: GameWorld) => {
             else if (state === WorkerState.GATHERING) {
                 Worker.timer[eid] -= 0.016;
                 if (Worker.timer[eid] <= 0) {
-                    // Fini -> Retour Maison
                     Worker.state[eid] = WorkerState.MOVING_HOME;
 
-                    // Trouver la pos de la maison via HomeID
-                    // On doit chercher dans les entités Building
-                    // Optimisation: On va stocker les coords de la maison dans une map temporaire ou chercher brute force
-                    // Comme on a peu de bâtiments, brute search dans buildingQuery est OK
-                    const buildings = buildingQuery(w);
-                    let homeX = Position.x[eid]; // Fallback
-                    let homeY = Position.y[eid];
+                    // Retour Maison via Cache
+                    const homeId = Worker.homeBuildingId[eid];
+                    const homePos = buildingPosMap.get(homeId);
 
-                    for (let b = 0; b < buildings.length; b++) {
-                        if (buildings[b] === Worker.homeBuildingId[eid]) {
-                            homeX = Position.x[buildings[b]];
-                            homeY = Position.y[buildings[b]];
-                            break;
-                        }
+                    if (homePos) {
+                        addComponent(w, MoveTo, eid);
+                        MoveTo.targetX[eid] = homePos.x + 0.5;
+                        MoveTo.targetY[eid] = homePos.y + 0.5;
+                        MoveTo.speed[eid] = WORKER_SPEED;
+                    } else {
+                        // Maison détruite ? On tue le worker (ou idle)
+                        Worker.state[eid] = WorkerState.IDLE;
                     }
-
-                    addComponent(w, MoveTo, eid);
-                    MoveTo.targetX[eid] = homeX + 0.5; // Centre
-                    MoveTo.targetY[eid] = homeY + 0.5;
-                    MoveTo.speed[eid] = WORKER_SPEED;
                 }
             }
             // D. RETOUR MAISON
             else if (state === WorkerState.MOVING_HOME) {
                 if (!hasComponent(w, MoveTo, eid)) {
-                    // Arrivé
                     Worker.state[eid] = WorkerState.DEPOSITING;
-                    Worker.timer[eid] = 1.0; // 1s pour déposer
+                    Worker.timer[eid] = 1.0;
                 }
             }
             // E. DÉPÔT
             else if (state === WorkerState.DEPOSITING) {
                 Worker.timer[eid] -= 0.016;
                 if (Worker.timer[eid] <= 0) {
-                    // Cycle fini
                     Worker.state[eid] = WorkerState.IDLE;
                 }
             }
@@ -199,9 +199,13 @@ export const createWorkerSystem = (world: GameWorld) => {
     });
 };
 
-function findNearestResource(engine: any, x: number, y: number, type: number): { x: number, y: number, index: number } | null {
-    // Rayon de recherche
-    const RADIUS = 15;
+// ✅ FIX: On prend MapEngine directement, pas GameEngine
+function findNearestResource(map: any, x: number, y: number, type: number): { x: number, y: number, index: number } | null {
+    // Si on a reçu GameEngine au lieu de MapEngine, on corrige
+    if (map.map) map = map.map;
+
+    // Rayon de recherche (Doit matcher BuildingManager)
+    const RADIUS = 5;
     let nearestDist = Infinity;
     let target = null;
 
@@ -223,14 +227,14 @@ function findNearestResource(engine: any, x: number, y: number, type: number): {
 
             if (type === WorkerType.HUNTER) {
                 // Chercher Animal ou Forêt
-                if (engine.resourceMaps.animals && engine.resourceMaps.animals[index] > 0) valid = true;
+                if (map.resourceMaps.animals && map.resourceMaps.animals[index] > 0) valid = true;
             } else if (type === WorkerType.FISHERMAN) {
                 // Chercher Eau (avec Poisson si possible, mais eau suffit pour anim)
-                if (engine.getLayer(1)[index] > 0.3) valid = true;
+                if (map.getLayer(1)[index] > 0.3) valid = true;
             } else if (type === WorkerType.LUMBERJACK) {
                 // Chercher Forêt ou Bois
-                if (engine.biomes[index] === 4) valid = true; // FOREST
-                if (engine.resourceMaps.wood && engine.resourceMaps.wood[index] > 0) valid = true;
+                if (map.biomes[index] === 4) valid = true; // FOREST
+                if (map.resourceMaps.wood && map.resourceMaps.wood[index] > 0) valid = true;
             }
 
             if (valid) {

@@ -6,6 +6,7 @@ import { GameRenderer } from '../components/GameRenderer';
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { VehicleRenderer } from '../components/VehicleRenderer';
 import { ParticleSystem } from '../engine/systems/ParticleSystem'; // ✅ Import
+import { BuildingType } from '../engine/types'; // ✅ Import BuildingType
 
 export function useGameLoop(
     appRef: React.MutableRefObject<PIXI.Application | null>,
@@ -22,6 +23,7 @@ export function useGameLoop(
     setFps: (fps: number) => void,
     setResources: (res: any) => void,
     setStats: (stats: any) => void,
+    selectedBuildingType: React.MutableRefObject<BuildingType>, // ✅ Ajout
     updateECS?: (delta: number, elapsed: number) => void // ✅ NOUVEAU: Callback ECS
 ) {
     const lastRevRef = useRef(-2);
@@ -147,7 +149,8 @@ export function useGameLoop(
                     previewPathRef.current,
                     viewMode, // currentMode
                     isValidBuildRef.current,
-                    currentZoom
+                    currentZoom,
+                    selectedBuildingType.current // ✅ Ajout
                 );
 
                 // ✅ RENDU VÉHICULES (Sprites)

@@ -2,7 +2,8 @@ import * as PIXI from 'pixi.js';
 import { MapEngine } from '../engine/MapEngine';
 import { gridToScreen } from '../engine/isometric';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE, CURSOR_DEPTH_OFFSET, SURFACE_Y_OFFSET } from '../engine/config';
-import { ZoneType, ZONE_COLORS } from '../engine/types';
+import { ZoneType, ZONE_COLORS, BuildingType } from '../engine/types'; // ✅ Import BuildingType
+import { BuildingManager } from '../engine/BuildingManager'; // ✅ Import BuildingManager
 import { TerrainRenderer } from './TerrainRenderer';
 import { TerrainTilemap } from './TerrainTilemap';
 // import { DebugTerrainTilemap as TerrainTilemap } from '../implant/DebugTerrainTilemap';
@@ -136,7 +137,7 @@ export class GameRenderer {
         return true;
     }
 
-    static renderDynamicLayer(g: PIXI.Graphics, engine: MapEngine, cursorPos: { x: number, y: number }, previewPath: number[], currentMode: string, isValidBuild: boolean, zoomLevel: number) {
+    static renderDynamicLayer(g: PIXI.Graphics, engine: MapEngine, cursorPos: { x: number, y: number }, previewPath: number[], currentMode: string, isValidBuild: boolean, zoomLevel: number, buildingType?: BuildingType) { // ✅ Added buildingType
         g.clear();
 
         const isLow = zoomLevel < LOD_THRESHOLD_LOW;
@@ -171,6 +172,41 @@ export class GameRenderer {
                 g.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
                 g.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
                 g.fill({ color, alpha: 0.6 });
+            }
+        }
+
+        // ✅ RENDU DU RADIUS DE RÉCOLTE ET DU RENDEMENT
+        // Afficher seulement si on est VRAIMENT en train de construire ce bâtiment
+        const isBuildingMode = currentMode.startsWith('BUILD_'); // Ou vérifier 'BUILD_HUNTER', etc.
+
+        if (isBuildingMode && buildingType && (buildingType === BuildingType.HUNTER_HUT || buildingType === BuildingType.FISHERMAN || buildingType === BuildingType.LUMBER_HUT)) {
+            const index = cursorPos.y * GRID_SIZE + cursorPos.x;
+            if (index >= 0 && index < engine.config.totalCells) {
+
+                // 1. Calcul du Rendement
+                const yieldData = BuildingManager.calculatePotentialYield(engine, index, buildingType);
+                const radius = 5; // Doit matcher BuildingManager
+
+                // 2. Dessin du Cercle (Approximatif en ISO)
+                // En isométrique, un cercle est une ellipse ratio 2:1
+                // Rayon en pixels = radius * TILE_WIDTH
+                const screenRadius = radius * TILE_WIDTH;
+
+                g.beginPath();
+                g.ellipse(hl.x, hl.y, screenRadius, screenRadius * 0.5); // Ellipse ISO
+
+                // Couleur selon rendement
+                const color = yieldData.amount > 0 ? 0x00FF00 : 0xFF0000;
+                g.stroke({ width: 2, color, alpha: 0.5 });
+                g.fill({ color, alpha: 0.1 });
+
+                // 3. Texte (Score)
+                // Note: PIXI.Graphics ne gère pas bien le texte direct, idéalement on utiliserait un PIXI.Text séparé.
+                // Mais on est dans une fonction statique de rendu Graphics...
+                // On peut dessiner une petite barre ou juste compter sur le cercle vert/rouge pour l'instant.
+                // Pour afficher du texte, il faudrait passer le container UI ou gérer ça dans GameUI (via hoverInfo).
+                // => On va utiliser hoverInfo dans GameUI pour afficher le texte précis !
+                // Ici, on affiche juste la zone d'influence visuelle commitée.
             }
         }
     }

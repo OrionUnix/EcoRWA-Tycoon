@@ -14,27 +14,32 @@ export class InteractionSystem {
     /**
      * Gère les interactions utilisateur (Click, Drag & Drop)
      */
-    static handleInteraction(map: MapEngine, index: number, mode: string, path: number[] | null, type: any) {
+    static handleInteraction(map: MapEngine, index: number, mode: string, path: number[] | null, type: any): { success: boolean, placedType?: string } {
 
         // --- CONSTRUCTION ROUTE (Drag & Drop) ---
         if (mode === 'BUILD_ROAD' && path && path.length > 0) {
             this.handleRoadConstruction(map, path, type);
+            return { success: true, placedType: 'ROAD' };
         }
 
         // --- BULLDOZER ---
         else if (mode === 'BULLDOZER') {
             this.handleBulldozer(map, index);
+            return { success: true, placedType: 'BULLDOZER' };
         }
 
         // --- ZONAGE ---
         else if (mode === 'ZONE') {
             this.handleZoning(map, index, type);
+            return { success: true, placedType: 'ZONE' };
         }
 
         // --- CONSTRUCTION BUILDING ---
         else if (mode.startsWith('BUILD_')) {
-            this.handleBuildingConstruction(map, index, mode);
+            return this.handleBuildingConstruction(map, index, mode);
         }
+
+        return { success: false };
     }
 
     private static handleRoadConstruction(map: MapEngine, path: number[], type: any) {
@@ -130,14 +135,14 @@ export class InteractionSystem {
         }
     }
 
-    private static handleBuildingConstruction(map: MapEngine, index: number, mode: string) {
+    private static handleBuildingConstruction(map: MapEngine, index: number, mode: string): { success: boolean, placedType?: string } {
         const buildingTypeStr = mode.replace('BUILD_', '');
         const buildingType = buildingTypeStr as BuildingType;
 
         // Validation du type de bâtiment
         if (!Object.values(BuildingType).includes(buildingType)) {
             console.error(`❌ Type de bâtiment invalide: ${buildingTypeStr}`);
-            return;
+            return { success: false };
         }
 
         // Tentative de placement
@@ -169,8 +174,11 @@ export class InteractionSystem {
 
             console.log(`⚙️ ECS Entity ${eid} created for Building.`);
 
+            // ✅ RETOUR SUCCÈS POUR AUTO-DESELECT
+            return { success: true, placedType: buildingType };
         } else {
             console.error(`❌ Construction impossible: ${result.message}`);
+            return { success: false };
         }
     }
 }
