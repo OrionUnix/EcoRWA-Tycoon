@@ -11,89 +11,66 @@ export class BuildingAssets {
 
         console.log("🏗️ Loading Building Assets...");
 
-        // Liste des fichiers fournis par l'utilisateur
-        // Mapping Niveaux -> Fichiers
-        // Level 1: house 01a (Variante 0), house 02a (Variante 1), house 03a (Variante 2)
-        // Level 2: house 06a...
-        // Level 3: house 11a...
-        // Level 4: apartment complex 01a...
+        // ✅ MAPPING CORRECT (Basé sur les fichiers réels)
+        const MAPPING: Record<string, string[]> = {
+            // RESIDENTIAL
+            'RESIDENTIAL_LVL1': ['residences/house01.png', 'residences/house02.png', 'residences/house03.png'],
+            'RESIDENTIAL_LVL2': ['residences/building.png', 'residences/building01.png', 'residences/building02.png'],
+            'RESIDENTIAL_LVL3': ['residences/building02.png'], // Placeholder
 
-        // Structure de mapping: [Type] -> [Level] -> [Variant] -> Filename
-        const MAPPING: Record<number, Record<number, string[]>> = {
-            1: { // Level 1
-                0: ['house 01a.png', 'house 02a.png', 'house 03a.png'],
-                1: ['house 04a.png', 'house 05a.png', 'house 06a.png'], // Juste pour varier si variante > 0
-                2: ['house 07a.png', 'house 08a.png', 'house 09a.png']
-            },
-            2: { // Level 2
-                0: ['house 10a.png', 'house 11a.png', 'house 12a.png'],
-                1: ['house 10b.png', 'house 11b.png', 'house 12b.png'],
-                2: ['house 10c.png', 'house 11c.png', 'house 12c.png']
-            },
-            3: { // Level 3
-                0: ['apartment complex 01a.png'],
-                1: ['apartment complex 01b.png'],
-                2: ['apartment complex 01c.png']
-            },
-            4: {
-                0: ['apartment complex 02a.png'],
-                1: ['apartment complex 02b.png'],
-                2: ['apartment complex 02c.png']
-            },
-            5: {
-                0: ['apartment complex 03a.png'],
-                1: ['apartment complex 03b.png'],
-                2: ['apartment complex 03c.png']
-            }
-        };
+            // COMMERCIAL (Restos, Cafés, Magasins)
+            'COMMERCIAL_LVL1': ['commercial/comercial01.png', 'commercial/comercial02.png'],
+            'COMMERCIAL_LVL2': ['commercial/comercial_building.png'],
 
-        // Mapping Commercial (Ajouté suite au retour user)
-        const COMMERCIAL_MAPPING: Record<number, Record<number, string[]>> = {
-            1: { // Level 1 (Commerces de proximité)
-                0: ['convenience store 01a.png', 'convenience store 01b.png', 'convenience store 01d.png'],
-                1: ['convenience store 01b.png'],
-                2: ['convenience store 01d.png']
-            },
-            2: { // Level 2 (Station Service ?)
-                0: ['gas station a.png'],
-                1: ['gas station b.png'],
-                2: ['gas station c.png']
-            }
+            // SERVICES
+            'POLICE_STATION': ['services/police_station.png'],
+            'FIRE_STATION': ['services/firestation.png'],
+            'CLINIC': ['services/hospital.png'], // Hospital
+            'SCHOOL': ['services/recycling_center.png'], // Placeholder (Recycling -> School)
+            'MUSEUM': ['services/treatmentplant.png'],   // Placeholder (Treatment -> Museum)
+
+            // LOISIRS (Utilisent des assets commerciaux ou random pour l'instant)
+            'RESTAURANT': ['commercial/comercial01.png'],
+            'CAFE': ['commercial/comercial02.png'],
+            'PARK': ['residences/construction.png'], // Placeholder (TODO: Add Park Asset)
+
+            // UTILITIES
+            'WATER_PUMP': ['services/treatmentplant.png'],
+            'POWER_PLANT': ['services/recycling_center.png'], // Placeholder
+
+            // MINES (NEW)
+            'COAL_MINE': ['mine/coal_mine.png'],
+            'ORE_MINE': ['mine/iron_mine.png'],
+            'OIL_PUMP': ['oil_extraction.png'] // Root folder
         };
 
         const promises: Promise<void>[] = [];
         const loadedKeys: string[] = [];
 
-        // Helper de chargement
-        const loadMapping = (mapping: Record<number, Record<number, string[]>>, prefix: string) => {
-            for (const [levelStr, variants] of Object.entries(mapping)) {
-                const level = parseInt(levelStr);
-                for (const [variantStr, files] of Object.entries(variants)) {
-                    const variant = parseInt(variantStr);
-                    const filename = files[0];
-                    const encodedFilename = encodeURIComponent(filename);
-                    const relativePath = `/assets/isometric/Spritesheet/Buildings/${encodedFilename}`;
-                    const fullPath = asset(relativePath);
+        for (const [key, files] of Object.entries(MAPPING)) {
+            // On charge toutes les variantes pour une clé, mais on stocke la première comme principale
+            files.forEach((filename, index) => {
+                const encodedFilename = encodeURIComponent(filename).replace(/%2F/g, '/'); // Keep slashes
+                // Attention: Les sous-dossiers sont dans `Buildings/`
+                const relativePath = `/assets/isometric/Spritesheet/Buildings/${filename}`; // Pas d'encodage complet
+                const fullPath = asset(relativePath);
 
-                    const key = `${prefix}_LVL${level}_VAR${variant}`;
-                    const simpleKey = `${prefix}_LVL${level}`;
+                // Clé Principale (ex: RESIDENTIAL_LVL1)
+                // Clé Variante (ex: RESIDENTIAL_LVL1_VAR0)
+                const varKey = `${key}_VAR${index}`;
 
-                    const p = PIXI.Assets.load(fullPath).then(texture => {
-                        if (texture) {
-                            this.textures.set(key, texture);
-                            if (variant === 0) this.textures.set(simpleKey, texture);
-                            loadedKeys.push(key);
-                        }
-                    }).catch(e => {
-                        console.warn(`⚠️ Texture manquante (${prefix}): ${filename}`, e);
-                    });
-                    promises.push(p);
-                }
-            }
-        };
-
-        loadMapping(MAPPING, 'RESIDENTIAL');
-        loadMapping(COMMERCIAL_MAPPING, 'COMMERCIAL');
+                const p = PIXI.Assets.load(fullPath).then(texture => {
+                    if (texture) {
+                        this.textures.set(varKey, texture);
+                        if (index === 0) this.textures.set(key, texture); // Default
+                        loadedKeys.push(key);
+                    }
+                }).catch(e => {
+                    console.warn(`⚠️ Texture manquante: ${filename}`, e);
+                });
+                promises.push(p);
+            });
+        }
 
         await Promise.all(promises);
         this._loaded = true;
@@ -101,21 +78,29 @@ export class BuildingAssets {
     }
 
     static getTexture(type: BuildingType, level: number, variant: number): PIXI.Texture | undefined {
+        let key = '';
+
         if (type === BuildingType.RESIDENTIAL) {
-            // Essai avec variante spécifique
-            // Variation est souvent 0, 1, 2
-            // On modulo par 3 pour être sûr
             const v = (variant || 0) % 3;
-            const keyVar = `RESIDENTIAL_LVL${level}_VAR${v}`;
-            if (this.textures.has(keyVar)) return this.textures.get(keyVar);
-
-            // Fallback niveau simple
-            const keySimple = `RESIDENTIAL_LVL${level}`;
-            if (this.textures.has(keySimple)) return this.textures.get(keySimple);
-
-            // Fallback ultime : Niveau 1
-            if (this.textures.has('RESIDENTIAL_LVL1')) return this.textures.get('RESIDENTIAL_LVL1');
+            const lvl = Math.min(level || 1, 3); // Max Level 3 defined
+            key = `RESIDENTIAL_LVL${lvl}`;
+            // Try variant
+            if (this.textures.has(`${key}_VAR${v}`)) return this.textures.get(`${key}_VAR${v}`);
         }
+        else if (type === BuildingType.COMMERCIAL) {
+            const lvl = Math.min(level || 1, 2);
+            key = `COMMERCIAL_LVL${lvl}`;
+        }
+        else {
+            // Direct mapping for Services/Others
+            key = type;
+        }
+
+        if (this.textures.has(key)) return this.textures.get(key);
+
+        // Fallback
+        if (type === BuildingType.RESIDENTIAL) return this.textures.get('RESIDENTIAL_LVL1');
+
         return undefined;
     }
 }

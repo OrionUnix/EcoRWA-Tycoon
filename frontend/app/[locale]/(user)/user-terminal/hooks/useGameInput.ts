@@ -21,7 +21,8 @@ export function useGameInput(
     setTotalCost: (cost: number) => void,
     setIsValidBuild: (valid: boolean) => void,
     previewPathRef: React.MutableRefObject<number[]>,
-    isValidBuildRef: React.MutableRefObject<boolean>
+    isValidBuildRef: React.MutableRefObject<boolean>,
+    setSelectedBuildingId: (id: number | null) => void // ✅ AJOUT
 ) {
     // Refs pour la logique interne
     const isDraggingRef = useRef(false);
@@ -189,6 +190,17 @@ export function useGameInput(
                     setViewMode('ALL');
                 }
                 // ParticleSystem.spawnPlacementDust(x, y);
+            }
+            // ✅ MODE SÉLECTION (Nouveauté)
+            else if (viewMode === 'ALL') {
+                // Si on clique sur un bâtiment, on le sélectionne
+                if (engine.map.buildingLayer[idx]) {
+                    console.log("Selected building at:", idx);
+                    setSelectedBuildingId(idx);
+                    // TODO: Play select sound?
+                } else {
+                    setSelectedBuildingId(null);
+                }
             }
         };
 

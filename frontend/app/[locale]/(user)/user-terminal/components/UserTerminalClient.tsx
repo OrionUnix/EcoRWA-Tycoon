@@ -41,6 +41,8 @@ export default function UserTerminalClient() {
     const [selectedRoad, setSelectedRoad] = useState(RoadType.DIRT);
     const [selectedZone, setSelectedZone] = useState(ZoneType.RESIDENTIAL);
     const [selectedBuilding, setSelectedBuilding] = useState(BuildingType.POWER_PLANT);
+    // ✅ NOUVEAU : ID du bâtiment sélectionné pour inspection
+    const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
 
     // ÉTATS UI (Stats & Feedbacks)
     const [fps, setFps] = useState(0);
@@ -236,6 +238,13 @@ export default function UserTerminalClient() {
         selectedBuildingTypeRef.current = selectedBuilding;
     }, [selectedBuilding]);
 
+    // ✅ FERMETURE INSPECTOR SI CHANGEMENT DE MODE
+    useEffect(() => {
+        if (viewMode !== 'ALL') {
+            setSelectedBuildingId(null);
+        }
+    }, [viewMode]);
+
     useGameLoop(
         appRef,
         terrainContainerRef,
@@ -270,7 +279,8 @@ export default function UserTerminalClient() {
         setTotalCost,
         setIsValidBuild,
         previewPathRef,
-        isValidBuildRef
+        isValidBuildRef,
+        setSelectedBuildingId // ✅ Passé pour la sélection
     );
 
     const engine = getGameEngine();
@@ -366,6 +376,9 @@ export default function UserTerminalClient() {
                                 setPaused(newPaused);
                                 engine.isPaused = newPaused;
                             }}
+                            // ✅ Props pour l'inspection
+                            selectedBuildingId={selectedBuildingId}
+                            setSelectedBuildingId={setSelectedBuildingId}
                         />
                     </div>
                 </div>

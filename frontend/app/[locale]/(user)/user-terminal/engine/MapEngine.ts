@@ -112,43 +112,42 @@ export class MapEngine {
         console.log("🌍 MapEngine: Monde généré !");
     }
 
-    // ✅ LOGIQUE RESTAURÉE
+    // ✅ LOGIQUE RESTAURÉE & AMÉLIORÉE (Total Quantity)
     public calculateSummary() {
         let oil = 0, coal = 0, iron = 0, wood = 0, water = 0, fertile = 0;
         let stone = 0, silver = 0, gold = 0;
 
         // On vérifie une case sur 10 pour ne pas laguer (Sampling)
         const step = 10;
-        const totalSamples = TOTAL_CELLS / step;
+        // Multiplicateur pour estimer la quantité totale (1.0 valeur = 1000 tonnes par exemple)
+        const QUANTITY_MULTIPLIER = 5000;
 
         for (let i = 0; i < TOTAL_CELLS; i += step) {
-            // Ressources minières/forestières
-            if (this.resourceMaps.oil[i] > 0.1) oil++;
-            if (this.resourceMaps.coal[i] > 0.1) coal++;
-            if (this.resourceMaps.iron[i] > 0.1) iron++;
-            if (this.resourceMaps.wood[i] > 0.1) wood++;
-            if (this.resourceMaps.stone[i] > 0.1) stone++;
-            if (this.resourceMaps.silver[i] > 0.1) silver++;
-            if (this.resourceMaps.gold[i] > 0.1) gold++;
+            // Ressources minières/forestières (Somme des intensités)
+            oil += this.resourceMaps.oil[i];
+            coal += this.resourceMaps.coal[i];
+            iron += this.resourceMaps.iron[i];
+            wood += this.resourceMaps.wood[i];
+            stone += this.resourceMaps.stone[i];
+            silver += this.resourceMaps.silver[i];
+            gold += this.resourceMaps.gold[i];
 
             if (this.layers[LayerType.WATER][i] > 0.1) water++;
             if (this.moistureMap[i] > 0.5) fertile++;
         }
-        // Conversion en pourcentage (0-100) pour l'UI
-        const f = 100 / totalSamples;
-        const rareF = f * 5;
-        const veryRareF = f * 20;
 
+        // On multiplie par step car on a échantillonné 1/step
+        // On multiplie par QUANTITY_MULTIPLIER pour avoir des "tonnes"
         this.currentSummary = {
-            oil: Math.min(100, oil * f),
-            coal: Math.min(100, coal * f),
-            iron: Math.min(100, iron * f),
-            wood: Math.min(100, wood * f),
-            water: Math.min(100, water * f),
-            fertile: Math.min(100, fertile * f),
-            stone: Math.min(100, stone * f),
-            silver: Math.min(100, silver * rareF),
-            gold: Math.min(100, gold * veryRareF)
+            oil: Math.floor(oil * step * QUANTITY_MULTIPLIER),
+            coal: Math.floor(coal * step * QUANTITY_MULTIPLIER),
+            iron: Math.floor(iron * step * QUANTITY_MULTIPLIER),
+            wood: Math.floor(wood * step * 100), // Bois en unités arbres
+            water: Math.floor(water * step * 1000),
+            fertile: Math.floor(fertile * step), // Juste surface
+            stone: Math.floor(stone * step * QUANTITY_MULTIPLIER),
+            silver: Math.floor(silver * step * QUANTITY_MULTIPLIER),
+            gold: Math.floor(gold * step * QUANTITY_MULTIPLIER)
         };
     }
 

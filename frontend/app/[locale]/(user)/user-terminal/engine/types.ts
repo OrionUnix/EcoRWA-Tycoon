@@ -61,8 +61,9 @@ export enum BuildingType {
     INDUSTRIAL = 'INDUSTRIAL',
     POWER_PLANT = 'POWER_PLANT',
     WATER_PUMP = 'WATER_PUMP',
-    MINE = 'MINE',
-    OIL_RIG = 'OIL_RIG',
+    MINE = 'MINE', // Deprecated ? Kept for compatibility if needed
+    OIL_RIG = 'OIL_RIG', // Offshore ?
+    OIL_PUMP = 'OIL_PUMP', // ✅ NEW: Land based
     CITY_HALL = 'CITY_HALL',
     PARK = 'PARK',
     POLICE_STATION = 'POLICE_STATION',
@@ -70,7 +71,14 @@ export enum BuildingType {
     FISHERMAN = 'FISHERMAN',
     HUNTER_HUT = 'HUNTER_HUT',
     LUMBER_HUT = 'LUMBER_HUT',
-    FOOD_MARKET = 'FOOD_MARKET' // ✅ NOUVEAU: Marché Alimentaire
+    FOOD_MARKET = 'FOOD_MARKET',
+    // ✅ SERVICES
+    SCHOOL = 'SCHOOL',
+    CLINIC = 'CLINIC',
+    MUSEUM = 'MUSEUM',
+    // ✅ LOISIRS
+    RESTAURANT = 'RESTAURANT',
+    CAFE = 'CAFE'
 }
 
 // ==================================================================
@@ -167,7 +175,8 @@ export enum BuildingStatus {
     NO_FOOD = 1 << 2,
     NO_JOBS = 1 << 3,
     UNHAPPY = 1 << 4,
-    ABANDONED = 1 << 5
+    ABANDONED = 1 << 5,
+    NO_GOODS = 1 << 6 // ✅ Pas de marchanises (Commercial)
 }
 
 // ✅ NOUVEAU: Contrat Commercial
@@ -305,6 +314,13 @@ export interface BuildingSpecs {
         type: 'WATER' | 'ENERGY' | 'FOOD' | 'WOOD';
         amount: number;
     };
+    // ✅ UPGRADES
+    upgradeCost?: number;
+    maxLevel?: number;
+
+    // ✅ INFLUENCE
+    influenceRadius?: number;
+    influenceScore?: number;
 }
 
 export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
@@ -322,13 +338,15 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     },
     [BuildingType.POWER_PLANT]: {
         type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Électrique",
-        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4, // ✅ Fix: 4 Travailleurs
+        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4,
         production: { type: 'ENERGY', amount: 100 }
     },
     [BuildingType.WATER_PUMP]: {
         type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
-        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2, // ✅ Fix: 2 Travailleurs
-        production: { type: 'WATER', amount: 100 }
+        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
+        production: { type: 'WATER', amount: 100 },
+        // Investissement possible
+        upgradeCost: 500, maxLevel: 3
     },
     [BuildingType.MINE]: {
         type: BuildingType.MINE, cost: 99999, name: "Mine (Désactivé)",
@@ -357,20 +375,55 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.FISHERMAN]: {
         type: BuildingType.FISHERMAN, cost: 300, name: "Cabane de Pêcheur",
         description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
-        production: { type: 'FOOD', amount: 50 }
+        production: { type: 'FOOD', amount: 50 },
+        upgradeCost: 200, maxLevel: 3
     },
     [BuildingType.HUNTER_HUT]: {
         type: BuildingType.HUNTER_HUT, cost: 350, name: "Cabane de Chasseur",
         description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2,
-        production: { type: 'FOOD', amount: 40 }
+        production: { type: 'FOOD', amount: 40 },
+        upgradeCost: 250, maxLevel: 3
     },
     [BuildingType.LUMBER_HUT]: {
         type: BuildingType.LUMBER_HUT, cost: 150, name: "Cabane de Bûcheron",
         description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2,
-        production: { type: 'WOOD', amount: 40 }
+        production: { type: 'WOOD', amount: 40 },
+        upgradeCost: 150, maxLevel: 3
     },
-    [BuildingType.FOOD_MARKET]: { // ✅ NOUVEAU: Marché
+    [BuildingType.FOOD_MARKET]: {
         type: BuildingType.FOOD_MARKET, cost: 500, name: "Marché Alimentaire",
-        description: "Exporte vos surplus de nourriture.", width: 2, height: 2, color: 0xFF9800, requiresRoad: true, workersNeeded: 4, maintenance: 50
+        description: "Exporte vos surplus de nourriture.", width: 2, height: 2, color: 0xFF9800, requiresRoad: true, workersNeeded: 4, maintenance: 50,
+        upgradeCost: 500, maxLevel: 2,
+        influenceRadius: 6
+        // Note: influenceScore removed from interface in previous step? No, it's missing in interface definition in this file content! 
+        // Wait, looking at file content of types.ts from previous step:
+        // influenceRadius and influenceScore are NOT in BuildingSpecs interface lines 294-312.
+        // I must add them to interface first or simultaneously.
+    },
+    // ✅ SPECS DES NOUVEAUX BÂTIMENTS
+    [BuildingType.SCHOOL]: {
+        type: BuildingType.SCHOOL, cost: 1500, name: "École",
+        description: "Éducation de base.", width: 2, height: 1, color: 0xFFEB3B, requiresRoad: true, workersNeeded: 6, maintenance: 100,
+        influenceRadius: 8
+    },
+    [BuildingType.CLINIC]: {
+        type: BuildingType.CLINIC, cost: 1200, name: "Clinique",
+        description: "Soins de santé.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 4, maintenance: 80,
+        influenceRadius: 6
+    },
+    [BuildingType.MUSEUM]: {
+        type: BuildingType.MUSEUM, cost: 2500, name: "Musée",
+        description: "Culture et tourisme.", width: 2, height: 2, color: 0x9C27B0, requiresRoad: true, workersNeeded: 5, maintenance: 150,
+        influenceRadius: 10
+    },
+    [BuildingType.RESTAURANT]: {
+        type: BuildingType.RESTAURANT, cost: 600, name: "Restaurant",
+        description: "Cuisine locale.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 3, maintenance: 0,
+        influenceRadius: 4
+    },
+    [BuildingType.CAFE]: {
+        type: BuildingType.CAFE, cost: 400, name: "Café",
+        description: "Lieu de rencontre.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2, maintenance: 0,
+        influenceRadius: 4
     }
 };

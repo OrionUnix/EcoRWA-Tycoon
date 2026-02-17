@@ -58,14 +58,18 @@ export class BuildingManager {
         }
 
         // Check Ressource Spécifique
-        if (type === BuildingType.MINE) {
+        if (type === BuildingType.COAL_MINE) {
             const hasCoal = engine.resourceMaps.coal && engine.resourceMaps.coal[index] > 0;
+            if (!hasCoal) return { valid: false, reason: "Doit être placé sur un gisement de Charbon" };
+        }
+        else if (type === BuildingType.ORE_MINE) {
             const hasIron = engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0;
-            const hasStone = engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0;
+            const hasSilver = engine.resourceMaps.silver && engine.resourceMaps.silver[index] > 0;
             const hasGold = engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0;
+            const hasStone = engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0;
 
-            if (!hasCoal && !hasIron && !hasStone && !hasGold) {
-                return { valid: false, reason: "Doit être placé sur un gisement (Charbon, Fer, Or, Pierre)" };
+            if (!hasIron && !hasSilver && !hasGold && !hasStone) {
+                return { valid: false, reason: "Doit être placé sur un gisement de Minerai (Fer, Or, Argent, Pierre)" };
             }
         }
         else if (type === BuildingType.OIL_RIG) {
@@ -190,11 +194,15 @@ export class BuildingManager {
 
         // Préparation des données minières
         let miningData: { resource: any; amount: number } | undefined;
-        if (type === BuildingType.MINE) {
-            if (engine.resourceMaps.coal && engine.resourceMaps.coal[index] > 0) miningData = { resource: 'COAL', amount: 1000 };
-            else if (engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0) miningData = { resource: 'IRON', amount: 800 };
-            else if (engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0) miningData = { resource: 'STONE', amount: 2000 };
-            else if (engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0) miningData = { resource: 'GOLD', amount: 500 };
+
+        if (type === BuildingType.COAL_MINE) {
+            miningData = { resource: 'COAL', amount: engine.resourceMaps.coal[index] };
+        }
+        else if (type === BuildingType.ORE_MINE) {
+            if (engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0) miningData = { resource: 'GOLD', amount: engine.resourceMaps.gold[index] };
+            else if (engine.resourceMaps.silver && engine.resourceMaps.silver[index] > 0) miningData = { resource: 'SILVER', amount: engine.resourceMaps.silver[index] };
+            else if (engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0) miningData = { resource: 'IRON', amount: engine.resourceMaps.iron[index] };
+            else if (engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0) miningData = { resource: 'STONE', amount: engine.resourceMaps.stone[index] };
         }
         else if (type === BuildingType.OIL_RIG) {
             if (engine.resourceMaps.oil && engine.resourceMaps.oil[index] > 0) miningData = { resource: 'OIL', amount: 5000 };
@@ -231,5 +239,49 @@ export class BuildingManager {
         PopulationManager.onBuildingPlaced(specs);
 
         return { success: true, message: "Construction terminée." };
+    }
+
+    /**
+     * Améliore un bâtiment (Level Up)
+     */
+    static upgradeBuilding(engine: MapEngine, index: number): { success: boolean, message?: string } {
+        const building = engine.buildingLayer[index];
+        if (!building) return { success: false, message: "Aucun bâtiment ici." };
+
+        const specs = BUILDING_SPECS[building.type];
+        if (!specs.upgradeCost || !specs.maxLevel) {
+            return { success: false, message: "Ce bâtiment ne peut pas être amélioré." };
+        }
+
+        if (building.level >= specs.maxLevel) {
+            return { success: false, message: "Niveau maximum atteint." };
+        }
+
+        // Calcul du coût (Basé sur le niveau actuel ? Ou fixe ?)
+        // Le user a dit "budget >= upgradeCost * level"
+        // Donc pour passer au niveau 2 (étant lvl 1), on paie cost * 1.
+        // Pour passer au niveau 3 (étant lvl 2), on paie cost * 2.
+        const cost = specs.upgradeCost * building.level;
+
+        if (engine.resources.money < cost) {
+            return { success: false, message: `Fonds insuffisants (${cost}$ requis)` };
+        }
+
+        // Paiement
+        engine.resources.money -= cost;
+
+        // Level Up
+        const oldLevel = building.level;
+        building.level++;
+
+        // Effet visuel immédiat (Redraw)
+        engine.revision++;
+
+        // Mise à jour des stats globales (Production / Jobs)
+        PopulationManager.onBuildingUpgraded(specs, oldLevel, building.level);
+
+        console.log(`🆙 Upgrade: ${specs.name} L${oldLevel} -> L${building.level} (Cost: ${cost}$)`);
+
+        return { success: true, message: `Amélioration réussie ! (Niveau ${building.level})` };
     }
 }

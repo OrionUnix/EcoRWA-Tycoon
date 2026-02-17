@@ -169,6 +169,30 @@ export class PopulationManager {
     }
 
     /**
+     * Called when a building is upgraded
+     * Adds the difference in production/jobs
+     */
+    public static onBuildingUpgraded(specs: any, oldLevel: number, newLevel: number): void {
+        // Hypothèse : La production et les jobs scalent linéairement avec le niveau
+        // Lvl 1 -> Lvl 2 = +1x Base
+        const multiplierDiff = newLevel - oldLevel;
+
+        if (specs.workersNeeded) {
+            const addedJobs = specs.workersNeeded * multiplierDiff;
+            this.totalJobs += addedJobs;
+            console.log(`💼 PopulationManager: +${addedJobs} service jobs (Upgrade L${oldLevel}->L${newLevel})`);
+        }
+
+        if (specs.production) {
+            // On ajoute la différence de production
+            this.addProduction({
+                type: specs.production.type,
+                amount: specs.production.amount * multiplierDiff
+            });
+        }
+    }
+
+    /**
      * Get the current total population (O(1) - uses cached value)
      */
     public static getTotalPopulation(): number {

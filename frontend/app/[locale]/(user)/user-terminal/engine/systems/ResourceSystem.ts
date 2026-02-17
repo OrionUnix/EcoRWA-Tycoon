@@ -30,49 +30,75 @@ export class ResourceSystem {
 
             if (building.jobsAssigned <= 0) {
                 // Pas de travailleurs -> Pas de prod
-                // On pourrait mettre un flag "NO_WORKERS" mais "NO_JOBS" est déjà utilisé pour l'accessibilité
                 continue;
             }
 
             const miningData = building.mining;
+            const index = building.y * engine.config.size + building.x;
 
             // Quantité extraite (Base)
             let amount = 0;
 
-            // Taux d'extraction par tick (ou par appel de update)
-            // Disons que update est appelé toutes les secondes (60 ticks)
-            // Valeurs ajustables
             switch (miningData.resource) {
                 case 'COAL': amount = 5; break;
                 case 'IRON': amount = 3; break;
                 case 'GOLD': amount = 1; break;
+                case 'SILVER': amount = 2; break; // Added SILVER
                 case 'STONE': amount = 10; break;
                 case 'OIL': amount = 10; break;
             }
 
-            // Bonus d'efficacité (Workers)
-            // Si on a 8 workers requis et 4 assignés -> 50% efficacité
-            // On ne connait pas le max ici sans specs.
-            // On assume que jobsAssigned est "suffisant" pour la base, 
-            // ou on multiplie par jobsAssigned (ex: 1 unité par worker)
+            // ✅ MULTIPLICATEUR DE NIVEAU (Upgrade)
+            amount *= (building.level || 1);
 
-            // Approche simple : Amount * (jobsAssigned / 4) (Moyenne 4 workers)
-            // Ou juste Amount fixe si au moins 1 worker.
-            // Allons-y pour Amount fixe pour l'instant pour valider le flux.
+            // ✅ EXTRACTION DU SOL (Logique demandée par user)
+            // On vérifie s'il reste de la ressource dans le sol
+            let mapResourceAmount = 0;
+            if (miningData.resource === 'COAL') mapResourceAmount = engine.resourceMaps.coal[index];
+            else if (miningData.resource === 'IRON') mapResourceAmount = engine.resourceMaps.iron[index];
+            else if (miningData.resource === 'GOLD') mapResourceAmount = engine.resourceMaps.gold[index];
+            else if (miningData.resource === 'SILVER') mapResourceAmount = engine.resourceMaps.silver[index];
+            else if (miningData.resource === 'STONE') mapResourceAmount = engine.resourceMaps.stone[index];
+            else if (miningData.resource === 'OIL') mapResourceAmount = engine.resourceMaps.oil[index];
+
+            // Si plus de ressources, on arrête
+            if (mapResourceAmount <= 0) {
+                // TODO: Marquer le bâtiment comme "Épuisé" (Icône rouge ?)
+                continue;
+            }
+
+            // On ne peut pas extraire plus que ce qu'il y a
+            // Note: Les valeurs de mapResourceAmount sont des "intesités" (0.0 - 1.0 ou plus selon génération)
+            // Pour l'instant on décrémente directement une petite valeur pour simuler l'épuisement lent
+            // Si on retire 'amount' direct, ça va vider très vite si mapResourceAmount est petit.
+            // Le user a dit : "tile.resourceAmount -= 5". 
+            // Si mapResourceAmount est ~1000 (comme vu dans MapEngine), c'est ok. 
+            // Si c'est 0.8, c'est mort.
+            // On assume que MapGenerator a généré des valeurs CONSÉQUENTES ou que l'unité est différente.
+            // Update: MapGenerator génère des intensités > 0.1.
+            // Pour que ça dure, on va diviser l'impact sur le sol.
+            // MAIS le user veut voir le sol baisser de 5.
+
+            // Correction : MapEngine.calculateSummary multiplie par 5000 pour l'affichage.
+            // La valeur brute dans resourceMaps est petite.
+            // On va donc retirer une fraction très faible (ex: 0.001) qui correspond à 5 tonnes.
+            const DEPLETION_RATE = 0.001 * amount;
+
+            // Mise à jour du sol
+            if (miningData.resource === 'COAL') engine.resourceMaps.coal[index] -= DEPLETION_RATE;
+            else if (miningData.resource === 'IRON') engine.resourceMaps.iron[index] -= DEPLETION_RATE;
+            else if (miningData.resource === 'GOLD') engine.resourceMaps.gold[index] -= DEPLETION_RATE;
+            else if (miningData.resource === 'SILVER') engine.resourceMaps.silver[index] -= DEPLETION_RATE;
+            else if (miningData.resource === 'STONE') engine.resourceMaps.stone[index] -= DEPLETION_RATE;
+            else if (miningData.resource === 'OIL') engine.resourceMaps.oil[index] -= DEPLETION_RATE;
 
             // Ajouter aux ressources du joueur
             if (miningData.resource === 'COAL') engine.resources.coal += amount;
             if (miningData.resource === 'IRON') engine.resources.iron += amount;
             if (miningData.resource === 'GOLD') engine.resources.gold += amount;
+            if (miningData.resource === 'SILVER') engine.resources.silver += amount;
             if (miningData.resource === 'STONE') engine.resources.stone += amount;
             if (miningData.resource === 'OIL') engine.resources.oil += amount;
-
-            // Optionnel : Réduire le stock du sol (miningData.amount)
-            // miningData.amount -= amount;
-            // if (miningData.amount <= 0) {
-            //    // Épuisé !
-            //    // building.statusFlags |= BuildingStatus.ABANDONED; // ou status "DEPLETED"
-            // }
         }
     }
 }

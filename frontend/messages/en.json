@@ -260,7 +260,8 @@
       "water": "Water",
       "hunter": "Hunter",
       "fisherman": "Fisherman",
-      "lumberjack": "Lumberjack"
+      "lumberjack": "Lumberjack",
+      "market": "Food Market"
     },
     "needs": {
       "title": "Demands",
@@ -283,7 +284,8 @@
       "production": "Production",
       "workers": "Workers",
       "status": "Status",
-      "level": "Level"
+      "level": "Level",
+      "estimated_yield": "Est. Yield"
     },
     "buildings": {
       "RESIDENTIAL": {

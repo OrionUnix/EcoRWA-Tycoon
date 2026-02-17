@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-// ✅ AJOUT DE BuildingType DANS LES IMPORTS
 import { RoadType, ZoneType, BuildingType, PlayerResources, CityStats, ResourceSummary } from '../engine/types';
 import {
     ROADS, LAYERS, formatNumber,
     ResourceItem, ToolButton, ResourceCard, GameTooltip, NeedsDisplay
 } from './ui/GameWidgets';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { BuildingInspector } from './ui/BuildingInspector';
+import { getGameEngine } from '../engine/GameEngine';
 
 interface GameUIProps {
     t: any; // ✅ Accepte le retour de useTranslations() de next-intl
@@ -17,6 +18,10 @@ interface GameUIProps {
     setSelectedZoneType: (type: ZoneType) => void;
     selectedBuildingType: BuildingType;
     setSelectedBuildingType: (type: BuildingType) => void;
+    // ✅ NOUVEAU : Sélection d'un bâtiment existant (Inspection/Upgrade)
+    selectedBuildingId: number | null;
+    setSelectedBuildingId: (id: number | null) => void;
+
     totalCost: number;
     isValidBuild: boolean;
     fps: number;
@@ -33,11 +38,12 @@ interface GameUIProps {
 }
 
 export default function GameUI({
-    t, // ✅ Ajout de t dans les props déstructurées
+    t,
     viewMode, setViewMode,
     selectedRoadType, setSelectedRoadType,
     selectedZoneType, setSelectedZoneType,
     selectedBuildingType, setSelectedBuildingType,
+    selectedBuildingId, setSelectedBuildingId, // ✅ Recuperation prop
     totalCost, isValidBuild,
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
@@ -46,12 +52,60 @@ export default function GameUI({
 }: GameUIProps) {
     // État pour gérer la catégorie active (VIEWS, ROADS, ZONES, SERVICES)
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const engine = getGameEngine();
 
-    const isInspectMode = !['BUILD_ROAD', 'ZONE', 'BULLDOZER'].includes(viewMode);
-    const s = summary || { oil: 0, coal: 0, iron: 0, wood: 0, water: 0, stone: 0, silver: 0, gold: 0, fertile: 0 };
+    // Alias for summary to avoid changing all the JSX below
+    const s = summary || {} as any;
+
+
+    // Gestion du clic pour ouvrir l'inspecteur
+    // On utilise un useEffect pour écouter les changements de sélection venant du moteur ou de l'input
+    // Mais GameUI est un composant React pur au dessus du Canvas...
+    // Le plus simple est de passer une fonction `onSelectBuilding` à useGameInput, 
+    // ou d'exposer un state global.
+    // POUR L'INSTANT : On va tricher un peu et checker hoverInfo clické dans le canvas ?
+    // Non, utilisons l'event click du jeu.
+    // Solution : On ajoute `selectedEntity` dans les props de GameUI venant de page.tsx
+
+    // ATTENTION : Je ne peux pas modifier page.tsx facilement sans voir tout le flow.
+    // Je vais ajouter un écouteur d'événement custom ou modifier useGameInput pour set un state ici ?
+    // Mieux : GameUI reçoit `selectedBuildingId` en prop, ou le gère via un callback passée au hook.
+
+    // SIMPLIFICATION : Je vais ajouter la logique de sélection dans useGameInput qui appellera un setter passé en prop à GameComponent, qui le passera à GameUI.
+    // Mais pour l'instant, modifions GameUI pour afficher le panneau SI une prop est passée.
+
+    // Je vais assumer que je vais modifier le parent (GameComponent) pour gérer cet état.
+    // Mais attendez, GameUI est rendu par `page.tsx` (ou `GameComponent` ?).
+    // Regardons `page.tsx` ou le parent de GameUI.
+
+    // En attendant, je mets le code du panel commenté ou prêt à être branché.
+
+    // ...
 
     return (
         <div className="absolute inset-0 pointer-events-none flex flex-col justify-between overflow-hidden font-sans">
+
+            {/* ✅ INSPECTOR PANEL */}
+            {selectedBuildingId !== null && engine.map.buildingLayer[selectedBuildingId] && (
+                <div className="pointer-events-auto">
+                    <BuildingInspector
+                        engine={engine.map} // ✅ Pass MapEngine
+                        building={engine.map.buildingLayer[selectedBuildingId]!}
+                        index={selectedBuildingId}
+                        onClose={() => setSelectedBuildingId(null)}
+                        onUpgrade={() => {
+                            // Force refresh (React reactive update)
+                            // We can trigger a re-render by cloning the ID or just relying on engine updates if they trigger react?
+                            // For now, simpler:
+                            setSelectedBuildingId(null);
+                            setTimeout(() => setSelectedBuildingId(selectedBuildingId), 0);
+                        }}
+                    />
+                </div>
+            )}
+
+            {/* ... Reste du Jsx ... */}
+
 
             {/* ======================= */}
             {/* HAUT : TOP BAR */}
@@ -146,13 +200,13 @@ export default function GameUI({
             {/* MILIEU : WIDGETS LATERAUX ET TOOLTIP */}
             {/* ======================= */}
             <div className="fixed right-6 top-1/2 -translate-y-1/2 pointer-events-auto z-40 flex flex-col gap-2 scale-90 origin-right">
-                <ResourceCard icon="🛢️" value={s.oil} label="Oil" color="bg-yellow-600" />
-                <ResourceCard icon="⚫" value={s.coal} label="Coal" color="bg-zinc-700" />
-                <ResourceCard icon="🔩" value={s.iron} label="Iron" color="bg-orange-700" />
-                <ResourceCard icon="🌲" value={s.wood} label="Wood" color="bg-emerald-700" />
-                <ResourceCard icon="💧" value={s.water} label="Water" color="bg-blue-600" />
-                <ResourceCard icon="🪙" value={s.gold} label="Gold" color="bg-blue-600" />
-                <ResourceCard icon="🪙" value={s.silver} label="Silver" color="bg-blue-600" />
+                <ResourceCard icon="🛢️" value={resources?.oil} max={5000} label="Oil" color="bg-yellow-600" />
+                <ResourceCard icon="⚫" value={resources?.coal} max={5000} label="Coal" color="bg-zinc-700" />
+                <ResourceCard icon="🔩" value={resources?.iron} max={5000} label="Iron" color="bg-orange-700" />
+                <ResourceCard icon="🌲" value={resources?.wood} max={5000} label="Wood" color="bg-emerald-700" />
+                <ResourceCard icon="💧" value={resources?.water} max={5000} label="Water" color="bg-blue-600" />
+                <ResourceCard icon="🪙" value={resources?.gold} max={1000} label="Gold" color="bg-yellow-400" />
+                <ResourceCard icon="🥈" value={resources?.silver} max={1000} label="Silver" color="bg-slate-400" />
             </div>
 
             {totalCost > 0 && (
@@ -210,6 +264,7 @@ export default function GameUI({
                             {/* Choix des SERVICES */}
                             {activeCategory === 'SERVICES' && (
                                 <>
+                                    {/* --- SERVICES ESSENTIELS --- */}
                                     <ToolButton
                                         active={viewMode === `BUILD_${BuildingType.POWER_PLANT}`}
                                         onClick={() => {
@@ -230,6 +285,64 @@ export default function GameUI({
                                         label={t('Game.tools.water')}
                                         icon="💧"
                                     />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.FOOD_MARKET}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.FOOD_MARKET}`);
+                                            setSelectedBuildingType(BuildingType.FOOD_MARKET);
+                                            setActiveCategory(null);
+                                        }}
+                                        label={t('Game.tools.market')}
+                                        icon="🏪"
+                                    />
+
+                                    {/* --- PROTECTION & SANTÉ --- */}
+                                    <div className="w-[1px] h-8 bg-white/10 mx-1" />
+
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.POLICE_STATION}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.POLICE_STATION}`);
+                                            setSelectedBuildingType(BuildingType.POLICE_STATION);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Police"
+                                        icon="👮"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.FIRE_STATION}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.FIRE_STATION}`);
+                                            setSelectedBuildingType(BuildingType.FIRE_STATION);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Pompier"
+                                        icon="🚒"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.CLINIC}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.CLINIC}`);
+                                            setSelectedBuildingType(BuildingType.CLINIC);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Clinique"
+                                        icon="🏥"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.SCHOOL}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.SCHOOL}`);
+                                            setSelectedBuildingType(BuildingType.SCHOOL);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="École"
+                                        icon="🏫"
+                                    />
+
+                                    {/* --- PRODUCTION PRIMAIRE --- */}
+                                    <div className="w-[1px] h-8 bg-white/10 mx-1" />
+
                                     <ToolButton
                                         active={viewMode === `BUILD_${BuildingType.HUNTER_HUT}`}
                                         onClick={() => {
@@ -260,16 +373,81 @@ export default function GameUI({
                                         label={t('Game.tools.lumberjack')}
                                         icon="🪓"
                                     />
-                                    {/* ✅ NOVEAU : MARCHÉ */}
                                     <ToolButton
-                                        active={viewMode === `BUILD_${BuildingType.FOOD_MARKET}`}
+                                        active={viewMode === `BUILD_${BuildingType.COAL_MINE}`}
                                         onClick={() => {
-                                            setViewMode(`BUILD_${BuildingType.FOOD_MARKET}`);
-                                            setSelectedBuildingType(BuildingType.FOOD_MARKET);
+                                            setViewMode(`BUILD_${BuildingType.COAL_MINE}`);
+                                            setSelectedBuildingType(BuildingType.COAL_MINE);
                                             setActiveCategory(null);
                                         }}
-                                        label={t('Game.tools.market')}
-                                        icon="🏪"
+                                        label="Mine Charbon"
+                                        icon="⛏️"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.ORE_MINE}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.ORE_MINE}`);
+                                            setSelectedBuildingType(BuildingType.ORE_MINE);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Mine Fer/Or"
+                                        icon="⚒️"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.OIL_PUMP}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.OIL_PUMP}`);
+                                            setSelectedBuildingType(BuildingType.OIL_PUMP);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Puits Pétrole"
+                                        icon="🛢️"
+                                    />
+                                </>
+                            )}
+
+                            {/* Choix des LOISIRS */}
+                            {activeCategory === 'LEISURE' && (
+                                <>
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.PARK}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.PARK}`);
+                                            setSelectedBuildingType(BuildingType.PARK);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Parc"
+                                        icon="🌳"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.CAFE}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.CAFE}`);
+                                            setSelectedBuildingType(BuildingType.CAFE);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Café"
+                                        icon="☕"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.RESTAURANT}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.RESTAURANT}`);
+                                            setSelectedBuildingType(BuildingType.RESTAURANT);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Resto"
+                                        icon="🍽️"
+                                    />
+                                    <ToolButton
+                                        active={viewMode === `BUILD_${BuildingType.MUSEUM}`}
+                                        onClick={() => {
+                                            setViewMode(`BUILD_${BuildingType.MUSEUM}`);
+                                            setSelectedBuildingType(BuildingType.MUSEUM);
+                                            setActiveCategory(null);
+                                        }}
+                                        label="Musée"
+                                        icon="🏛️"
                                     />
                                 </>
                             )}
@@ -311,6 +489,11 @@ export default function GameUI({
                                 active={activeCategory === 'SERVICES'}
                                 onClick={() => setActiveCategory(activeCategory === 'SERVICES' ? null : 'SERVICES')}
                                 label={t('Game.tools.services')} icon="⚡" variant="circle"
+                            />
+                            <ToolButton
+                                active={activeCategory === 'LEISURE'}
+                                onClick={() => setActiveCategory(activeCategory === 'LEISURE' ? null : 'LEISURE')}
+                                label="Loisirs" icon="🎡" variant="circle"
                             />
                         </div>
                     </div>

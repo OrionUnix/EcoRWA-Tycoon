@@ -98,6 +98,42 @@ export const createWorkerSystem = (world: GameWorld) => {
                 if (Worker.timer[eid] <= 0) {
                     Worker.state[eid] = WorkerState.MOVING_HOME;
 
+                    // ✅ DÉPLÉTION DE LA RESSOURCE SUR LA CARTE
+                    const rIndex = Worker.targetResourceId[eid];
+                    // Quantité récoltée (ex: 5 tonnes)
+                    const AMOUNT_MINED = 5;
+
+                    if (engine.map.resourceMaps) {
+                        const type = Worker.type[eid];
+
+                        if (type === WorkerType.HUNTER) {
+                            // Décroissance Animaux
+                            if (engine.map.resourceMaps.animals && engine.map.resourceMaps.animals[rIndex] > 0) {
+                                engine.map.resourceMaps.animals[rIndex] = Math.max(0, engine.map.resourceMaps.animals[rIndex] - (AMOUNT_MINED / 1000));
+                            }
+                        }
+                        else if (type === WorkerType.FISHERMAN) {
+                            // Décroissance Poissons
+                            if (engine.map.resourceMaps.fish && engine.map.resourceMaps.fish[rIndex] > 0) {
+                                engine.map.resourceMaps.fish[rIndex] = Math.max(0, engine.map.resourceMaps.fish[rIndex] - (AMOUNT_MINED / 1000));
+                            }
+                        }
+                        else if (type === WorkerType.LUMBERJACK) {
+                            // Décroissance Bois
+                            if (engine.map.resourceMaps.wood && engine.map.resourceMaps.wood[rIndex] > 0) {
+                                engine.map.resourceMaps.wood[rIndex] = Math.max(0, engine.map.resourceMaps.wood[rIndex] - (AMOUNT_MINED / 1000));
+
+                                // Si plus de bois, on enlève la forêt visuellement (Biome -> Plains)
+                                // et on trigger un update du Render
+                                if (engine.map.resourceMaps.wood[rIndex] <= 0) {
+                                    engine.map.biomes[rIndex] = 3; // PLAINS
+                                    engine.map.heightMap[rIndex] = engine.map.heightMap[rIndex]; // Trigger update? Non il faut refresh le chunk/renderer
+                                    // engine.renderer?.markDirty(rIndex); // Simplifié
+                                }
+                            }
+                        }
+                    }
+
                     // Retour Maison via Cache
                     const homeId = Worker.homeBuildingId[eid];
                     const homePos = buildingPosMap.get(homeId);

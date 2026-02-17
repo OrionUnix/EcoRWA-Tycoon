@@ -7,6 +7,7 @@ import { JobSystem } from './systems/JobSystem';
 import { ResourceSystem } from './systems/ResourceSystem';
 import { InteractionSystem } from './systems/InteractionSystem';
 import { EconomySystem } from './systems/EconomySystem'; // ✅ Import EconomySystem
+import { HappinessSystem } from './systems/HappinessSystem'; // ✅ Import HappinessSystem
 import { FAKE_WALLET_ADDRESS } from './constants';
 import { BUILDING_SPECS, BuildingType } from './types'; // ✅ BuildingType for Market check
 
@@ -85,6 +86,11 @@ export class GameEngine {
             JobSystem.update(this.map);
         }
 
+        // ✅ HAPPINESS & INFLUENCE (Every 30 ticks, same as population)
+        if (this.tickCount % 30 === 0) {
+            HappinessSystem.update(this.map);
+        }
+
         // 6. RESSOURCES
         if (this.tickCount % 60 === 0) {
             ResourceSystem.update(this.map);
@@ -128,28 +134,21 @@ export class GameEngine {
         const resources: any = {};
 
         if (this.map.resourceMaps) {
-            // ❌ CLEANUP: On cache les minerais souterrains du Tooltip curseur
-            // (Le joueur doit utiliser les calques de vue pour voir ça)
-            /*
-            if (this.map.resourceMaps.oil && this.map.resourceMaps.oil[index] > 0)
-                resources.oil = this.map.resourceMaps.oil[index];
-            if (this.map.resourceMaps.coal && this.map.resourceMaps.coal[index] > 0)
-                resources.coal = this.map.resourceMaps.coal[index];
-            if (this.map.resourceMaps.iron && this.map.resourceMaps.iron[index] > 0)
-                resources.iron = this.map.resourceMaps.iron[index];
-            if (this.map.resourceMaps.gold && this.map.resourceMaps.gold[index] > 0)
-                resources.gold = this.map.resourceMaps.gold[index];
-            if (this.map.resourceMaps.stone && this.map.resourceMaps.stone[index] > 0)
-                resources.stone = this.map.resourceMaps.stone[index];
-            */
+            // ✅ RESSOURCES (Surface & Sous-sol)
+            // On mappe les clés techniques vers les clés d'affichage
+            const MAP_TO_DISPLAY: Record<string, string> = {
+                'oil': 'oil', 'coal': 'coal', 'iron': 'iron',
+                'gold': 'gold', 'silver': 'silver', 'stone': 'stone',
+                'wood': 'wood', 'animals': 'gibier', 'fish': 'fish'
+            };
 
-            // ✅ Ressources de surface (Gibier, Poisson, Bois) restent visibles
-            if (this.map.resourceMaps.wood && this.map.resourceMaps.wood[index] > 0)
-                resources.wood = this.map.resourceMaps.wood[index];
-            if (this.map.resourceMaps.animals && this.map.resourceMaps.animals[index] > 0)
-                resources.gibier = this.map.resourceMaps.animals[index];
-            if (this.map.resourceMaps.fish && this.map.resourceMaps.fish[index] > 0)
-                resources.poisson = this.map.resourceMaps.fish[index];
+            for (const [mapKey, displayKey] of Object.entries(MAP_TO_DISPLAY)) {
+                // @ts-ignore
+                if (this.map.resourceMaps[mapKey] && this.map.resourceMaps[mapKey][index] > 0) {
+                    // @ts-ignore
+                    resources[displayKey] = this.map.resourceMaps[mapKey][index];
+                }
+            }
         }
 
         // Ajouter les ressources seulement si au moins une existe
@@ -199,7 +198,8 @@ export class GameEngine {
                         water: (b.statusFlags & 1) === 0, // 1 = NO_WATER
                         power: (b.statusFlags & 2) === 0, // 2 = NO_POWER
                         food: (b.statusFlags & 4) === 0,  // 4 = NO_FOOD
-                        jobs: !hasJobIssue
+                        jobs: !hasJobIssue,
+                        goods: (b.statusFlags & 64) === 0 // 64 = NO_GOODS (Checking flag defined in types)
                     },
                     happiness: Math.floor(b.happiness)
                 };

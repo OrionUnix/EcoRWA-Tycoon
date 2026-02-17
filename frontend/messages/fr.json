@@ -251,7 +251,8 @@
       "oil": "Oil",
       "hunter": "Chasseur",
       "fisherman": "Pêcheur",
-      "lumberjack": "Bûcheron"
+      "lumberjack": "Bûcheron",
+      "market": "Marché"
     },
     "needs": {
       "title": "Demandes",
@@ -274,7 +275,8 @@
       "production": "Production",
       "workers": "Travailleurs",
       "status": "État",
-      "level": "Niveau"
+      "level": "Niveau",
+      "estimated_yield": "Rendement Estimé"
     },
     "buildings": {
       "RESIDENTIAL": {
