@@ -5,6 +5,7 @@ import { ZoneManager } from '../ZoneManager';
 import { PopulationManager } from './PopulationManager';
 import { BuildingType, BUILDING_SPECS } from '../types';
 import { ResourceRenderer } from '../ResourceRenderer';
+import { ChunkManager } from '../ChunkManager';
 import { globalWorld } from '../ecs/world';
 import { addEntity, addComponent, removeEntity } from 'bitecs';
 import { Building } from '../ecs/components/Building';
@@ -15,6 +16,16 @@ export class InteractionSystem {
      * Gère les interactions utilisateur (Click, Drag & Drop)
      */
     static handleInteraction(map: MapEngine, index: number, mode: string, path: number[] | null, type: any): { success: boolean, placedType?: string } {
+
+        // ✅ CHUNK CHECK : Bloque toute interaction sur un chunk verrouillé
+        // Pour les routes, l'index passé est 0 (dummy), on utilise le premier tile du path
+        const checkIndex = (mode === 'BUILD_ROAD' && path && path.length > 0) ? path[0] : index;
+        const col = checkIndex % map.config.size;
+        const row = Math.floor(checkIndex / map.config.size);
+        if (!ChunkManager.isTileUnlocked(col, row)) {
+            console.warn(`🔒 Chunk verrouillé à [${col},${row}]`);
+            return { success: false };
+        }
 
         // --- CONSTRUCTION ROUTE (Drag & Drop) ---
         if (mode === 'BUILD_ROAD' && path && path.length > 0) {

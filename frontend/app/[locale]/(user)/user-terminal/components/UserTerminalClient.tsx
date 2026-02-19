@@ -91,13 +91,17 @@ export default function UserTerminalClient() {
                 console.log("🚀 Page: Démarrage du chargement des assets...");
                 if (!appRef.current) throw new Error("App Pixi non initialisée");
 
+                // ✅ ÉTAPE 1: Charger l'Atlas en premier (nécessaire pour BiomeAssets + BuildingAssets)
+                const { AtlasManager } = await import('../engine/AtlasManager');
+                await AtlasManager.load();
+
+                // ✅ ÉTAPE 2: Charger tous les assets en parallèle (atlas déjà prêt)
                 await Promise.all([
                     loadBiomeTextures(appRef.current),
-                    ResourceAssets.load(appRef.current), // Corrected: Static load
-                    RoadAssets.load(appRef.current),     // Corrected: Static load
-                    VehicleAssets.load(appRef.current),  // Corrected: Static load
-                    BuildingAssets.load()                // Corrected: Static load (no app arg needed?) - Check BuildingAssets.ts content says static load() no args? 
-                    // Let's re-verify BuildingAssets.ts content. It was static async load() { ... } with NO args.
+                    ResourceAssets.load(appRef.current),
+                    RoadAssets.load(appRef.current),
+                    VehicleAssets.load(appRef.current),
+                    BuildingAssets.load()
                 ]);
 
                 if (active) {

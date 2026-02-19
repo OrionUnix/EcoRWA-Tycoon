@@ -1,10 +1,37 @@
 import * as PIXI from 'pixi.js';
 import { ResourceAssets } from './ResourceAssets';
+import { AtlasManager } from './AtlasManager';
 import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
-import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH, SURFACE_Y_OFFSET, RESOURCE_SCALE } from './config'; // Ajout GRID_SIZE, TILE_WIDTH
+import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH, SURFACE_Y_OFFSET } from './config';
+
+// ═══════════════════════════════════════════════════════
+// ResourceRenderer — Rendu des ressources naturelles
+// Priorité: Atlas (tree.png, tree02.png) > Procédural (forestFrames)
+// ═══════════════════════════════════════════════════════
 
 const resourceCache = new Map<number, PIXI.Sprite>();
+
+// Cache des textures arbres Atlas (chargées une fois)
+let atlasTreeTextures: PIXI.Texture[] | null = null;
+
+function getAtlasTreeTextures(): PIXI.Texture[] {
+    if (atlasTreeTextures && atlasTreeTextures.length > 0) return atlasTreeTextures;
+    if (!AtlasManager.isReady) return [];
+
+    atlasTreeTextures = [];
+    // Noms exacts dans atlas.json
+    const treeFrames = ['tree.png', 'tree02.png'];
+    for (const name of treeFrames) {
+        const tex = AtlasManager.getTexture(name);
+        if (tex) atlasTreeTextures.push(tex);
+    }
+
+    if (atlasTreeTextures.length > 0) {
+        console.log(`🌲 ResourceRenderer: ${atlasTreeTextures.length} textures arbres atlas chargées.`);
+    }
+    return atlasTreeTextures;
+}
 
 export class ResourceRenderer {
 
@@ -38,16 +65,12 @@ export class ResourceRenderer {
         else if (engine.resourceMaps.coal[i] > 0.5) resType = 'COAL';
         else if (engine.resourceMaps.stone[i] > 0.5) resType = 'STONE';
 
-        // ✅ NETTOYAGE VISUEL: On garde le BOIS (Arbres)
-        // Mais on masque les minerais ("trucs noirs")
+        // ✅ BOIS (Arbres) prioritaire en forêt
         if (woodAmount > 0.1 && biome === BiomeType.FOREST) {
-            resType = 'WOOD'; // On force le bois
+            resType = 'WOOD';
         }
 
-        // Note: Si on avait des animaux, on les masquerait aussi ici.
-
-        // Si ce n'est PAS du bois, on masque (Minerais, Pétrole...)
-        // L'utilisateur ne veut pas de "trucs noirs" à l'écran
+        // Masquer les minerais (pas de formes noires sur la carte)
         if (resType !== 'WOOD') {
             resType = 'NONE';
         }
@@ -56,64 +79,38 @@ export class ResourceRenderer {
 
         if (shouldShow) {
             if (!sprite) {
-                // SÉLECTION DE LA TEXTURE SELON LE TYPE
                 let texture: PIXI.Texture | null = null;
-
                 let tint = 0xFFFFFF;
 
-                if (resType === 'WOOD' && ResourceAssets.forestFrames.length > 0) {
-                    const frameIndex = i % ResourceAssets.forestFrames.length;
-                    texture = ResourceAssets.forestFrames[frameIndex];
-                } else if (resType === 'OIL' && ResourceAssets.oilFrames.length > 0) {
-                    texture = ResourceAssets.oilFrames[0];
-                } else if (ResourceAssets.rockFrames.length > 0) {
-                    // MAPPING DES ROCHERS AVEC FALLBACK
-                    let rockIndex = 0; // Stone par défaut
-
-                    // Si on a les frames spécifiques, on les utilise (si tu les as générées)
-                    // Sinon on fallback sur la frame 0 (Stone) et on Teinte
-
-                    if (resType === 'COAL') {
-                        rockIndex = 1;
-                        if (!ResourceAssets.rockFrames[1]) { rockIndex = 0; tint = 0x555555; }
+                if (resType === 'WOOD') {
+                    // ═══════════════════════════════════════
+                    // PRIORITÉ 1: Atlas (tree.png / tree02.png)
+                    // ═══════════════════════════════════════
+                    const atlasFrames = getAtlasTreeTextures();
+                    if (atlasFrames.length > 0) {
+                        const frameIndex = i % atlasFrames.length;
+                        texture = atlasFrames[frameIndex];
                     }
-                    if (resType === 'IRON') {
-                        rockIndex = 2;
-                        if (!ResourceAssets.rockFrames[2]) { rockIndex = 0; tint = 0xBCAAA4; } // Rouille
-                    }
-                    if (resType === 'GOLD') {
-                        rockIndex = 3;
-                        if (!ResourceAssets.rockFrames[3]) { rockIndex = 0; tint = 0xFFD700; } // Or
-                    }
-
-                    if (ResourceAssets.rockFrames[rockIndex]) {
-                        texture = ResourceAssets.rockFrames[rockIndex];
-                    } else {
-                        // Fallback ultime : Pierre de base
-                        texture = ResourceAssets.rockFrames[0];
+                    // ═══════════════════════════════════════
+                    // FALLBACK: Procédural (ResourceAssets.forestFrames)
+                    // ═══════════════════════════════════════
+                    else if (ResourceAssets.forestFrames.length > 0) {
+                        const frameIndex = i % ResourceAssets.forestFrames.length;
+                        texture = ResourceAssets.forestFrames[frameIndex];
                     }
                 }
 
-                if (!texture) {
-                    // ✅ ECHEC CRITIQUE : Si on devait afficher une ressource mais qu'on a pas de texture
-                    // On log pour info, mais surtout on s'assure que le système sache qu'il manque des trucs.
-                    // (Note: La gestion du retry se fait dans GameRenderer qui check ResourceAssets.isReady)
-                    return;
-                }
+                if (!texture) return;
 
                 sprite = new PIXI.Sprite(texture);
 
-                // Ancrage pour que les pieds de l'objet soient au bas de l'image
-                sprite.anchor.set(0.5, 0.9);
-                sprite.tint = tint; // ✅ Application de la teinte (si fallback)
+                // ✅ Ancrage base-centre : l'arbre "se tient debout"
+                sprite.anchor.set(0.5, 1.0);
+                sprite.tint = tint;
 
-                // Variation de taille légère
-                // Variation de taille légère
-                const randomSeed = Math.sin(i) * 10000;
-                const scale = 0.85 + (Math.abs(randomSeed % 1) * 0.3);
-
-                // ✅ APPLICATION DE L'ÉCHELLE DEMANDÉE (x4)
-                sprite.scale.set(RESOURCE_SCALE);
+                // ✅ Échelle: adapter au grid (atlas = 16px, grille = TILE_WIDTH px)
+                const treeScale = TILE_WIDTH / texture.width;
+                sprite.scale.set(treeScale);
 
                 container.addChild(sprite);
                 resourceCache.set(i, sprite);
@@ -127,19 +124,16 @@ export class ResourceRenderer {
                 } else {
                     sprite.visible = true;
 
-                    // ✅ RE-ATTACHEMENT (Crucial pour le mode Clean-Redraw)
+                    // ✅ RE-ATTACHEMENT
                     if (sprite.parent !== container) {
                         container.addChild(sprite);
                     }
 
-                    // ✅ ISOMÉTRIQUE CONFIRMÉ
-                    // const pos = gridToScreen(x, y) est déjà passé en argument via 'pos'
-
+                    // Position isométrique
                     sprite.x = pos.x;
-                    // Position Y : Bas de la tuile + Offset 3D (Remontée pour sortir du sol)
                     sprite.y = pos.y + SURFACE_Y_OFFSET;
 
-                    // ✅ CALCUL Z-INDEX UNIFIÉ
+                    // Z-Index : entre le sol et les bâtiments
                     const x = i % GRID_SIZE;
                     const y = Math.floor(i / GRID_SIZE);
                     sprite.zIndex = x + y + 0.5;
@@ -182,5 +176,6 @@ export class ResourceRenderer {
             }
         });
         resourceCache.clear();
+        atlasTreeTextures = null; // Reset pour recharger au prochain render
     }
 }

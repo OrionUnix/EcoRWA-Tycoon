@@ -10,7 +10,7 @@
 },
 "commercial/comercial01.png":
 {
-	"frame": {"x":160,"y":40,"w":32,"h":48},
+	"frame": {"x":128,"y":40,"w":32,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":48},
@@ -18,7 +18,7 @@
 },
 "commercial/comercial02.png":
 {
-	"frame": {"x":192,"y":40,"w":32,"h":48},
+	"frame": {"x":160,"y":40,"w":32,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":48},
@@ -26,7 +26,7 @@
 },
 "commercial/comercial_building.png":
 {
-	"frame": {"x":224,"y":40,"w":32,"h":48},
+	"frame": {"x":192,"y":40,"w":32,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":48},
@@ -34,7 +34,7 @@
 },
 "commercial/construction.png":
 {
-	"frame": {"x":100,"y":204,"w":100,"h":80},
+	"frame": {"x":0,"y":204,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -42,7 +42,7 @@
 },
 "commercial/destruction.png":
 {
-	"frame": {"x":256,"y":40,"w":32,"h":48},
+	"frame": {"x":224,"y":40,"w":32,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":48},
@@ -50,7 +50,7 @@
 },
 "culture/museum.png":
 {
-	"frame": {"x":200,"y":204,"w":100,"h":80},
+	"frame": {"x":100,"y":204,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -58,7 +58,7 @@
 },
 "culture/sport_center.png":
 {
-	"frame": {"x":300,"y":204,"w":100,"h":80},
+	"frame": {"x":200,"y":204,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -66,7 +66,7 @@
 },
 "culture/stadium.png":
 {
-	"frame": {"x":400,"y":204,"w":100,"h":80},
+	"frame": {"x":300,"y":204,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -74,7 +74,7 @@
 },
 "culture/swiming_pool.png":
 {
-	"frame": {"x":0,"y":284,"w":100,"h":80},
+	"frame": {"x":400,"y":204,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -82,7 +82,7 @@
 },
 "culture/theater.png":
 {
-	"frame": {"x":100,"y":284,"w":100,"h":80},
+	"frame": {"x":0,"y":284,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -90,7 +90,7 @@
 },
 "culture/zoo.png":
 {
-	"frame": {"x":200,"y":284,"w":100,"h":80},
+	"frame": {"x":100,"y":284,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -114,7 +114,7 @@
 },
 "food/farm.png":
 {
-	"frame": {"x":300,"y":284,"w":100,"h":80},
+	"frame": {"x":200,"y":284,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -122,7 +122,7 @@
 },
 "food/fishport01.png":
 {
-	"frame": {"x":400,"y":284,"w":100,"h":80},
+	"frame": {"x":300,"y":284,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -130,7 +130,7 @@
 },
 "food/fishport02.png":
 {
-	"frame": {"x":0,"y":364,"w":100,"h":80},
+	"frame": {"x":400,"y":284,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -138,7 +138,7 @@
 },
 "food/fishport03.png":
 {
-	"frame": {"x":100,"y":364,"w":100,"h":80},
+	"frame": {"x":0,"y":364,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -146,7 +146,7 @@
 },
 "food/fishport04.png":
 {
-	"frame": {"x":200,"y":364,"w":100,"h":80},
+	"frame": {"x":100,"y":364,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -170,7 +170,7 @@
 },
 "industrial/bike_factory.png":
 {
-	"frame": {"x":300,"y":364,"w":100,"h":80},
+	"frame": {"x":200,"y":364,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -178,7 +178,7 @@
 },
 "industrial/factory.png":
 {
-	"frame": {"x":400,"y":364,"w":100,"h":80},
+	"frame": {"x":300,"y":364,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -186,7 +186,7 @@
 },
 "industrial/special/component_factory.png":
 {
-	"frame": {"x":0,"y":444,"w":100,"h":80},
+	"frame": {"x":400,"y":364,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -194,7 +194,7 @@
 },
 "industrial/special/iron_factory.png":
 {
-	"frame": {"x":100,"y":444,"w":100,"h":80},
+	"frame": {"x":0,"y":444,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -202,7 +202,7 @@
 },
 "industrial/special/iron_milk.png":
 {
-	"frame": {"x":200,"y":444,"w":100,"h":80},
+	"frame": {"x":100,"y":444,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -210,7 +210,7 @@
 },
 "mine/coal_mine.png":
 {
-	"frame": {"x":300,"y":444,"w":100,"h":80},
+	"frame": {"x":200,"y":444,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -218,7 +218,7 @@
 },
 "mine/iron_mine.png":
 {
-	"frame": {"x":400,"y":444,"w":100,"h":80},
+	"frame": {"x":300,"y":444,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -226,7 +226,7 @@
 },
 "mine/stone_quarry.png":
 {
-	"frame": {"x":0,"y":524,"w":100,"h":80},
+	"frame": {"x":400,"y":444,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -250,7 +250,7 @@
 },
 "power/electrical_central_02.png":
 {
-	"frame": {"x":100,"y":524,"w":100,"h":80},
+	"frame": {"x":0,"y":524,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -258,7 +258,7 @@
 },
 "power/nuclear.png":
 {
-	"frame": {"x":200,"y":524,"w":100,"h":80},
+	"frame": {"x":100,"y":524,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -314,7 +314,7 @@
 },
 "residences/construction03.png":
 {
-	"frame": {"x":0,"y":40,"w":32,"h":40},
+	"frame": {"x":480,"y":0,"w":32,"h":40},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":40},
@@ -322,7 +322,7 @@
 },
 "residences/detruction.png":
 {
-	"frame": {"x":32,"y":40,"w":32,"h":40},
+	"frame": {"x":0,"y":40,"w":32,"h":40},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":40},
@@ -330,7 +330,7 @@
 },
 "residences/house01.png":
 {
-	"frame": {"x":64,"y":40,"w":32,"h":40},
+	"frame": {"x":32,"y":40,"w":32,"h":40},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":40},
@@ -338,7 +338,7 @@
 },
 "residences/house02.png":
 {
-	"frame": {"x":96,"y":40,"w":32,"h":40},
+	"frame": {"x":64,"y":40,"w":32,"h":40},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":40},
@@ -346,7 +346,7 @@
 },
 "residences/house03.png":
 {
-	"frame": {"x":128,"y":40,"w":32,"h":40},
+	"frame": {"x":96,"y":40,"w":32,"h":40},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":40},
@@ -354,7 +354,7 @@
 },
 "services/construction_firestation.png":
 {
-	"frame": {"x":288,"y":40,"w":64,"h":50},
+	"frame": {"x":256,"y":40,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -362,7 +362,7 @@
 },
 "services/construction_hospital.png":
 {
-	"frame": {"x":352,"y":40,"w":64,"h":50},
+	"frame": {"x":320,"y":40,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -370,7 +370,7 @@
 },
 "services/construction_treatmentplant.png":
 {
-	"frame": {"x":416,"y":40,"w":64,"h":50},
+	"frame": {"x":384,"y":40,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -378,7 +378,7 @@
 },
 "services/contruction_police.png":
 {
-	"frame": {"x":0,"y":90,"w":64,"h":50},
+	"frame": {"x":448,"y":40,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -386,7 +386,7 @@
 },
 "services/firestation.png":
 {
-	"frame": {"x":300,"y":524,"w":100,"h":80},
+	"frame": {"x":200,"y":524,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -394,7 +394,7 @@
 },
 "services/firestation_ruined.png":
 {
-	"frame": {"x":64,"y":90,"w":64,"h":50},
+	"frame": {"x":0,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -402,7 +402,7 @@
 },
 "services/hospital.png":
 {
-	"frame": {"x":400,"y":524,"w":100,"h":80},
+	"frame": {"x":300,"y":524,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -410,7 +410,7 @@
 },
 "services/hospital_ruin.png":
 {
-	"frame": {"x":128,"y":90,"w":64,"h":50},
+	"frame": {"x":64,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -418,7 +418,7 @@
 },
 "services/police_station.png":
 {
-	"frame": {"x":192,"y":90,"w":64,"h":50},
+	"frame": {"x":128,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -426,7 +426,7 @@
 },
 "services/police_station_ruin.png":
 {
-	"frame": {"x":256,"y":90,"w":64,"h":50},
+	"frame": {"x":192,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -434,7 +434,7 @@
 },
 "services/recycling_center.png":
 {
-	"frame": {"x":0,"y":604,"w":100,"h":80},
+	"frame": {"x":400,"y":524,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -442,7 +442,7 @@
 },
 "services/treatmentplant.png":
 {
-	"frame": {"x":320,"y":90,"w":64,"h":50},
+	"frame": {"x":256,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -450,7 +450,7 @@
 },
 "services/treatmentplant_ruin.png":
 {
-	"frame": {"x":384,"y":90,"w":64,"h":50},
+	"frame": {"x":320,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -466,7 +466,7 @@
 },
 "special/bank.png":
 {
-	"frame": {"x":100,"y":604,"w":100,"h":80},
+	"frame": {"x":0,"y":604,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -474,7 +474,7 @@
 },
 "special/bibliotheque.png":
 {
-	"frame": {"x":0,"y":140,"w":64,"h":50},
+	"frame": {"x":384,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -482,7 +482,7 @@
 },
 "special/clothing.png":
 {
-	"frame": {"x":384,"y":140,"w":50,"h":64},
+	"frame": {"x":256,"y":140,"w":50,"h":64},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":50,"h":64},
@@ -490,7 +490,7 @@
 },
 "special/coffee_shop.png":
 {
-	"frame": {"x":434,"y":140,"w":50,"h":64},
+	"frame": {"x":306,"y":140,"w":50,"h":64},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":50,"h":64},
@@ -498,7 +498,7 @@
 },
 "special/construction.png":
 {
-	"frame": {"x":64,"y":140,"w":64,"h":50},
+	"frame": {"x":448,"y":90,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -506,7 +506,7 @@
 },
 "special/exchangemarket.png":
 {
-	"frame": {"x":200,"y":604,"w":100,"h":80},
+	"frame": {"x":100,"y":604,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -514,7 +514,7 @@
 },
 "special/hunter.png":
 {
-	"frame": {"x":128,"y":140,"w":64,"h":50},
+	"frame": {"x":0,"y":140,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -522,7 +522,7 @@
 },
 "special/hunter_cabin.png":
 {
-	"frame": {"x":192,"y":140,"w":64,"h":50},
+	"frame": {"x":64,"y":140,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -530,7 +530,7 @@
 },
 "special/lumber_camp.png":
 {
-	"frame": {"x":300,"y":604,"w":100,"h":80},
+	"frame": {"x":200,"y":604,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -538,7 +538,7 @@
 },
 "special/market01.png":
 {
-	"frame": {"x":400,"y":604,"w":100,"h":80},
+	"frame": {"x":300,"y":604,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -546,7 +546,7 @@
 },
 "special/market02.png":
 {
-	"frame": {"x":0,"y":684,"w":100,"h":80},
+	"frame": {"x":400,"y":604,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -554,7 +554,7 @@
 },
 "special/Municipal.png":
 {
-	"frame": {"x":100,"y":684,"w":100,"h":80},
+	"frame": {"x":0,"y":684,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -562,7 +562,7 @@
 },
 "special/pharmacy.png":
 {
-	"frame": {"x":0,"y":204,"w":50,"h":64},
+	"frame": {"x":356,"y":140,"w":50,"h":64},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":50,"h":64},
@@ -570,7 +570,7 @@
 },
 "special/restaurant.png":
 {
-	"frame": {"x":50,"y":204,"w":50,"h":64},
+	"frame": {"x":406,"y":140,"w":50,"h":64},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":50,"h":64},
@@ -578,7 +578,7 @@
 },
 "special/sawkill.png":
 {
-	"frame": {"x":200,"y":684,"w":100,"h":80},
+	"frame": {"x":100,"y":684,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -586,7 +586,7 @@
 },
 "special/school.png":
 {
-	"frame": {"x":256,"y":140,"w":64,"h":50},
+	"frame": {"x":128,"y":140,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -594,7 +594,7 @@
 },
 "special/school_ruined.png":
 {
-	"frame": {"x":320,"y":140,"w":64,"h":50},
+	"frame": {"x":192,"y":140,"w":64,"h":50},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":50},
@@ -602,19 +602,11 @@
 },
 "special/university.png":
 {
-	"frame": {"x":300,"y":684,"w":100,"h":80},
+	"frame": {"x":200,"y":684,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
 	"sourceSize": {"w":100,"h":80}
-},
-"SpriteSheet.png":
-{
-	"frame": {"x":100,"y":764,"w":209,"h":326},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":209,"h":326},
-	"sourceSize": {"w":209,"h":326}
 },
 "tree.png":
 {
@@ -634,7 +626,7 @@
 },
 "water/walter_pump.png":
 {
-	"frame": {"x":400,"y":684,"w":100,"h":80},
+	"frame": {"x":300,"y":684,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -642,7 +634,7 @@
 },
 "water/walter_pump02.png":
 {
-	"frame": {"x":0,"y":764,"w":100,"h":80},
+	"frame": {"x":400,"y":684,"w":100,"h":80},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":100,"h":80},
@@ -660,8 +652,8 @@
 	"version": "1.1",
 	"image": "atlas.png",
 	"format": "RGBA8888",
-	"size": {"w":500,"h":1090},
+	"size": {"w":512,"h":764},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:c28216a9df0f78cea5bd5f0d144a6d0d:b2140e8b8a6d25c9aa723815eea51fd4:cbce6b53f0f49e0bf15173c25c41f876$"
+	"smartupdate": "$TexturePacker:SmartUpdate:9ac57b61147f3ef695e2187c80c97aa1:3b6330c8c5ad0696f28e551648a8c6aa:cbce6b53f0f49e0bf15173c25c41f876$"
 }
 }

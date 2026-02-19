@@ -2,12 +2,6 @@ import React from 'react';
 import { GlassPanel } from './GlassPanel';
 import { RoadType, BuildingType, ZoneType, BUILDING_SPECS, ROAD_SPECS } from '../../engine/types';
 
-// ═══════════════════════════════════════
-// SimCity 2013 — ACTIVE TOOL HUD
-// Small floating pill (Bottom-Left, above CityInfoBar)
-// Shows: icon, tool name, cost, shortcuts
-// ═══════════════════════════════════════
-
 interface ActiveToolHUDProps {
     viewMode: string;
     selectedRoadType: RoadType;

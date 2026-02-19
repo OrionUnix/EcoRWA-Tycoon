@@ -23,17 +23,29 @@ export class ResourceAssets {
     }
 
     static async load(app?: PIXI.Application) {
-        if (this.isLoaded || !app) return;
+        if (this.isLoaded) return;
 
-        console.log("🌲 ResourceAssets: Génération procédurale...");
+        console.log("🌲 ResourceAssets: Chargement...");
 
-        try {
-            // 1. GÉNÉRATION ARBRES (3 Variantes)
-            this.forestFrames.push(ProceduralResources.generateTree(app, 0x2E7D32, 0x5D4037)); // Vert foncé
-            this.forestFrames.push(ProceduralResources.generateTree(app, 0x388E3C, 0x4E342E)); // Vert moyen
-            this.forestFrames.push(ProceduralResources.generateTree(app, 0x4CAF50, 0x3E2723)); // Vert clair
+        // TENTATIVE ATLAS (Priorité)
+        const { AtlasManager } = await import('./AtlasManager');
+        const forestTex = AtlasManager.getTexture('forest.png'); // 32x32
 
-            // 2. GÉNÉRATION ROCHERS (Minerais)
+        if (forestTex) {
+            console.log("🌲 ResourceAssets: Utilisation de l'atlas (forest.png)");
+            // On ajoute plusieurs fois le même pour l'instant, ou on cherche d'autres var
+            this.forestFrames.push(forestTex);
+            // On pourrait ajouter tree.png aussi mais il est moche (16x16)
+        } else if (app) {
+            // FALLBACK PROCÉDURAL
+            console.log("🌲 ResourceAssets: Génération procédurale...");
+            this.forestFrames.push(ProceduralResources.generateTree(app, 0x2E7D32, 0x5D4037));
+            this.forestFrames.push(ProceduralResources.generateTree(app, 0x388E3C, 0x4E342E));
+            this.forestFrames.push(ProceduralResources.generateTree(app, 0x4CAF50, 0x3E2723));
+        }
+
+        // 2. GÉNÉRATION ROCHERS (Minerais) - Toujours procédural pour l'instant
+        if (app) {
             this.rockFrames.push(ProceduralResources.generateRock(app, 0x9E9E9E)); // Pierre
             this.rockFrames.push(ProceduralResources.generateRock(app, 0x3E2723)); // Charbon
             this.rockFrames.push(ProceduralResources.generateRock(app, 0xB71C1C)); // Fer
@@ -41,11 +53,9 @@ export class ResourceAssets {
 
             // 3. GÉNÉRATION PÉTROLE
             this.oilFrames.push(ProceduralResources.generateOil(app));
-
-            this.isLoaded = true;
-            console.log(`✅ Assets Resources générés.`);
-        } catch (err) {
-            console.error("❌ Erreur critique ResourceAssets:", err);
         }
+
+        this.isLoaded = true;
+        console.log(`✅ Assets Resources chargés.`);
     }
 }

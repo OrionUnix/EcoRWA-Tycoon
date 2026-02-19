@@ -343,6 +343,46 @@
       "LUMBER_HUT": {
         "name": "Lumberjack Hut",
         "desc": "Produces wood (Requires Forest)."
+      },
+      "MUSEUM": {
+        "name": "Museum",
+        "desc": "Cultural building."
+      },
+      "ZOO": {
+        "name": "Zoo",
+        "desc": "Cultural building."
+      },
+      "THEATER": {
+        "name": "Theater",
+        "desc": "Cultural building."
+      },
+      "STADIUM": {
+        "name": "Stadium",
+        "desc": "Sports facility."
+      },
+      "SWIMMING_POOL": {
+        "name": "Swimming Pool",
+        "desc": "Sports facility."
+      },
+      "HOSPITAL": {
+        "name": "Hospital",
+        "desc": "Health service."
+      },
+      "SCHOOL": {
+        "name": "School",
+        "desc": "Education facility."
+      },
+      "UNIVERSITY": {
+        "name": "University",
+        "desc": "Higher education."
+      },
+      "BANK": {
+        "name": "Bank",
+        "desc": "Financial institution."
+      },
+      "MARKET": {
+        "name": "Market",
+        "desc": "Local goods."
       }
     }
   }

@@ -2,13 +2,35 @@ import * as PIXI from 'pixi.js';
 import { ProceduralTiles } from './ProceduralTiles';
 import { BiomeType } from './types';
 import { TILE_WIDTH, TILE_HEIGHT, TILE_DEPTH } from './config';
+import { AtlasManager } from './AtlasManager';
 
 const texturesCache = new Map<number, PIXI.Texture[]>();
 
+// ═══════════════════════════════════════════════════════
+// Mapping Biome → Frame(s) dans atlas.json
+// Les noms correspondent EXACTEMENT aux clés du JSON
+// ═══════════════════════════════════════════════════════
+const BIOME_ATLAS_MAP: Record<number, string[]> = {
+    [BiomeType.PLAINS]: ['grass.png'],
+    [BiomeType.FOREST]: ['forest.png'],
+    [BiomeType.DESERT]: ['desert.png'],
+    [BiomeType.BEACH]: ['bleach.png'],  // "bleach" dans l'atlas = beach/sable
+    [BiomeType.MOUNTAIN]: ['mountain.png'],
+    [BiomeType.SNOW]: ['snow.png'],
+    [BiomeType.OCEAN]: ['ocean.png'],
+    [BiomeType.DEEP_OCEAN]: ['deepwalter.png'],  // "deepwalter" dans l'atlas
+};
+
 export function clearBiomeTextures() {
     console.log("🧹 Clearing Biome Textures Cache...");
+    // Ne détruire que les textures procédurales (pas les atlas)
     texturesCache.forEach(textures => {
-        textures.forEach(t => t.destroy(true));
+        textures.forEach(t => {
+            // Sécurité: ne pas détruire les textures atlas (elles appartiennent au Spritesheet)
+            if (t && !t.destroyed) {
+                // On ne détruit plus les textures ici pour éviter de casser les refs atlas
+            }
+        });
     });
     texturesCache.clear();
 }
@@ -16,13 +38,48 @@ export function clearBiomeTextures() {
 export async function loadBiomeTextures(app: PIXI.Application) {
     if (texturesCache.size > 0) return true;
 
-    console.log("🔄 Génération textures Minecraft Isometric...");
+    // ═══════════════════════════════════════
+    // TENTATIVE 1: Charger depuis l'Atlas
+    // ═══════════════════════════════════════
+    /* ✅ DÉSACTIVÉ SUR DEMANDE UTILISATEUR ("Retire les grounds tiles")
+       On laisse le code commenté pour référence future / bascule facile.
+    if (AtlasManager.isReady) {
+        console.log("🗺️ BiomeAssets: Chargement depuis l'Atlas...");
+        let loaded = 0;
 
-    // Profondeur des blocs (Proportionnelle à la hauteur)
-    const DEPTH = TILE_DEPTH; // ✅ Utilise la config globale
-    const VARIATIONS = 3; // 3 variantes de texture par biome
+        for (const [biome, frameNames] of Object.entries(BIOME_ATLAS_MAP)) {
+            const biomeNum = Number(biome);
+            const textures: PIXI.Texture[] = [];
 
-    // Couleurs directes (Setup)
+            for (const frameName of frameNames) {
+                const tex = AtlasManager.getTexture(frameName);
+                if (tex) {
+                    textures.push(tex);
+                    loaded++;
+                }
+            }
+
+            if (textures.length > 0) {
+                texturesCache.set(biomeNum, textures);
+            }
+        }
+
+        if (loaded > 0) {
+            console.log(`✅ BiomeAssets: ${loaded} textures biomes chargées depuis l'atlas.`);
+            return true;
+        }
+        console.warn("⚠️ BiomeAssets: Atlas prêt mais aucune texture terrain trouvée, fallback procédural...");
+    }
+    */
+
+    // ═══════════════════════════════════════
+    // FALLBACK: Génération procédurale (ancien système)
+    // ═══════════════════════════════════════
+    console.log("🔄 BiomeAssets: Génération textures procédurales...");
+
+    const DEPTH = TILE_DEPTH;
+    const VARIATIONS = 3;
+
     const cGrass = ProceduralTiles.PALETTE['grass'];
     const cForest = ProceduralTiles.PALETTE['forest'];
     const cDirt = ProceduralTiles.PALETTE['dirt'];
@@ -31,61 +88,28 @@ export async function loadBiomeTextures(app: PIXI.Application) {
     const cDesert = ProceduralTiles.PALETTE['desert'];
     const cSnow = ProceduralTiles.PALETTE['snow'];
     const cWater = ProceduralTiles.PALETTE['water'];
-    const cWood = ProceduralTiles.PALETTE['wood'];
 
-    // Helper pour créer un set de blocs
     const createBiomeSet = (biome: BiomeType, topColor: number, sideColor: number, customDepth: number = DEPTH) => {
         const textures: PIXI.Texture[] = [];
-
         for (let i = 0; i < VARIATIONS; i++) {
-            // Variation subtile de la couleur pour briser la répétition
-            // On fait varier un peu la teinte si i > 0
-            let varTop = topColor;
-
-            if (i > 0) {
-                // Petite variation RGB possible ici, mais on garde simple pour l'instant
-            }
-
             const block = ProceduralTiles.generateTexturedBlock(
-                app,
-                TILE_WIDTH,
-                TILE_HEIGHT,
-                customDepth,
-                varTop,
-                sideColor
+                app, TILE_WIDTH, TILE_HEIGHT, customDepth, topColor, sideColor
             );
             textures.push(block);
         }
         texturesCache.set(biome, textures);
     };
 
-    // --- CONFIGURATION DES BIOMES (COULEURS) ---
-
-    // 1. PLAINE : Vert / Terre
     createBiomeSet(BiomeType.PLAINS, cGrass, cDirt);
-
-    // 2. DESERT : Jaune Foncé / Jaune Foncé
     createBiomeSet(BiomeType.DESERT, cDesert, cDesert);
-
-    // 3. OCEAN : Bleu / Bleu (Depth réduite)
     createBiomeSet(BiomeType.OCEAN, cWater, cWater);
-
-    // 4. DEEP OCEAN : Bleu / Bleu
     createBiomeSet(BiomeType.DEEP_OCEAN, cWater, cWater);
-
-    // 5. MOUNTAIN : Gris / Gris (Haut)
     createBiomeSet(BiomeType.MOUNTAIN, cStone, cStone);
-
-    // 6. SNOW : Blanc / Blanc
     createBiomeSet(BiomeType.SNOW, cSnow, cSnow);
-
-    // 7. FOREST : Vert Foncé / Terre
     createBiomeSet(BiomeType.FOREST, cForest, cDirt);
-
-    // 8. BEACH : Jaune (Sable) / Jaune
     createBiomeSet(BiomeType.BEACH, cSand, cSand);
 
-    console.log(`✅ Textures Biomes (Couleurs) générées.`);
+    console.log(`✅ BiomeAssets: Textures procédurales générées.`);
     return true;
 }
 

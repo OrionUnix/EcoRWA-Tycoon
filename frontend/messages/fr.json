@@ -334,6 +334,46 @@
       "LUMBER_HUT": {
         "name": "Cabane de Bûcheron",
         "desc": "Produit du bois (Forêt requise)."
+      },
+      "MUSEUM": {
+        "name": "Musée",
+        "desc": "Bâtiment culturel."
+      },
+      "ZOO": {
+        "name": "Zoo",
+        "desc": "Bâtiment culturel."
+      },
+      "THEATER": {
+        "name": "Théâtre",
+        "desc": "Bâtiment culturel."
+      },
+      "STADIUM": {
+        "name": "Stade",
+        "desc": "Installation sportive."
+      },
+      "SWIMMING_POOL": {
+        "name": "Piscine",
+        "desc": "Installation sportive."
+      },
+      "HOSPITAL": {
+        "name": "Hôpital",
+        "desc": "Service de santé."
+      },
+      "SCHOOL": {
+        "name": "École",
+        "desc": "Établissement scolaire."
+      },
+      "UNIVERSITY": {
+        "name": "Université",
+        "desc": "Enseignement supérieur."
+      },
+      "BANK": {
+        "name": "Banque",
+        "desc": "Institution financière."
+      },
+      "MARKET": {
+        "name": "Marché",
+        "desc": "Produits locaux."
       }
     }
   }

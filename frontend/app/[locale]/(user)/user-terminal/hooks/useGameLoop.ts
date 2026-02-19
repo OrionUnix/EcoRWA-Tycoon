@@ -67,9 +67,11 @@ export function useGameLoop(
         const app = appRef.current;
         const engine = getGameEngine();
 
-        // Chargement des Assets (Routes + Bâtiments)
+        // Chargement des Assets (Atlas + Routes + Bâtiments)
         ResourceAssets.load(); // Au cas où
-        import('../engine/BuildingAssets').then(m => m.BuildingAssets.load());
+        import('../engine/AtlasManager').then(m => m.AtlasManager.load().then(() => {
+            import('../engine/BuildingAssets').then(m => m.BuildingAssets.load());
+        }));
 
         console.log("🎬 GameLoop: Running with Resource Support.");
 

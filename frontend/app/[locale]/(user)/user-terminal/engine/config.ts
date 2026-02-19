@@ -1,5 +1,9 @@
-export const GRID_SIZE = 32;
+export const GRID_SIZE = 96;
 export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+
+// Chunk System (Cities: Skylines style — "Island in void")
+export const CHUNK_SIZE = 32;
+export const CHUNKS_PER_SIDE = GRID_SIZE / CHUNK_SIZE; // 3
 
 // Configuration de l'affichage
 export const TILE_WIDTH = 64;
