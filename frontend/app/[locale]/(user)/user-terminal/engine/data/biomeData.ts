@@ -3,6 +3,8 @@ import { BiomeType } from '../types';
 export interface ResourceRule {
     chance: number;
     intensity: number;
+    minHeight?: number; // ✅ Optional height constraints
+    maxHeight?: number;
 }
 
 export interface BiomeRule {

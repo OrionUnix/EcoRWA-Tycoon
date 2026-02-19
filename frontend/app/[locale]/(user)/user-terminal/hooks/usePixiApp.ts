@@ -66,6 +66,29 @@ export function usePixiApp(containerRef: React.RefObject<HTMLDivElement | null>)
             viewportRef.current = viewport;
             stageRef.current = app.stage;
 
+            // 🔑 FIX BUG 2: Centrage de la caméra sur le centre de la carte isometrique.
+            // La grille isometrique s'étend de:
+            //   X: -(GRID_SIZE*TILE_WIDTH/2) à +(GRID_SIZE*TILE_WIDTH/2)
+            //   Y: 0 à GRID_SIZE*TILE_HEIGHT
+            // Le centre du losange = (0, GRID_SIZE*TILE_HEIGHT/2)
+            // viewport.moveCenter(worldX, worldY) place ce point au centre de l'écran.
+            const centerMap = () => {
+                const mapCenterX = 0; // (GRID_SIZE/2 - GRID_SIZE/2) * TILE_WIDTH/2 = 0
+                const mapCenterY = (GRID_SIZE / 2 + GRID_SIZE / 2) * (TILE_HEIGHT / 2); // = GRID_SIZE * TILE_HEIGHT / 2
+                viewport!.moveCenter(mapCenterX, mapCenterY);
+                viewport!.setZoom(1.0);
+            };
+            centerMap();
+
+            // Re-center on window resize
+            const onResize = () => {
+                if (!viewportRef.current) return;
+                viewportRef.current.resize(window.innerWidth, window.innerHeight);
+                // Only re-center if no camera state was saved (first load)
+                // We rely on UserTerminalClient to restore saved camera position
+            };
+            window.addEventListener('resize', onResize);
+
             console.log(`✅ [PixiApp] Prêt.`);
             setIsReady(true);
         };

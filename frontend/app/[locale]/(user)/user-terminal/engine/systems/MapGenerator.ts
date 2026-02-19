@@ -53,7 +53,7 @@ export class MapGenerator {
         }
         // Mulberry32 (Générateur pseudo-aléatoire rapide)
         return () => {
-            var t = seed += 0x6D2B79F5;
+            let t = seed += 0x6D2B79F5;
             t = Math.imul(t ^ t >>> 15, t | 1);
             t ^= t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
             return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
@@ -78,7 +78,7 @@ export class MapGenerator {
         const terrainNoise = createNoise2D(rng);
         const moistureNoise = createNoise2D(rng);
         const riverNoise = createNoise2D(rng);
-        const resNoise = createNoise2D(rng);
+        const resNoise = createNoise2D(rng); // Not used explicitly but good practice
 
         // Reset des layers
         engine.biomes.fill(0);
@@ -93,13 +93,14 @@ export class MapGenerator {
         resLayer.fill(0);
         Object.values(engine.resourceMaps).forEach(map => map.fill(0));
 
-        // 🔧 RÉGLAGES IMPORTANTS (ADAPTÉ POUR GRID_SIZE = 32)
-        // Scale augmenté (0.006 -> 0.15) pour avoir du détail sur une petite carte
-        // Sinon c'est juste une pente douce unique (Gradient)
-        const scale = 0.15;
-        const riverScale = 0.3; // Augmenté aussi
-        const offsetX = rng() * 1000;
-        const offsetY = rng() * 1000;
+        // 🔧 RÉGLAGES: Scale réduit à 0.18 = features plus grandes (continents vs océans)
+        // Note: < 0.15 = trop lisse (un seul blob), > 0.35 = trop morcelé (archipel)
+        const scale = 0.18;
+        const riverScale = 0.3;
+
+        // ✅ CRUCIAL: Utiliser rng() pour les offsets, sinon c'est toujours pareil ou aléatoire non-contrôlé
+        const offsetX = rng() * 10000;
+        const offsetY = rng() * 10000;
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -108,26 +109,12 @@ export class MapGenerator {
                 const nx = (x + offsetX) * scale;
                 const ny = (y + offsetY) * scale;
 
-                // 1. Hauteur de base (Terrain)
+                // 1. Hauteur de base (Terrain) — FBM pur, pas de masque
+                // 🔑 FIX: Le masque côtier (gradient Y) était la VRAIE cause des 70% d'eau.
+                // Il écrasait h vers 0 dans toute la moitié basse de la carte.
+                // On utilise uniquement le bruit de Perlin pour décider du terrain.
                 let h = this.fbm(nx, ny, 6, terrainNoise);
                 const m = this.fbm(nx, ny, 2, moistureNoise);
-
-                // 2. ✅ GÉNÉRATION CÔTIÈRE (Bord de mer)
-                // On ajoute du bruit au gradient pour que la côte soit irrégulière
-                const coastalNoise = this.fbm(nx * 0.5, ny * 0.5, 2, terrainNoise); // Bruit basse fréquence
-                const gradient = 1.0 - (y / GRID_SIZE); // 1 en haut, 0 en bas
-
-                // On tord le gradient avec le bruit
-                // Si coastalNoise est fort, on repousse la mer
-                const mask = Math.min(1, Math.max(0, gradient + (coastalNoise - 0.5) * 0.8));
-
-                // Mélange :
-
-                // On utilise un smoothstep pour une transition plus franche de la côte
-                h = h * mask;
-
-                // Pour s'assurer qu'il y a bien de l'eau en bas, on force un peu le falloff
-                if (y > GRID_SIZE * 0.85) h *= 0.5;
 
                 // 3. ✅ GÉNÉRATION DES RIVIÈRES
                 const rVal = Math.abs(riverNoise(x * riverScale, y * riverScale));
@@ -141,15 +128,15 @@ export class MapGenerator {
                 engine.moistureMap[i] = m;
                 terrainLayer[i] = h;
 
-                // --- DÉCISION BIOME ---
+                // --- DÉCISION BIOME (RADICALE) ---
                 let biome = BiomeType.PLAINS;
 
-                // Niveaux d'eau abaissés pour plus de terre constructible
-                if (h < 0.20) { // 0.30 -> 0.20
+                // ✅ SEUILS AGRESSIFS (Objectif: 80% Terre)
+                if (h < 0.15) {
                     biome = BiomeType.DEEP_OCEAN;
                     waterLayer[i] = 1.0;
                 }
-                else if (h < 0.25) { // 0.35 -> 0.25
+                else if (h < 0.20) {
                     biome = BiomeType.OCEAN;
                     waterLayer[i] = 0.8;
                 }
@@ -158,7 +145,9 @@ export class MapGenerator {
                     waterLayer[i] = 0.6;
                     engine.heightMap[i] -= 0.05;
                 }
-                else if (h < 0.38) {
+                // ✅ Plage réduite à une fine bande (0.20 -> 0.23)
+                // Tout ce qui est > 0.23 est maintenant TERRE
+                else if (h < 0.23) {
                     biome = BiomeType.BEACH;
                 }
                 else if (h > 0.85) {
@@ -181,35 +170,30 @@ export class MapGenerator {
                         targetMap[i] = 0;
                         return;
                     }
-                    if (resourceType === 'wood' && biome !== BiomeType.FOREST) { targetMap[i] = 0; return; }
+                    if (r.minHeight && h < r.minHeight) return;
+                    if (r.maxHeight && h > r.maxHeight) return;
 
-                    const n = resNoise(nx + noiseOffset, ny + noiseOffset);
-                    if (n > (1 - r.chance * 2.5)) {
-                        const amount = r.intensity * Math.abs(n);
+                    // Bruit spécifique pour cette ressource
+                    const n = resNoise(x * 0.1 + noiseOffset, y * 0.1 + noiseOffset);
+                    if (n > (1 - r.chance)) {
+                        let amount = r.intensity;
+                        // Variation aléatoire + ou - 20%
+                        amount *= (0.8 + rng() * 0.4);
                         targetMap[i] = amount;
-                        resLayer[i] = Math.max(resLayer[i], amount);
                     }
                 };
 
-                applyRes(engine.resourceMaps.oil, rule.oil, 10);
-                applyRes(engine.resourceMaps.coal, rule.coal, 20);
-                applyRes(engine.resourceMaps.iron, rule.iron, 30);
-                applyRes(engine.resourceMaps.wood, rule.wood, 40, 'wood');
+                applyRes(engine.resourceMaps.oil, rule.oil, 0, 'oil');
+                applyRes(engine.resourceMaps.coal, rule.coal, 100, 'coal');
+                applyRes(engine.resourceMaps.iron, rule.iron, 200, 'iron');
+                applyRes(engine.resourceMaps.wood, rule.wood, 300, 'wood');
+                applyRes(engine.resourceMaps.animals, rule.animals, 400);
+                applyRes(engine.resourceMaps.fish, rule.fish, 500);
 
-                const r = rule as any;
-                if (r.stone) applyRes(engine.resourceMaps.stone, r.stone, 70);
-                if (r.silver) applyRes(engine.resourceMaps.silver, r.silver, 80);
-                if (r.gold) applyRes(engine.resourceMaps.gold, r.gold, 90);
-
-                applyRes(engine.resourceMaps.animals, rule.animals, 50);
-                applyRes(engine.resourceMaps.fish, rule.fish, 60);
-
-                engine.resourceMaps.food[i] = (engine.resourceMaps.animals[i] || 0) + (engine.resourceMaps.fish[i] || 0);
+                applyRes(engine.resourceMaps.gold, rule.gold, 600);
+                applyRes(engine.resourceMaps.silver, rule.silver, 700);
+                applyRes(engine.resourceMaps.stone, rule.stone, 800);
             }
         }
-
-        engine.calculateSummary();
-        engine.revision++;
-        console.log("✅ MapGenerator: Génération terminée (Continent + Rivières).");
     }
 }

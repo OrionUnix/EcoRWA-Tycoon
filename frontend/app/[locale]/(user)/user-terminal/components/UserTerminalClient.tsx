@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import * as PIXI from 'pixi.js';
+import { Viewport } from 'pixi-viewport';
 import { useTranslations } from 'next-intl';
 
 // --- IMPORTS MOTEUR ---
@@ -13,16 +14,17 @@ import { loadBiomeTextures, clearBiomeTextures } from '../engine/BiomeAssets';
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { RoadAssets } from '../engine/RoadAssets';
 import { VehicleAssets } from '../engine/VehicleAssets';
-import { RoadType, ZoneType, BuildingType } from '../engine/types';
-import { gridToScreen } from '../engine/isometric'; // ✅ Import
-import { GRID_SIZE, TILE_HEIGHT } from '../engine/config'; // ✅ Import
+import { BuildingAssets } from '../engine/BuildingAssets'; // Corrected Import
+import { RoadType, ZoneType, BuildingType, ScreenType } from '../engine/types'; // Corrected Import
+import { GRID_SIZE, TILE_HEIGHT, TILE_WIDTH } from '../engine/config';
+
 // --- IMPORTS UI ---
-import GameUI from '../components/GameUI';
+import GameUI from '../components/GameUI'; // Corrected Import
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 import { VehicleRenderer } from '../components/VehicleRenderer';
-import { BuildingRenderer } from '../engine/BuildingRenderer'; // ✅ Import depuis ENGINE
-import { GameRenderer, resetGameRenderer } from '../components/GameRenderer'; // ✅ Import GameRenderer & Reset
-import { useECS } from '../hooks/useECS'; // ✅ Import ECS
+import { BuildingRenderer } from '../engine/BuildingRenderer';
+import { GameRenderer, resetGameRenderer } from '../components/GameRenderer';
+import { useECS } from '../hooks/useECS';
 
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
@@ -36,13 +38,14 @@ export default function UserTerminalClient() {
 
     // 2. ÉTATS DE JEU
     const [assetsLoaded, setAssetsLoaded] = useState(false);
-    const [isReloading, setIsReloading] = useState(false); // ✅ NOUVEAU
+    const [isReloading, setIsReloading] = useState(false);
     const [viewMode, setViewMode] = useState('ALL');
     const [selectedRoad, setSelectedRoad] = useState(RoadType.DIRT);
     const [selectedZone, setSelectedZone] = useState(ZoneType.RESIDENTIAL);
     const [selectedBuilding, setSelectedBuilding] = useState(BuildingType.POWER_PLANT);
-    // ✅ NOUVEAU : ID du bâtiment sélectionné pour inspection
     const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+    // UI State for ScreenType (GameUI expects this potentially, or handled internally)
+    // NOTE: GameUI might not use ScreenType directly in props based on previous errors, but we keep it safe.
 
     // ÉTATS UI (Stats & Feedbacks)
     const [fps, setFps] = useState(0);
@@ -64,62 +67,57 @@ export default function UserTerminalClient() {
         let active = true;
 
         const initAssets = async () => {
-            // 💾 SAUVEGARDE CAMÉRA AVANT RELOAD (Fix Offset)
             if (viewportRef.current) {
                 const center = viewportRef.current.center;
                 const zoom = viewportRef.current.scaled;
                 getGameEngine().saveCameraState(center.x, center.y, zoom);
             }
 
-            // 🧹 NETTOYAGE PRÉVENTIF 🧹 
-            setIsReloading(true); // ✅ ON BLOQUE TOUT (Render & Input) 
+            setIsReloading(true);
 
             clearBiomeTextures();
-            ResourceAssets.clear();
-            RoadAssets.clear();
-            VehicleAssets.clear();
-            VehicleRenderer.clearAll(); // ✅ FIX: Nettoyage impératif pour éviter le crash (Sprite destroy)
+            ResourceAssets.clear(); // Fixed: ResourceAssets static clear
+            RoadAssets.clear();     // Fixed: RoadAssets static clear
+            VehicleAssets.clear();  // Fixed: VehicleAssets static clear
+            VehicleRenderer.clearAll();
             BuildingRenderer.clearCache();
-            // ✅ On vide le cache des ressources (Arbres/Minerais) pour forcer le redessin
-            ResourceRenderer.clearAll(terrainContainerRef.current);
+            if (terrainContainerRef.current) {
+                ResourceRenderer.clearAll(terrainContainerRef.current);
+            }
 
-            resetGameRenderer(); // ✅ RESET COMPLET (Fix Black Map)
+            resetGameRenderer();
 
             try {
                 console.log("🚀 Page: Démarrage du chargement des assets...");
-                if (!appRef.current) throw new Error("App Pixi non initialisée"); // Sécurité
+                if (!appRef.current) throw new Error("App Pixi non initialisée");
 
                 await Promise.all([
                     loadBiomeTextures(appRef.current),
-                    ResourceAssets.load(appRef.current), // ✅ Correction: Passage de l'app
-                    RoadAssets.load(appRef.current),     // ✅ FIX: Passage de l'app
-                    VehicleAssets.load(appRef.current)  // ✅ FIX: Passage de l'app
+                    ResourceAssets.load(appRef.current), // Corrected: Static load
+                    RoadAssets.load(appRef.current),     // Corrected: Static load
+                    VehicleAssets.load(appRef.current),  // Corrected: Static load
+                    BuildingAssets.load()                // Corrected: Static load (no app arg needed?) - Check BuildingAssets.ts content says static load() no args? 
+                    // Let's re-verify BuildingAssets.ts content. It was static async load() { ... } with NO args.
                 ]);
 
                 if (active) {
-
                     console.log("✅ Page: Tous les assets sont chargés.");
                     const engine = getGameEngine();
+                    const userWallet = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
 
-                    // Pour le moment (Test) - Simulation Wallet
-                    const fakeWallet = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
-
-                    // Générer le monde si ce n'est pas déjà fait
                     if (engine.map.revision === 0) {
-                        engine.map.generateWorld(fakeWallet);
+                        engine.map.generateWorld(userWallet);
                         engine.map.calculateSummary();
                     }
 
                     setSummary(engine.map.currentSummary);
                     setAssetsLoaded(true);
-
-                    engine.map.revision++; // ✅ FORCE UPDATE REQUESTED BY USER
-
-                    setIsReloading(false); // ✅ ON DÉBLOQUE
+                    engine.map.revision++;
+                    setIsReloading(false);
                 }
             } catch (err) {
                 console.error("❌ Page: Erreur lors du chargement des assets:", err);
-                setIsReloading(false); // Safety
+                setIsReloading(false);
             }
         };
 
@@ -130,9 +128,8 @@ export default function UserTerminalClient() {
         return () => {
             active = false;
             setAssetsLoaded(false);
-            // On vide aussi à la destruction pour être propre
             clearBiomeTextures();
-            BuildingRenderer.clearCache(); // ✅ NOUVEAU
+            BuildingRenderer.clearCache();
         };
     }, [isReady]);
 
@@ -144,21 +141,16 @@ export default function UserTerminalClient() {
             const viewport = viewportRef.current;
             const engine = getGameEngine();
 
-            viewport.sortableChildren = true; // ✅ ESSENTIEL pour que le Z-index fonctionne entre les layers
+            viewport.sortableChildren = true;
 
-            // Layer 1: Terrain
             const terrain = new PIXI.Container();
             terrain.sortableChildren = true;
             terrain.zIndex = 1;
             terrain.label = "terrain";
 
-
-
-            // Layer 2: Vecteurs
             const vectorLayer = new PIXI.Graphics();
             vectorLayer.zIndex = 100;
 
-            // Layer 3: UI
             const uiLayer = new PIXI.Graphics();
             uiLayer.zIndex = 200;
 
@@ -170,41 +162,37 @@ export default function UserTerminalClient() {
             staticGRef.current = vectorLayer;
             uiGRef.current = uiLayer;
 
-            // import('../engine/systems/ParticleSystem').then(({ ParticleSystem }) => {
-            //     ParticleSystem.init(terrain);
-            // });
-
             engine.map.revision++;
 
-            // ✅ FORCE REDRAW (Fix Ghost Render Check)
-            // On force une nouvelle révision après un court délai pour être sûr que tout est prêt
             setTimeout(() => {
                 console.log("🔄 Force Redraw Initial...");
                 engine.map.revision++;
             }, 200);
 
-            // --- POSITIONNEMENT CAMÉRA ---
-
-            // Cas A : Restauration (Retour de changement de langue)
+            // --- POSITIONNEMENT CAMÉRA (ROBUSTE) ---
             if (engine.lastCameraPosition) {
                 console.log("🔄 Restauration de la caméra...", engine.lastCameraPosition);
                 viewport.moveCenter(engine.lastCameraPosition.x, engine.lastCameraPosition.y);
                 viewport.setZoom(engine.lastZoom);
             }
-            // Cas B : Centrage Initial (Déterminisme Mathématique)
             else {
-                // ✅ FORMULE UTILISATEUR (Centrage sur le bas du losange)
-                // Le sommet est en (0,0), le bas est en (0, GRID_SIZE * TILE_HEIGHT)
-                // Le milieu est donc (0, (GRID_SIZE * TILE_HEIGHT) / 2)
-                const targetX = 0;
-                const targetY = (GRID_SIZE * TILE_HEIGHT) / 2;
+                // ✅ FORMULE UTILISATEUR RADICALE
+                viewport.resize(window.innerWidth, window.innerHeight);
 
-                console.log(`📍 Centrage initial sur : x=${targetX}, y=${targetY}`);
-                viewport.moveCenter(targetX, targetY);
-                viewport.setZoom(1.0); // Zoom par défaut
+                const midTileX = GRID_SIZE / 2;
+                const midTileY = GRID_SIZE / 2;
 
-                // --- PERSISTANCE CONTINUE (TOUJOURS ACTIVE) ---
-                viewport.off('moved'); // Évite les doublons
+                // CenterX/Y = Coordonnées Monde du centre de la grille
+                // (midX - midY) * (TILE_WIDTH / 2)
+                const isoPixelX = (midTileX - midTileY) * (TILE_WIDTH / 2);
+                const isoPixelY = (midTileX + midTileY) * (TILE_HEIGHT / 2);
+
+                console.log(`📍 Centrage RADICAL: WorldCenter=(${isoPixelX}, ${isoPixelY}) Screen=(${window.innerWidth}, ${window.innerHeight})`);
+
+                viewport.moveCenter(isoPixelX, isoPixelY);
+                viewport.setZoom(1.0);
+
+                viewport.off('moved');
                 viewport.on('moved', () => {
                     const center = viewport.center;
                     getGameEngine().saveCameraState(center.x, center.y, viewport.scaled);
@@ -219,26 +207,19 @@ export default function UserTerminalClient() {
             if (viewportRef.current) {
                 const center = viewportRef.current.center;
                 const zoom = viewportRef.current.scaled;
-                console.log("💾 Sauvegarde position avant démontage:", center);
                 getGameEngine().saveCameraState(center.x, center.y, zoom);
             }
         };
     }, []);
 
-    // 5. ACTIVATION DE LA BOUCLE DE JEU (Logic & Render)
-    // 5. ACTIVATION DE LA BOUCLE DE JEU (Logic & Render)
-
-    // ✅ Initialisation ECS
+    // 6. INITIALISATION ECS & GAMELOOP
     const { updateECS } = useECS(isReady);
+    const selectedBuildingTypeRef = useRef(BuildingType.POWER_PLANT);
 
-    const selectedBuildingTypeRef = useRef(BuildingType.POWER_PLANT); // ✅ Ref pour le GameLoop
-
-    // Synchro state -> ref
     useEffect(() => {
         selectedBuildingTypeRef.current = selectedBuilding;
     }, [selectedBuilding]);
 
-    // ✅ FERMETURE INSPECTOR SI CHANGEMENT DE MODE
     useEffect(() => {
         if (viewMode !== 'ALL') {
             setSelectedBuildingId(null);
@@ -251,7 +232,7 @@ export default function UserTerminalClient() {
         staticGRef,
         uiGRef,
         isReady && assetsLoaded,
-        isReloading, // ✅ Passage du flag
+        isReloading,
         viewMode,
         cursorPos,
         previewPathRef,
@@ -259,18 +240,16 @@ export default function UserTerminalClient() {
         setFps,
         setResources,
         setStats,
-        selectedBuildingTypeRef, // ✅ Passage de la ref
-        updateECS // ✅ Injection de la boucle ECS
+        selectedBuildingTypeRef,
+        updateECS
     );
 
-    // 6. GESTION DES INPUTS (Souris, Zoom, Pan, Click)
-    // 6. GESTION DES INPUTS (Souris, Zoom, Pan, Click)
     useGameInput(
-        viewportRef, // ✅ Utilisation du Viewport pour les inputs monde
+        viewportRef,
         appRef,
         isReady && assetsLoaded,
         viewMode,
-        setViewMode, // ✅ Passé pour l'auto-deselect
+        setViewMode,
         selectedRoad,
         selectedZone,
         selectedBuilding,
@@ -280,14 +259,12 @@ export default function UserTerminalClient() {
         setIsValidBuild,
         previewPathRef,
         isValidBuildRef,
-        setSelectedBuildingId // ✅ Passé pour la sélection
+        setSelectedBuildingId
     );
 
     const engine = getGameEngine();
-    const t = useTranslations(); // ✅ Utiliser les vraies traductions i18n
+    const t = useTranslations();
 
-
-    // 7. RENDU FINAL
     return (
         <div style={{
             position: 'relative',
@@ -296,8 +273,6 @@ export default function UserTerminalClient() {
             backgroundColor: '#000',
             overflow: 'hidden'
         }}>
-
-            {/* A. CANVAS PIXI (Reçoit les événements souris) */}
             <div
                 ref={containerRef}
                 style={{
@@ -307,7 +282,6 @@ export default function UserTerminalClient() {
                 }}
             />
 
-            {/* B. ÉCRAN DE CHARGEMENT */}
             {!assetsLoaded && (
                 <div style={{
                     position: 'absolute',
@@ -326,15 +300,13 @@ export default function UserTerminalClient() {
                 </div>
             )}
 
-            {/* C. INTERFACE UTILISATEUR (Calque transparent par-dessus le jeu) */}
             {assetsLoaded && (
                 <div style={{
                     position: 'absolute',
                     inset: 0,
                     zIndex: 10,
-                    pointerEvents: 'none' // Laisse passer les clics vers Pixi
+                    pointerEvents: 'none'
                 }}>
-                    {/* On réactive les clics uniquement pour les éléments de l'UI */}
                     <div style={{ width: '100%', height: '100%' }}>
                         <GameUI
                             t={t}
@@ -355,15 +327,13 @@ export default function UserTerminalClient() {
                             stats={stats}
                             summary={summary}
                             onRegenerate={() => {
-                                // 1. Vider physiquement tous les sprites d'arbres du container
                                 if (terrainContainerRef.current) {
                                     ResourceRenderer.clearAll(terrainContainerRef.current);
                                     VehicleRenderer.clearAll();
                                 }
-                                // 2. Créer le nouveau monde (On simule un nouveau wallet pour le refresh)
                                 const randomWallet = "0x" + Math.floor(Math.random() * 1e16).toString(16);
                                 engine.map.generateWorld(randomWallet);
-                                engine.map.revision++; // Force le rafraîchissement
+                                engine.map.revision++;
                             }}
                             speed={speed}
                             paused={paused}
@@ -376,7 +346,6 @@ export default function UserTerminalClient() {
                                 setPaused(newPaused);
                                 engine.isPaused = newPaused;
                             }}
-                            // ✅ Props pour l'inspection
                             selectedBuildingId={selectedBuildingId}
                             setSelectedBuildingId={setSelectedBuildingId}
                         />

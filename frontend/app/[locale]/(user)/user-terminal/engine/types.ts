@@ -9,6 +9,14 @@ export enum LayerType {
     RESOURCES = 3
 }
 
+export enum ScreenType {
+    CITY_BUILDER = 'CITY_BUILDER',
+    MARKETPLACE = 'MARKETPLACE',
+    TECHNOLOGY = 'TECHNOLOGY',
+    WORLD_MAP = 'WORLD_MAP',
+    SETTINGS = 'SETTINGS'
+}
+
 export enum ZoneType {
     NONE = 'NONE',
     RESIDENTIAL = 'RESIDENTIAL',
