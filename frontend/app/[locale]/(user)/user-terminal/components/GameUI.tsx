@@ -170,7 +170,12 @@ export default function GameUI({
                 <DataLayersPanel
                     activeLayer={activeDataLayer}
                     onSelectLayer={setActiveDataLayer}
-                    onClose={() => setActiveCategory(null)}
+                    onSetViewMode={setViewMode}
+                    onClose={() => {
+                        setActiveCategory(null);
+                        setViewMode('ALL');
+                        setActiveDataLayer(null);
+                    }}
                 />
             )}
 

@@ -22,6 +22,18 @@ export const COLORS = {
     ANIMALS: 0x8D6E63, // Marron (Gibier)
     FISH: 0x00BCD4,    // Cyan (Poisson)
 
+    // Simulation Overlays
+    WATER_NET: 0x50E3C2,   // Réseau d'eau (Couverture)
+    POWER_NET: 0xF8E71C,   // Réseau électrique (Couverture)
+    SEWAGE: 0xBD10E0,      // Assainissement
+    POLLUTION: 0xF5A623,   // Pollution
+    TRAFFIC: 0xD0021B,     // Trafic
+    HAPPINESS: 0x7ED321,   // Bonheur
+    JOBS: 0x4A90E2,        // Emplois
+    WATER_LAYER: 0x29B6F6, // Eau souterraine naturelle
+    LAND_VALUE: 0x7ED321,  // Valeur foncière
+    RWA_ECONOMY: 0xBD10E0, // Économie RWA
+
     DEEP_WATER: 0x000033,
     // Fallback Erreur
     ERROR: 0xFF00FF
