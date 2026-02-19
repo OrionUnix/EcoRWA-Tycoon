@@ -31,7 +31,8 @@ export enum ZoneType {
 
 export enum RoadType {
     DIRT = 'DIRT',       // Chemin de terre (lent)
-    ASPHALT = 'ASPHALT', // Route standard (moyen)
+    SMALL = 'SMALL',     // ✅ NOUVEAU: Petite route (Standard)
+    ASPHALT = 'ASPHALT', // Route standard (moyen) - Rename to MEDIUM ?
     AVENUE = 'AVENUE',   // 4 voies (rapide)
     HIGHWAY = 'HIGHWAY'  // Autoroute (très rapide)
 }
@@ -91,6 +92,17 @@ export enum BuildingType {
     CAFE = 'CAFE'
 }
 
+// ✅ NOUVEAU: Catégories de Bâtiments
+export enum BuildingCategory {
+    UTILITIES = 'UTILITIES', // Énergie, Eau
+    SERVICES = 'SERVICES',   // Police, Pompier, Santé, Éducation
+    EXTRACTION = 'EXTRACTION', // Mines, Bûcheron, Pêche
+    LEISURE = 'LEISURE',     // Parcs, Culture
+    RESIDENTIAL = 'RESIDENTIAL',
+    COMMERCIAL = 'COMMERCIAL',
+    INDUSTRIAL = 'INDUSTRIAL'
+}
+
 // ==================================================================
 // 2. INTERFACES DE DONNÉES
 // ==================================================================
@@ -115,6 +127,7 @@ export interface PlayerResources {
 
 export interface CityStats {
     population: number;
+    happiness: number; // ✅ FIXED: Added missing property
     jobsCommercial: number;
     jobsIndustrial: number;
     jobs: number;    // ✅ Total jobs
@@ -264,6 +277,10 @@ export const ROAD_SPECS: Record<RoadType, RoadSpecs> = {
         type: RoadType.DIRT, speed: 0.5, capacity: 10, lanes: 1, cost: 5,
         width: 6, color: 0x8D6E63
     },
+    [RoadType.SMALL]: {
+        type: RoadType.SMALL, speed: 0.8, capacity: 30, lanes: 2, cost: 10,
+        width: 7, color: 0x666666
+    },
     [RoadType.ASPHALT]: {
         type: RoadType.ASPHALT, speed: 1.0, capacity: 50, lanes: 2, cost: 20,
         width: 8, color: 0x555555
@@ -316,8 +333,9 @@ export interface BuildingSpecs {
     description: string;
     width: number;
     height: number;
-    color: number;
+    color: number; // ✅ Unique
     requiresRoad: boolean;
+    category: BuildingCategory; // ✅ NOUVEAU: Catégorie pour l'UI
     workersNeeded?: number; // ✅ NOUVEAU : Nombre de travailleurs requis
     maintenance?: number; // ✅ NOUVEAU : Coût d'entretien hebdomadaire
     production?: {
@@ -337,121 +355,140 @@ export interface BuildingSpecs {
 export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.RESIDENTIAL]: {
         type: BuildingType.RESIDENTIAL, cost: 50, name: "Zone Résidentielle",
-        description: "Logements pour les citoyens.", width: 1, height: 1, color: 0x4CAF50, requiresRoad: true
+        description: "Logements pour les citoyens.", width: 1, height: 1, color: 0x4CAF50, requiresRoad: true,
+        category: BuildingCategory.RESIDENTIAL
     },
     [BuildingType.COMMERCIAL]: {
         type: BuildingType.COMMERCIAL, cost: 100, name: "Zone Commerciale",
-        description: "Commerces et services.", width: 1, height: 1, color: 0x2196F3, requiresRoad: true
+        description: "Commerces et services.", width: 1, height: 1, color: 0x2196F3, requiresRoad: true,
+        category: BuildingCategory.COMMERCIAL
     },
     [BuildingType.INDUSTRIAL]: {
         type: BuildingType.INDUSTRIAL, cost: 150, name: "Zone Industrielle",
-        description: "Usines et production.", width: 1, height: 1, color: 0xFFC107, requiresRoad: true
+        description: "Usines et production.", width: 1, height: 1, color: 0xFFC107, requiresRoad: true,
+        category: BuildingCategory.INDUSTRIAL
     },
     [BuildingType.POWER_PLANT]: {
         type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Électrique",
         description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4,
+        category: BuildingCategory.UTILITIES,
         production: { type: 'ENERGY', amount: 100 }
     },
     [BuildingType.WATER_PUMP]: {
         type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
         description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
+        category: BuildingCategory.UTILITIES,
         production: { type: 'WATER', amount: 100 },
         // Investissement possible
         upgradeCost: 500, maxLevel: 3
     },
     [BuildingType.MINE]: {
         type: BuildingType.MINE, cost: 99999, name: "Mine (Désactivé)",
-        description: "Bâtiment désactivé.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 0
+        description: "Bâtiment désactivé.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 0,
+        category: BuildingCategory.EXTRACTION
     },
     [BuildingType.OIL_RIG]: {
         type: BuildingType.OIL_RIG, cost: 99999, name: "Plateforme Pétrolière (Mer)",
-        description: "Extrait du pétrole en mer.", width: 2, height: 2, color: 0x424242, requiresRoad: false, workersNeeded: 0
+        description: "Extrait du pétrole en mer.", width: 2, height: 2, color: 0x424242, requiresRoad: false, workersNeeded: 0,
+        category: BuildingCategory.EXTRACTION
     },
     [BuildingType.OIL_PUMP]: {
         type: BuildingType.OIL_PUMP, cost: 3000, name: "Puits de Pétrole",
         description: "Extrait du pétrole terrestre.", width: 1, height: 1, color: 0x263238, requiresRoad: true, workersNeeded: 5, maintenance: 120,
+        category: BuildingCategory.EXTRACTION,
         influenceRadius: 8, influenceScore: -40
     },
     [BuildingType.CITY_HALL]: {
         type: BuildingType.CITY_HALL, cost: 3000, name: "Mairie",
-        description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true, workersNeeded: 10
+        description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true, workersNeeded: 10,
+        category: BuildingCategory.SERVICES
     },
     [BuildingType.PARK]: {
         type: BuildingType.PARK, cost: 200, name: "Parc",
-        description: "Espace vert pour le bonheur des citoyens.", width: 1, height: 1, color: 0x8BC34A, requiresRoad: true
+        description: "Espace vert pour le bonheur des citoyens.", width: 1, height: 1, color: 0x8BC34A, requiresRoad: true,
+        category: BuildingCategory.LEISURE
     },
     [BuildingType.POLICE_STATION]: {
         type: BuildingType.POLICE_STATION, cost: 1000, name: "Commissariat",
-        description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true, workersNeeded: 4
+        description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true, workersNeeded: 4,
+        category: BuildingCategory.SERVICES
     },
     [BuildingType.FIRE_STATION]: {
         type: BuildingType.FIRE_STATION, cost: 1000, name: "Caserne de Pompiers",
-        description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true, workersNeeded: 4
+        description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true, workersNeeded: 4,
+        category: BuildingCategory.SERVICES
     },
     [BuildingType.FISHERMAN]: {
         type: BuildingType.FISHERMAN, cost: 300, name: "Cabane de Pêcheur",
         description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
+        category: BuildingCategory.EXTRACTION,
         production: { type: 'FOOD', amount: 50 },
         upgradeCost: 200, maxLevel: 3
     },
     [BuildingType.HUNTER_HUT]: {
         type: BuildingType.HUNTER_HUT, cost: 350, name: "Cabane de Chasseur",
         description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2,
+        category: BuildingCategory.EXTRACTION,
         production: { type: 'FOOD', amount: 40 },
         upgradeCost: 250, maxLevel: 3
     },
     [BuildingType.LUMBER_HUT]: {
         type: BuildingType.LUMBER_HUT, cost: 150, name: "Cabane de Bûcheron",
         description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2,
+        category: BuildingCategory.EXTRACTION,
         production: { type: 'WOOD', amount: 40 },
         upgradeCost: 150, maxLevel: 3
     },
     [BuildingType.FOOD_MARKET]: {
         type: BuildingType.FOOD_MARKET, cost: 500, name: "Marché Alimentaire",
         description: "Exporte vos surplus de nourriture.", width: 2, height: 2, color: 0xFF9800, requiresRoad: true, workersNeeded: 4, maintenance: 50,
+        category: BuildingCategory.SERVICES,
         upgradeCost: 500, maxLevel: 2,
         influenceRadius: 6
-        // Note: influenceScore removed from interface in previous step? No, it's missing in interface definition in this file content! 
-        // Wait, looking at file content of types.ts from previous step:
-        // influenceRadius and influenceScore are NOT in BuildingSpecs interface lines 294-312.
-        // I must add them to interface first or simultaneously.
     },
     // ✅ MINES
     [BuildingType.COAL_MINE]: {
         type: BuildingType.COAL_MINE, cost: 2000, name: "Mine de Charbon",
         description: "Extrait du charbon du sol (Pollution !).", width: 2, height: 2, color: 0x3E2723, requiresRoad: true, workersNeeded: 10, maintenance: 150,
+        category: BuildingCategory.EXTRACTION,
         influenceRadius: 6, influenceScore: -30,
         production: { type: 'ENERGY', amount: 0 } // Produit ressource brute, pas énergie directe (affiché ailleurs)
     },
     [BuildingType.ORE_MINE]: {
         type: BuildingType.ORE_MINE, cost: 2500, name: "Mine de Minerai",
         description: "Extrait Fer, Or, Argent ou Pierre.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maintenance: 200,
+        category: BuildingCategory.EXTRACTION,
         influenceRadius: 6, influenceScore: -30
     },
     // ✅ SPECS DES NOUVEAUX BÂTIMENTS
     [BuildingType.SCHOOL]: {
         type: BuildingType.SCHOOL, cost: 1500, name: "École",
         description: "Éducation de base.", width: 2, height: 1, color: 0xFFEB3B, requiresRoad: true, workersNeeded: 6, maintenance: 100,
+        category: BuildingCategory.SERVICES,
         influenceRadius: 8
     },
     [BuildingType.CLINIC]: {
         type: BuildingType.CLINIC, cost: 1200, name: "Clinique",
         description: "Soins de santé.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 4, maintenance: 80,
+        category: BuildingCategory.SERVICES,
         influenceRadius: 6
     },
     [BuildingType.MUSEUM]: {
         type: BuildingType.MUSEUM, cost: 2500, name: "Musée",
         description: "Culture et tourisme.", width: 2, height: 2, color: 0x9C27B0, requiresRoad: true, workersNeeded: 5, maintenance: 150,
+        category: BuildingCategory.LEISURE,
         influenceRadius: 10
     },
     [BuildingType.RESTAURANT]: {
         type: BuildingType.RESTAURANT, cost: 600, name: "Restaurant",
         description: "Cuisine locale.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 3, maintenance: 0,
+        category: BuildingCategory.LEISURE,
         influenceRadius: 4
     },
     [BuildingType.CAFE]: {
         type: BuildingType.CAFE, cost: 400, name: "Café",
         description: "Lieu de rencontre.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2, maintenance: 0,
+        category: BuildingCategory.LEISURE,
         influenceRadius: 4
     }
 };
