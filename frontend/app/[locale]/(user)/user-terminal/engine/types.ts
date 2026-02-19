@@ -61,6 +61,8 @@ export enum BuildingType {
     INDUSTRIAL = 'INDUSTRIAL',
     POWER_PLANT = 'POWER_PLANT',
     WATER_PUMP = 'WATER_PUMP',
+    COAL_MINE = 'COAL_MINE', // ✅ New
+    ORE_MINE = 'ORE_MINE',   // ✅ New
     MINE = 'MINE', // Deprecated ? Kept for compatibility if needed
     OIL_RIG = 'OIL_RIG', // Offshore ?
     OIL_PUMP = 'OIL_PUMP', // ✅ NEW: Land based
@@ -210,7 +212,7 @@ export interface BuildingData {
 
     // Ressources (Mines / Puits)
     mining?: {
-        resource: 'COAL' | 'IRON' | 'GOLD' | 'OIL' | 'STONE';
+        resource: 'COAL' | 'IRON' | 'GOLD' | 'OIL' | 'STONE' | 'SILVER';
         amount: number; // Stock restant ou taux d'extraction
     };
 
@@ -320,7 +322,8 @@ export interface BuildingSpecs {
 
     // ✅ INFLUENCE
     influenceRadius?: number;
-    influenceScore?: number;
+    influenceScore?: number; // ✅ NOUVEAU: Impact sur le bonheur (-30 par ex)
+
 }
 
 export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
@@ -353,8 +356,13 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         description: "Bâtiment désactivé.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 0
     },
     [BuildingType.OIL_RIG]: {
-        type: BuildingType.OIL_RIG, cost: 99999, name: "Pétrole (Désactivé)",
-        description: "Bâtiment désactivé.", width: 1, height: 1, color: 0x424242, requiresRoad: true, workersNeeded: 0
+        type: BuildingType.OIL_RIG, cost: 99999, name: "Plateforme Pétrolière (Mer)",
+        description: "Extrait du pétrole en mer.", width: 2, height: 2, color: 0x424242, requiresRoad: false, workersNeeded: 0
+    },
+    [BuildingType.OIL_PUMP]: {
+        type: BuildingType.OIL_PUMP, cost: 3000, name: "Puits de Pétrole",
+        description: "Extrait du pétrole terrestre.", width: 1, height: 1, color: 0x263238, requiresRoad: true, workersNeeded: 5, maintenance: 120,
+        influenceRadius: 8, influenceScore: -40
     },
     [BuildingType.CITY_HALL]: {
         type: BuildingType.CITY_HALL, cost: 3000, name: "Mairie",
@@ -399,6 +407,18 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         // Wait, looking at file content of types.ts from previous step:
         // influenceRadius and influenceScore are NOT in BuildingSpecs interface lines 294-312.
         // I must add them to interface first or simultaneously.
+    },
+    // ✅ MINES
+    [BuildingType.COAL_MINE]: {
+        type: BuildingType.COAL_MINE, cost: 2000, name: "Mine de Charbon",
+        description: "Extrait du charbon du sol (Pollution !).", width: 2, height: 2, color: 0x3E2723, requiresRoad: true, workersNeeded: 10, maintenance: 150,
+        influenceRadius: 6, influenceScore: -30,
+        production: { type: 'ENERGY', amount: 0 } // Produit ressource brute, pas énergie directe (affiché ailleurs)
+    },
+    [BuildingType.ORE_MINE]: {
+        type: BuildingType.ORE_MINE, cost: 2500, name: "Mine de Minerai",
+        description: "Extrait Fer, Or, Argent ou Pierre.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maintenance: 200,
+        influenceRadius: 6, influenceScore: -30
     },
     // ✅ SPECS DES NOUVEAUX BÂTIMENTS
     [BuildingType.SCHOOL]: {

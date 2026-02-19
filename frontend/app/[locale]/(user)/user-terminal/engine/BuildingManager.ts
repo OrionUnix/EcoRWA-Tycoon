@@ -36,7 +36,13 @@ export class BuildingManager {
             // EXCEPTION : Si on construit une Mine ou un Puits de pétrole, on peut écraser la zone (auto-clear)
             // Mais pour l'instant, checkBuildValidity doit retourner true/false.
             // On va dire que c'est valide SI c'est une mine, car on gérera le nettoyage dans placeBuilding.
-            const isResourceExtractor = (type === BuildingType.MINE || type === BuildingType.OIL_RIG);
+            const isResourceExtractor = (
+                type === BuildingType.MINE ||
+                type === BuildingType.OIL_RIG ||
+                type === BuildingType.COAL_MINE ||
+                type === BuildingType.ORE_MINE ||
+                type === BuildingType.OIL_PUMP
+            );
 
             if (!isResourceExtractor) {
                 console.log('❌ Validation: Zone existante:', engine.zoningLayer[index]);
@@ -72,7 +78,7 @@ export class BuildingManager {
                 return { valid: false, reason: "Doit être placé sur un gisement de Minerai (Fer, Or, Argent, Pierre)" };
             }
         }
-        else if (type === BuildingType.OIL_RIG) {
+        else if (type === BuildingType.OIL_RIG || type === BuildingType.OIL_PUMP) {
             const hasOil = engine.resourceMaps.oil && engine.resourceMaps.oil[index] > 0;
             if (!hasOil) {
                 return { valid: false, reason: "Doit être placé sur un gisement de Pétrole" };
@@ -143,9 +149,29 @@ export class BuildingManager {
                 else if (type === BuildingType.FISHERMAN) {
                     label = "Zone de Pêche";
                     // Compte Eau
-                    if (engine.getLayer(1)[idx] > 0.3) count += 1;
+                    if (engine.getLayer(1)[idx] > 0.3) count += 1; // 1 = WATER
                 }
             }
+        }
+
+        // ✅ NOUVEAU : ESTIMATION POUR LES MINES (Rayon 0, juste sous le bâtiment)
+        // Mais comme la fonction est appelée "autour d'un point", on peut tricher
+        // ou juste check l'index central.
+        if (type === BuildingType.COAL_MINE) {
+            label = "Charbon (Est.)";
+            if (engine.resourceMaps.coal[index] > 0) count = 5; // Production de base
+        }
+        else if (type === BuildingType.ORE_MINE) {
+            label = "Minerai (Est.)";
+            // On prend le meilleur
+            if (engine.resourceMaps.gold[index] > 0) count = 5;
+            else if (engine.resourceMaps.silver[index] > 0) count = 5;
+            else if (engine.resourceMaps.iron[index] > 0) count = 5;
+            else if (engine.resourceMaps.stone[index] > 0) count = 5;
+        }
+        else if (type === BuildingType.OIL_PUMP || type === BuildingType.OIL_RIG) {
+            label = "Pétrole (Est.)";
+            if (engine.resourceMaps.oil[index] > 0) count = 5;
         }
 
         return { amount: count, label };
@@ -204,8 +230,8 @@ export class BuildingManager {
             else if (engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0) miningData = { resource: 'IRON', amount: engine.resourceMaps.iron[index] };
             else if (engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0) miningData = { resource: 'STONE', amount: engine.resourceMaps.stone[index] };
         }
-        else if (type === BuildingType.OIL_RIG) {
-            if (engine.resourceMaps.oil && engine.resourceMaps.oil[index] > 0) miningData = { resource: 'OIL', amount: 5000 };
+        else if (type === BuildingType.OIL_RIG || type === BuildingType.OIL_PUMP) {
+            if (engine.resourceMaps.oil && engine.resourceMaps.oil[index] > 0) miningData = { resource: 'OIL', amount: engine.resourceMaps.oil[index] };
         }
 
         // 3. Création Données

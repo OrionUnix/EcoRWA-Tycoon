@@ -86,7 +86,14 @@ export class MapEngine {
             energy: { produced: 0, consumed: 0 },
             water: { produced: 0, consumed: 0 },
             food: { produced: 0, consumed: 0 },
-            needs: { food: 0, water: 0, electricity: 0, jobs: 0 }
+            needs: { food: 0, water: 0, electricity: 0, jobs: 0 },
+            budget: {
+                income: 0,
+                expenses: 0,
+                taxIncome: { residential: 0, commercial: 0, industrial: 0 },
+                tradeIncome: 0,
+                maintenance: 0
+            }
         };
         this.currentSummary = {
             oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0,
