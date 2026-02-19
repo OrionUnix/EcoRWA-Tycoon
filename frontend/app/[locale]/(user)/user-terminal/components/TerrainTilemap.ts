@@ -44,8 +44,8 @@ export class TerrainTilemap {
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
-                // ✅ CHUNK: Ne pas dessiner les tuiles verrouillées (Île dans le vide)
-                if (!ChunkManager.isTileUnlocked(x, y)) continue;
+                // ✅ CHUNK: Détection verrouillé pour teinte grise (SimCity style)
+                const isLocked = !ChunkManager.isTileUnlocked(x, y);
 
                 const i = y * GRID_SIZE + x;
                 const biome = engine.biomes[i];
@@ -62,25 +62,20 @@ export class TerrainTilemap {
 
                     // 2. Ancrage Isométrique
                     if (isAtlas) {
-                        // Atlas (32x32) -> Scale x2 -> 64x64
-                        // Surface centrée à (0.5, 0.25)
                         sprite.anchor.set(0.5, 0.25);
                     } else {
-                        // Procédural (64x38 env) -> Scale x1
-                        // On veut que le CENTRE de la surface (32, 16) soit à l'origine (0, 0)
-                        // Anchor X = 32 / width = 0.5
-                        // Anchor Y = 16 / height
                         sprite.anchor.set(0.5, (TILE_HEIGHT / 2) / texture.height);
                     }
 
-                    // 3. Positionnement (Formule stricte utilisateur)
-                    // x = (col - row) * (WIDTH / 2)
-                    // y = (col + row) * (HEIGHT / 2)
+                    // 3. Positionnement
                     sprite.x = (x - y) * stepX;
                     sprite.y = (x + y) * stepY;
 
                     // 4. Tri d'affichage (Depth Sorting)
-                    sprite.zIndex = x + y; // Ce qui est loin derrière s'affiche en premier
+                    sprite.zIndex = x + y;
+
+                    // 5. ✅ TEINTE GRISE pour chunks verrouillés (SimCity border style)
+                    sprite.tint = isLocked ? 0x555555 : 0xFFFFFF;
 
                     this.container.addChild(sprite);
                     this.spriteCache.push(sprite);

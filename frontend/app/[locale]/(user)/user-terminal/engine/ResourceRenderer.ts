@@ -4,33 +4,86 @@ import { AtlasManager } from './AtlasManager';
 import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
 import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH, SURFACE_Y_OFFSET } from './config';
+import { asset } from '../utils/assetUtils';
 
 // ═══════════════════════════════════════════════════════
 // ResourceRenderer — Rendu des ressources naturelles
-// Priorité: Atlas (tree.png, tree02.png) > Procédural (forestFrames)
+// Priorité: Standalone 128px > Atlas (tree.png, tree02.png) > Procédural
 // ═══════════════════════════════════════════════════════
 
 const resourceCache = new Map<number, PIXI.Sprite>();
 
-// Cache des textures arbres Atlas (chargées une fois)
-let atlasTreeTextures: PIXI.Texture[] | null = null;
+// Cache des textures arbres (chargées une fois)
+let treeTexturesCache: PIXI.Texture[] | null = null;
+let treeTexturesLoading = false;
 
-function getAtlasTreeTextures(): PIXI.Texture[] {
-    if (atlasTreeTextures && atlasTreeTextures.length > 0) return atlasTreeTextures;
+// ✅ Chemins vers les sprites standalone 128x128
+const STANDALONE_TREE_PATHS = [
+    '/assets/isometric/Spritesheet/resources/tree.png',
+    '/assets/isometric/Spritesheet/resources/tree02.png',
+];
+
+/**
+ * Charge les textures arbres avec priorité :
+ *   1. Standalone 128x128 PNGs (meilleur rendu)
+ *   2. Atlas frames (fallback si standalone absent)
+ * 
+ * ⚠️ Doit être appelé AVANT le premier render (dans Promise.all du startup)
+ */
+export async function loadStandaloneTreeTextures(): Promise<void> {
+    if (treeTexturesCache || treeTexturesLoading) return;
+    treeTexturesLoading = true;
+
+    const loaded: PIXI.Texture[] = [];
+    for (const path of STANDALONE_TREE_PATHS) {
+        try {
+            const url = asset(path);
+            const tex = await PIXI.Assets.load(url);
+            if (tex && !tex.destroyed) {
+                // ✅ PIXEL ART CRISP
+                if (tex.source) tex.source.scaleMode = 'nearest';
+                loaded.push(tex);
+            }
+        } catch (e) {
+            // Silencieux — on essaiera l'atlas en fallback
+        }
+    }
+
+    if (loaded.length > 0) {
+        treeTexturesCache = loaded;
+        console.log(`🌲 ResourceRenderer: ${loaded.length} arbres standalone 128px chargés !`);
+    } else {
+        // Fallback: atlas
+        treeTexturesCache = getAtlasTreeTexturesSync();
+        if (treeTexturesCache.length > 0) {
+            console.log(`🌲 ResourceRenderer: ${treeTexturesCache.length} arbres atlas (fallback).`);
+        }
+    }
+    treeTexturesLoading = false;
+}
+
+/** Sync atlas tree textures (fallback) */
+function getAtlasTreeTexturesSync(): PIXI.Texture[] {
     if (!AtlasManager.isReady) return [];
-
-    atlasTreeTextures = [];
-    // Noms exacts dans atlas.json
-    const treeFrames = ['tree.png', 'tree02.png'];
-    for (const name of treeFrames) {
+    const result: PIXI.Texture[] = [];
+    for (const name of ['tree.png', 'tree02.png']) {
         const tex = AtlasManager.getTexture(name);
-        if (tex) atlasTreeTextures.push(tex);
+        if (tex) result.push(tex);
     }
+    return result;
+}
 
-    if (atlasTreeTextures.length > 0) {
-        console.log(`🌲 ResourceRenderer: ${atlasTreeTextures.length} textures arbres atlas chargées.`);
-    }
-    return atlasTreeTextures;
+function getTreeTextures(): PIXI.Texture[] {
+    if (treeTexturesCache && treeTexturesCache.length > 0) return treeTexturesCache;
+
+    // Tenter le chargement async (les frames seront dispo à la prochaine frame)
+    loadStandaloneTreeTextures();
+
+    // En attendant, essayer l'atlas en synchrone
+    const atlas = getAtlasTreeTexturesSync();
+    if (atlas.length > 0) return atlas;
+
+    return [];
 }
 
 export class ResourceRenderer {
@@ -84,12 +137,12 @@ export class ResourceRenderer {
 
                 if (resType === 'WOOD') {
                     // ═══════════════════════════════════════
-                    // PRIORITÉ 1: Atlas (tree.png / tree02.png)
+                    // PRIORITÉ 1: Standalone 128px > Atlas > Procédural
                     // ═══════════════════════════════════════
-                    const atlasFrames = getAtlasTreeTextures();
-                    if (atlasFrames.length > 0) {
-                        const frameIndex = i % atlasFrames.length;
-                        texture = atlasFrames[frameIndex];
+                    const treeFrames = getTreeTextures();
+                    if (treeFrames.length > 0) {
+                        const frameIndex = i % treeFrames.length;
+                        texture = treeFrames[frameIndex];
                     }
                     // ═══════════════════════════════════════
                     // FALLBACK: Procédural (ResourceAssets.forestFrames)
@@ -176,6 +229,6 @@ export class ResourceRenderer {
             }
         });
         resourceCache.clear();
-        atlasTreeTextures = null; // Reset pour recharger au prochain render
+        treeTexturesCache = null; // Reset pour recharger au prochain render
     }
 }

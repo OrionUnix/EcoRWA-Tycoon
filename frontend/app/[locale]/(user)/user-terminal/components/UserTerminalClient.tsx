@@ -20,6 +20,7 @@ import { GRID_SIZE, TILE_HEIGHT, TILE_WIDTH } from '../engine/config';
 
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI'; // Corrected Import
+import ChunkExpandOverlay from '../components/ui/ChunkExpandOverlay';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 import { VehicleRenderer } from '../components/VehicleRenderer';
 import { BuildingRenderer } from '../engine/BuildingRenderer';
@@ -96,12 +97,14 @@ export default function UserTerminalClient() {
                 await AtlasManager.load();
 
                 // ✅ ÉTAPE 2: Charger tous les assets en parallèle (atlas déjà prêt)
+                const { loadStandaloneTreeTextures } = await import('../engine/ResourceRenderer');
                 await Promise.all([
                     loadBiomeTextures(appRef.current),
                     ResourceAssets.load(appRef.current),
                     RoadAssets.load(appRef.current),
                     VehicleAssets.load(appRef.current),
-                    BuildingAssets.load()
+                    BuildingAssets.load(),
+                    loadStandaloneTreeTextures(), // 🌲 Arbres standalone 128px
                 ]);
 
                 if (active) {
@@ -354,6 +357,7 @@ export default function UserTerminalClient() {
                             setSelectedBuildingId={setSelectedBuildingId}
                         />
                     </div>
+                    <ChunkExpandOverlay viewportRef={viewportRef} isReady={isReady} />
                 </div>
             )}
         </div>

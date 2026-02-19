@@ -1,4 +1,5 @@
 import { CHUNK_SIZE, CHUNKS_PER_SIDE, GRID_SIZE } from './config';
+import { gridToScreen } from './isometric';
 
 // ═══════════════════════════════════════
 // CHUNK MANAGER — Gestion des parcelles
@@ -66,6 +67,32 @@ class _ChunkManager {
             }
         }
         return false;
+    }
+
+    /**
+     * Retourne la liste des chunks verrouillés adjacents à un chunk débloqué
+     * avec leurs coordonnées monde (pour afficher des boutons '+' en React)
+     */
+    getExpandableChunks(): { cx: number; cy: number; cost: number; worldX: number; worldY: number }[] {
+        const result: { cx: number; cy: number; cost: number; worldX: number; worldY: number }[] = [];
+        for (let cy = 0; cy < CHUNKS_PER_SIDE; cy++) {
+            for (let cx = 0; cx < CHUNKS_PER_SIDE; cx++) {
+                if (!this.unlocked[cy][cx] && this.isAdjacentToUnlocked(cx, cy)) {
+                    // Centre du chunk en coordonnées grille
+                    const tileX = cx * CHUNK_SIZE + CHUNK_SIZE / 2;
+                    const tileY = cy * CHUNK_SIZE + CHUNK_SIZE / 2;
+                    // Conversion grille → monde (isométrique)
+                    const screen = gridToScreen(tileX, tileY);
+                    result.push({
+                        cx, cy,
+                        cost: this.getUnlockCost(cx, cy),
+                        worldX: screen.x,
+                        worldY: screen.y
+                    });
+                }
+            }
+        }
+        return result;
     }
 
     /** Reset (pour régénération de monde) */

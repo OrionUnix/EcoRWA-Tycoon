@@ -11,6 +11,7 @@ import { TerrainPass } from './renderers/TerrainPass';
 import { RoadPass } from './renderers/RoadPass';
 import { EntityPass } from './renderers/EntityPass';
 import { CursorPass } from './renderers/CursorPass';
+import { BorderPass } from './renderers/BorderPass';
 
 /**
  * GameRenderer — Chef d'orchestre du rendu
@@ -39,6 +40,7 @@ export class GameRenderer {
         TerrainPass.render(container, engine, viewMode);    // z=0 : Sol
         RoadPass.render(container, engine);                  // z=0.5 : Routes
         EntityPass.render(container, g, engine, viewMode, showGrid, zoomLevel); // z=1+ : Entités
+        BorderPass.render(g);                                // Frontière brillante
         WorkerRenderer.render(container, zoomLevel);         // z=2+ : Workers
 
         return true;

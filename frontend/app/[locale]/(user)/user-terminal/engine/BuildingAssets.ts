@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { BuildingType } from './types';
 import { AtlasManager } from './AtlasManager';
+import { asset } from '../utils/assetUtils';
 
 // ═══════════════════════════════════════════════════════
 // BuildingAssets — Textures pour les bâtiments
@@ -116,6 +117,69 @@ export class BuildingAssets {
 
         this._loaded = true;
         console.log(`✅ BuildingAssets: ${loaded} textures chargées depuis l'atlas (${missed} manquantes)`);
+
+        // ═══════════════════════════════════════
+        // PASS 2: Standalone haute résolution (REMPLACE les atlas)
+        // Pour les bâtiments qui ont des sprites 128x128 hors atlas
+        // ═══════════════════════════════════════
+        const STANDALONE_OVERRIDES: Record<string, string> = {
+            'HUNTER_HUT': '/assets/isometric/Spritesheet/Buildings/special/hunter_cabin.png',
+            'LUMBER_CAMP': '/assets/isometric/Spritesheet/Buildings/special/lumber_camp.png',
+            'SAWMILL': '/assets/isometric/Spritesheet/Buildings/special/sawkill.png',
+            'EXCHANGE_MARKET': '/assets/isometric/Spritesheet/Buildings/special/exchangemarket.png',
+        };
+
+        let overrideCount = 0;
+        for (const [key, path] of Object.entries(STANDALONE_OVERRIDES)) {
+            try {
+                const url = asset(path);
+                const tex = await PIXI.Assets.load(url);
+                if (tex && !tex.destroyed) {
+                    if (tex.source) tex.source.scaleMode = 'nearest';
+                    this.textures.set(key, tex);
+                    this.textures.set(`${key}_VAR0`, tex);
+                    overrideCount++;
+                }
+            } catch (e) {
+                // Fichier introuvable — on garde la version atlas
+            }
+        }
+
+        if (overrideCount > 0) {
+            console.log(`🏗️ BuildingAssets: ${overrideCount} textures overridées en standalone haute-res`);
+        }
+
+        // ═══════════════════════════════════════
+        // PASS 3: Fallback direct PNG pour les frames manquantes
+        // ═══════════════════════════════════════
+        if (missed > 0) {
+            const BASE = '/assets/isometric/Spritesheet/Buildings/';
+            let directLoaded = 0;
+
+            for (const [key, files] of Object.entries(this.MAPPING)) {
+                for (let index = 0; index < files.length; index++) {
+                    const varKey = `${key}_VAR${index}`;
+                    if (!this.textures.has(varKey) && !this.textures.has(key)) {
+                        try {
+                            const url = asset(BASE + files[index]);
+                            const tex = await PIXI.Assets.load(url);
+                            if (tex && !tex.destroyed) {
+                                if (tex.source) tex.source.scaleMode = 'nearest';
+                                this.textures.set(varKey, tex);
+                                if (index === 0) this.textures.set(key, tex);
+                                directLoaded++;
+                            }
+                        } catch (e) {
+                            // Fichier introuvable
+                        }
+                    }
+                }
+            }
+
+            if (directLoaded > 0) {
+                console.log(`🏗️ BuildingAssets: +${directLoaded} textures chargées en standalone (fallback PNG)`);
+            }
+        }
     }
 
     /**
