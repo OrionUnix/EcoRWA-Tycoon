@@ -15,7 +15,7 @@ export default function AnimatedHero({ className }: AnimatedHeroProps) {
     const [mounted, setMounted] = useState(false);
     const [frame, setFrame] = useState(0);
 
-    const spriteUrl = withBasePath('/assets/models/house/animate02.png');
+    const spriteUrl = withBasePath('/assets/models/house/animate03.png');
     const cols = 6;
     const rows = 3;
     const totalFrames = 17;

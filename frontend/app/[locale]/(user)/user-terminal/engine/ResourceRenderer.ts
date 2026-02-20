@@ -5,12 +5,6 @@ import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
 import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH, SURFACE_Y_OFFSET } from './config';
 import { asset } from '../utils/assetUtils';
-
-// ═══════════════════════════════════════════════════════
-// ResourceRenderer — Rendu des ressources naturelles
-// Priorité: Standalone 128px > Atlas (tree.png, tree02.png) > Procédural
-// ═══════════════════════════════════════════════════════
-
 const resourceCache = new Map<number, PIXI.Sprite>();
 
 // Cache des textures arbres (chargées une fois)
@@ -19,17 +13,20 @@ let treeTexturesLoading = false;
 
 // ✅ Chemins vers les sprites standalone 128x128
 const STANDALONE_TREE_PATHS = [
-    '/assets/isometric/Spritesheet/resources/tree.png',
-    '/assets/isometric/Spritesheet/resources/tree02.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree02.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree03.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree04.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree05.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree06.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree07.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree08.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree09.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree10.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree11.png',
+    '/assets/isometric/Spritesheet/resources/trees/tree12.png',
 ];
 
-/**
- * Charge les textures arbres avec priorité :
- *   1. Standalone 128x128 PNGs (meilleur rendu)
- *   2. Atlas frames (fallback si standalone absent)
- * 
- * ⚠️ Doit être appelé AVANT le premier render (dans Promise.all du startup)
- */
 export async function loadStandaloneTreeTextures(): Promise<void> {
     if (treeTexturesCache || treeTexturesLoading) return;
     treeTexturesLoading = true;
@@ -118,9 +115,13 @@ export class ResourceRenderer {
         else if (engine.resourceMaps.coal[i] > 0.5) resType = 'COAL';
         else if (engine.resourceMaps.stone[i] > 0.5) resType = 'STONE';
 
-        // ✅ BOIS (Arbres) prioritaire en forêt
-        if (woodAmount > 0.1 && biome === BiomeType.FOREST) {
-            resType = 'WOOD';
+        // ════════════════════════════════════════════════════
+        // ✅ CORRECTION LOGIQUE DES ARBRES (Des vraies forêts !)
+        // ════════════════════════════════════════════════════
+        if (biome === BiomeType.FOREST) {
+            if (woodAmount > 0.02) resType = 'WOOD';
+        } else if (biome === BiomeType.PLAINS) {
+            if (woodAmount > 0.6) resType = 'WOOD';
         }
 
         // Masquer les minerais (pas de formes noires sur la carte)
@@ -157,12 +158,14 @@ export class ResourceRenderer {
 
                 sprite = new PIXI.Sprite(texture);
 
-                // ✅ Ancrage base-centre : l'arbre "se tient debout"
+                // ════════════════════════════════════════════════════
+                // ✅ CORRECTION DE L'ANCRAGE (TRES IMPORTANT)
+                // ════════════════════════════════════════════════════
                 sprite.anchor.set(0.5, 1.0);
                 sprite.tint = tint;
 
-                // ✅ Échelle: adapter au grid (atlas = 16px, grille = TILE_WIDTH px)
-                const treeScale = TILE_WIDTH / texture.width;
+                // ✅ Échelle: on agrandit l'arbre pour qu'il paraisse majestueux
+                const treeScale = (TILE_WIDTH / texture.width) * 2.0;
                 sprite.scale.set(treeScale);
 
                 container.addChild(sprite);
@@ -182,9 +185,11 @@ export class ResourceRenderer {
                         container.addChild(sprite);
                     }
 
-                    // Position isométrique
+                    // ════════════════════════════════════════════════════
+                    // ✅ CORRECTION DU PLACEMENT ISOMÉTRIQUE
+                    // ════════════════════════════════════════════════════
                     sprite.x = pos.x;
-                    sprite.y = pos.y + SURFACE_Y_OFFSET;
+                    sprite.y = pos.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET;
 
                     // Z-Index : entre le sol et les bâtiments
                     const x = i % GRID_SIZE;

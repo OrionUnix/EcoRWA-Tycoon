@@ -1,14 +1,19 @@
 import * as PIXI from 'pixi.js';
-import { CompositeTilemap } from '@pixi/tilemap';
 import { MapEngine } from '../engine/MapEngine';
 import { GRID_SIZE, TILE_WIDTH, TILE_HEIGHT } from '../engine/config';
 import { gridToScreen } from '../engine/isometric';
 import { getBiomeTexture } from '../engine/BiomeAssets';
 
+// ═══════════════════════════════════════════════════════════
+// DebugTerrainTilemap — Version native PixiJS v8
+// Remplace CompositeTilemap (@pixi/tilemap v5/v6 incompatible)
+// Utilise un PIXI.Container de PIXI.Sprite pour chaque tuile
+// ═══════════════════════════════════════════════════════════
+
 export class DebugTerrainTilemap {
-    private tilemap: CompositeTilemap;
+    private tileContainer: PIXI.Container;
     private debugGraphics: PIXI.Graphics;
-    private container: PIXI.Container; // Ajout d'un container stable
+    private container: PIXI.Container;
     private initialized: boolean = false;
 
     public debugMode: boolean = true;
@@ -16,18 +21,17 @@ export class DebugTerrainTilemap {
     // Configuration statique pour faciliter les tests à chaud
     static DEBUG_CONFIG = {
         ANCHOR_X: 0.5,
-        ANCHOR_Y: 0.75, // <--- Valeur à tester (0.6, 0.75, 0.85)
+        ANCHOR_Y: 0.65,
         WATER_OFFSET: 4,
         ROUND_PIXELS: true
     };
 
     constructor() {
-        this.tilemap = new CompositeTilemap();
+        this.container = new PIXI.Container();
+        this.tileContainer = new PIXI.Container();
         this.debugGraphics = new PIXI.Graphics();
 
-        // Initialisation du container stable
-        this.container = new PIXI.Container();
-        this.container.addChild(this.tilemap);
+        this.container.addChild(this.tileContainer);
         this.container.addChild(this.debugGraphics);
         this.container.sortableChildren = true;
 
@@ -35,14 +39,14 @@ export class DebugTerrainTilemap {
     }
 
     getContainer(): PIXI.Container {
-        // Retourne toujours la même instance pour éviter les fuites mémoire dans la boucle de rendu
         return this.container;
     }
 
     render(engine: MapEngine, viewMode: string) {
         if (!this.initialized || !engine.biomes) return;
 
-        this.tilemap.clear();
+        // Nettoyer les anciens sprites de tuiles
+        this.tileContainer.removeChildren().forEach(c => (c as PIXI.Sprite).destroy());
         this.debugGraphics.clear();
 
         for (let y = 0; y < GRID_SIZE; y++) {
@@ -52,39 +56,33 @@ export class DebugTerrainTilemap {
                 const pos = gridToScreen(x, y);
                 const texture = getBiomeTexture(biome, x, y);
 
-                if (texture) {
-                    // --- RÉGLAGES D'ALIGNEMENT ---
-                    const ANCHOR_X = 0.5;
-                    // ✅ MODIFICATION ICI : On diminue pour descendre le sprite.
-                    // Essaie 0.6. Si c'est trop bas, essaie 0.65. Si c'est trop haut, 0.55.
-                    const ANCHOR_Y = 0.65;
+                if (!texture) continue;
 
-                    const drawX = pos.x - (texture.width * ANCHOR_X);
-                    const drawY = pos.y - (texture.height * ANCHOR_Y);
+                const ANCHOR_X = DebugTerrainTilemap.DEBUG_CONFIG.ANCHOR_X;
+                const ANCHOR_Y = DebugTerrainTilemap.DEBUG_CONFIG.ANCHOR_Y;
 
-                    // ✅ MODIFICATION ICI : On remet l'eau à 0 pour l'instant
-                    let depthOffset = 4;
-                    // if (biome === 0 || biome === 1) depthOffset = 4;
+                const finalX = Math.round(pos.x - texture.width * ANCHOR_X);
+                const finalY = Math.round(pos.y - texture.height * ANCHOR_Y + DebugTerrainTilemap.DEBUG_CONFIG.WATER_OFFSET);
 
-                    const finalX = Math.round(drawX);
-                    const finalY = Math.round(drawY + depthOffset);
+                // ── Sprite natif PixiJS v8 ──
+                const sprite = new PIXI.Sprite(texture);
+                sprite.x = finalX;
+                sprite.y = finalY;
+                this.tileContainer.addChild(sprite);
 
-                    this.tilemap.addFrame(texture, finalX, finalY);
+                // --- VISUALISATION DEBUG ---
+                if (this.debugMode) {
+                    // Grille Rouge (losange isométrique)
+                    this.drawIsoDiamond(this.debugGraphics, pos.x, pos.y, TILE_WIDTH, TILE_HEIGHT);
+                    this.debugGraphics.stroke({ width: 1, color: 0xFF0000, alpha: 0.5 });
 
-                    // --- VISUALISATION DEBUG (Syntaxe Pixi v8) ---
-                    if (this.debugMode) {
-                        // Grille Rouge
-                        this.drawIsoDiamond(this.debugGraphics, pos.x, pos.y, TILE_WIDTH, TILE_HEIGHT);
-                        this.debugGraphics.stroke({ width: 1, color: 0xFF0000, alpha: 0.5 });
+                    // Boite Bleue (bounds du sprite)
+                    this.debugGraphics.rect(finalX, finalY, texture.width, texture.height);
+                    this.debugGraphics.stroke({ width: 1, color: 0x0000FF, alpha: 0.5 });
 
-                        // Boite Bleue
-                        this.debugGraphics.rect(finalX, finalY, texture.width, texture.height);
-                        this.debugGraphics.stroke({ width: 1, color: 0x0000FF, alpha: 0.5 });
-
-                        // Point Jaune (Centre cible)
-                        this.debugGraphics.circle(pos.x, pos.y, 3);
-                        this.debugGraphics.fill({ color: 0xFFFF00, alpha: 1 });
-                    }
+                    // Point Jaune (Centre cible)
+                    this.debugGraphics.circle(pos.x, pos.y, 3);
+                    this.debugGraphics.fill({ color: 0xFFFF00, alpha: 1 });
                 }
             }
         }
@@ -100,15 +98,13 @@ export class DebugTerrainTilemap {
         g.closePath();
     }
 
-
-
     clear() {
-        this.tilemap.clear();
+        this.tileContainer.removeChildren().forEach(c => (c as PIXI.Sprite).destroy());
         this.debugGraphics.clear();
     }
 
     destroy() {
-        this.tilemap.destroy({ children: true });
-        this.debugGraphics.destroy();
+        this.clear();
+        this.container.destroy({ children: true });
     }
 }

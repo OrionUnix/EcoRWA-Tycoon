@@ -7,6 +7,7 @@ import { COLORS } from '../../engine/constants';
 import { ChunkManager } from '../../engine/ChunkManager';
 import { TerrainRenderer } from '../TerrainRenderer';
 import { ResourceRenderer } from '../../engine/ResourceRenderer';
+import { WildlifeRenderer } from '../../engine/WildlifeRenderer';
 import { BuildingRenderer } from '../../engine/BuildingRenderer';
 
 /**
@@ -47,9 +48,10 @@ export class EntityPass {
                     TerrainRenderer.drawOverlays(g, engine, biome, i, pos, viewMode);
                 }
 
-                // 2. RESSOURCES (Arbres)
+                // 2. RESSOURCES (Arbres) & FAUNE
                 if (!isLowDetail && viewMode === 'ALL') {
                     ResourceRenderer.drawResource(container, engine, i, pos, wood, biome);
+                    WildlifeRenderer.drawWildlife(container, engine, i, pos, biome);
                 }
 
                 // 3. GRILLE

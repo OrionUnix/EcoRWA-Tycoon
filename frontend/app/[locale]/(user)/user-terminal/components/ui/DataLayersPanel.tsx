@@ -1,5 +1,4 @@
 import React from 'react';
-import { GlassPanel } from './GlassPanel';
 
 // ═══════════════════════════════════════
 // SimCity 2013 — DATA LAYERS PANEL
@@ -109,70 +108,65 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
 
     return (
         <div
-            className="fixed z-40 pointer-events-auto"
+            className="absolute z-40 pointer-events-auto left-6 top-32 w-64 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-4 border border-black/10"
             style={{
-                left: '60px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                maxHeight: 'calc(100vh - 200px)',
+                maxHeight: 'calc(100vh - 160px)',
                 fontFamily: "'Inter', 'Segoe UI', sans-serif",
                 animation: 'panelSlideIn 0.2s ease-out',
             }}
         >
-            <GlassPanel variant="sub" className="p-3">
-                <div style={{ width: '240px' }}>
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-2 pb-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                        <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs shadow-md"
-                                style={{ background: '#4A4A4A' }}>📊</div>
-                            <span className="text-[12px] font-bold" style={{ color: '#2C2C2C' }}>Couches de Données</span>
-                        </div>
-                        <button onClick={handleClose} className="w-5 h-5 rounded-full flex items-center justify-center text-[9px]"
-                            style={{ background: 'rgba(0,0,0,0.06)', color: '#999' }}>✕</button>
+            <div className="w-full flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-2 pb-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs shadow-md"
+                            style={{ background: '#4A4A4A' }}>📊</div>
+                        <span className="text-[12px] font-bold" style={{ color: '#2C2C2C' }}>Couches de Données</span>
                     </div>
-
-                    {/* Clear button */}
-                    {activeLayer && (
-                        <button
-                            onClick={handleClear}
-                            className="w-full mb-2 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-[1.01]"
-                            style={{ background: 'rgba(208,2,27,0.08)', color: '#D0021B', border: '1px solid rgba(208,2,27,0.15)' }}
-                        >
-                            ✕ Désactiver
-                        </button>
-                    )}
-
-                    {/* Grouped layers */}
-                    <div className="overflow-y-auto space-y-2" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-                        {Object.entries(groups).map(([groupName, layers]) => (
-                            <div key={groupName}>
-                                <div className="text-[9px] font-bold uppercase tracking-wider mb-1 px-1"
-                                    style={{ color: 'rgba(0,0,0,0.3)' }}>
-                                    {groupName}
-                                </div>
-                                <div className="space-y-0.5">
-                                    {layers.map(layer => (
-                                        <LayerButton
-                                            key={layer.id}
-                                            layer={layer}
-                                            active={activeLayer === layer.id}
-                                            onClick={() => handleSelectLayer(layer)}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <button onClick={handleClose} className="w-5 h-5 rounded-full flex items-center justify-center text-[9px]"
+                        style={{ background: 'rgba(0,0,0,0.06)', color: '#999' }}>✕</button>
                 </div>
-            </GlassPanel>
+
+                {/* Clear button */}
+                {activeLayer && (
+                    <button
+                        onClick={handleClear}
+                        className="w-full mb-2 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-[1.01]"
+                        style={{ background: 'rgba(208,2,27,0.08)', color: '#D0021B', border: '1px solid rgba(208,2,27,0.15)' }}
+                    >
+                        ✕ Désactiver
+                    </button>
+                )}
+
+                {/* Grouped layers */}
+                <div className="overflow-y-auto space-y-2" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+                    {Object.entries(groups).map(([groupName, layers]) => (
+                        <div key={groupName}>
+                            <div className="text-[9px] font-bold uppercase tracking-wider mb-1 px-1"
+                                style={{ color: 'rgba(0,0,0,0.3)' }}>
+                                {groupName}
+                            </div>
+                            <div className="space-y-0.5">
+                                {layers.map(layer => (
+                                    <LayerButton
+                                        key={layer.id}
+                                        layer={layer}
+                                        active={activeLayer === layer.id}
+                                        onClick={() => handleSelectLayer(layer)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             <style>{`
                 @keyframes panelSlideIn {
-                    from { opacity: 0; transform: translate(-12px, -50%); }
-                    to { opacity: 1; transform: translate(0, -50%); }
+                    from { opacity: 0; transform: translateX(-12px); }
+                    to { opacity: 1; transform: translateX(0); }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };

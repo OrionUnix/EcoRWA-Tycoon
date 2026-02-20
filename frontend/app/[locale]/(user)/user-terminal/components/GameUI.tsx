@@ -11,7 +11,6 @@ import { getGameEngine } from '../engine/GameEngine';
 // ✅ SIMCITY 2013 UI COMPONENTS
 import { CityInfoBar } from './ui/CityInfoBar';
 import { MainToolbar } from './ui/MainToolbar';
-import { SubToolbar } from './ui/SubToolbar';
 import { ActiveToolHUD } from './ui/ActiveToolHUD';
 
 // ✅ SERVICE PANELS
@@ -179,22 +178,7 @@ export default function GameUI({
                 />
             )}
 
-            {/* ═══════════════════════════════════════ */}
-            {/* SUB-TOOLBAR (Floating, left-side centered) */}
-            {/* ═══════════════════════════════════════ */}
-            {activeCategory !== 'DATA' && (
-                <SubToolbar
-                    activeCategory={activeCategory}
-                    viewMode={viewMode}
-                    setViewMode={setViewMode}
-                    selectedRoadType={selectedRoadType}
-                    setSelectedRoadType={setSelectedRoadType}
-                    selectedZoneType={selectedZoneType}
-                    setSelectedZoneType={setSelectedZoneType}
-                    setSelectedBuildingType={setSelectedBuildingType}
-                    setActiveCategory={setActiveCategory}
-                />
-            )}
+
 
             {/* ═══════════════════════════════════════ */}
             {/* MAIN TOOLBAR (Bottom-Center) */}
@@ -204,6 +188,11 @@ export default function GameUI({
                 setActiveCategory={setActiveCategory}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
+                selectedRoadType={selectedRoadType}
+                setSelectedRoadType={setSelectedRoadType}
+                selectedZoneType={selectedZoneType}
+                setSelectedZoneType={setSelectedZoneType}
+                setSelectedBuildingType={setSelectedBuildingType}
             />
         </div>
     );

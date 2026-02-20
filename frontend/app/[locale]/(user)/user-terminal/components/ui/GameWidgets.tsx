@@ -86,9 +86,8 @@ export function GameTooltip({ hoverInfo, cursorPos }: { hoverInfo: any, cursorPo
     return (
         <div className="absolute top-24 left-6 bg-gray-900/95 text-white p-4 rounded-2xl border border-white/10 shadow-2xl w-64 pointer-events-none z-50 backdrop-blur-xl animate-in fade-in slide-in-from-left-2">
             <div className="flex justify-between items-start border-b border-white/10 pb-2 mb-3">
-                <div>
-                    <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">{t('Game.tooltip.coordinates')}</h3>
-                    <p className="font-mono text-sm text-blue-400">{cursorPos.x}, {cursorPos.y}</p>
+                <div className="flex-1">
+                    {/* Coordonnées supprimées à la demande de l'utilisateur */}
                 </div>
                 {/* Si bâtiment, on affiche son nom en priorité sur le biome */}
                 <div className="text-right">

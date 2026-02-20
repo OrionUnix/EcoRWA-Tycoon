@@ -5,6 +5,7 @@ import { ZoneManager } from '../ZoneManager';
 import { PopulationManager } from './PopulationManager';
 import { BuildingType, BUILDING_SPECS } from '../types';
 import { ResourceRenderer } from '../ResourceRenderer';
+import { WildlifeRenderer } from '../WildlifeRenderer';
 import { ChunkManager } from '../ChunkManager';
 import { globalWorld } from '../ecs/world';
 import { addEntity, addComponent, removeEntity } from 'bitecs';
@@ -91,8 +92,9 @@ export class InteractionSystem {
                     // 3. IMPACT ENVIRONNEMENT & PATHFINDING
                     RoadManager.applyEnvironmentalImpact(map, idx);
                     RoadManager.updateConnections(map, idx);
-                    // ✅ SUPPRESSION VISUELLE DE L'ARBRE
+                    // ✅ SUPPRESSION VISUELLE DE L'ARBRE ET ANIMAUX
                     ResourceRenderer.removeResourceAt(idx);
+                    WildlifeRenderer.removeWildlifeAt(idx);
                 }
             });
 

@@ -2,6 +2,7 @@ import { MapEngine } from './MapEngine';
 import { BuildingType, BuildingData, BUILDING_SPECS, ZoneType } from './types';
 import { GRID_SIZE } from './config';
 import { ResourceRenderer } from './ResourceRenderer';
+import { WildlifeRenderer } from './WildlifeRenderer';
 import { PopulationManager } from './systems/PopulationManager';
 
 export class BuildingManager {
@@ -210,7 +211,9 @@ export class BuildingManager {
 
         // 2. Nettoyage Nature
         if (engine.resourceMaps.wood) engine.resourceMaps.wood[index] = 0;
+        if (engine.resourceMaps.animals) engine.resourceMaps.animals[index] = 0;
         ResourceRenderer.removeResourceAt(index);
+        WildlifeRenderer.removeWildlifeAt(index);
 
         // 2b. Nettoyage Zone (Auto-clear pour les mines)
         if (engine.zoningLayer[index]) {
