@@ -12,9 +12,13 @@ const wildlifeCache = new Map<number, PIXI.AnimatedSprite>();
 // ✅ NOUVELLE CONFIGURATION : Nombre exact de frames calculées
 const ANIMAL_CONFIG = {
     cerf: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_NE_idle.png', frames: 24 }, // 768 / 32 = 24
-    cerf2: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_SW_run.png', frames: 10 }, // 320 / 32 = 10
+    cerf2: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_SW_idle.png', frames: 24 }, // 768 / 32 = 24
+    cerf_run: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_NE_run.png', frames: 10 },
+    cerf2_run: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_SW_run.png', frames: 10 },
     sanglier: { url: '/assets/isometric/Spritesheet/resources/animals/boar/boar_NE_idle_strip.png', frames: 7 }, // 287 / 41 = 7
-    blaireau: { url: '/assets/isometric/Spritesheet/resources/animals/badger/critter_badger_NE_idle.png', frames: 22 } // 924 / 42 = 22
+    sanglier_run: { url: '/assets/isometric/Spritesheet/resources/animals/boar/boar_NE_run_strip.png', frames: 4 }, // 164 / 41 = 4
+    blaireau: { url: '/assets/isometric/Spritesheet/resources/animals/badger/critter_badger_NE_idle.png', frames: 22 }, // 924 / 42 = 22
+    blaireau_run: { url: '/assets/isometric/Spritesheet/resources/animals/badger/critter_badger_NE_walk.png', frames: 9 } // 378 / 42 = 9
 };
 
 const animalAnimations: Record<string, PIXI.Texture[]> = {};
@@ -64,8 +68,12 @@ export async function loadWildlifeTextures(): Promise<void> {
     // ✅ On passe maintenant l'URL ET le nombre de frames à la fonction
     animalAnimations['cerf'] = await sliceStrip(ANIMAL_CONFIG.cerf.url, ANIMAL_CONFIG.cerf.frames);
     animalAnimations['cerf2'] = await sliceStrip(ANIMAL_CONFIG.cerf2.url, ANIMAL_CONFIG.cerf2.frames);
+    animalAnimations['cerf_run'] = await sliceStrip(ANIMAL_CONFIG.cerf_run.url, ANIMAL_CONFIG.cerf_run.frames);
+    animalAnimations['cerf2_run'] = await sliceStrip(ANIMAL_CONFIG.cerf2_run.url, ANIMAL_CONFIG.cerf2_run.frames);
     animalAnimations['sanglier'] = await sliceStrip(ANIMAL_CONFIG.sanglier.url, ANIMAL_CONFIG.sanglier.frames);
+    animalAnimations['sanglier_run'] = await sliceStrip(ANIMAL_CONFIG.sanglier_run.url, ANIMAL_CONFIG.sanglier_run.frames);
     animalAnimations['blaireau'] = await sliceStrip(ANIMAL_CONFIG.blaireau.url, ANIMAL_CONFIG.blaireau.frames);
+    animalAnimations['blaireau_run'] = await sliceStrip(ANIMAL_CONFIG.blaireau_run.url, ANIMAL_CONFIG.blaireau_run.frames);
 
     // Nettoyer les animations vides (échec de chargement)
     for (const key in animalAnimations) {
@@ -85,11 +93,72 @@ export class WildlifeRenderer {
     static removeWildlifeAt(i: number) {
         const sprite = wildlifeCache.get(i);
         if (sprite) {
-            if (sprite.parent) sprite.parent.removeChild(sprite);
-            sprite.stop();
-            sprite.destroy();
-            wildlifeCache.delete(i);
+            // Si l'animal n'est pas déjà en train de fuir, on déclenche la fuite
+            if (!(sprite as any).isFleeing) {
+                const animalType = (sprite as any).animalType || 'cerf';
+                WildlifeRenderer.fleeAnimal(sprite, i, animalType);
+            } else {
+                // S'il fuit déjà et qu'on le supprime de nouveau, alors on détruit
+                if (sprite.parent) sprite.parent.removeChild(sprite);
+                sprite.stop();
+                sprite.destroy();
+                wildlifeCache.delete(i);
+            }
         }
+    }
+
+    static fleeAnimal(sprite: PIXI.AnimatedSprite, i: number, animalType: string) {
+        if ((sprite as any).isFleeing) return;
+        (sprite as any).isFleeing = true; // Marque en fuite
+
+        // Retire du cache pour ne plus être re-ciblé par update
+        wildlifeCache.delete(i);
+
+        const runType = animalType + '_run';
+        let runFrames = animalAnimations[runType];
+
+        // Fallback s'il n'y a pas d'animation de course
+        if (!runFrames || runFrames.length === 0) {
+            runFrames = animalAnimations[animalType];
+        }
+
+        if (runFrames && runFrames.length > 0) {
+            sprite.textures = runFrames;
+            sprite.animationSpeed = 0.2; // Courir plus vite
+            sprite.play();
+        }
+
+        // Objectif: une case à côté (en haut à droite isométriquement par ex)
+        const targetX = sprite.x + TILE_WIDTH / 2;
+        const targetY = sprite.y - TILE_HEIGHT / 2;
+
+        const ticker = PIXI.Ticker.shared;
+        const speed = 1.5;
+
+        // Fonction d'animation ajoutée au Ticker
+        const moveFlee = () => {
+            if (sprite.destroyed) {
+                ticker.remove(moveFlee);
+                return;
+            }
+
+            const dx = targetX - sprite.x;
+            const dy = targetY - sprite.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // Si arrivé à destination, on supprime l'animal
+            if (dist < 3) {
+                ticker.remove(moveFlee);
+                if (sprite.parent) sprite.parent.removeChild(sprite);
+                sprite.stop();
+                sprite.destroy();
+            } else {
+                sprite.x += (dx / dist) * speed;
+                sprite.y += (dy / dist) * speed;
+            }
+        };
+
+        ticker.add(moveFlee);
     }
 
     static drawWildlife(
@@ -103,6 +172,7 @@ export class WildlifeRenderer {
 
         const hasRoad = engine.roadLayer && engine.roadLayer[i] !== null;
         const hasBuilding = engine.buildingLayer && engine.buildingLayer[i] !== null;
+        const hasWood = engine.resourceMaps.wood && engine.resourceMaps.wood[i] > 0.5;
 
         // 1. On lit la valeur du gibier sur cette tuile
         const gibierValue = engine.resourceMaps.animals ? engine.resourceMaps.animals[i] : 0;
@@ -113,7 +183,8 @@ export class WildlifeRenderer {
         // Cela crée des petits "troupeaux" naturels au lieu d'un tapis d'animaux collés.
         const hasAnimals = gibierValue > 0.85 && (i % 4 === 0);
 
-        const shouldShow = hasAnimals && !hasRoad && !hasBuilding;
+        // NOUVEAU: Le gibier n'apparaît JAMAIS dans les forêts denses (hasWood)
+        const shouldShow = hasAnimals && !hasRoad && !hasBuilding && !hasWood;
 
         if (shouldShow) {
             if (!sprite) {
@@ -140,6 +211,9 @@ export class WildlifeRenderer {
 
                 // ✅ Ancrage Isométrique
                 sprite.anchor.set(0.5, 1.0);
+
+                // Sauvegarde du type d'animal pour la logique de fuite
+                (sprite as any).animalType = animalType;
 
                 // ✅ CORRECTION DE L'ÉCHELLE (SCALE)
                 // L'animal occupera 40% de la largeur de la tuile
@@ -179,7 +253,9 @@ export class WildlifeRenderer {
                 wildlifeCache.delete(i);
                 sprite = undefined;
             }
-        } else {
+        } else if (sprite) {
+            // S'il existe un sprite et qu'il ne doit plus être affiché
+            // C'est qu'on vient de construire une route/un bâtiment => FUITE !
             WildlifeRenderer.removeWildlifeAt(i);
         }
     }

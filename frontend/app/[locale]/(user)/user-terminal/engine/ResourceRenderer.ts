@@ -118,10 +118,9 @@ export class ResourceRenderer {
         // ════════════════════════════════════════════════════
         // ✅ CORRECTION LOGIQUE DES ARBRES (Des vraies forêts !)
         // ════════════════════════════════════════════════════
-        if (biome === BiomeType.FOREST) {
-            if (woodAmount > 0.02) resType = 'WOOD';
-        } else if (biome === BiomeType.PLAINS) {
-            if (woodAmount > 0.6) resType = 'WOOD';
+        // Règle stricte: Les arbres n'apparaissent QUE là où il y a concrètement du bois
+        if (woodAmount > 0.5) {
+            resType = 'WOOD';
         }
 
         // Masquer les minerais (pas de formes noires sur la carte)
