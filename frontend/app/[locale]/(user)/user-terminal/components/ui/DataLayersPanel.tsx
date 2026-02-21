@@ -51,17 +51,17 @@ function LayerButton({ layer, active, onClick }: { layer: DataLayer; active: boo
     return (
         <button
             onClick={onClick}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl transition-all duration-150 hover:scale-[1.01]"
+            className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl transition-all duration-150 hover:bg-white/5 hover:scale-[1.01]"
             style={{
-                background: active ? `${layer.color}18` : 'transparent',
-                border: active ? `2px solid ${layer.color}50` : '2px solid transparent',
+                background: active ? `${layer.color}25` : 'transparent',
+                border: active ? `1.5px solid ${layer.color}80` : '1.5px solid transparent',
             }}
         >
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs shadow-sm flex-shrink-0"
-                style={{ background: active ? layer.color : `${layer.color}88` }}>
+                style={{ background: active ? layer.color : `${layer.color}66` }}>
                 {layer.icon}
             </div>
-            <span className="text-[11px] font-semibold" style={{ color: active ? '#2C2C2C' : '#666' }}>
+            <span className="text-[11px] font-semibold" style={{ color: active ? 'white' : '#aaa' }}>
                 {layer.label}
             </span>
             {active && (
@@ -108,23 +108,21 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
 
     return (
         <div
-            className="absolute z-40 pointer-events-auto left-6 top-32 w-64 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-4 border border-black/10"
+            className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-h-[60vh] overflow-y-auto bg-slate-800/95 backdrop-blur-md border border-slate-600 rounded-xl p-4 shadow-2xl origin-bottom animate-in fade-in slide-in-from-bottom-2 z-40 pointer-events-auto"
             style={{
-                maxHeight: 'calc(100vh - 160px)',
                 fontFamily: "'Inter', 'Segoe UI', sans-serif",
-                animation: 'panelSlideIn 0.2s ease-out',
             }}
         >
             <div className="w-full flex flex-col h-full">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-2 pb-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                <div className="flex items-center justify-between mb-2 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs shadow-md"
                             style={{ background: '#4A4A4A' }}>📊</div>
-                        <span className="text-[12px] font-bold" style={{ color: '#2C2C2C' }}>Couches de Données</span>
+                        <span className="text-[12px] font-bold text-white">Couches de Données</span>
                     </div>
-                    <button onClick={handleClose} className="w-5 h-5 rounded-full flex items-center justify-center text-[9px]"
-                        style={{ background: 'rgba(0,0,0,0.06)', color: '#999' }}>✕</button>
+                    <button onClick={handleClose} className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] hover:bg-white/10"
+                        style={{ background: 'rgba(255,255,255,0.1)', color: '#ccc' }}>✕</button>
                 </div>
 
                 {/* Clear button */}
@@ -139,11 +137,11 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
                 )}
 
                 {/* Grouped layers */}
-                <div className="overflow-y-auto space-y-2" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+                <div className="overflow-y-auto space-y-2">
                     {Object.entries(groups).map(([groupName, layers]) => (
                         <div key={groupName}>
                             <div className="text-[9px] font-bold uppercase tracking-wider mb-1 px-1"
-                                style={{ color: 'rgba(0,0,0,0.3)' }}>
+                                style={{ color: 'rgba(255,255,255,0.4)' }}>
                                 {groupName}
                             </div>
                             <div className="space-y-0.5">
@@ -161,12 +159,6 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
                 </div>
             </div>
 
-            <style>{`
-                @keyframes panelSlideIn {
-                    from { opacity: 0; transform: translateX(-12px); }
-                    to { opacity: 1; transform: translateX(0); }
-                }
-            `}</style>
         </div >
     );
 };

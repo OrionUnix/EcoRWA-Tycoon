@@ -163,20 +163,8 @@ export default function GameUI({
             />
 
             {/* ═══════════════════════════════════════ */}
-            {/* DATA LAYERS PANEL */}
+            {/* DATA LAYERS PANEL MAITENANT RENDU DANS MAINTOOLBAR */}
             {/* ═══════════════════════════════════════ */}
-            {activeCategory === 'DATA' && (
-                <DataLayersPanel
-                    activeLayer={activeDataLayer}
-                    onSelectLayer={setActiveDataLayer}
-                    onSetViewMode={setViewMode}
-                    onClose={() => {
-                        setActiveCategory(null);
-                        setViewMode('ALL');
-                        setActiveDataLayer(null);
-                    }}
-                />
-            )}
 
 
 
@@ -193,6 +181,8 @@ export default function GameUI({
                 selectedZoneType={selectedZoneType}
                 setSelectedZoneType={setSelectedZoneType}
                 setSelectedBuildingType={setSelectedBuildingType}
+                activeDataLayer={activeDataLayer}
+                setActiveDataLayer={setActiveDataLayer}
             />
         </div>
     );

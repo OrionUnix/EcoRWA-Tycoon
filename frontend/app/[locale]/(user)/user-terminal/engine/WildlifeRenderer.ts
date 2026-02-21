@@ -12,7 +12,7 @@ const wildlifeCache = new Map<number, PIXI.AnimatedSprite>();
 // ✅ NOUVELLE CONFIGURATION : Nombre exact de frames calculées
 const ANIMAL_CONFIG = {
     cerf: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_NE_idle.png', frames: 24 }, // 768 / 32 = 24
-    cerf2: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_SW_idle.png', frames: 24 }, // 768 / 32 = 24
+    cerf2: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_SE_idle.png', frames: 24 }, // 768 / 32 = 24
     cerf_run: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_NE_run.png', frames: 10 },
     cerf2_run: { url: '/assets/isometric/Spritesheet/resources/animals/cerf/critter_stag_SW_run.png', frames: 10 },
     sanglier: { url: '/assets/isometric/Spritesheet/resources/animals/boar/boar_NE_idle_strip.png', frames: 7 }, // 287 / 41 = 7
@@ -90,13 +90,20 @@ export async function loadWildlifeTextures(): Promise<void> {
 }
 
 export class WildlifeRenderer {
-    static removeWildlifeAt(i: number) {
+    static removeWildlifeAt(i: number, engine?: MapEngine) {
         const sprite = wildlifeCache.get(i);
         if (sprite) {
             // Si l'animal n'est pas déjà en train de fuir, on déclenche la fuite
             if (!(sprite as any).isFleeing) {
                 const animalType = (sprite as any).animalType || 'cerf';
-                WildlifeRenderer.fleeAnimal(sprite, i, animalType);
+
+                // Déplacer les données vers une case voisine si l'engine est fourni
+                let targetIdx = i - GRID_SIZE; // Par défaut: Nord
+                if (engine) {
+                    targetIdx = WildlifeRenderer.disperseWildlifeData(engine, i);
+                }
+
+                WildlifeRenderer.fleeAnimal(sprite, i, animalType, targetIdx);
             } else {
                 // S'il fuit déjà et qu'on le supprime de nouveau, alors on détruit
                 if (sprite.parent) sprite.parent.removeChild(sprite);
@@ -104,10 +111,44 @@ export class WildlifeRenderer {
                 sprite.destroy();
                 wildlifeCache.delete(i);
             }
+        } else if (engine) {
+            // Même s'il n'y a pas de sprite, on déplace la donnée (ex: hors écran)
+            WildlifeRenderer.disperseWildlifeData(engine, i);
         }
     }
 
-    static fleeAnimal(sprite: PIXI.AnimatedSprite, i: number, animalType: string) {
+    /**
+     * Transfère la quantité de gibier d'une tuile vers une voisine
+     */
+    static disperseWildlifeData(engine: MapEngine, index: number): number {
+        if (!engine.resourceMaps.animals || engine.resourceMaps.animals[index] <= 0) return index - GRID_SIZE;
+
+        const amount = engine.resourceMaps.animals[index];
+        engine.resourceMaps.animals[index] = 0;
+
+        const neighbors = [
+            index - GRID_SIZE, // N
+            index + 1,         // E
+            index + GRID_SIZE, // S
+            index - 1          // W
+        ];
+
+        for (const n of neighbors) {
+            if (n >= 0 && n < engine.config.totalCells) {
+                const isWater = engine.getLayer(1)[n] > 0.3;
+                const hasRoad = engine.roadLayer[n] !== null;
+                const hasBuilding = engine.buildingLayer[n] !== null;
+
+                if (!hasRoad && !hasBuilding && !isWater) {
+                    engine.resourceMaps.animals[n] += amount;
+                    return n; // Voisin trouvé
+                }
+            }
+        }
+        return neighbors[0]; // Fallback
+    }
+
+    static fleeAnimal(sprite: PIXI.AnimatedSprite, i: number, animalType: string, targetIdx: number) {
         if ((sprite as any).isFleeing) return;
         (sprite as any).isFleeing = true; // Marque en fuite
 
@@ -128,9 +169,26 @@ export class WildlifeRenderer {
             sprite.play();
         }
 
-        // Objectif: une case à côté (en haut à droite isométriquement par ex)
-        const targetX = sprite.x + TILE_WIDTH / 2;
-        const targetY = sprite.y - TILE_HEIGHT / 2;
+        // Objectif: une case à côté (calculée)
+        const targetXGrid = targetIdx % GRID_SIZE;
+        const targetYGrid = Math.floor(targetIdx / GRID_SIZE);
+
+        // Conversion Isométrique basique relative
+        // Sachant que la position actuelle est (i % GRID_SIZE) et Math.floor(i / GRID_SIZE)
+        const currentXGrid = i % GRID_SIZE;
+        const currentYGrid = Math.floor(i / GRID_SIZE);
+        const diffX = targetXGrid - currentXGrid;
+        const diffY = targetYGrid - currentYGrid;
+
+        const targetX = sprite.x + (diffX - diffY) * (TILE_WIDTH / 2);
+        const targetY = sprite.y + (diffX + diffY) * (TILE_HEIGHT / 2);
+
+        // Orienter visuellement le sprite
+        if (targetX < sprite.x) {
+            sprite.scale.x = -Math.abs(sprite.scale.x); // Mirroir horizontal (fuite vers la gauche)
+        } else {
+            sprite.scale.x = Math.abs(sprite.scale.x);
+        }
 
         const ticker = PIXI.Ticker.shared;
         const speed = 1.5;
@@ -183,8 +241,11 @@ export class WildlifeRenderer {
         // Cela crée des petits "troupeaux" naturels au lieu d'un tapis d'animaux collés.
         const hasAnimals = gibierValue > 0.85 && (i % 4 === 0);
 
-        // NOUVEAU: Le gibier n'apparaît JAMAIS dans les forêts denses (hasWood)
-        const shouldShow = hasAnimals && !hasRoad && !hasBuilding && !hasWood;
+        const waterLevel = engine.getLayer(1)[i];
+        const isWater = waterLevel > 0.3;
+
+        // NOUVEAU: Le gibier n'apparaît JAMAIS dans les forêts denses (hasWood) et JAMAIS dans l'eau
+        const shouldShow = hasAnimals && !hasRoad && !hasBuilding && !hasWood && !isWater;
 
         if (shouldShow) {
             if (!sprite) {
@@ -239,9 +300,8 @@ export class WildlifeRenderer {
 
                     // ✅ CORRECTION DU PLACEMENT ISOMÉTRIQUE
                     sprite.x = pos.x;
-                    // On descend de la moitié d'une tuile pour simuler le sol 3D isométrique
-                    // J'ajoute +10 pour poser leurs pattes parfaitement au sol
-                    sprite.y = pos.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET + 10;
+                    // On descend légèrement pour toucher le sol, mais pas de translation sur la case d'à côté
+                    sprite.y = pos.y + SURFACE_Y_OFFSET + 10;
 
                     // Z-Index isométrique classique + un léger offset
                     const x = i % GRID_SIZE;
@@ -256,7 +316,7 @@ export class WildlifeRenderer {
         } else if (sprite) {
             // S'il existe un sprite et qu'il ne doit plus être affiché
             // C'est qu'on vient de construire une route/un bâtiment => FUITE !
-            WildlifeRenderer.removeWildlifeAt(i);
+            WildlifeRenderer.removeWildlifeAt(i, engine);
         }
     }
 

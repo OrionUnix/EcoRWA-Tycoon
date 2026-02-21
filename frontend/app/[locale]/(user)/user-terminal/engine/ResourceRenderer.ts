@@ -128,7 +128,10 @@ export class ResourceRenderer {
             resType = 'NONE';
         }
 
-        const shouldShow = resType !== 'NONE' && !hasRoad && !hasBuilding;
+        const waterLevel = engine.getLayer(1)[i];
+        const isWater = waterLevel > 0.3;
+
+        const shouldShow = resType !== 'NONE' && !hasRoad && !hasBuilding && !isWater;
 
         if (shouldShow) {
             if (!sprite) {
@@ -163,8 +166,8 @@ export class ResourceRenderer {
                 sprite.anchor.set(0.5, 1.0);
                 sprite.tint = tint;
 
-                // ✅ Échelle: on agrandit l'arbre pour qu'il paraisse majestueux
-                const treeScale = (TILE_WIDTH / texture.width) * 2.0;
+                // ✅ Échelle: on agrandit légèrement l'arbre (1.5x) pour être visible mais pas envahir 3 tuiles adjacentes
+                const treeScale = (TILE_WIDTH / texture.width) * 1.5;
                 sprite.scale.set(treeScale);
 
                 container.addChild(sprite);
@@ -186,9 +189,10 @@ export class ResourceRenderer {
 
                     // ════════════════════════════════════════════════════
                     // ✅ CORRECTION DU PLACEMENT ISOMÉTRIQUE
+                    // Les props (arbres) ont leur racine au centre de la case
                     // ════════════════════════════════════════════════════
                     sprite.x = pos.x;
-                    sprite.y = pos.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET;
+                    sprite.y = pos.y + SURFACE_Y_OFFSET;
 
                     // Z-Index : entre le sol et les bâtiments
                     const x = i % GRID_SIZE;
@@ -233,6 +237,6 @@ export class ResourceRenderer {
             }
         });
         resourceCache.clear();
-        treeTexturesCache = null; // Reset pour recharger au prochain render
+        // On NE met PAS treeTexturesCache = null, sinon les arbres HD sont perdus au reset!
     }
 }

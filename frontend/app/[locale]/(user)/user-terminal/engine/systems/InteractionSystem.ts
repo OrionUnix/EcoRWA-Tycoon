@@ -94,7 +94,7 @@ export class InteractionSystem {
                     RoadManager.updateConnections(map, idx);
                     // ✅ SUPPRESSION VISUELLE DE L'ARBRE ET ANIMAUX
                     ResourceRenderer.removeResourceAt(idx);
-                    WildlifeRenderer.removeWildlifeAt(idx);
+                    WildlifeRenderer.removeWildlifeAt(idx, map);
                 }
             });
 

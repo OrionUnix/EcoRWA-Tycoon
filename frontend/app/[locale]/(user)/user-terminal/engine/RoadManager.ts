@@ -55,7 +55,6 @@ export class RoadManager {
         // =================================================================
         // ✅ C'est ICI que l'arbre est supprimé (uniquement sur la route)
         engine.resourceMaps.wood[index] = 0;
-        engine.resourceMaps.animals[index] = 0;
         engine.resourceMaps.fish[index] = 0;
         engine.resourceMaps.stone[index] = 0; // On enlève aussi les cailloux gênants
 

@@ -23,6 +23,7 @@ export class MapEngine {
         stone: Float32Array;
         silver: Float32Array;
         gold: Float32Array;
+        undergroundWater: Float32Array;
     };
     public currentSummary: ResourceSummary;
 
@@ -64,6 +65,7 @@ export class MapEngine {
             food: new Float32Array(TOTAL_CELLS),
             animals: new Float32Array(TOTAL_CELLS),
             fish: new Float32Array(TOTAL_CELLS),
+            undergroundWater: new Float32Array(TOTAL_CELLS),
         };
 
         this.roadLayer = new Array(TOTAL_CELLS).fill(null);
@@ -76,8 +78,7 @@ export class MapEngine {
             money: 50000, wood: 500, concrete: 200, glass: 100, steel: 50,
             stone: 100, coal: 0, iron: 0, oil: 0, food: 0,
             energy: 0, water: 0,
-
-            silver: 0, gold: 0
+            silver: 0, gold: 0, undergroundWater: 0
         };
         this.stats = {
             population: 0, jobsCommercial: 0, jobsIndustrial: 0, unemployed: 0,
@@ -97,7 +98,7 @@ export class MapEngine {
         };
         this.currentSummary = {
             oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0,
-            stone: 0, silver: 0, gold: 0
+            stone: 0, silver: 0, gold: 0, undergroundWater: 0
         };
 
         // 2. Génération immédiate
@@ -122,7 +123,7 @@ export class MapEngine {
     // ✅ LOGIQUE RESTAURÉE & AMÉLIORÉE (Total Quantity)
     public calculateSummary() {
         let oil = 0, coal = 0, iron = 0, wood = 0, water = 0, fertile = 0;
-        let stone = 0, silver = 0, gold = 0;
+        let stone = 0, silver = 0, gold = 0, undergroundWater = 0;
 
         // On vérifie une case sur 10 pour ne pas laguer (Sampling)
         const step = 10;
@@ -138,6 +139,7 @@ export class MapEngine {
             stone += this.resourceMaps.stone[i];
             silver += this.resourceMaps.silver[i];
             gold += this.resourceMaps.gold[i];
+            undergroundWater += this.resourceMaps.undergroundWater[i];
 
             if (this.layers[LayerType.WATER][i] > 0.1) water++;
             if (this.moistureMap[i] > 0.5) fertile++;
@@ -154,7 +156,8 @@ export class MapEngine {
             fertile: Math.floor(fertile * step), // Juste surface
             stone: Math.floor(stone * step * QUANTITY_MULTIPLIER),
             silver: Math.floor(silver * step * QUANTITY_MULTIPLIER),
-            gold: Math.floor(gold * step * QUANTITY_MULTIPLIER)
+            gold: Math.floor(gold * step * QUANTITY_MULTIPLIER),
+            undergroundWater: Math.floor(undergroundWater * step * QUANTITY_MULTIPLIER)
         };
     }
 

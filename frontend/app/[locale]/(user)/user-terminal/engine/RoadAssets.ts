@@ -19,7 +19,7 @@ export class RoadAssets {
 
         console.log("🛣️ RoadAssets: Génération procédurale...");
 
-        const types = [RoadType.DIRT, RoadType.ASPHALT, RoadType.AVENUE, RoadType.HIGHWAY];
+        const types = [RoadType.DIRT, RoadType.SMALL, RoadType.ASPHALT, RoadType.AVENUE, RoadType.HIGHWAY];
 
         for (const type of types) {
             // Générer les 16 combinaisons (0 à 15)

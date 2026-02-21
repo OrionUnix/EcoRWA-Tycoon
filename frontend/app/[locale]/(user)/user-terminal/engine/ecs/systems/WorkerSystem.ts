@@ -107,28 +107,26 @@ export const createWorkerSystem = (world: GameWorld) => {
                         const type = Worker.type[eid];
 
                         if (type === WorkerType.HUNTER) {
-                            // Décroissance Animaux
+                            // Décroissance Animaux (Un chasseur rapporte 40)
                             if (engine.map.resourceMaps.animals && engine.map.resourceMaps.animals[rIndex] > 0) {
-                                engine.map.resourceMaps.animals[rIndex] = Math.max(0, engine.map.resourceMaps.animals[rIndex] - (AMOUNT_MINED / 1000));
+                                engine.map.resourceMaps.animals[rIndex] = Math.max(0, engine.map.resourceMaps.animals[rIndex] - 40);
                             }
                         }
                         else if (type === WorkerType.FISHERMAN) {
-                            // Décroissance Poissons
+                            // Décroissance Poissons (Un pêcheur rapporte 50)
                             if (engine.map.resourceMaps.fish && engine.map.resourceMaps.fish[rIndex] > 0) {
-                                engine.map.resourceMaps.fish[rIndex] = Math.max(0, engine.map.resourceMaps.fish[rIndex] - (AMOUNT_MINED / 1000));
+                                engine.map.resourceMaps.fish[rIndex] = Math.max(0, engine.map.resourceMaps.fish[rIndex] - 50);
                             }
                         }
                         else if (type === WorkerType.LUMBERJACK) {
-                            // Décroissance Bois
+                            // Décroissance Bois (Un bûcheron rapporte 40)
                             if (engine.map.resourceMaps.wood && engine.map.resourceMaps.wood[rIndex] > 0) {
-                                engine.map.resourceMaps.wood[rIndex] = Math.max(0, engine.map.resourceMaps.wood[rIndex] - (AMOUNT_MINED / 1000));
+                                engine.map.resourceMaps.wood[rIndex] = Math.max(0, engine.map.resourceMaps.wood[rIndex] - 40);
 
                                 // Si plus de bois, on enlève la forêt visuellement (Biome -> Plains)
                                 // et on trigger un update du Render
                                 if (engine.map.resourceMaps.wood[rIndex] <= 0) {
                                     engine.map.biomes[rIndex] = 3; // PLAINS
-                                    engine.map.heightMap[rIndex] = engine.map.heightMap[rIndex]; // Trigger update? Non il faut refresh le chunk/renderer
-                                    // engine.renderer?.markDirty(rIndex); // Simplifié
                                 }
                             }
                         }

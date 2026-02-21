@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { BuildingCategory, BuildingType, ZoneType, RoadType, BUILDING_SPECS, ROAD_SPECS } from '../../engine/types';
+import { DataLayersPanel } from './DataLayersPanel';
 
 // ═══════════════════════════════════════════════════════════
 // MAIN TOOLBAR — SimCity 2013 Style
@@ -271,6 +272,8 @@ interface MainToolbarProps {
     selectedZoneType: ZoneType;
     setSelectedZoneType: (t: ZoneType) => void;
     setSelectedBuildingType: (t: BuildingType) => void;
+    activeDataLayer: string | null;
+    setActiveDataLayer: (layer: string | null) => void;
 }
 
 export const MainToolbar: React.FC<MainToolbarProps> = ({
@@ -279,6 +282,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
     selectedRoadType, setSelectedRoadType,
     selectedZoneType, setSelectedZoneType,
     setSelectedBuildingType,
+    activeDataLayer, setActiveDataLayer
 }) => {
     const toggle = (cat: string) => setActiveCategory(activeCategory === cat ? null : cat);
 
@@ -318,7 +322,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                     }}
                 >
                     {categories.map(cat => (
-                        <div key={cat.id} className="relative flex items-center justify-center">
+                        <div key={cat.id} className="relative z-50 flex items-center justify-center">
                             {/* Sous-menu horizontal */}
                             {activeCategory === cat.id && cat.id !== 'DATA' && (
                                 <SubMenu
@@ -333,6 +337,21 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                                     onClose={() => setActiveCategory(null)}
                                 />
                             )}
+
+                            {/* DATA LAYERS PANEL (Nouveau rendu intégré) */}
+                            {activeCategory === cat.id && cat.id === 'DATA' && (
+                                <DataLayersPanel
+                                    activeLayer={activeDataLayer}
+                                    onSelectLayer={setActiveDataLayer}
+                                    onSetViewMode={setViewMode}
+                                    onClose={() => {
+                                        setActiveCategory(null);
+                                        setViewMode('ALL');
+                                        setActiveDataLayer(null);
+                                    }}
+                                />
+                            )}
+
                             <MainBtn
                                 id={cat.id}
                                 icon={cat.icon}

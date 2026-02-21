@@ -1,6 +1,8 @@
 import { MapEngine } from './MapEngine';
 import { ZoneType, ZoneData } from './types';
 import { GRID_SIZE } from './config';
+import { ResourceRenderer } from './ResourceRenderer';
+import { WildlifeRenderer } from './WildlifeRenderer';
 
 /**
  * Gère les opérations liées aux ZONES (Résidentiel, Commercial, Industriel)
@@ -127,6 +129,11 @@ export class ZoneManager {
 
         // Placement de la zone
         engine.setZone(index, zoneData);
+
+        // ✅ Nettoyage Nature (Arbres & Animaux)
+        if (engine.resourceMaps.wood) engine.resourceMaps.wood[index] = 0;
+        ResourceRenderer.removeResourceAt(index);
+        WildlifeRenderer.removeWildlifeAt(index, engine);
 
         console.log(`✅ ZoneManager: Zone ${type} placée à index ${index}`);
         return { success: true, message: `Zone ${type} créée.`, zoneData: zoneData };

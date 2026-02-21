@@ -114,7 +114,7 @@ export interface GridConfig {
 
 export interface ResourceSummary {
     oil: number; coal: number; iron: number; wood: number;
-    water: number; fertile: number; stone: number;
+    water: number; undergroundWater: number; fertile: number; stone: number;
     silver: number; gold: number;
 }
 
@@ -123,6 +123,7 @@ export interface PlayerResources {
     steel: number; coal: number; iron: number; oil: number;
     food: number; energy: number; water: number;
     stone: number; silver: number; gold: number;
+    undergroundWater: number;
 }
 
 export interface CityStats {
