@@ -92,12 +92,13 @@ export enum BuildingType {
     CAFE = 'CAFE'
 }
 
-// ✅ NOUVEAU: Catégories de Bâtiments
+// ✅ NOUVEAU: Catégories de Bâtiments (UX SimCity)
 export enum BuildingCategory {
-    UTILITIES = 'UTILITIES', // Énergie, Eau
-    SERVICES = 'SERVICES',   // Police, Pompier, Santé, Éducation
-    EXTRACTION = 'EXTRACTION', // Mines, Bûcheron, Pêche
-    LEISURE = 'LEISURE',     // Parcs, Culture
+    POWER = 'POWER',           // Électricité (Centrales, Solaire)
+    WATER = 'WATER',           // Eau (Pompes, Châteaux d'eau)
+    FOOD = 'FOOD',             // Nourriture (Fermes, Chasseurs, Pêche)
+    EXTRACTION = 'EXTRACTION', // Industrie extraction (Bois, Mines, Pétrole)
+    CIVIC = 'CIVIC',           // Civique / Décorations (Mairie, Santé, Parcs)
     RESIDENTIAL = 'RESIDENTIAL',
     COMMERCIAL = 'COMMERCIAL',
     INDUSTRIAL = 'INDUSTRIAL'
@@ -372,13 +373,13 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.POWER_PLANT]: {
         type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Électrique",
         description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4,
-        category: BuildingCategory.UTILITIES,
+        category: BuildingCategory.POWER,
         production: { type: 'ENERGY', amount: 100 }
     },
     [BuildingType.WATER_PUMP]: {
         type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
         description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
-        category: BuildingCategory.UTILITIES,
+        category: BuildingCategory.WATER,
         production: { type: 'WATER', amount: 100 },
         // Investissement possible
         upgradeCost: 500, maxLevel: 3
@@ -402,34 +403,34 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.CITY_HALL]: {
         type: BuildingType.CITY_HALL, cost: 3000, name: "Mairie",
         description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true, workersNeeded: 10,
-        category: BuildingCategory.SERVICES
+        category: BuildingCategory.CIVIC
     },
     [BuildingType.PARK]: {
         type: BuildingType.PARK, cost: 200, name: "Parc",
         description: "Espace vert pour le bonheur des citoyens.", width: 1, height: 1, color: 0x8BC34A, requiresRoad: true,
-        category: BuildingCategory.LEISURE
+        category: BuildingCategory.CIVIC
     },
     [BuildingType.POLICE_STATION]: {
         type: BuildingType.POLICE_STATION, cost: 1000, name: "Commissariat",
         description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true, workersNeeded: 4,
-        category: BuildingCategory.SERVICES
+        category: BuildingCategory.CIVIC
     },
     [BuildingType.FIRE_STATION]: {
         type: BuildingType.FIRE_STATION, cost: 1000, name: "Caserne de Pompiers",
         description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true, workersNeeded: 4,
-        category: BuildingCategory.SERVICES
+        category: BuildingCategory.CIVIC
     },
     [BuildingType.FISHERMAN]: {
         type: BuildingType.FISHERMAN, cost: 300, name: "Cabane de Pêcheur",
         description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
-        category: BuildingCategory.EXTRACTION,
+        category: BuildingCategory.FOOD,
         production: { type: 'FOOD', amount: 50 },
         upgradeCost: 200, maxLevel: 3
     },
     [BuildingType.HUNTER_HUT]: {
         type: BuildingType.HUNTER_HUT, cost: 350, name: "Cabane de Chasseur",
         description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2,
-        category: BuildingCategory.EXTRACTION,
+        category: BuildingCategory.FOOD,
         production: { type: 'FOOD', amount: 40 },
         upgradeCost: 250, maxLevel: 3
     },
@@ -443,7 +444,7 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.FOOD_MARKET]: {
         type: BuildingType.FOOD_MARKET, cost: 500, name: "Marché Alimentaire",
         description: "Exporte vos surplus de nourriture.", width: 2, height: 2, color: 0xFF9800, requiresRoad: true, workersNeeded: 4, maintenance: 50,
-        category: BuildingCategory.SERVICES,
+        category: BuildingCategory.FOOD,
         upgradeCost: 500, maxLevel: 2,
         influenceRadius: 6
     },
@@ -465,31 +466,31 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.SCHOOL]: {
         type: BuildingType.SCHOOL, cost: 1500, name: "École",
         description: "Éducation de base.", width: 2, height: 1, color: 0xFFEB3B, requiresRoad: true, workersNeeded: 6, maintenance: 100,
-        category: BuildingCategory.SERVICES,
+        category: BuildingCategory.CIVIC,
         influenceRadius: 8
     },
     [BuildingType.CLINIC]: {
         type: BuildingType.CLINIC, cost: 1200, name: "Clinique",
         description: "Soins de santé.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 4, maintenance: 80,
-        category: BuildingCategory.SERVICES,
+        category: BuildingCategory.CIVIC,
         influenceRadius: 6
     },
     [BuildingType.MUSEUM]: {
         type: BuildingType.MUSEUM, cost: 2500, name: "Musée",
         description: "Culture et tourisme.", width: 2, height: 2, color: 0x9C27B0, requiresRoad: true, workersNeeded: 5, maintenance: 150,
-        category: BuildingCategory.LEISURE,
+        category: BuildingCategory.CIVIC,
         influenceRadius: 10
     },
     [BuildingType.RESTAURANT]: {
         type: BuildingType.RESTAURANT, cost: 600, name: "Restaurant",
         description: "Cuisine locale.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 3, maintenance: 0,
-        category: BuildingCategory.LEISURE,
+        category: BuildingCategory.FOOD,
         influenceRadius: 4
     },
     [BuildingType.CAFE]: {
         type: BuildingType.CAFE, cost: 400, name: "Café",
         description: "Lieu de rencontre.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2, maintenance: 0,
-        category: BuildingCategory.LEISURE,
+        category: BuildingCategory.FOOD,
         influenceRadius: 4
     }
 };

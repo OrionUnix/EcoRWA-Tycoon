@@ -11,10 +11,11 @@ import { DataLayersPanel } from './DataLayersPanel';
 const SC_COLORS: Record<string, string> = {
     ROADS: '#4A90E2',
     ZONES: '#7ED321',
-    SERVICES: '#50E3C2',
-    UTILITIES: '#F8E71C',
-    EXTRACTION: '#F5A623',
-    LEISURE: '#7B61FF',
+    POWER: '#F5A623',      // Orange / Jaune Industriel
+    WATER: '#4FC3F7',      // Bleu clair
+    FOOD: '#8BC34A',       // Vert agricole
+    EXTRACTION: '#795548', // Marron minerais/bois
+    CIVIC: '#9C27B0',      // Violet/Gris civique
     RWA: '#BD10E0',
     DATA: '#9B9B9B',
     BULLDOZER: '#D0021B',
@@ -289,10 +290,11 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
     const categories = [
         { id: 'ROADS', icon: '🛣️', label: 'Routes', color: SC_COLORS.ROADS },
         { id: 'ZONES', icon: '🏘️', label: 'Zones', color: SC_COLORS.ZONES },
-        { id: BuildingCategory.SERVICES, icon: '🏛️', label: 'Services', color: SC_COLORS.SERVICES },
-        { id: BuildingCategory.UTILITIES, icon: '⚡', label: 'Énergie', color: SC_COLORS.UTILITIES },
+        { id: BuildingCategory.POWER, icon: '⚡', label: 'Énergie', color: SC_COLORS.POWER },
+        { id: BuildingCategory.WATER, icon: '💧', label: 'Eau', color: SC_COLORS.WATER },
+        { id: BuildingCategory.FOOD, icon: '🌾', label: 'Nourriture', color: SC_COLORS.FOOD },
         { id: BuildingCategory.EXTRACTION, icon: '⛏️', label: 'Industrie', color: SC_COLORS.EXTRACTION },
-        { id: BuildingCategory.LEISURE, icon: '🎡', label: 'Loisirs', color: SC_COLORS.LEISURE },
+        { id: BuildingCategory.CIVIC, icon: '🏛️', label: 'Civique', color: SC_COLORS.CIVIC },
         { id: 'RWA', icon: '🌍', label: 'RWA', color: SC_COLORS.RWA },
         { id: 'DATA', icon: '📊', label: 'Données', color: SC_COLORS.DATA },
     ];
