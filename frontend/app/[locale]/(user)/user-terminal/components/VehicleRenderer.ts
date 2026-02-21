@@ -2,7 +2,9 @@ import * as PIXI from 'pixi.js';
 import { VehicleAssets } from '../engine/VehicleAssets';
 import { MapEngine } from '../engine/MapEngine';
 import { gridToScreen } from '../engine/isometric';
-import { TILE_WIDTH, TILE_HEIGHT, SURFACE_Y_OFFSET, VEHICLE_SCALE } from '../engine/config';
+import { TILE_WIDTH, TILE_HEIGHT, SURFACE_Y_OFFSET } from '../engine/config';
+
+export const VEHICLE_SCALE = 0.3; // Constante modifiable pour l'échelle globale des véhicules
 
 const vehicleCache = new Map<number, PIXI.Sprite>();
 
@@ -28,7 +30,7 @@ export class VehicleRenderer {
                 sprite = new PIXI.Sprite();
                 sprite.anchor.set(0.5, 0.7); // Anchor at bottom centerish
                 // ✅ FORCE SCALE (Fix Gigantic Cars)
-                sprite.scale.set(0.45); // Réduit de 0.75 à 0.45
+                sprite.scale.set(VEHICLE_SCALE);
                 container.addChild(sprite);
                 vehicleCache.set(car.id, sprite);
             }

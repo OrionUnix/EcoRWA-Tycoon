@@ -1,8 +1,10 @@
 import { createNoise2D } from 'simplex-noise';
 import { MapEngine } from '../MapEngine';
 import { GRID_SIZE } from '../config';
-import { LayerType, BiomeType } from '../types';
+import { LayerType, BiomeType, RoadType } from '../types';
 import { BIOME_SIGNATURES, ResourceRule } from '../data/biomeData';
+import { RoadManager } from '../RoadManager';
+import { ChunkManager } from '../ChunkManager';
 
 export class MapGenerator {
 
@@ -189,6 +191,8 @@ export class MapGenerator {
         this.generateRivers(engine, rng, 2); // Génère 2 rivières principales
         // 5. ✅ GÉNÉRATION DES PLAGES DE FAÇON COHÉRENTE
         this.generateBeaches(engine);
+        // 6. ✅ GÉNÉRATION DE L'AUTOROUTE RÉGIONALE (M2 & M3)
+        this.generateHighway(engine, rng);
     }
 
     // 🌊 ALGORITHME DES RIVAGES (Plages)
@@ -278,5 +282,101 @@ export class MapGenerator {
                 }
             }
         }
+    }
+
+    // 🛣️ ALGORITHME DE L'AUTOROUTE RÉGIONALE (Mission 5 : Inside-Out)
+    private static generateHighway(engine: MapEngine, rng: () => number) {
+        const placedIndices: number[] = [];
+
+        // 1. Trouver le centre de la carte
+        const centerX = Math.floor(GRID_SIZE / 2);
+        const centerY = Math.floor(GRID_SIZE / 2);
+
+        // 2. Choisir l'axe de sortie : 0 = Gauche, 1 = Bas
+        const exitEdge = Math.floor(rng() * 2);
+        let dx = 0;
+        let dy = 0;
+        let borderX = centerX;
+        let borderY = centerY;
+
+        if (exitEdge === 0) {
+            // Sortie par la Gauche (vers x = 0)
+            dx = -1;
+            dy = 0;
+            // Trouver le bord gauche de la zone débloquée
+            while (ChunkManager.isTileUnlocked(borderX + dx, borderY) && borderX > 0) {
+                borderX += dx;
+            }
+        } else {
+            // Sortie par le Bas (vers y = GRID_SIZE - 1)
+            dx = 0;
+            dy = 1;
+            // Trouver le bord bas de la zone débloquée
+            while (ChunkManager.isTileUnlocked(borderX, borderY + dy) && borderY < GRID_SIZE - 1) {
+                borderY += dy;
+            }
+        }
+
+        // `borderX, borderY` représente la case la plus au bord (gauche ou bas) de la zone initiale.
+
+        // 3. Pénétrer dans la ville (3 cases vers l'intérieur)
+        let inDx = -dx;
+        let inDy = -dy;
+        for (let i = 0; i < 3; i++) {
+            const cx = borderX + (inDx * i);
+            const cy = borderY + (inDy * i);
+            const idx = cy * GRID_SIZE + cx;
+
+            engine.roadLayer[idx] = {
+                type: RoadType.HIGHWAY,
+                speedLimit: 3.0,
+                lanes: 6,
+                isTunnel: false,
+                isBridge: false,
+                connections: { n: false, s: false, e: false, w: false }
+            };
+
+            // On écrase les ressources
+            if (engine.resourceMaps.wood) engine.resourceMaps.wood[idx] = 0;
+            if (engine.resourceMaps.stone) engine.resourceMaps.stone[idx] = 0;
+            if (engine.resourceMaps.animals) engine.resourceMaps.animals[idx] = 0;
+
+            placedIndices.push(idx);
+        }
+
+        // 4. Sortir vers le monde (mode Bulldozer total)
+        // On commence à placer la route à partir de la case située 1 unité à l'extérieur
+        let cx = borderX + dx;
+        let cy = borderY + dy;
+        while (cx >= 0 && cx < GRID_SIZE && cy >= 0 && cy < GRID_SIZE) {
+            const idx = cy * GRID_SIZE + cx;
+
+            // Mode Bulldozer : on écrase tout (l'eau devient traversable par la route)
+            engine.roadLayer[idx] = {
+                type: RoadType.HIGHWAY,
+                speedLimit: 3.0,
+                lanes: 6,
+                isTunnel: false,
+                isBridge: false,
+                connections: { n: false, s: false, e: false, w: false }
+            };
+
+            // Nettoyage des ressources sur le passage
+            if (engine.resourceMaps.wood) engine.resourceMaps.wood[idx] = 0;
+            if (engine.resourceMaps.stone) engine.resourceMaps.stone[idx] = 0;
+            if (engine.resourceMaps.animals) engine.resourceMaps.animals[idx] = 0;
+
+            placedIndices.push(idx);
+
+            cx += dx;
+            cy += dy;
+        }
+
+        // 5. Enregistrer pour le trafic instantané
+        placedIndices.forEach(idx => {
+            RoadManager.updateConnections(engine, idx);
+        });
+
+        console.log(`🛣️ Autoroute régionale (Inside-Out) générée (bord: ${exitEdge === 0 ? 'Gauche' : 'Bas'}), longueur totale: ${placedIndices.length} cases`);
     }
 }

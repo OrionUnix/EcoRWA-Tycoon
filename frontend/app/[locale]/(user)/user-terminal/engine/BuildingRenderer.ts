@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { BuildingData, BUILDING_SPECS } from '../engine/types';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
 import { BuildingAssets } from './BuildingAssets';
+import { FXRenderer } from './FXRenderer';
 
 export const RESIDENTIAL_SCALE = 0.5; // Modifiable pour ajuster la taille
 const SURFACE_Y_OFFSET = 0; // Ajustement fin Y pour coller au sol
@@ -53,6 +54,21 @@ export class BuildingRenderer {
 
         const lvl = building.level || 0;
         const isConstState = building.state === 'CONSTRUCTION' || lvl === 0;
+
+        // ═══════════════════════════════════════
+        // FX: Particules de construction (Fumée)
+        // ═══════════════════════════════════════
+        if (isConstState) {
+            if (!(building as any)._dustPlayed) {
+                (building as any)._dustPlayed = true;
+                FXRenderer.playConstructionDust(
+                    parentContainer,
+                    pos.x,
+                    pos.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET, // Centre de la base isométrique
+                    container.zIndex + 0.1 // Juste au dessus du mur/sol
+                );
+            }
+        }
 
         // ═══════════════════════════════════════
         // Tenter le rendu sprite depuis l'atlas ou Custom

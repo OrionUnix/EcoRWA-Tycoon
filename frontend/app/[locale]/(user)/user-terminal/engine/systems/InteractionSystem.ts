@@ -62,17 +62,13 @@ export class InteractionSystem {
             map.resources.money -= cost;
 
             path.forEach(idx => {
-                // 1. AUTO-BULLDOZER (Nettoyage)
+                // ✅ M1: OVERRIDE DU BULLDOZER POUR LES BÂTIMENTS STRICTS
                 if (map.buildingLayer[idx]) {
-                    const building = map.buildingLayer[idx];
-                    if (building) {
-                        const specs = BUILDING_SPECS[building.type];
-                        if (specs) {
-                            PopulationManager.onBuildingRemoved(specs);
-                        }
-                    }
-                    map.buildingLayer[idx] = null;
+                    // Si c'est un bâtiment, on ne l'écrase SURTOUT PAS. On skip cette tuile.
+                    return;
                 }
+
+                // Pour les zones, on nettoie si la route prend la place.
                 if (map.zoningLayer[idx] !== null) {
                     const zoneData = map.zoningLayer[idx];
                     if (zoneData) {
