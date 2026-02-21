@@ -18,7 +18,7 @@ export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
     'RESIDENTIAL': {
         construction: '/assets/isometric/Spritesheet/Buildings/residences/construction_house01.png',
         levels: [
-            ['/assets/isometric/Spritesheet/Buildings/residences/house01.png', '/assets/isometric/Spritesheet/Buildings/residences/House01_B.png'], // Niveau 1
+            ['/assets/isometric/Spritesheet/Buildings/residences/house01_A.png', '/assets/isometric/Spritesheet/Buildings/residences/House01_B.png'], // Niveau 1
             ['/assets/isometric/Spritesheet/Buildings/residences/House02_A.png'] // Niveau 2
         ]
     }
