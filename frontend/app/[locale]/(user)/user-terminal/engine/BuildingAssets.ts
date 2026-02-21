@@ -9,6 +9,21 @@ import { asset } from '../utils/assetUtils';
 // Fallback: charge les fichiers individuels si atlas manquant
 // ═══════════════════════════════════════════════════════
 
+export interface CustomSpriteDef {
+    construction?: string;
+    levels: string[][]; // Tableau par niveaux : level[0] = tableau des variantes pour Lvl 1
+}
+
+export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
+    'RESIDENTIAL': {
+        construction: '/assets/isometric/Spritesheet/Buildings/residences/construction_house01.png',
+        levels: [
+            ['/assets/isometric/Spritesheet/Buildings/residences/house01.png', '/assets/isometric/Spritesheet/Buildings/residences/House01_B.png'], // Niveau 1
+            ['/assets/isometric/Spritesheet/Buildings/residences/House02_A.png'] // Niveau 2
+        ]
+    }
+};
+
 export class BuildingAssets {
     private static _loaded = false;
     public static textures: Map<string, PIXI.Texture> = new Map();
@@ -150,6 +165,54 @@ export class BuildingAssets {
         }
 
         // ═══════════════════════════════════════
+        // PASS 2.5: CUSTOM ISOMETRIC SPRITES (Mode Modulaire)
+        // Charge les assets haute résolution depuis CUSTOM_SPRITES_CONFIG
+        // ═══════════════════════════════════════
+        let customCount = 0;
+        for (const [bType, config] of Object.entries(CUSTOM_SPRITES_CONFIG)) {
+            // Variante en construction
+            if (config.construction) {
+                try {
+                    const url = asset(config.construction);
+                    const tex = await PIXI.Assets.load(url);
+                    if (tex && !tex.destroyed) {
+                        if (tex.source) tex.source.scaleMode = 'nearest';
+                        (tex as any).isCustomIso = true; // Flag d'identification
+                        this.textures.set(`CUSTOM_${bType}_CONSTRUCTION`, tex);
+                        customCount++;
+                    }
+                } catch (e) { }
+            }
+
+            // Variantes par niveau
+            for (let lvl = 0; lvl < config.levels.length; lvl++) {
+                const variants = config.levels[lvl];
+                for (let v = 0; v < variants.length; v++) {
+                    try {
+                        const url = asset(variants[v]);
+                        const tex = await PIXI.Assets.load(url);
+                        if (tex && !tex.destroyed) {
+                            if (tex.source) tex.source.scaleMode = 'nearest';
+                            (tex as any).isCustomIso = true; // Flag d'identification
+                            const customKey = `CUSTOM_${bType}_LVL${lvl + 1}_VAR${v}`;
+                            this.textures.set(customKey, tex);
+
+                            // Définit le niveau brut par défaut sur la variance 0
+                            if (v === 0) {
+                                this.textures.set(`CUSTOM_${bType}_LVL${lvl + 1}`, tex);
+                            }
+                            customCount++;
+                        }
+                    } catch (e) { }
+                }
+            }
+        }
+
+        if (customCount > 0) {
+            console.log(`🦸 BuildingAssets: ${customCount} custom isometric sprites chargés avec succès !`);
+        }
+
+        // ═══════════════════════════════════════
         // PASS 3: Fallback direct PNG pour les frames manquantes
         // ═══════════════════════════════════════
         if (missed > 0) {
@@ -183,11 +246,43 @@ export class BuildingAssets {
     }
 
     /**
-     * Récupère la texture pour un type de bâtiment, niveau et variante
-     * API identique à l'ancien système — aucun changement pour les appelants
+     * Récupère la texture pour un type de bâtiment, niveau et variante.
+     * Supporte désormais l'état de construction et les assets custom modulaires.
      */
-    static getTexture(type: BuildingType, level: number = 1, variant: number = 0): PIXI.Texture | undefined {
+    static getTexture(type: BuildingType, level: number = 1, variant: number = 0, isConstruction: boolean = false): PIXI.Texture | undefined {
         let key = '';
+
+        // 1. VÉRIFICATION DU CUSTOM CONFIG (Priorité absolue)
+        if (CUSTOM_SPRITES_CONFIG[type]) {
+            if (isConstruction) {
+                const tex = this.textures.get(`CUSTOM_${type}_CONSTRUCTION`);
+                if (tex) return tex;
+            } else {
+                const lvlIndex = Math.max(1, level);
+                const configDef = CUSTOM_SPRITES_CONFIG[type];
+
+                // Si le niveau demandé dépasse le nombre de niveaux configurés, on borne
+                const actualLvl = Math.min(lvlIndex, configDef.levels.length);
+                const variantsArray = configDef.levels[actualLvl - 1] || [];
+
+                // Utilisation du modulo pour déterminer la variante aléatoire (50/50 safe)
+                const mappedVariant = variantsArray.length > 0 ? (variant % variantsArray.length) : 0;
+
+                const customKeyBase = `CUSTOM_${type}_LVL${actualLvl}`;
+                const texVar = this.textures.get(`${customKeyBase}_VAR${mappedVariant}`);
+                if (texVar) return texVar;
+
+                // Fallback de sécurité (VAR0)
+                const texLvl = this.textures.get(customKeyBase);
+                if (texLvl) return texLvl;
+            }
+        }
+
+        // Si on est en construction et aucune texture custom n'existe, on retourne undefined 
+        // pour laisser BuildingRenderer afficher le bloc 3D de base
+        if (isConstruction) return undefined;
+
+        // 2. COMPORTEMENT EXISTANT (Rétrocompatibilité Atlas & Standalone fallback)
 
         if (type === BuildingType.RESIDENTIAL) {
             const v = (variant || 0) % 3;

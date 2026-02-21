@@ -3,6 +3,9 @@ import { BuildingData, BUILDING_SPECS } from '../engine/types';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
 import { BuildingAssets } from './BuildingAssets';
 
+export const RESIDENTIAL_SCALE = 0.5; // Modifiable pour ajuster la taille
+const SURFACE_Y_OFFSET = 0; // Ajustement fin Y pour coller au sol
+
 // ═══════════════════════════════════════════════════════
 // BuildingRenderer — Rendu des bâtiments (Engine)
 // Priorité 1: Sprite depuis l'atlas TexturePacker (PIXI.Sprite)
@@ -44,15 +47,21 @@ export class BuildingRenderer {
         container.visible = true;
         container.x = pos.x;
         container.y = pos.y;
-        container.zIndex = x + y + 1;
+
+        // Formule de profondeur isométrique stricte
+        container.zIndex = x + y + 0.5;
+
+        const lvl = building.level || 0;
+        const isConstState = building.state === 'CONSTRUCTION' || lvl === 0;
 
         // ═══════════════════════════════════════
-        // Tenter le rendu sprite depuis l'atlas
+        // Tenter le rendu sprite depuis l'atlas ou Custom
         // ═══════════════════════════════════════
         const texture = BuildingAssets.getTexture(
             building.type as any,
-            building.level || 1,
-            building.variant || 0
+            lvl || 1,
+            building.variant || 0,
+            isConstState
         );
 
         if (texture) {
@@ -85,13 +94,22 @@ export class BuildingRenderer {
 
             // Positionnement : le sprite est ancré à (0.5, 1.0)
             // Le container est déjà positionné au centre de la tuile (pos.x, pos.y)
-            // On descend de TILE_HEIGHT/2 pour placer la base du sprite au bas du diamant iso
-            sprite.x = 0;
-            sprite.y = TILE_HEIGHT / 2;
+            const isCustomIso = (texture as any).isCustomIso === true;
+            let currentScale = 1.0;
 
-            // ✅ Échelle: adapter au grid (atlas sprite → taille TILE_WIDTH)
-            const buildingScale = TILE_WIDTH / texture.width;
-            sprite.scale.set(buildingScale);
+            if (isCustomIso) {
+                // ✅ MODE CUSTOM 128x128
+                sprite.x = 0;
+                sprite.y = TILE_HEIGHT / 2 + SURFACE_Y_OFFSET;
+                currentScale = RESIDENTIAL_SCALE;
+                sprite.scale.set(currentScale);
+            } else {
+                // ✅ MODE EXISTANT (ATLAS FALLBACK)
+                sprite.x = 0;
+                sprite.y = TILE_HEIGHT / 2;
+                currentScale = TILE_WIDTH / texture.width;
+                sprite.scale.set(currentScale);
+            }
 
             // Gestion de l'emote (toujours au dessus du sprite)
             const emoteText = container.children.find(c => c instanceof PIXI.Text) as PIXI.Text | undefined;
@@ -101,7 +119,7 @@ export class BuildingRenderer {
                     emoteText.text = emote;
                     emoteText.visible = true;
                     const bounce = Math.sin(Date.now() / 200) * 5;
-                    const spriteTop = sprite.y - (texture.height * buildingScale);
+                    const spriteTop = sprite.y - (texture.height * currentScale);
                     emoteText.x = 0;
                     emoteText.y = spriteTop - 10 + bounce;
                 } else {
