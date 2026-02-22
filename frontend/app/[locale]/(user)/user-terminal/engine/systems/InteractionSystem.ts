@@ -111,7 +111,7 @@ export class InteractionSystem {
                 map.resources.money += Math.floor(specs.cost * 0.5);
 
                 // Bonus spécifique pour les bâtiments d'extraction (Mines, Bois, Pierre)
-                if (building.type === BuildingType.COAL_MINE || building.type === BuildingType.ORE_MINE || building.type === BuildingType.OIL_PUMP || building.type === BuildingType.OIL_RIG) {
+                if (building.type === BuildingType.MINE || building.type === BuildingType.OIL_PUMP || building.type === BuildingType.OIL_RIG) {
                     map.resources.wood += 20;
                     map.resources.stone += 20;
                 } else if (building.type === BuildingType.LUMBER_HUT) {

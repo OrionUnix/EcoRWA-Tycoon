@@ -36,12 +36,22 @@ export class GameRenderer {
         g.clear();
         if (!engine || !engine.biomes) return false;
 
-        // Rendu dans l'ordre Z
-        TerrainPass.render(container, engine, viewMode);    // z=0 : Sol
-        RoadPass.render(container, engine);                  // z=0.5 : Routes
-        EntityPass.render(container, g, engine, viewMode, showGrid, zoomLevel); // z=1+ : Entités
-        BorderPass.render(g);                                // Frontière brillante
-        WorkerRenderer.render(container, zoomLevel);         // z=2+ : Workers
+        // Récupération dynamique des couches Z-Order créées dans UserTerminalClient
+        const terrainLayer = (container.getChildByLabel("terrainContainer") as PIXI.Container) || container;
+        const roadLayer = (container.getChildByLabel("roadContainer") as PIXI.Container) || container;
+        const vehicleLayer = (container.getChildByLabel("vehicleContainer") as PIXI.Container) || container;
+        const zoneLayer = (container.getChildByLabel("zoneContainer") as PIXI.Graphics);
+
+        if (zoneLayer) {
+            zoneLayer.clear();
+        }
+
+        // Rendu réparti dans les conteneurs spécialisés
+        TerrainPass.render(terrainLayer, engine, viewMode);  // Sol -> terrainContainer (zIndex 0)
+        RoadPass.render(roadLayer, engine);                  // Routes -> roadContainer (zIndex 20)
+        EntityPass.render(container, g, engine, viewMode, showGrid, zoomLevel); // Reste (Bâtiments, Arbres, Zones)
+        BorderPass.render(g);                                // Frontière brillante -> vectorLayer (zIndex 150)
+        WorkerRenderer.render(vehicleLayer, zoomLevel);      // Workers -> vehicleContainer (zIndex 40)
 
         return true;
     }

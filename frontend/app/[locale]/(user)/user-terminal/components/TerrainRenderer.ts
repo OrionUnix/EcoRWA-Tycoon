@@ -25,31 +25,31 @@ export class TerrainRenderer {
         // ══════════════════════════════════════
         // SECTION 1: NATURAL RESOURCES (from resourceMaps)
         // ══════════════════════════════════════
-        if (viewMode === 'OIL' && engine.resourceMaps.oil[i] > 0.1) {
+        if ((viewMode === 'OIL' || viewMode === 'BUILD_OIL_PUMP' || viewMode === 'BUILD_OIL_RIG') && engine.resourceMaps.oil[i] > 0.1) {
             overlayColor = COLORS.OIL;
             overlayAlpha = Math.min(0.3 + engine.resourceMaps.oil[i] * 0.6, 0.9);
         }
-        else if (viewMode === 'COAL' && engine.resourceMaps.coal[i] > 0.1) {
+        else if ((viewMode === 'COAL' || viewMode === 'BUILD_MINE') && engine.resourceMaps.coal[i] > 0.1) {
             overlayColor = COLORS.COAL;
             overlayAlpha = Math.min(0.3 + engine.resourceMaps.coal[i] * 0.6, 0.9);
         }
-        else if (viewMode === 'IRON' && engine.resourceMaps.iron[i] > 0.1) {
+        else if ((viewMode === 'IRON' || viewMode === 'BUILD_MINE') && engine.resourceMaps.iron[i] > 0.1) {
             overlayColor = COLORS.IRON;
             overlayAlpha = Math.min(0.3 + engine.resourceMaps.iron[i] * 0.6, 0.9);
         }
-        else if (viewMode === 'WOOD' && engine.resourceMaps.wood[i] > 0.1) {
+        else if ((viewMode === 'WOOD' || viewMode === 'BUILD_LUMBER_HUT') && engine.resourceMaps.wood[i] > 0.1) {
             overlayColor = COLORS.WOOD;
             overlayAlpha = Math.min(0.3 + engine.resourceMaps.wood[i] * 0.6, 0.9);
         }
-        else if (viewMode === 'GOLD' && engine.resourceMaps.gold[i] > 0.1) {
+        else if ((viewMode === 'GOLD' || viewMode === 'BUILD_MINE') && engine.resourceMaps.gold[i] > 0.1) {
             overlayColor = COLORS.GOLD;
             overlayAlpha = Math.min(0.3 + engine.resourceMaps.gold[i] * 0.6, 0.9);
         }
-        else if (viewMode === 'SILVER' && engine.resourceMaps.silver[i] > 0.1) {
+        else if ((viewMode === 'SILVER' || viewMode === 'BUILD_MINE') && engine.resourceMaps.silver[i] > 0.1) {
             overlayColor = COLORS.SILVER;
             overlayAlpha = Math.min(0.3 + engine.resourceMaps.silver[i] * 0.6, 0.9);
         }
-        else if (viewMode === 'STONE' && engine.resourceMaps.stone[i] > 0.1) {
+        else if ((viewMode === 'STONE' || viewMode === 'BUILD_MINE') && engine.resourceMaps.stone[i] > 0.1) {
             overlayColor = COLORS.STONE;
             overlayAlpha = Math.min(0.3 + engine.resourceMaps.stone[i] * 0.6, 0.9);
         }
@@ -150,7 +150,7 @@ export class TerrainRenderer {
         }
 
         // GROUNDWATER — natural water from the water layer
-        else if (viewMode === 'WATER_LAYER') {
+        else if (viewMode === 'WATER_LAYER' || viewMode === 'BUILD_WATER_PUMP') {
             const waterValue = engine.layers[LayerType.WATER]?.[i] || 0;
             if (waterValue > 0.05) {
                 overlayColor = COLORS.WATER_LAYER;

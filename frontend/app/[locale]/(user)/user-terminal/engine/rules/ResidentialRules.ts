@@ -227,13 +227,9 @@ export class ResidentialRules {
         if (building.stability > 100) building.stability = 100;
         if (building.stability < -100) building.stability = -100;
 
-        // ÉVOLUTION (Level Up)
-        // Vérification Cooldown
-        const canEvolve = (!building.evolutionCooldown || building.evolutionCooldown <= 0);
-
-        if (building.stability > this.EVOLUTION_THRESHOLD && building.level < 4 && canEvolve) {
-            this.tryEvolve(building, engine);
-        }
+        // L'ÉVOLUTION est désormais gérée organiquement dans BuildingSystem.ts
+        // afin d'unifier les zones (Résidentielle, Commerciale, Industrielle).
+        // On ne fait donc plus de this.tryEvolve() ici.
 
         // RÉGRESSION (Abandon)
         if (building.stability < this.REGRESSION_THRESHOLD) {

@@ -25,26 +25,26 @@ interface DataLayer {
 
 const DATA_LAYERS: DataLayer[] = [
     // ── Section 1: Simulation Layers (SimCity 2013) ──
-    { id: 'water_net', viewMode: 'WATER_NET', icon: '💧', label: "Réseau d'Eau", color: '#50E3C2', group: 'Simulation' },
-    { id: 'power_net', viewMode: 'POWER_NET', icon: '⚡', label: 'Réseau Électrique', color: '#F8E71C', group: 'Simulation' },
-    { id: 'sewage', viewMode: 'SEWAGE', icon: '🚰', label: 'Assainissement', color: '#BD10E0', group: 'Simulation' },
-    { id: 'pollution', viewMode: 'POLLUTION', icon: '☁️', label: 'Pollution', color: '#F5A623', group: 'Simulation' },
-    { id: 'traffic', viewMode: 'TRAFFIC', icon: '🚦', label: 'Trafic', color: '#D0021B', group: 'Simulation' },
-    { id: 'landvalue', viewMode: 'LAND_VALUE', icon: '💰', label: 'Valeur Foncière', color: '#7ED321', group: 'Simulation' },
-    { id: 'happiness', viewMode: 'HAPPINESS', icon: '😊', label: 'Bonheur', color: '#7ED321', group: 'Simulation' },
-    { id: 'jobs', viewMode: 'JOBS', icon: '💼', label: 'Emplois', color: '#4A90E2', group: 'Simulation' },
-    { id: 'rwa', viewMode: 'RWA_ECONOMY', icon: '🌍', label: 'Économie RWA', color: '#BD10E0', group: 'Simulation' },
+    { id: 'water_net', viewMode: 'WATER_NET', icon: '💧', label: "Réseau d'Eau", color: '#50E3C2', group: '🏙️ Indicateurs Ville' },
+    { id: 'power_net', viewMode: 'POWER_NET', icon: '⚡', label: 'Réseau Électrique', color: '#F8E71C', group: '🏙️ Indicateurs Ville' },
+    { id: 'sewage', viewMode: 'SEWAGE', icon: '🚰', label: 'Assainissement', color: '#BD10E0', group: '🏙️ Indicateurs Ville' },
+    { id: 'pollution', viewMode: 'POLLUTION', icon: '☁️', label: 'Pollution', color: '#F5A623', group: '🏙️ Indicateurs Ville' },
+    { id: 'traffic', viewMode: 'TRAFFIC', icon: '🚦', label: 'Trafic', color: '#D0021B', group: '🏙️ Indicateurs Ville' },
+    { id: 'landvalue', viewMode: 'LAND_VALUE', icon: '💰', label: 'Valeur Foncière', color: '#7ED321', group: '🏙️ Indicateurs Ville' },
+    { id: 'happiness', viewMode: 'HAPPINESS', icon: '😊', label: 'Bonheur', color: '#7ED321', group: '🏙️ Indicateurs Ville' },
+    { id: 'jobs', viewMode: 'JOBS', icon: '💼', label: 'Emplois', color: '#4A90E2', group: '🏙️ Indicateurs Ville' },
+    { id: 'rwa', viewMode: 'RWA_ECONOMY', icon: '🌍', label: 'Économie RWA', color: '#BD10E0', group: '🏙️ Indicateurs Ville' },
 
     // ── Section 2: Natural Resources ──
-    { id: 'coal', viewMode: 'COAL', icon: '⚫', label: 'Charbon', color: '#424242', group: 'Ressources Naturelles' },
-    { id: 'iron', viewMode: 'IRON', icon: '⛏️', label: 'Minerai', color: '#E65100', group: 'Ressources Naturelles' },
-    { id: 'stone', viewMode: 'STONE', icon: '🪨', label: 'Pierre', color: '#808080', group: 'Ressources Naturelles' },
-    { id: 'oil', viewMode: 'OIL', icon: '🛢️', label: 'Pétrole', color: '#4A4A4A', group: 'Ressources Naturelles' },
-    { id: 'gold', viewMode: 'GOLD', icon: '🪙', label: 'Or', color: '#FFD600', group: 'Ressources Naturelles' },
-    { id: 'silver', viewMode: 'SILVER', icon: '🥈', label: 'Argent', color: '#90A4AE', group: 'Ressources Naturelles' },
-    { id: 'wood', viewMode: 'WOOD', icon: '🌲', label: 'Bois', color: '#7ED321', group: 'Ressources Naturelles' },
-    { id: 'wildlife', viewMode: 'ANIMALS', icon: '🦌', label: 'Gibier', color: '#795548', group: 'Ressources Naturelles' },
-    { id: 'groundwater', viewMode: 'WATER_LAYER', icon: '🌊', label: 'Eau Souterraine', color: '#4A90E2', group: 'Ressources Naturelles' },
+    { id: 'coal', viewMode: 'COAL', icon: '⚫', label: 'Charbon', color: '#424242', group: '🌍 Ressources Naturelles' },
+    { id: 'iron', viewMode: 'IRON', icon: '⛏️', label: 'Minerai', color: '#E65100', group: '🌍 Ressources Naturelles' },
+    { id: 'stone', viewMode: 'STONE', icon: '🪨', label: 'Pierre', color: '#808080', group: '🌍 Ressources Naturelles' },
+    { id: 'oil', viewMode: 'OIL', icon: '🛢️', label: 'Pétrole', color: '#4A4A4A', group: '🌍 Ressources Naturelles' },
+    { id: 'gold', viewMode: 'GOLD', icon: '🪙', label: 'Or', color: '#FFD600', group: '🌍 Ressources Naturelles' },
+    { id: 'silver', viewMode: 'SILVER', icon: '🥈', label: 'Argent', color: '#90A4AE', group: '🌍 Ressources Naturelles' },
+    { id: 'wood', viewMode: 'WOOD', icon: '🌲', label: 'Bois', color: '#7ED321', group: '🌍 Ressources Naturelles' },
+    { id: 'wildlife', viewMode: 'ANIMALS', icon: '🦌', label: 'Gibier', color: '#795548', group: '🌍 Ressources Naturelles' },
+    { id: 'groundwater', viewMode: 'WATER_LAYER', icon: '🌊', label: 'Eau Souterraine', color: '#4A90E2', group: '🌍 Ressources Naturelles' },
 ];
 
 function LayerButton({ layer, active, onClick }: { layer: DataLayer; active: boolean; onClick: () => void }) {
@@ -140,8 +140,7 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
                 <div className="overflow-y-auto space-y-2">
                     {Object.entries(groups).map(([groupName, layers]) => (
                         <div key={groupName}>
-                            <div className="text-[9px] font-bold uppercase tracking-wider mb-1 px-1"
-                                style={{ color: 'rgba(255,255,255,0.4)' }}>
+                            <div className="text-sm font-bold text-slate-400 uppercase mt-4 mb-2 border-b border-slate-600 pb-1">
                                 {groupName}
                             </div>
                             <div className="space-y-0.5">

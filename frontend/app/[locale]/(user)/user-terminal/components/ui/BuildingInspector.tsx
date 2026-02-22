@@ -1,5 +1,5 @@
 import React from 'react';
-import { BuildingData, BUILDING_SPECS, BuildingType, CityStats } from '../../engine/types';
+import { BuildingData, BUILDING_SPECS, BuildingType, CityStats, BuildingStatus } from '../../engine/types';
 import { BuildingManager } from '../../engine/BuildingManager';
 import { formatNumber } from './GameWidgets';
 import { MapEngine } from '../../engine/MapEngine';
@@ -44,14 +44,29 @@ function InspectorRow({ label, value, color = '#2C2C2C' }: { label: string; valu
 }
 
 export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, building, index, stats, onClose, onUpgrade }) => {
-    const specs = BUILDING_SPECS[building.type];
+    // Mission 2: Action 2 - Fallback pour éviter les plantages si l'entité n'a pas de spec
+    const specs = BUILDING_SPECS[building.type] || {
+        type: building.type,
+        name: building.type.replace(/_/g, ' '),
+        description: 'Fonctionne normalement',
+        cost: 0,
+        maintenance: 0,
+        maxLevel: 1
+    };
     const maxLevel = specs.maxLevel || 1;
     const isMaxLevel = building.level >= maxLevel;
     const upgradeCost = (specs.upgradeCost || 0) * building.level;
     const canAfford = engine.resources.money >= upgradeCost;
 
+    // Vérification des besoins de base
+    const powerOk = (building.statusFlags & BuildingStatus.NO_POWER) === 0;
+    const waterOk = (building.statusFlags & BuildingStatus.NO_WATER) === 0;
+    const basicNeedsMet = powerOk && waterOk;
+
+    const canUpgrade = canAfford && basicNeedsMet;
+
     const handleUpgrade = () => {
-        if (!canAfford || isMaxLevel) return;
+        if (!canUpgrade || isMaxLevel) return;
         const result = BuildingManager.upgradeBuilding(engine, index);
         if (result.success) onUpgrade();
     };
@@ -60,7 +75,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
     const isResidential = building.type === BuildingType.RESIDENTIAL;
     const isCommercial = building.type === BuildingType.COMMERCIAL;
     const isIndustrial = building.type === BuildingType.INDUSTRIAL;
-    const isServiceBuilding = !isResidential && !isCommercial && !isIndustrial;
+    const isZone = isResidential || isCommercial || isIndustrial;
+    const isServiceBuilding = !isZone;
 
     // Color by type
     const headerColor = isResidential ? '#7ED321' : isCommercial ? '#4A90E2' : isIndustrial ? '#F5A623' : '#50E3C2';
@@ -182,28 +198,51 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                             </div>
                         )}
 
-                        {/* ═══ UPGRADE ═══ */}
+                        {/* ═══ UPGRADE / EVOLUTION ═══ */}
                         <div className="pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                            {specs.upgradeCost && !isMaxLevel ? (
-                                <button
-                                    onClick={handleUpgrade}
-                                    disabled={!canAfford}
-                                    className="w-full py-2.5 px-4 rounded-xl font-bold text-[12px] flex justify-between items-center transition-all hover:scale-[1.02]"
-                                    style={{
-                                        background: canAfford ? headerColor : 'rgba(0,0,0,0.06)',
-                                        color: canAfford ? 'white' : '#999',
-                                        boxShadow: canAfford ? `0 3px 10px ${headerColor}40` : 'none',
-                                    }}
-                                >
-                                    <span>⬆️ Améliorer au Niveau {building.level + 1}</span>
-                                    <span className="px-2 py-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                                        ${formatNumber(upgradeCost)}
-                                    </span>
-                                </button>
-                            ) : (
-                                <div className="w-full py-2.5 px-4 rounded-xl text-center text-[11px] font-bold" style={{ background: 'rgba(0,0,0,0.04)', color: '#bbb' }}>
-                                    {isMaxLevel ? "✨ Niveau Maximum Atteint" : "Pas d'amélioration disponible"}
+                            {isZone ? (
+                                <div className="w-full py-2.5 px-4 rounded-xl text-center text-[10px] font-bold flex flex-col items-center justify-center gap-1" style={{ background: 'rgba(0,0,0,0.04)', color: '#bbb' }}>
+                                    {isMaxLevel ? (
+                                        <span>✨ Niveau Maximum Atteint</span>
+                                    ) : (
+                                        <>
+                                            {!basicNeedsMet && <span className="text-[#D0021B]">⚠️ Attente Eau/Électricité</span>}
+                                            {basicNeedsMet && building.level === 1 && <span className="text-[#F5A623]">⚠️ Attente Désirabilité (Services de base)</span>}
+                                            {basicNeedsMet && building.level === 2 && <span className="text-[#4A90E2]">⚠️ Attente Désirabilité (Éducation/Loisirs)</span>}
+                                            {basicNeedsMet && (building.level === 1 || building.level === 2) && <span style={{ fontSize: '9px', opacity: 0.6 }}>(Évolution automatique lente)</span>}
+                                        </>
+                                    )}
                                 </div>
+                            ) : (
+                                specs.upgradeCost && !isMaxLevel ? (
+                                    <button
+                                        onClick={handleUpgrade}
+                                        disabled={!canUpgrade}
+                                        className="w-full py-2.5 px-4 rounded-xl font-bold text-[12px] flex flex-col justify-center items-center transition-all hover:scale-[1.02]"
+                                        style={{
+                                            background: canUpgrade ? headerColor : 'rgba(0,0,0,0.06)',
+                                            color: canUpgrade ? 'white' : '#999',
+                                            boxShadow: canUpgrade ? `0 3px 10px ${headerColor}40` : 'none',
+                                            cursor: canUpgrade ? 'pointer' : 'not-allowed'
+                                        }}
+                                    >
+                                        <div className="w-full flex justify-between items-center">
+                                            <span>⬆️ Améliorer (Niv. {building.level + 1})</span>
+                                            <span className="px-2 py-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                                                ${formatNumber(upgradeCost)}
+                                            </span>
+                                        </div>
+                                        {!basicNeedsMet && (
+                                            <div className="text-[10px] mt-1.5 font-bold text-[#D0021B] text-center w-full">
+                                                ⚠️ Eau & Électricité requises
+                                            </div>
+                                        )}
+                                    </button>
+                                ) : (
+                                    <div className="w-full py-2.5 px-4 rounded-xl text-center text-[11px] font-bold" style={{ background: 'rgba(0,0,0,0.04)', color: '#bbb' }}>
+                                        {isMaxLevel ? "✨ Niveau Maximum Atteint" : "Pas d'amélioration disponible"}
+                                    </div>
+                                )
                             )}
                         </div>
                     </div>

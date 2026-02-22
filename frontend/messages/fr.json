@@ -295,6 +295,14 @@
         "name": "Centrale Électrique",
         "desc": "Produit de l'énergie."
       },
+      "WIND_TURBINE": {
+        "name": "Éolienne",
+        "desc": "Produit de l'énergie propre."
+      },
+      "SOLAR_PANEL": {
+        "name": "Centrale Solaire",
+        "desc": "Produit de l'énergie propre."
+      },
       "WATER_PUMP": {
         "name": "Station de Pompage",
         "desc": "Pompe de l'eau pour la ville."
@@ -306,6 +314,10 @@
       "OIL_RIG": {
         "name": "Plateforme Pétrolière",
         "desc": "Extrait du pétrole."
+      },
+      "OIL_PUMP": {
+        "name": "Puits de Pétrole",
+        "desc": "Extrait du pétrole terrestre."
       },
       "CITY_HALL": {
         "name": "Mairie",
@@ -357,6 +369,10 @@
       },
       "HOSPITAL": {
         "name": "Hôpital",
+        "desc": "Service de santé."
+      },
+      "CLINIC": {
+        "name": "Clinique",
         "desc": "Service de santé."
       },
       "SCHOOL": {

@@ -61,8 +61,12 @@ export class BuildingRenderer {
         if (isConstState) {
             if (!(building as any)._dustPlayed) {
                 (building as any)._dustPlayed = true;
+
+                // Essayer de trouver la fxContainer s'il existe via la racine du monde (terrainContainerRef)
+                const targetFxContainer = parentContainer.parent?.getChildByLabel("fxContainer") as PIXI.Container || parentContainer;
+
                 FXRenderer.playConstructionDust(
-                    parentContainer,
+                    targetFxContainer,
                     pos.x,
                     pos.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET, // Centre de la base isométrique
                     container.zIndex + 0.1 // Juste au dessus du mur/sol
@@ -95,6 +99,10 @@ export class BuildingRenderer {
                 sprite = new PIXI.Sprite(texture);
                 // ✅ ANCRAGE BASE-CENTRE — aligne la base du sprite avec le centre de la tuile iso
                 sprite.anchor.set(0.5, 1.0);
+
+                // Mission 2: Éviter que les zones transparentes bloquent les clics
+                sprite.eventMode = 'static';
+
                 container.addChild(sprite);
 
                 // Recreate emote text above sprite
@@ -127,6 +135,19 @@ export class BuildingRenderer {
                 sprite.scale.set(currentScale);
             }
 
+            // HitArea isométrique
+            const hw = (TILE_WIDTH / 2) / currentScale;
+            const hh = (TILE_HEIGHT / 2) / currentScale;
+            // Centre local de la tuile iso par rapport au point d'ancrage du sprite
+            const cy = -(sprite.y) / currentScale;
+
+            sprite.hitArea = new PIXI.Polygon([
+                new PIXI.Point(0, cy - hh),
+                new PIXI.Point(hw, cy),
+                new PIXI.Point(0, cy + hh),
+                new PIXI.Point(-hw, cy)
+            ]);
+
             // Gestion de l'emote (toujours au dessus du sprite)
             const emoteText = container.children.find(c => c instanceof PIXI.Text) as PIXI.Text | undefined;
             if (emoteText) {
@@ -135,9 +156,8 @@ export class BuildingRenderer {
                     emoteText.text = emote;
                     emoteText.visible = true;
                     const bounce = Math.sin(Date.now() / 200) * 5;
-                    const spriteTop = sprite.y - (texture.height * currentScale);
                     emoteText.x = 0;
-                    emoteText.y = spriteTop - 10 + bounce;
+                    emoteText.y = -(TILE_HEIGHT + 30) + bounce; // Emote juste au-dessus du diamant iso
                 } else {
                     emoteText.visible = false;
                 }
@@ -338,8 +358,11 @@ export class BuildingRenderer {
         }
 
         if (parentContainer) {
+            // Essayer de trouver la fxContainer s'il existe via la racine du monde (terrainContainerRef)
+            const targetFxContainer = parentContainer.parent?.getChildByLabel("fxContainer") as PIXI.Container || parentContainer;
+
             FXRenderer.playConstructionDust(
-                parentContainer,
+                targetFxContainer,
                 targetX,
                 targetY,
                 zIndex

@@ -27,17 +27,8 @@ export class ResourceAssets {
 
         console.log("🌲 ResourceAssets: Chargement...");
 
-        // TENTATIVE ATLAS (Priorité)
-        const { AtlasManager } = await import('./AtlasManager');
-        const forestTex = AtlasManager.getTexture('forest.png'); // 32x32
-
-        if (forestTex) {
-            console.log("🌲 ResourceAssets: Utilisation de l'atlas (forest.png)");
-            // On ajoute plusieurs fois le même pour l'instant, ou on cherche d'autres var
-            this.forestFrames.push(forestTex);
-            // On pourrait ajouter tree.png aussi mais il est moche (16x16)
-        } else if (app) {
-            // FALLBACK PROCÉDURAL
+        if (app) {
+            // FALLBACK PROCÉDURAL EXCLUSIF
             console.log("🌲 ResourceAssets: Génération procédurale...");
             this.forestFrames.push(ProceduralResources.generateTree(app, 0x2E7D32, 0x5D4037));
             this.forestFrames.push(ProceduralResources.generateTree(app, 0x388E3C, 0x4E342E));

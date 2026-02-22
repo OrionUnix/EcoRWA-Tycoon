@@ -92,11 +92,7 @@ export default function UserTerminalClient() {
                 console.log("🚀 Page: Démarrage du chargement des assets...");
                 if (!appRef.current) throw new Error("App Pixi non initialisée");
 
-                // ✅ ÉTAPE 1: Charger l'Atlas en premier (nécessaire pour BiomeAssets + BuildingAssets)
-                const { AtlasManager } = await import('../engine/AtlasManager');
-                await AtlasManager.load();
-
-                // ✅ ÉTAPE 2: Charger tous les assets en parallèle (atlas déjà prêt)
+                // ✅ ÉTAPE 1: Charger tous les assets en parallèle
                 const { loadStandaloneTreeTextures } = await import('../engine/ResourceRenderer');
                 await Promise.all([
                     loadBiomeTextures(appRef.current),
@@ -150,13 +146,48 @@ export default function UserTerminalClient() {
 
             viewport.sortableChildren = true;
 
+            // Conteneur groupé principal gérant tout le monde (pour éviter de casser useGameLoop)
             const terrain = new PIXI.Container();
             terrain.sortableChildren = true;
             terrain.zIndex = 1;
-            terrain.label = "terrain";
+            terrain.label = "worldContainer";
 
+            // 🔥 APPLICATION DE LA SOLUTION PIXIJS Z-LAYERING 🔥
+            const terrainContainer = new PIXI.Container();
+            terrainContainer.zIndex = 0; // (Sol)
+            terrainContainer.label = "terrainContainer";
+            terrainContainer.sortableChildren = true;
+
+            const zoneContainer = new PIXI.Graphics();
+            zoneContainer.zIndex = 10; // <- IMPORTANT : Les zones doivent être basses.
+            zoneContainer.label = "zoneContainer";
+
+            const roadContainer = new PIXI.Container();
+            roadContainer.zIndex = 20;
+            roadContainer.label = "roadContainer";
+            roadContainer.sortableChildren = true;
+
+            const buildingContainer = new PIXI.Container();
+            buildingContainer.zIndex = 30; // <- IMPORTANT : Bâtiments au-dessus des zones.
+            buildingContainer.label = "buildingContainer";
+            buildingContainer.sortableChildren = true;
+
+            const vehicleContainer = new PIXI.Container();
+            vehicleContainer.zIndex = 40;
+            vehicleContainer.label = "vehicleContainer";
+            vehicleContainer.sortableChildren = true;
+
+            const fxContainer = new PIXI.Container();
+            fxContainer.zIndex = 100; // (Fumée, curseurs)
+            fxContainer.label = "fxContainer";
+            fxContainer.sortableChildren = true;
+
+            // Ajout des sous-couches au conteneur principal
+            terrain.addChild(terrainContainer, zoneContainer, roadContainer, buildingContainer, vehicleContainer, fxContainer);
+
+            // Calques pour UI et Debug Vectoriel 
             const vectorLayer = new PIXI.Graphics();
-            vectorLayer.zIndex = 100;
+            vectorLayer.zIndex = 150;
 
             const uiLayer = new PIXI.Graphics();
             uiLayer.zIndex = 200;

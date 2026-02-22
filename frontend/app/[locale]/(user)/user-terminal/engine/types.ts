@@ -69,10 +69,10 @@ export enum BuildingType {
     COMMERCIAL = 'COMMERCIAL',
     INDUSTRIAL = 'INDUSTRIAL',
     POWER_PLANT = 'POWER_PLANT',
+    WIND_TURBINE = 'WIND_TURBINE', // ✅ NEW
+    SOLAR_PANEL = 'SOLAR_PANEL',   // ✅ NEW
     WATER_PUMP = 'WATER_PUMP',
-    COAL_MINE = 'COAL_MINE', // ✅ New
-    ORE_MINE = 'ORE_MINE',   // ✅ New
-    MINE = 'MINE', // Deprecated ? Kept for compatibility if needed
+    MINE = 'MINE', // ✅ UNIFIED MINE
     OIL_RIG = 'OIL_RIG', // Offshore ?
     OIL_PUMP = 'OIL_PUMP', // ✅ NEW: Land based
     CITY_HALL = 'CITY_HALL',
@@ -87,6 +87,9 @@ export enum BuildingType {
     SCHOOL = 'SCHOOL',
     CLINIC = 'CLINIC',
     MUSEUM = 'MUSEUM',
+    THEATER = 'THEATER', // ✅ NOUVEAU
+    PHARMACY = 'PHARMACY', // ✅ NOUVEAU
+    STADIUM = 'STADIUM', // ✅ NOUVEAU
     // ✅ LOISIRS
     RESTAURANT = 'RESTAURANT',
     CAFE = 'CAFE'
@@ -358,23 +361,39 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     [BuildingType.RESIDENTIAL]: {
         type: BuildingType.RESIDENTIAL, cost: 50, name: "Zone Résidentielle",
         description: "Logements pour les citoyens.", width: 1, height: 1, color: 0x4CAF50, requiresRoad: true,
-        category: BuildingCategory.RESIDENTIAL
+        category: BuildingCategory.RESIDENTIAL,
+        upgradeCost: 50, maxLevel: 3
     },
     [BuildingType.COMMERCIAL]: {
         type: BuildingType.COMMERCIAL, cost: 100, name: "Zone Commerciale",
         description: "Commerces et services.", width: 1, height: 1, color: 0x2196F3, requiresRoad: true,
-        category: BuildingCategory.COMMERCIAL
+        category: BuildingCategory.COMMERCIAL,
+        upgradeCost: 100, maxLevel: 3
     },
     [BuildingType.INDUSTRIAL]: {
         type: BuildingType.INDUSTRIAL, cost: 150, name: "Zone Industrielle",
         description: "Usines et production.", width: 1, height: 1, color: 0xFFC107, requiresRoad: true,
-        category: BuildingCategory.INDUSTRIAL
+        category: BuildingCategory.INDUSTRIAL,
+        upgradeCost: 150, maxLevel: 3
     },
     [BuildingType.POWER_PLANT]: {
-        type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Électrique",
-        description: "Produit de l'énergie.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4,
+        type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Charbon",
+        description: "Forte puissance, mais très polluante.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4, maintenance: 80,
         category: BuildingCategory.POWER,
-        production: { type: 'ENERGY', amount: 100 }
+        production: { type: 'ENERGY', amount: 300 },
+        influenceRadius: 8, influenceScore: -50
+    },
+    [BuildingType.WIND_TURBINE]: {
+        type: BuildingType.WIND_TURBINE, cost: 150, name: "Éolienne",
+        description: "Énergie propre (Faible puissance).", width: 1, height: 1, color: 0xE0F7FA, requiresRoad: true, workersNeeded: 1, maintenance: 20,
+        category: BuildingCategory.POWER,
+        production: { type: 'ENERGY', amount: 50 }
+    },
+    [BuildingType.SOLAR_PANEL]: {
+        type: BuildingType.SOLAR_PANEL, cost: 800, name: "Centrale Solaire",
+        description: "Énergie propre (Puissance moyenne).", width: 2, height: 2, color: 0x4FC3F7, requiresRoad: true, workersNeeded: 2, maintenance: 35,
+        category: BuildingCategory.POWER,
+        production: { type: 'ENERGY', amount: 150 }
     },
     [BuildingType.WATER_PUMP]: {
         type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
@@ -385,9 +404,11 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         upgradeCost: 500, maxLevel: 3
     },
     [BuildingType.MINE]: {
-        type: BuildingType.MINE, cost: 99999, name: "Mine (Désactivé)",
-        description: "Bâtiment désactivé.", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 0,
-        category: BuildingCategory.EXTRACTION
+        type: BuildingType.MINE, cost: 2000, name: "Mine",
+        description: "Extrait des ressources selon le sol.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maintenance: 200,
+        category: BuildingCategory.EXTRACTION,
+        influenceRadius: 6, influenceScore: -30,
+        upgradeCost: 2000, maxLevel: 3
     },
     [BuildingType.OIL_RIG]: {
         type: BuildingType.OIL_RIG, cost: 99999, name: "Plateforme Pétrolière (Mer)",
@@ -439,7 +460,7 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2,
         category: BuildingCategory.EXTRACTION,
         production: { type: 'WOOD', amount: 40 },
-        upgradeCost: 150, maxLevel: 3
+        upgradeCost: 150, maxLevel: 4
     },
     [BuildingType.FOOD_MARKET]: {
         type: BuildingType.FOOD_MARKET, cost: 500, name: "Marché Alimentaire",
@@ -448,26 +469,15 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         upgradeCost: 500, maxLevel: 2,
         influenceRadius: 6
     },
-    // ✅ MINES
-    [BuildingType.COAL_MINE]: {
-        type: BuildingType.COAL_MINE, cost: 2000, name: "Mine de Charbon",
-        description: "Extrait du charbon du sol (Pollution !).", width: 2, height: 2, color: 0x3E2723, requiresRoad: true, workersNeeded: 10, maintenance: 150,
-        category: BuildingCategory.EXTRACTION,
-        influenceRadius: 6, influenceScore: -30,
-        production: { type: 'ENERGY', amount: 0 } // Produit ressource brute, pas énergie directe (affiché ailleurs)
-    },
-    [BuildingType.ORE_MINE]: {
-        type: BuildingType.ORE_MINE, cost: 2500, name: "Mine de Minerai",
-        description: "Extrait Fer, Or, Argent ou Pierre.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maintenance: 200,
-        category: BuildingCategory.EXTRACTION,
-        influenceRadius: 6, influenceScore: -30
-    },
+    // ✅ MINES UNIFIÉES EN HAUT
+    // ✅ SPECS DES NOUVEAUX BÂTIMENTS
     // ✅ SPECS DES NOUVEAUX BÂTIMENTS
     [BuildingType.SCHOOL]: {
         type: BuildingType.SCHOOL, cost: 1500, name: "École",
         description: "Éducation de base.", width: 2, height: 1, color: 0xFFEB3B, requiresRoad: true, workersNeeded: 6, maintenance: 100,
         category: BuildingCategory.CIVIC,
-        influenceRadius: 8
+        influenceRadius: 8,
+        upgradeCost: 1500, maxLevel: 3
     },
     [BuildingType.CLINIC]: {
         type: BuildingType.CLINIC, cost: 1200, name: "Clinique",
@@ -479,7 +489,28 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         type: BuildingType.MUSEUM, cost: 2500, name: "Musée",
         description: "Culture et tourisme.", width: 2, height: 2, color: 0x9C27B0, requiresRoad: true, workersNeeded: 5, maintenance: 150,
         category: BuildingCategory.CIVIC,
-        influenceRadius: 10
+        influenceRadius: 10,
+        upgradeCost: 2500, maxLevel: 3
+    },
+    [BuildingType.THEATER]: {
+        type: BuildingType.THEATER, cost: 3000, name: "Théâtre",
+        description: "Culture et Loisirs animés.", width: 2, height: 2, color: 0xE91E63, requiresRoad: true, workersNeeded: 8, maintenance: 200,
+        category: BuildingCategory.CIVIC,
+        influenceRadius: 12,
+        upgradeCost: 3000, maxLevel: 3
+    },
+    [BuildingType.STADIUM]: {
+        type: BuildingType.STADIUM, cost: 5000, name: "Stade",
+        description: "Gros boost de bonheur (Évolutif).", width: 3, height: 3, color: 0xE91E63, requiresRoad: true, workersNeeded: 20, maintenance: 400,
+        category: BuildingCategory.CIVIC,
+        influenceRadius: 20,
+        upgradeCost: 5000, maxLevel: 3
+    },
+    [BuildingType.PHARMACY]: {
+        type: BuildingType.PHARMACY, cost: 800, name: "Pharmacie",
+        description: "Soins médicaux de proximité.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 2, maintenance: 50,
+        category: BuildingCategory.CIVIC,
+        influenceRadius: 5
     },
     [BuildingType.RESTAURANT]: {
         type: BuildingType.RESTAURANT, cost: 600, name: "Restaurant",

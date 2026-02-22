@@ -1,6 +1,6 @@
 import { MapEngine } from '../MapEngine';
 // ✅ AJOUT DE BuildingType
-import { ZoneType, BuildingType, BUILDING_COSTS, PlayerResources, BuildingStatus } from '../types';
+import { ZoneType, BuildingType, BUILDING_COSTS, PlayerResources, BuildingStatus, BUILDING_SPECS } from '../types';
 import { GRID_SIZE } from '../config';
 import { ResidentialRules } from '../rules/ResidentialRules';
 
@@ -56,6 +56,38 @@ export class BuildingSystem {
      */
     static update(engine: MapEngine, currentTick: number) {
 
+        // ----------------------------------------------------------------
+        // PRÉ-CALCUL : DÉMOGRAPHIE & SERVICES ACTIFS (Desirability Check)
+        // ----------------------------------------------------------------
+        const activeServices = new Set<BuildingType>();
+        let totalEducatedRes = 0;
+        let totalRes = 0;
+
+        for (let i = 0; i < engine.buildingLayer.length; i++) {
+            const b = engine.buildingLayer[i];
+            if (!b || b.state !== 'ACTIVE') continue;
+
+            // Enregistrer qu'un service est actif (s'il a accès à l'eau et l'élec)
+            if ((b.statusFlags & BuildingStatus.NO_POWER) === 0 &&
+                (b.statusFlags & BuildingStatus.NO_WATER) === 0) {
+                activeServices.add(b.type);
+            }
+
+            // Statistique d'éducation
+            if (b.type === BuildingType.RESIDENTIAL) {
+                totalRes++;
+                if (b.level >= 2) totalEducatedRes++;
+            }
+        }
+
+        const highEducationRatio = totalRes > 0 ? (totalEducatedRes / totalRes) : 0;
+        const hasPolice = activeServices.has(BuildingType.POLICE_STATION);
+        const hasClinic = activeServices.has(BuildingType.CLINIC);
+        const hasSchool = activeServices.has(BuildingType.SCHOOL);
+        const hasCulture = activeServices.has(BuildingType.PARK) ||
+            activeServices.has(BuildingType.MUSEUM) ||
+            activeServices.has(BuildingType.THEATER as any);
+
         // 1. Calcul du Job Pool Global (Offre / Demande)
         // Optimisation : On pourrait le calculer moins souvent, mais c'est des additions simples
         // Workers = Somme population (simplifié)
@@ -80,15 +112,24 @@ export class BuildingSystem {
         if (endIdx > totalCells) endIdx = totalCells;
 
         // Traitement du premier segment
-        this.processRange(engine, startIdx, endIdx);
+        this.processRange(engine, startIdx, endIdx, hasPolice, hasClinic, hasSchool, hasCulture, highEducationRatio);
 
         // Traitement du reste (bouclage)
         if (overflow > 0) {
-            this.processRange(engine, 0, overflow);
+            this.processRange(engine, 0, overflow, hasPolice, hasClinic, hasSchool, hasCulture, highEducationRatio);
         }
     }
 
-    private static processRange(engine: MapEngine, start: number, end: number) {
+    private static processRange(
+        engine: MapEngine,
+        start: number,
+        end: number,
+        hasPolice: boolean,
+        hasClinic: boolean,
+        hasSchool: boolean,
+        hasCulture: boolean,
+        highEducationRatio: number
+    ) {
         for (let idx = start; idx < end; idx++) {
             const building = engine.buildingLayer[idx];
             const zoneData = engine.zoningLayer[idx];
@@ -116,10 +157,60 @@ export class BuildingSystem {
                     // Simulation Résidentielle
                     if (building.type === BuildingType.RESIDENTIAL) {
                         ResidentialRules.update(building, engine);
-                        // ResidentialRules s'occupe de l'évolution via tryEvolve
                     }
 
-                    // TODO: Simulation Commerciale / Industrielle simplifiée ici si besoin
+                    // ✅ AUTO-NIVEAU UP ORGANIC POUR TOUTES LES ZONES (Mission 2 & 3)
+                    const isZone = building.type === BuildingType.RESIDENTIAL ||
+                        building.type === BuildingType.COMMERCIAL ||
+                        building.type === BuildingType.INDUSTRIAL;
+
+                    if (isZone) {
+                        const specs = BUILDING_SPECS[building.type];
+                        const maxLevel = specs?.maxLevel || 1;
+
+                        if (building.level < maxLevel) {
+                            const noWater = (building.statusFlags & BuildingStatus.NO_WATER) !== 0;
+                            const noPower = (building.statusFlags & BuildingStatus.NO_POWER) !== 0;
+
+                            if (!noWater && !noPower) {
+                                // 1. Vérification de l'Arbre de Désirabilité (Desirability Tree)
+                                let canEvolve = false;
+                                const desirability = this.calculateDesirability(engine, idx);
+
+                                if (building.type === BuildingType.RESIDENTIAL || building.type === BuildingType.COMMERCIAL) {
+                                    if (building.level === 1) {
+                                        canEvolve = hasPolice || hasClinic; // Vers Lvl 2: Police ou Santé
+                                    } else if (building.level === 2) {
+                                        canEvolve = (hasPolice || hasClinic) && hasSchool && hasCulture; // Vers Lvl 3: + Éducation + Culture
+                                    }
+
+                                    // MISSION 4: Bloquer l'évolution si c'est trop moche (Usines/Mines à proximité)
+                                    if (desirability < 20) {
+                                        canEvolve = false;
+                                    }
+                                } else if (building.type === BuildingType.INDUSTRIAL) {
+                                    if (building.level === 1) {
+                                        canEvolve = hasPolice; // Vers Lvl 2: Police
+                                    } else if (building.level === 2) {
+                                        canEvolve = hasPolice && hasSchool && (highEducationRatio > 0.20); // Vers Lvl 3: Main d'œuvre qualifiée > 20%
+                                    }
+                                    // Les industries aiment se regrouper et s'en fichent de la mocheté, on ne bloque pas avec < 20
+                                }
+
+                                // 2. Évolution (0.5% par tick si désirable) -> ~200 ticks moy.
+                                if (canEvolve && Math.random() < 0.005) {
+                                    building.level++;
+                                    building.variant = Math.floor(Math.random() * 3); // Nouveaux A/B Variants !
+
+                                    building.state = 'CONSTRUCTION';
+                                    building.constructionTimer = 0;
+
+                                    engine.revision++;
+                                    console.log(`✨ Bâtiment ${building.type} a évolué vers le Niveau ${building.level} !`);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -142,26 +233,65 @@ export class BuildingSystem {
         // Ou assumer coût 0 pour auto-build résidentiel/commercial (croissance organique)
         // Pour l'instant on garde la logique de coût, mais on log si ça fail
 
-        const costConfig = BUILDING_COSTS[zoneType]?.[1];
+        // Hackathon Mode: On retire les coûts stricts en ressources des auto-constructions (Zones)
+        // Les citoyens amènent eurs propres matériaux (le joueur a déjà payé 10$ pour zoner)
+        engine.buildingLayer[idx] = {
+            type: targetType,
+            x: idx % GRID_SIZE,
+            y: Math.floor(idx / GRID_SIZE),
+            variant: Math.floor(Math.random() * 3),
+            level: 1,
+            state: 'CONSTRUCTION',
+            constructionTimer: 0,
+            pollution: 0,
+            happiness: 100,
+            statusFlags: 0,
+            stability: 0, // NEW
+            jobsAssigned: 0 // NEW
+        };
+        engine.revision++;
+    }
 
-        if (costConfig) {
-            if (this.tryConsumeResources(engine, costConfig)) {
-                engine.buildingLayer[idx] = {
-                    type: targetType,
-                    x: idx % GRID_SIZE,
-                    y: Math.floor(idx / GRID_SIZE),
-                    variant: Math.floor(Math.random() * 3),
-                    level: 1,
-                    state: 'CONSTRUCTION',
-                    constructionTimer: 0,
-                    pollution: 0,
-                    happiness: 100,
-                    statusFlags: 0,
-                    stability: 0, // NEW
-                    jobsAssigned: 0 // NEW
-                };
-                engine.revision++;
+    // ----------------------------------------------------------------
+    // MISSION 4 : SYSTÈME DE DÉSIRABILITÉ PAR RAYON
+    // ----------------------------------------------------------------
+    private static calculateDesirability(map: MapEngine, index: number, radius: number = 4): number {
+        const cx = index % GRID_SIZE;
+        const cy = Math.floor(index / GRID_SIZE);
+        // Score de base (neutre)
+        let score = 50;
+
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const nx = cx + dx;
+                const ny = cy + dy;
+                // Hors map
+                if (nx < 0 || ny < 0 || nx >= GRID_SIZE || ny >= GRID_SIZE) continue;
+
+                const ni = ny * GRID_SIZE + nx;
+                const b = map.buildingLayer[ni];
+
+                if (b) {
+                    // +10 pour les services / parcs
+                    if (b.type === BuildingType.PARK ||
+                        b.type === BuildingType.SCHOOL ||
+                        b.type === BuildingType.CLINIC ||
+                        b.type === BuildingType.CITY_HALL) {
+                        score += 10;
+                    }
+
+                    // -15 pour l'industrie, extraction, bûcherons
+                    if (b.type === BuildingType.INDUSTRIAL ||
+                        b.type.includes('MINE') ||
+                        b.type.includes('PUMP') ||
+                        b.type.includes('LUMBER_HUT') ||
+                        b.type === BuildingType.POWER_PLANT) { // Ajout des centrales pour la forme
+                        score -= 15;
+                    }
+                }
             }
         }
+
+        return Math.max(0, Math.min(100, score)); // Clamp 0-100
     }
 }

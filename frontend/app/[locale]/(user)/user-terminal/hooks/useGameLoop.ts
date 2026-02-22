@@ -69,9 +69,7 @@ export function useGameLoop(
 
         // Chargement des Assets (Atlas + Routes + Bâtiments)
         ResourceAssets.load(); // Au cas où
-        import('../engine/AtlasManager').then(m => m.AtlasManager.load().then(() => {
-            import('../engine/BuildingAssets').then(m => m.BuildingAssets.load());
-        }));
+        import('../engine/BuildingAssets').then(m => m.BuildingAssets.load());
 
         console.log("🎬 GameLoop: Running with Resource Support.");
 
@@ -157,9 +155,10 @@ export function useGameLoop(
 
                 // ✅ RENDU VÉHICULES (Sprites)
                 // Doit être fait à chaque frame pour l'animation et le mouvement
-                // Maintenant on dessine dans le terrainContainer pour le tri Z (Occlusion)
+                // Maintenant on dessine dans le vehicleContainer pour le tri Z (Occlusion correcte)
                 if (terrainContainerRef.current) {
-                    VehicleRenderer.drawVehicles(terrainContainerRef.current, mapData, currentZoom);
+                    const vehicleLayer = (terrainContainerRef.current.getChildByLabel("vehicleContainer") as PIXI.Container) || terrainContainerRef.current;
+                    VehicleRenderer.drawVehicles(vehicleLayer, mapData, currentZoom);
                 }
 
                 // ✅ SYSTÈME DE PARTICULES

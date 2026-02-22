@@ -304,6 +304,14 @@
         "name": "Power Plant",
         "desc": "Produces energy."
       },
+      "WIND_TURBINE": {
+        "name": "Wind Turbine",
+        "desc": "Produces clean energy."
+      },
+      "SOLAR_PANEL": {
+        "name": "Solar Plant",
+        "desc": "Produces clean energy."
+      },
       "WATER_PUMP": {
         "name": "Water Pump",
         "desc": "Pumps water for the city."
@@ -315,6 +323,10 @@
       "OIL_RIG": {
         "name": "Oil Rig",
         "desc": "Extracts oil."
+      },
+      "OIL_PUMP": {
+        "name": "Oil Pump",
+        "desc": "Extracts oil on land."
       },
       "CITY_HALL": {
         "name": "City Hall",
@@ -366,6 +378,10 @@
       },
       "HOSPITAL": {
         "name": "Hospital",
+        "desc": "Health service."
+      },
+      "CLINIC": {
+        "name": "Clinic",
         "desc": "Health service."
       },
       "SCHOOL": {

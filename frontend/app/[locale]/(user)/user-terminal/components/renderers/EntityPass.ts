@@ -32,6 +32,10 @@ export class EntityPass {
         const isHighDetail = zoomLevel > 1.2;
         const isLowDetail = zoomLevel < 0.6;
 
+        // Récupération dynamique des couches Z-Order créées dans UserTerminalClient
+        const zoneLayer = (container.getChildByLabel("zoneContainer") as PIXI.Graphics) || g;
+        const buildingLayer = (container.getChildByLabel("buildingContainer") as PIXI.Container) || container;
+
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
                 // CHUNK: Ne pas dessiner les tuiles verrouillées (Île dans le vide)
@@ -50,8 +54,8 @@ export class EntityPass {
 
                 // 2. RESSOURCES (Arbres) & FAUNE
                 if (!isLowDetail && viewMode === 'ALL') {
-                    ResourceRenderer.drawResource(container, engine, i, pos, wood, biome);
-                    WildlifeRenderer.drawWildlife(container, engine, i, pos, biome);
+                    ResourceRenderer.drawResource(buildingLayer, engine, i, pos, wood, biome);
+                    WildlifeRenderer.drawWildlife(buildingLayer, engine, i, pos, biome);
                 }
 
                 // 3. GRILLE
@@ -59,22 +63,22 @@ export class EntityPass {
                     g.stroke({ width: 1, color: COLORS.GRID_LINES, alpha: 0.1 });
                 }
 
-                // 4. ZONES
+                // 4. ZONES (Utilise Z-Index = 10 -> zoneContainer)
                 const zoneData = engine.zoningLayer[i];
                 if (zoneData) {
                     const zColor = ZONE_COLORS[zoneData.type] || 0xFF00FF;
-                    g.beginPath();
-                    g.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
-                    g.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
-                    g.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
-                    g.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
-                    g.fill({ color: zColor, alpha: 0.3 });
+                    zoneLayer.beginPath();
+                    zoneLayer.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
+                    zoneLayer.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
+                    zoneLayer.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
+                    zoneLayer.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
+                    zoneLayer.fill({ color: zColor, alpha: 0.3 });
                 }
 
-                // 5. BÂTIMENTS
+                // 5. BÂTIMENTS (Utilise Z-Index = 30 -> buildingContainer)
                 if (engine.buildingLayer && engine.buildingLayer[i]) {
                     BuildingRenderer.drawTile(
-                        container,
+                        buildingLayer,
                         engine.buildingLayer[i]!,
                         x, y, pos,
                         isHighDetail,

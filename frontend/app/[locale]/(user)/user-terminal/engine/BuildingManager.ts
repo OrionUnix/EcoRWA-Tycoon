@@ -4,6 +4,7 @@ import { GRID_SIZE } from './config';
 import { ResourceRenderer } from './ResourceRenderer';
 import { WildlifeRenderer } from './WildlifeRenderer';
 import { PopulationManager } from './systems/PopulationManager';
+import { BuildingRenderer } from './BuildingRenderer';
 
 export class BuildingManager {
 
@@ -40,8 +41,6 @@ export class BuildingManager {
             const isResourceExtractor = (
                 type === BuildingType.MINE ||
                 type === BuildingType.OIL_RIG ||
-                type === BuildingType.COAL_MINE ||
-                type === BuildingType.ORE_MINE ||
                 type === BuildingType.OIL_PUMP
             );
 
@@ -65,18 +64,15 @@ export class BuildingManager {
         }
 
         // Check Ressource Spécifique
-        if (type === BuildingType.COAL_MINE) {
+        if (type === BuildingType.MINE) {
             const hasCoal = engine.resourceMaps.coal && engine.resourceMaps.coal[index] > 0;
-            if (!hasCoal) return { valid: false, reason: "Doit être placé sur un gisement de Charbon" };
-        }
-        else if (type === BuildingType.ORE_MINE) {
             const hasIron = engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0;
             const hasSilver = engine.resourceMaps.silver && engine.resourceMaps.silver[index] > 0;
             const hasGold = engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0;
             const hasStone = engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0;
 
-            if (!hasIron && !hasSilver && !hasGold && !hasStone) {
-                return { valid: false, reason: "Doit être placé sur un gisement de Minerai (Fer, Or, Argent, Pierre)" };
+            if (!hasCoal && !hasIron && !hasSilver && !hasGold && !hasStone) {
+                return { valid: false, reason: "Doit être placé sur un gisement de Minerai (Fer, Or, Argent, Pierre, Charbon)" };
             }
         }
         else if (type === BuildingType.OIL_RIG || type === BuildingType.OIL_PUMP) {
@@ -158,14 +154,10 @@ export class BuildingManager {
         // ✅ NOUVEAU : ESTIMATION POUR LES MINES (Rayon 0, juste sous le bâtiment)
         // Mais comme la fonction est appelée "autour d'un point", on peut tricher
         // ou juste check l'index central.
-        if (type === BuildingType.COAL_MINE) {
-            label = "Charbon (Est.)";
+        if (type === BuildingType.MINE) {
+            label = "Ressource (Est.)";
             if (engine.resourceMaps.coal[index] > 0) count = 5; // Production de base
-        }
-        else if (type === BuildingType.ORE_MINE) {
-            label = "Minerai (Est.)";
-            // On prend le meilleur
-            if (engine.resourceMaps.gold[index] > 0) count = 5;
+            else if (engine.resourceMaps.gold[index] > 0) count = 5;
             else if (engine.resourceMaps.silver[index] > 0) count = 5;
             else if (engine.resourceMaps.iron[index] > 0) count = 5;
             else if (engine.resourceMaps.stone[index] > 0) count = 5;
@@ -223,11 +215,9 @@ export class BuildingManager {
         // Préparation des données minières
         let miningData: { resource: any; amount: number } | undefined;
 
-        if (type === BuildingType.COAL_MINE) {
-            miningData = { resource: 'COAL', amount: engine.resourceMaps.coal[index] };
-        }
-        else if (type === BuildingType.ORE_MINE) {
-            if (engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0) miningData = { resource: 'GOLD', amount: engine.resourceMaps.gold[index] };
+        if (type === BuildingType.MINE) {
+            if (engine.resourceMaps.coal && engine.resourceMaps.coal[index] > 0) miningData = { resource: 'COAL', amount: engine.resourceMaps.coal[index] };
+            else if (engine.resourceMaps.gold && engine.resourceMaps.gold[index] > 0) miningData = { resource: 'GOLD', amount: engine.resourceMaps.gold[index] };
             else if (engine.resourceMaps.silver && engine.resourceMaps.silver[index] > 0) miningData = { resource: 'SILVER', amount: engine.resourceMaps.silver[index] };
             else if (engine.resourceMaps.iron && engine.resourceMaps.iron[index] > 0) miningData = { resource: 'IRON', amount: engine.resourceMaps.iron[index] };
             else if (engine.resourceMaps.stone && engine.resourceMaps.stone[index] > 0) miningData = { resource: 'STONE', amount: engine.resourceMaps.stone[index] };
@@ -304,6 +294,12 @@ export class BuildingManager {
 
         // Effet visuel immédiat (Redraw)
         engine.revision++;
+
+        // Vider le cache visuel pour forcer la nouvelle texture HD
+        BuildingRenderer.removeBuilding(index);
+
+        // Jouer le nuage de poussière
+        BuildingRenderer.playDemolitionFX(index, engine);
 
         // Mise à jour des stats globales (Production / Jobs)
         PopulationManager.onBuildingUpgraded(specs, oldLevel, building.level);

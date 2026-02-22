@@ -1,6 +1,5 @@
 import * as PIXI from 'pixi.js';
 import { ResourceAssets } from './ResourceAssets';
-import { AtlasManager } from './AtlasManager';
 import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
 import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH, SURFACE_Y_OFFSET } from './config';
@@ -50,24 +49,9 @@ export async function loadStandaloneTreeTextures(): Promise<void> {
         treeTexturesCache = loaded;
         console.log(`🌲 ResourceRenderer: ${loaded.length} arbres standalone 128px chargés !`);
     } else {
-        // Fallback: atlas
-        treeTexturesCache = getAtlasTreeTexturesSync();
-        if (treeTexturesCache.length > 0) {
-            console.log(`🌲 ResourceRenderer: ${treeTexturesCache.length} arbres atlas (fallback).`);
-        }
+        treeTexturesCache = [];
     }
     treeTexturesLoading = false;
-}
-
-/** Sync atlas tree textures (fallback) */
-function getAtlasTreeTexturesSync(): PIXI.Texture[] {
-    if (!AtlasManager.isReady) return [];
-    const result: PIXI.Texture[] = [];
-    for (const name of ['tree.png', 'tree02.png']) {
-        const tex = AtlasManager.getTexture(name);
-        if (tex) result.push(tex);
-    }
-    return result;
 }
 
 function getTreeTextures(): PIXI.Texture[] {
@@ -75,10 +59,6 @@ function getTreeTextures(): PIXI.Texture[] {
 
     // Tenter le chargement async (les frames seront dispo à la prochaine frame)
     loadStandaloneTreeTextures();
-
-    // En attendant, essayer l'atlas en synchrone
-    const atlas = getAtlasTreeTexturesSync();
-    if (atlas.length > 0) return atlas;
 
     return [];
 }
