@@ -3,9 +3,10 @@ import { RoadManager } from '../RoadManager';
 import { BuildingManager } from '../BuildingManager';
 import { ZoneManager } from '../ZoneManager';
 import { PopulationManager } from './PopulationManager';
-import { BuildingType, BUILDING_SPECS } from '../types';
+import { BuildingType, BUILDING_SPECS, BUILDING_COSTS } from '../types';
 import { ResourceRenderer } from '../ResourceRenderer';
 import { WildlifeRenderer } from '../WildlifeRenderer';
+import { BuildingRenderer } from '../BuildingRenderer';
 import { ChunkManager } from '../ChunkManager';
 import { globalWorld } from '../ecs/world';
 import { addEntity, addComponent, removeEntity } from 'bitecs';
@@ -99,12 +100,56 @@ export class InteractionSystem {
         }
     }
 
+    private static calculateSalvage(map: MapEngine, idx: number) {
+        const building = map.buildingLayer[idx];
+        const zone = map.zoningLayer[idx];
+
+        if (building) {
+            const specs = BUILDING_SPECS[building.type];
+            if (specs) {
+                // Rembourse 50% de l'investissement initial
+                map.resources.money += Math.floor(specs.cost * 0.5);
+
+                // Bonus spécifique pour les bâtiments d'extraction (Mines, Bois, Pierre)
+                if (building.type === BuildingType.COAL_MINE || building.type === BuildingType.ORE_MINE || building.type === BuildingType.OIL_PUMP || building.type === BuildingType.OIL_RIG) {
+                    map.resources.wood += 20;
+                    map.resources.stone += 20;
+                } else if (building.type === BuildingType.LUMBER_HUT) {
+                    map.resources.wood += 50;
+                }
+            }
+        }
+
+        if (zone) {
+            const costConfig = BUILDING_COSTS[zone.type];
+            if (costConfig && costConfig[zone.level]) {
+                const costs = costConfig[zone.level];
+
+                // Rembourse 50% de toutes les ressources utilisées pour ce niveau
+                if (costs.money) map.resources.money += Math.floor(costs.money * 0.5);
+                if (costs.wood) map.resources.wood += Math.floor(costs.wood * 0.5);
+                if (costs.concrete) map.resources.concrete += Math.floor(costs.concrete * 0.5);
+                if (costs.glass) map.resources.glass += Math.floor(costs.glass * 0.5);
+                if (costs.steel) map.resources.steel += Math.floor(costs.steel * 0.5);
+            }
+        }
+    }
+
     private static handleBulldozer(map: MapEngine, idx: number) {
+        let destroyedSomething = false;
+
+        // 1. Remboursement (Mission 2)
+        this.calculateSalvage(map, idx);
+
+        // 2. Nettoyage Route
         if (map.roadLayer[idx]) {
             map.removeRoad(idx);
-            map.resources.money += 5; // Remboursement partiel
+            map.resources.money += 5; // Remboursement partiel supplémentaire pour la route
             RoadManager.updateConnections(map, idx); // Update voisins + Pathfinding
+            destroyedSomething = true;
         }
+
+        // 3. Nettoyage Bâtiment (Mission 1)
         if (map.buildingLayer[idx]) {
             const building = map.buildingLayer[idx];
             if (building) {
@@ -120,13 +165,27 @@ export class InteractionSystem {
             }
             map.buildingLayer[idx] = null;
             map.revision++;
+            destroyedSomething = true;
         }
+
+        // 4. Nettoyage Zone (Mission 1)
         if (map.zoningLayer[idx] !== null) {
             const zoneData = map.zoningLayer[idx];
             if (zoneData) {
                 PopulationManager.onZoneRemoved(zoneData);
             }
             map.zoningLayer[idx] = null;
+            map.revision++;
+            destroyedSomething = true;
+        }
+
+        // 5. FX de destruction (Mission 3)
+        if (destroyedSomething) {
+            BuildingRenderer.playDemolitionFX(idx, map);
+            // ✅ NOUVEAU: Enlever visuellement le sprite du cache après avoir joué le FX isométrique
+            BuildingRenderer.removeBuilding(idx);
+
+            // Forcer une passe système de rafraîchissement global
             map.revision++;
         }
     }

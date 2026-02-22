@@ -279,4 +279,71 @@ export class BuildingRenderer {
         });
         buildingCache.clear();
     }
+
+    /**
+     * Supprime visuellement le sprite du bâtiment
+     */
+    static removeBuilding(index: number) {
+        const container = buildingCache.get(index);
+        if (container) {
+            if (container.parent) {
+                container.parent.removeChild(container);
+            }
+            if (!container.destroyed) {
+                container.destroy({ children: true });
+            }
+            buildingCache.delete(index);
+        }
+    }
+
+    /**
+     * Joue l'effet de destruction (nuage de poussière)
+     */
+    static playDemolitionFX(index: number, map: any) {
+        // Obtenir le premier conteneur parent (du building s'il existe encore dans le cache, sinon on calcule la position absolue)
+        const cachedContainer = buildingCache.get(index);
+
+        let targetX = 0;
+        let targetY = 0;
+        let parentContainer: PIXI.Container | null = null;
+        let zIndex = 0;
+
+        if (cachedContainer && cachedContainer.parent) {
+            targetX = cachedContainer.x;
+            targetY = cachedContainer.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET;
+            parentContainer = cachedContainer.parent;
+            zIndex = cachedContainer.zIndex + 0.1;
+        } else {
+            // Calcul fallback si le conteneur a déjà été détruit ou n'existait pas en cache
+            const gridX = index % GRID_SIZE;
+            const gridY = Math.floor(index / GRID_SIZE);
+
+            // Calculer la projection isométrique manuellement si pas de container
+            const halfW = TILE_WIDTH / 2;
+            const halfH = TILE_HEIGHT / 2;
+
+            targetX = (gridX - gridY) * halfW;
+            targetY = (gridX + gridY) * halfH + halfH + SURFACE_Y_OFFSET;
+            zIndex = gridX + gridY + 0.5;
+
+            // On a besoin du conteneur parent du renderer pour ajouter le FX si on n'a pas le conteneur du batiment
+            // Hack : on va chercher un conteneur d'un autre batiment pour trouver le parent `world`
+            // Si on ne trouve rien, on abandonne
+            for (const [_, container] of buildingCache.entries()) {
+                if (container.parent) {
+                    parentContainer = container.parent;
+                    break;
+                }
+            }
+        }
+
+        if (parentContainer) {
+            FXRenderer.playConstructionDust(
+                parentContainer,
+                targetX,
+                targetY,
+                zIndex
+            );
+        }
+    }
 }
