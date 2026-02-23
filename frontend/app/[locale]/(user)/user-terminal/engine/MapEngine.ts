@@ -93,7 +93,9 @@ export class MapEngine {
                 expenses: 0,
                 taxIncome: { residential: 0, commercial: 0, industrial: 0 },
                 tradeIncome: 0,
-                maintenance: 0
+                exportIncome: 0,
+                maintenance: 0,
+                maintenanceDetail: {}
             }
         };
         this.currentSummary = {

@@ -20,10 +20,10 @@ export class PopulationManager {
      * Population per zone level for residential zones
      */
     private static readonly POPULATION_BY_LEVEL: Record<number, number> = {
-        1: 5,
-        2: 12,
-        3: 30,
-        4: 80
+        1: 4,  // Level 1: 4 Inhabitants -> 40$/h
+        2: 10, // Level 2: 10 Inhabitants -> 100$/h
+        3: 25, // Level 3: 25 Inhabitants -> 250$/h
+        4: 60  // Level 4/High: 60 Inhabitants -> 600$/h
     };
 
     /**

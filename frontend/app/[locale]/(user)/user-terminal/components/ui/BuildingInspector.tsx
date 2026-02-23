@@ -2,8 +2,9 @@ import React from 'react';
 import { BuildingData, BUILDING_SPECS, BuildingType, CityStats, BuildingStatus } from '../../engine/types';
 import { BuildingManager } from '../../engine/BuildingManager';
 import { formatNumber } from './GameWidgets';
-import { MapEngine } from '../../engine/MapEngine';
 import { GlassPanel } from './GlassPanel';
+import { MapEngine } from '../../engine/MapEngine';
+import { EconomySystem } from '../../engine/systems/EconomySystem';
 
 // ═══════════════════════════════════════
 // SimCity 2013 — BUILDING INSPECTOR
@@ -56,14 +57,24 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
     const maxLevel = specs.maxLevel || 1;
     const isMaxLevel = building.level >= maxLevel;
     const upgradeCost = (specs.upgradeCost || 0) * building.level;
-    const canAfford = engine.resources.money >= upgradeCost;
+    const canAffordMoney = engine.resources.money >= upgradeCost;
 
-    // Vérification des besoins de base
-    const powerOk = (building.statusFlags & BuildingStatus.NO_POWER) === 0;
-    const waterOk = (building.statusFlags & BuildingStatus.NO_WATER) === 0;
-    const basicNeedsMet = powerOk && waterOk;
+    let canAffordResources = true;
+    const resourceUpgradeCost = specs.resourceCost
+        ? Object.fromEntries(Object.entries(specs.resourceCost).map(([k, v]) => [k, (v as number) * building.level]))
+        : undefined;
 
-    const canUpgrade = canAfford && basicNeedsMet;
+    if (resourceUpgradeCost) {
+        for (const [res, amount] of Object.entries(resourceUpgradeCost)) {
+            if (((engine.resources as any)[res] || 0) < amount) {
+                canAffordResources = false;
+                break;
+            }
+        }
+    }
+
+    const basicNeedsMet = (building.statusFlags & BuildingStatus.NO_POWER) === 0 && (building.statusFlags & BuildingStatus.NO_WATER) === 0;
+    const canUpgrade = canAffordMoney && canAffordResources && basicNeedsMet;
 
     const handleUpgrade = () => {
         if (!canUpgrade || isMaxLevel) return;
@@ -183,6 +194,44 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                             </div>
                         )}
 
+                        {/* ═══ EXPORTATION (Mines, Pêche, Bois) ═══ */}
+                        {EconomySystem.RESOURCE_EXPORT_RATES[building.type] && (() => {
+                            const exportRev = (EconomySystem.RESOURCE_EXPORT_RATES[building.type] || 0) * (building.level || 1);
+                            const opsCost = specs.maintenance || 0;
+                            const profit = exportRev - opsCost;
+                            const isProfitable = profit >= 0;
+
+                            return (
+                                <div className="mt-2 p-2 rounded-lg bg-green-50 border border-green-200">
+                                    <div className="text-[9px] font-bold uppercase tracking-wider mb-2 text-green-700">
+                                        Bilan Financier (Export)
+                                    </div>
+                                    <div className="space-y-1 mb-2 pb-1 border-b border-green-200/50">
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span style={{ color: '#D0021B' }}>🔴 Coût d'exploitation</span>
+                                            <span className="font-mono font-bold" style={{ color: '#D0021B' }}>
+                                                -${formatNumber(opsCost)}/h
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span style={{ color: '#7ED321' }}>🟢 Chiffre d'affaires</span>
+                                            <span className="font-mono font-bold" style={{ color: '#7ED321' }}>
+                                                +${formatNumber(exportRev)}/h
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[12px] font-bold text-green-800 flex items-center gap-1">
+                                            💎 Rentabilité Nette
+                                        </span>
+                                        <span className="text-[15px] font-bold font-mono" style={{ color: isProfitable ? '#7ED321' : '#D0021B' }}>
+                                            {isProfitable ? '+' : ''}${formatNumber(profit)}/h
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                         {/* ═══ CONTRACTS ═══ */}
                         {building.activeContracts && building.activeContracts.length > 0 && (
                             <div>
@@ -228,8 +277,16 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                                     >
                                         <div className="w-full flex justify-between items-center">
                                             <span>⬆️ Améliorer (Niv. {building.level + 1})</span>
-                                            <span className="px-2 py-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                                            <span className="px-2 py-0.5 rounded-lg flex items-center gap-1 flex-wrap" style={{ background: 'rgba(255,255,255,0.2)' }}>
                                                 ${formatNumber(upgradeCost)}
+                                                {resourceUpgradeCost && Object.entries(resourceUpgradeCost).map(([res, amt]) => {
+                                                    const RES_ICONS: Record<string, string> = { wood: '🪵', iron: '⛏️', oil: '🛢️', coal: '⚫', stone: '🪨', glass: '🪟', concrete: '🧱', steel: '🏗️', gold: '🪙', silver: '🥈' };
+                                                    return (
+                                                        <span key={res} title={res} className="ml-1 flex items-center gap-0.5">
+                                                            {amt} {RES_ICONS[res] || ''}
+                                                        </span>
+                                                    );
+                                                })}
                                             </span>
                                         </div>
                                         {!basicNeedsMet && (

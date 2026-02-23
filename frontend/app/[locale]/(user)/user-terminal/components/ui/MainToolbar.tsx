@@ -43,19 +43,21 @@ const BUILDING_ICON_MAP: Record<string, string> = {
     OIL_PUMP: '🛢️',
     FISHERMAN: '🎣',
     HUNTER_HUT: '🏹',
-    LUMBER_HUT: '🪓',
     OIL_RIG: '🛢️',
 };
 
+const RES_ICONS: Record<string, string> = { wood: '🪵', iron: '⛏️', oil: '🛢️', coal: '⚫', stone: '🪨', glass: '🪟', concrete: '🧱', steel: '🏗️', gold: '🪙', silver: '🥈' };
+
 // ── Item compact du sous-menu (ruban horizontal) ──
 function RibbonItem({
-    active, onClick, icon, label, cost, color,
+    active, onClick, icon, label, cost, color, resourceCost
 }: {
     active: boolean;
     onClick: () => void;
     icon: string;
     label: string;
     cost?: number;
+    resourceCost?: Record<string, number>;
     color: string;
 }) {
     return (
@@ -94,8 +96,13 @@ function RibbonItem({
             </span>
             {/* Prix */}
             {cost !== undefined && (
-                <span className="text-[9px] font-mono" style={{ color: active ? '#fbbf24' : '#6b7280' }}>
+                <span className="text-[9px] font-mono flex items-center gap-1 flex-wrap justify-center mt-0.5" style={{ color: active ? '#fbbf24' : '#6b7280' }}>
                     ${cost}
+                    {resourceCost && Object.entries(resourceCost).map(([res, amt]) => (
+                        <span key={res} title={res} className="flex flex-row items-center gap-0.5 ml-0.5">
+                            , {amt} {RES_ICONS[res] || ''}
+                        </span>
+                    ))}
                 </span>
             )}
         </button>
@@ -208,6 +215,7 @@ function SubMenu({ category, viewMode, setViewMode, selectedRoadType, setSelecte
                                 icon={BUILDING_ICON_MAP[spec.type] || '🏢'}
                                 label={spec.name}
                                 cost={spec.cost}
+                                resourceCost={spec.resourceCost}
                                 color={color}
                             />
                         ))

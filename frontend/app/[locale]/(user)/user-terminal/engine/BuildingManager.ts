@@ -285,8 +285,29 @@ export class BuildingManager {
             return { success: false, message: `Fonds insuffisants (${cost}$ requis)` };
         }
 
+        // Vérification des ressources
+        let missingRes = '';
+        if (specs.resourceCost) {
+            for (const [res, amount] of Object.entries(specs.resourceCost)) {
+                const req = (amount as number) * building.level;
+                if (((engine.resources as any)[res] || 0) < req) {
+                    missingRes = res;
+                    break;
+                }
+            }
+        }
+
+        if (missingRes) {
+            return { success: false, message: `Matériaux insuffisants (${missingRes})` };
+        }
+
         // Paiement
         engine.resources.money -= cost;
+        if (specs.resourceCost) {
+            for (const [res, amount] of Object.entries(specs.resourceCost)) {
+                (engine.resources as any)[res] -= (amount as number) * building.level;
+            }
+        }
 
         // Level Up
         const oldLevel = building.level;

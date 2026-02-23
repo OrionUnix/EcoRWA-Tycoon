@@ -54,6 +54,7 @@ export class BuildingRenderer {
 
         const lvl = building.level || 0;
         const isConstState = building.state === 'CONSTRUCTION' || lvl === 0;
+        const isRuined = building.state === 'ABANDONED' || (building as any).isRuined === true;
 
         // ═══════════════════════════════════════
         // FX: Particules de construction (Fumée)
@@ -77,11 +78,12 @@ export class BuildingRenderer {
         // ═══════════════════════════════════════
         // Tenter le rendu sprite depuis l'atlas ou Custom
         // ═══════════════════════════════════════
+        // ═══════════════════════════════════════
         const texture = BuildingAssets.getTexture(
             building.type as any,
             lvl || 1,
             building.variant || 0,
-            isConstState
+            isConstState || isRuined // Utilise texture de construction si en ruine (pour faire décombres)
         );
 
         if (texture) {
@@ -114,6 +116,13 @@ export class BuildingRenderer {
                 if (sprite.texture !== texture) {
                     sprite.texture = texture;
                 }
+            }
+
+            // MISSION 4 : Assombrir si ruiné
+            if (isRuined) {
+                sprite.tint = 0x555555;
+            } else {
+                sprite.tint = 0xFFFFFF;
             }
 
             // Positionnement : le sprite est ancré à (0.5, 1.0)
@@ -275,15 +284,27 @@ export class BuildingRenderer {
     }
 
     static getEmote(building: BuildingData): string | null {
-        if (building.state === 'CONSTRUCTION') return '🏗️';
-        if (building.state === 'ABANDONED') return '🏚️';
+        // Abandoned / Ruined
+        if (building.state === 'ABANDONED') return '⬇️'; // Ruiné / Downgrade
 
+        // Construction & Upgrades
+        if (building.state === 'CONSTRUCTION') {
+            if (building.level > 1) {
+                return '⬆️'; // Upgrading
+            } else {
+                return '🚧'; // Construcing
+            }
+        }
+
+        // Services & Happiness Issues
         const flags = building.statusFlags;
-        if (flags & 1) return '💧';
-        if (flags & 2) return '⚡';
-        if (flags & 4) return '🍞';
-        if (flags & 8) return '🛠️';
-        if (flags & 16) return '😡';
+        // statusFlags bitmask definitions from types.ts
+        // 1 = NO_WATER, 2 = NO_POWER, 4 = NO_FOOD, 8 = NO_JOBS, 16 = UNHAPPY, 32 = ABANDONED
+        if ((flags & 1) !== 0) return '💧';
+        if ((flags & 2) !== 0) return '⚡';
+        if ((flags & 4) !== 0) return '🍞'; // Food
+        if ((flags & 8) !== 0) return '💼'; // Jobs
+        if ((flags & 16) !== 0) return '😡'; // Unhappy
 
         return null;
     }

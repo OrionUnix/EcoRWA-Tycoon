@@ -213,11 +213,28 @@ export class InteractionSystem {
             return { success: false };
         }
 
+        const specs = BUILDING_SPECS[buildingType];
+
+        // Validation des ressources (Mission 3)
+        if (specs.resourceCost) {
+            for (const [res, amount] of Object.entries(specs.resourceCost)) {
+                if (((map.resources as any)[res] || 0) < amount) {
+                    console.error(`❌ Construction impossible: Pas assez de ${res}`);
+                    return { success: false };
+                }
+            }
+        }
+
         // Tentative de placement
         const result = BuildingManager.placeBuilding(map, index, buildingType);
 
         if (result.success) {
-            const specs = BUILDING_SPECS[buildingType];
+            // Déduction des ressources (Mission 3)
+            if (specs.resourceCost) {
+                for (const [res, amount] of Object.entries(specs.resourceCost)) {
+                    (map.resources as any)[res] -= amount;
+                }
+            }
             console.log(`✅ ${specs.name} construit avec succès!`);
 
             // 🌟 INTÉGRATION ECS 🌟

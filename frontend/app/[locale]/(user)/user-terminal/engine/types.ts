@@ -153,7 +153,9 @@ export interface CityStats {
         expenses: number;
         taxIncome: { residential: number; commercial: number; industrial: number };
         tradeIncome: number; // Export
+        exportIncome: number; // ✅ NOUVEAU: Revenu des mines / extraction
         maintenance: number;
+        maintenanceDetail: Record<string, number>; // Détail des coûts par catégorie
     };
 }
 
@@ -355,6 +357,8 @@ export interface BuildingSpecs {
     influenceRadius?: number;
     influenceScore?: number; // ✅ NOUVEAU: Impact sur le bonheur (-30 par ex)
 
+    // ✅ RESOURCES
+    resourceCost?: Partial<PlayerResources>;
 }
 
 export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
@@ -368,103 +372,107 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
         type: BuildingType.COMMERCIAL, cost: 100, name: "Zone Commerciale",
         description: "Commerces et services.", width: 1, height: 1, color: 0x2196F3, requiresRoad: true,
         category: BuildingCategory.COMMERCIAL,
-        upgradeCost: 100, maxLevel: 3
+        upgradeCost: 100, maxLevel: 3,
+        resourceCost: { wood: 2 }
     },
     [BuildingType.INDUSTRIAL]: {
         type: BuildingType.INDUSTRIAL, cost: 150, name: "Zone Industrielle",
         description: "Usines et production.", width: 1, height: 1, color: 0xFFC107, requiresRoad: true,
         category: BuildingCategory.INDUSTRIAL,
-        upgradeCost: 150, maxLevel: 3
+        upgradeCost: 150, maxLevel: 3,
+        resourceCost: { wood: 5, stone: 2 }
     },
     [BuildingType.POWER_PLANT]: {
         type: BuildingType.POWER_PLANT, cost: 500, name: "Centrale Charbon",
-        description: "Forte puissance, mais très polluante.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4, maintenance: 80,
+        description: "Forte puissance, mais très polluante.", width: 1, height: 1, color: 0xFF5722, requiresRoad: true, workersNeeded: 4, maintenance: 800,
         category: BuildingCategory.POWER,
         production: { type: 'ENERGY', amount: 300 },
-        influenceRadius: 8, influenceScore: -50
+        influenceRadius: 8, influenceScore: -50,
+        resourceCost: { stone: 10, iron: 5 }
     },
     [BuildingType.WIND_TURBINE]: {
         type: BuildingType.WIND_TURBINE, cost: 150, name: "Éolienne",
-        description: "Énergie propre (Faible puissance).", width: 1, height: 1, color: 0xE0F7FA, requiresRoad: true, workersNeeded: 1, maintenance: 20,
+        description: "Énergie propre (Faible puissance).", width: 1, height: 1, color: 0xE0F7FA, requiresRoad: true, workersNeeded: 1, maintenance: 200,
         category: BuildingCategory.POWER,
         production: { type: 'ENERGY', amount: 50 }
     },
     [BuildingType.SOLAR_PANEL]: {
         type: BuildingType.SOLAR_PANEL, cost: 800, name: "Centrale Solaire",
-        description: "Énergie propre (Puissance moyenne).", width: 2, height: 2, color: 0x4FC3F7, requiresRoad: true, workersNeeded: 2, maintenance: 35,
+        description: "Énergie propre (Puissance moyenne).", width: 2, height: 2, color: 0x4FC3F7, requiresRoad: true, workersNeeded: 2, maintenance: 350,
         category: BuildingCategory.POWER,
         production: { type: 'ENERGY', amount: 150 }
     },
     [BuildingType.WATER_PUMP]: {
         type: BuildingType.WATER_PUMP, cost: 800, name: "Station de Pompage",
-        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
+        description: "Pompe de l'eau pour la ville.", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2, maintenance: 300,
         category: BuildingCategory.WATER,
         production: { type: 'WATER', amount: 100 },
         // Investissement possible
-        upgradeCost: 500, maxLevel: 3
+        upgradeCost: 500, maxLevel: 3,
+        resourceCost: { stone: 5, iron: 2 }
     },
     [BuildingType.MINE]: {
         type: BuildingType.MINE, cost: 2000, name: "Mine",
-        description: "Extrait des ressources selon le sol.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maintenance: 200,
+        description: "Extrait des ressources selon le sol.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maintenance: 500,
         category: BuildingCategory.EXTRACTION,
         influenceRadius: 6, influenceScore: -30,
         upgradeCost: 2000, maxLevel: 3
     },
     [BuildingType.OIL_RIG]: {
         type: BuildingType.OIL_RIG, cost: 99999, name: "Plateforme Pétrolière (Mer)",
-        description: "Extrait du pétrole en mer.", width: 2, height: 2, color: 0x424242, requiresRoad: false, workersNeeded: 0,
+        description: "Extrait du pétrole en mer.", width: 2, height: 2, color: 0x424242, requiresRoad: false, workersNeeded: 0, maintenance: 1000,
         category: BuildingCategory.EXTRACTION
     },
     [BuildingType.OIL_PUMP]: {
         type: BuildingType.OIL_PUMP, cost: 3000, name: "Puits de Pétrole",
-        description: "Extrait du pétrole terrestre.", width: 1, height: 1, color: 0x263238, requiresRoad: true, workersNeeded: 5, maintenance: 120,
+        description: "Extrait du pétrole terrestre.", width: 1, height: 1, color: 0x263238, requiresRoad: true, workersNeeded: 5, maintenance: 800,
         category: BuildingCategory.EXTRACTION,
         influenceRadius: 8, influenceScore: -40
     },
     [BuildingType.CITY_HALL]: {
         type: BuildingType.CITY_HALL, cost: 3000, name: "Mairie",
-        description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true, workersNeeded: 10,
+        description: "Centre administratif de la ville.", width: 1, height: 1, color: 0x9C27B0, requiresRoad: true, workersNeeded: 10, maintenance: 500,
         category: BuildingCategory.CIVIC
     },
     [BuildingType.PARK]: {
         type: BuildingType.PARK, cost: 200, name: "Parc",
-        description: "Espace vert pour le bonheur des citoyens.", width: 1, height: 1, color: 0x8BC34A, requiresRoad: true,
+        description: "Espace vert pour le bonheur des citoyens.", width: 1, height: 1, color: 0x8BC34A, requiresRoad: true, maintenance: 50,
         category: BuildingCategory.CIVIC
     },
     [BuildingType.POLICE_STATION]: {
         type: BuildingType.POLICE_STATION, cost: 1000, name: "Commissariat",
-        description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true, workersNeeded: 4,
+        description: "Maintient l'ordre et la sécurité.", width: 1, height: 1, color: 0x1976D2, requiresRoad: true, workersNeeded: 4, maintenance: 400,
         category: BuildingCategory.CIVIC
     },
     [BuildingType.FIRE_STATION]: {
         type: BuildingType.FIRE_STATION, cost: 1000, name: "Caserne de Pompiers",
-        description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true, workersNeeded: 4,
+        description: "Protège contre les incendies.", width: 1, height: 1, color: 0xD32F2F, requiresRoad: true, workersNeeded: 4, maintenance: 400,
         category: BuildingCategory.CIVIC
     },
     [BuildingType.FISHERMAN]: {
         type: BuildingType.FISHERMAN, cost: 300, name: "Cabane de Pêcheur",
-        description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2,
+        description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2, maintenance: 100,
         category: BuildingCategory.FOOD,
         production: { type: 'FOOD', amount: 50 },
         upgradeCost: 200, maxLevel: 3
     },
     [BuildingType.HUNTER_HUT]: {
         type: BuildingType.HUNTER_HUT, cost: 350, name: "Cabane de Chasseur",
-        description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2,
+        description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2, maintenance: 100,
         category: BuildingCategory.FOOD,
         production: { type: 'FOOD', amount: 40 },
         upgradeCost: 250, maxLevel: 3
     },
     [BuildingType.LUMBER_HUT]: {
         type: BuildingType.LUMBER_HUT, cost: 150, name: "Cabane de Bûcheron",
-        description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2,
+        description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2, maintenance: 200,
         category: BuildingCategory.EXTRACTION,
         production: { type: 'WOOD', amount: 40 },
         upgradeCost: 150, maxLevel: 4
     },
     [BuildingType.FOOD_MARKET]: {
         type: BuildingType.FOOD_MARKET, cost: 500, name: "Marché Alimentaire",
-        description: "Exporte vos surplus de nourriture.", width: 2, height: 2, color: 0xFF9800, requiresRoad: true, workersNeeded: 4, maintenance: 50,
+        description: "Exporte vos surplus de nourriture.", width: 2, height: 2, color: 0xFF9800, requiresRoad: true, workersNeeded: 4, maintenance: 150,
         category: BuildingCategory.FOOD,
         upgradeCost: 500, maxLevel: 2,
         influenceRadius: 6
@@ -474,41 +482,41 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     // ✅ SPECS DES NOUVEAUX BÂTIMENTS
     [BuildingType.SCHOOL]: {
         type: BuildingType.SCHOOL, cost: 1500, name: "École",
-        description: "Éducation de base.", width: 2, height: 1, color: 0xFFEB3B, requiresRoad: true, workersNeeded: 6, maintenance: 100,
+        description: "Éducation de base.", width: 2, height: 1, color: 0xFFEB3B, requiresRoad: true, workersNeeded: 6, maintenance: 300,
         category: BuildingCategory.CIVIC,
         influenceRadius: 8,
         upgradeCost: 1500, maxLevel: 3
     },
     [BuildingType.CLINIC]: {
         type: BuildingType.CLINIC, cost: 1200, name: "Clinique",
-        description: "Soins de santé.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 4, maintenance: 80,
+        description: "Soins de santé.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 4, maintenance: 400,
         category: BuildingCategory.CIVIC,
         influenceRadius: 6
     },
     [BuildingType.MUSEUM]: {
         type: BuildingType.MUSEUM, cost: 2500, name: "Musée",
-        description: "Culture et tourisme.", width: 2, height: 2, color: 0x9C27B0, requiresRoad: true, workersNeeded: 5, maintenance: 150,
+        description: "Culture et tourisme.", width: 2, height: 2, color: 0x9C27B0, requiresRoad: true, workersNeeded: 5, maintenance: 600,
         category: BuildingCategory.CIVIC,
         influenceRadius: 10,
         upgradeCost: 2500, maxLevel: 3
     },
     [BuildingType.THEATER]: {
         type: BuildingType.THEATER, cost: 3000, name: "Théâtre",
-        description: "Culture et Loisirs animés.", width: 2, height: 2, color: 0xE91E63, requiresRoad: true, workersNeeded: 8, maintenance: 200,
+        description: "Culture et Loisirs animés.", width: 2, height: 2, color: 0xE91E63, requiresRoad: true, workersNeeded: 8, maintenance: 800,
         category: BuildingCategory.CIVIC,
         influenceRadius: 12,
         upgradeCost: 3000, maxLevel: 3
     },
     [BuildingType.STADIUM]: {
         type: BuildingType.STADIUM, cost: 5000, name: "Stade",
-        description: "Gros boost de bonheur (Évolutif).", width: 3, height: 3, color: 0xE91E63, requiresRoad: true, workersNeeded: 20, maintenance: 400,
+        description: "Gros boost de bonheur (Évolutif).", width: 3, height: 3, color: 0xE91E63, requiresRoad: true, workersNeeded: 20, maintenance: 1500,
         category: BuildingCategory.CIVIC,
         influenceRadius: 20,
         upgradeCost: 5000, maxLevel: 3
     },
     [BuildingType.PHARMACY]: {
         type: BuildingType.PHARMACY, cost: 800, name: "Pharmacie",
-        description: "Soins médicaux de proximité.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 2, maintenance: 50,
+        description: "Soins médicaux de proximité.", width: 1, height: 1, color: 0xF44336, requiresRoad: true, workersNeeded: 2, maintenance: 200,
         category: BuildingCategory.CIVIC,
         influenceRadius: 5
     },

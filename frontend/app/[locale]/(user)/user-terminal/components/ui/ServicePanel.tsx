@@ -23,8 +23,8 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
             {/* Backdrop */}
             <div className="fixed inset-0 -z-10" style={{ background: 'rgba(0,0,0,0.3)' }} onClick={onClose} />
 
-            <GlassPanel variant="sub" className="p-0 overflow-hidden">
-                <div style={{ width: '420px', maxHeight: '80vh' }}>
+            <GlassPanel variant="sub" className="p-0 overflow-hidden max-h-[80vh] flex flex-col">
+                <div className="flex flex-col w-[420px] max-h-[80vh]">
 
                     {/* ═══ HEADER ═══ */}
                     <div
@@ -51,7 +51,7 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
                     </div>
 
                     {/* ═══ BODY ═══ */}
-                    <div className="px-5 py-4 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 68px)' }}>
+                    <div className="px-5 py-4 overflow-y-auto flex-1">
                         {children}
                     </div>
                 </div>

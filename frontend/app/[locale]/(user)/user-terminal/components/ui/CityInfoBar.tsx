@@ -20,19 +20,24 @@ interface CityInfoBarProps {
 }
 
 // Tiny resource indicator with bar
-function ResourceMini({ icon, value, max, color, onClick }: {
-    icon: string; value: number; max: number; color: string; onClick?: () => void;
+function ResourceMini({ icon, value, max, color, onClick, label }: {
+    icon: string; value: number; max: number; color: string; onClick?: () => void; label?: string;
 }) {
     const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
     return (
         <button
             onClick={onClick}
-            className="flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-white/10 transition-all cursor-pointer"
-            title={`${formatNumber(value)} / ${formatNumber(max)}`}
+            className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10 transition-all cursor-pointer"
+            title={label ? `${label} : ${formatNumber(value)} / ${formatNumber(max)}` : `${formatNumber(value)} / ${formatNumber(max)}`}
         >
             <span className="text-sm">{icon}</span>
-            <div className="w-10 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+            <div className="flex flex-col items-start">
+                <span className="text-[10px] font-bold font-mono leading-none mb-1" style={{ color: '#fff' }}>
+                    {formatNumber(value)}<span className="text-gray-400">/{formatNumber(max)}</span>
+                </span>
+                <div className="w-12 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                </div>
             </div>
         </button>
     );
@@ -147,12 +152,12 @@ export const CityInfoBar: React.FC<CityInfoBarProps> = ({
                 <div className="w-px h-6 mx-1.5" style={{ background: 'rgba(255,255,255,0.15)' }} />
 
                 {/* RESOURCE STOCKS (Wood, Minerals, Oil, Coal, Iron, Gold, Silver) */}
-                <ResourceMini icon="🌲" value={resources?.wood || 0} max={5000} color="#7ED321" />
-                <ResourceMini icon="⛏️" value={resources?.iron || 0} max={5000} color="#E65100" />
-                <ResourceMini icon="🛢️" value={resources?.oil || 0} max={5000} color="#F5A623" />
-                <ResourceMini icon="⚫" value={resources?.coal || 0} max={5000} color="#607D8B" />
-                <ResourceMini icon="🪙" value={resources?.gold || 0} max={1000} color="#FFD600" />
-                <ResourceMini icon="🥈" value={resources?.silver || 0} max={1000} color="#90A4AE" />
+                <ResourceMini icon="🌲" label="Bois" value={resources?.wood || 0} max={5000} color="#7ED321" />
+                <ResourceMini icon="⛏️" label="Fer" value={resources?.iron || 0} max={5000} color="#E65100" />
+                <ResourceMini icon="🛢️" label="Pétrole" value={resources?.oil || 0} max={5000} color="#F5A623" />
+                <ResourceMini icon="⚫" label="Charbon" value={resources?.coal || 0} max={5000} color="#607D8B" />
+                <ResourceMini icon="🪙" label="Or" value={resources?.gold || 0} max={1000} color="#FFD600" />
+                <ResourceMini icon="🥈" label="Argent" value={resources?.silver || 0} max={1000} color="#90A4AE" />
 
                 {/* SPACER */}
                 <div className="flex-1" />
