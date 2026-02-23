@@ -142,13 +142,33 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete }) =>
                             animate={{ y: 0, opacity: 1 }}
                             className="flex flex-col items-center text-center space-y-8"
                         >
-                            <div className="space-y-4">
-                                <h1 className="text-4xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                                    Félicitations pour votre élection, Maire.
-                                </h1>
-                                <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
-                                    Avant de bâtir, choisissez votre premier investissement RWA pour générer des revenus passifs pour la ville.
-                                </p>
+                            <div className="flex flex-col md:flex-row items-center gap-6 max-w-4xl mx-auto bg-neutral-800/50 p-6 rounded-2xl border border-neutral-700 shadow-inner">
+                                <div className="w-32 h-32 flex-shrink-0 bg-neutral-900 border-[3px] border-emerald-500 overflow-hidden shadow-[4px_4px_0_0_rgba(16,185,129,0.3)]">
+                                    <img
+                                        src="/assets/isometric/Spritesheet/character/jordan/jordan_speak.png"
+                                        alt="Jordan"
+                                        className="w-full h-full object-cover scale-150 origin-top"
+                                        style={{ imageRendering: 'pixelated' }}
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            e.currentTarget.parentElement!.innerHTML = '<div class="text-6xl flex items-center justify-center h-full">👔</div>';
+                                        }}
+                                    />
+                                </div>
+                                <div className="text-left space-y-3">
+                                    <h1 className="text-xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent uppercase tracking-wider font-mono">
+                                        Jordan - Head of RWAs
+                                    </h1>
+                                    <p className="text-sm text-neutral-200 leading-relaxed italic">
+                                        "Salut Maire ! C'est Jordan. Félicitations pour l'élection, parlons vrai business. Ici, on ne joue pas qu'avec des pixels : on investit dans des actifs du monde réel (RWA) tokenisés. Choisissez une carte d'investissement :"
+                                    </p>
+                                    <ul className="text-xs text-neutral-300 space-y-1.5 mt-2">
+                                        <li>📈 <strong className="text-emerald-400">1. Vrai Rendement :</strong> Vos fonds génèrent du yield réel dans un Vault intouchable.</li>
+                                        <li>🚀 <strong className="text-emerald-400">2. Boost In-Game :</strong> Posséder ces RWA accélère massivement votre progression et débloque des bonus.</li>
+                                        <li>💧 <strong className="text-emerald-400">3. 100% Liquide :</strong> Vous pouvez revendre vos parts tokenisées à d'autres joueurs à tout moment.</li>
+                                    </ul>
+                                    <p className="font-bold text-white text-sm mt-3 border-t border-neutral-700 pt-3">Alors, on signe pour quoi aujourd'hui ?</p>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-8">

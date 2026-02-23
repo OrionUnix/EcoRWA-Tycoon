@@ -1,9 +1,32 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'PixelifyMedium';
+  src: url('/data/font/PixelifySans-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PixelifyBold';
+  src: url('/data/font/PixelifySans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+body {
+  font-family: 'PixelifyMedium', sans-serif;
+}
+
+button,
+.font-bold {
+  font-family: 'PixelifyBold', sans-serif;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'PixelifyMedium', sans-serif;
   --font-mono: var(--font-geist-mono);
   /* On définit explicitement les couleurs pour éviter l'erreur "unknown utility" */
   --color-primary: var(--primary);
@@ -161,4 +184,28 @@
     linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+/* Animation des lèvres pour les avatars (Grille 2x2) */
+.sprite-talk {
+  background-size: 200% 200%;
+  animation: talkAnim 1s steps(1) infinite;
+}
+
+@keyframes talkAnim {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  25% {
+    background-position: 100% 0%;
+  }
+
+  50% {
+    background-position: 0% 100%;
+  }
+
+  75% {
+    background-position: 100% 100%;
+  }
 }

@@ -40,7 +40,7 @@ export default function UserTerminalClient() {
     const staticGRef = useRef<PIXI.Graphics | null>(null);
     const uiGRef = useRef<PIXI.Graphics | null>(null);
 
-    const { isConnected } = useAccount();
+    const { isConnected, address } = useAccount();
 
     // 2. ÉTATS DE JEU
     const [assetsLoaded, setAssetsLoaded] = useState(false);
@@ -140,6 +140,22 @@ export default function UserTerminalClient() {
             BuildingRenderer.clearCache();
         };
     }, [isReady]);
+
+    // 3.5. RÉGÉNÉRATION DU BIOME SUR CONNEXION WEB3
+    useEffect(() => {
+        if (isReady && assetsLoaded && isConnected && address) {
+            console.log("🔗 Wallet connecté détecté. Régénération du biome basée sur l'adresse:", address);
+            const engine = getGameEngine();
+            // On utilise l'adresse (string hex) comme 'seed' textuelle
+            engine.map.generateWorld(address);
+            engine.map.calculateSummary();
+            setSummary(engine.map.currentSummary);
+            engine.map.revision++;
+
+            // Force React à re-render si on vient de se connecter en jeu
+            setViewMode(prev => prev);
+        }
+    }, [isReady, assetsLoaded, isConnected, address]);
 
     // 4. CONFIGURATION DES CALQUES PIXI (Layers)
     useEffect(() => {

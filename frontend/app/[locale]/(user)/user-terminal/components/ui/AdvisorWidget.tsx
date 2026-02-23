@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-
+import { AnimatedAvatar } from '../AnimatedAvatar';
+import { TypewriterText } from '../TypewriterText';
+import { useTranslations } from 'next-intl';
 interface AdvisorWidgetProps {
     isVisible: boolean;
 }
@@ -10,7 +12,8 @@ interface AdvisorWidgetProps {
 export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
     const [isClosed, setIsClosed] = useState(false);
     const { isConnected } = useAccount();
-
+    const [isTyping, setIsTyping] = useState(true);
+    const tBob = useTranslations('bob');
     return (
         <AnimatePresence>
             {isVisible && !isClosed && (
@@ -18,16 +21,11 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
                     initial={{ x: -100, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: -100, opacity: 0 }}
-                    className="fixed top-[25%] left-6 z-40 max-w-[400px] flex items-end gap-3 pointer-events-auto"
+                    className="fixed top-[35%] left-1/2 -translate-x-1/2 z-40 max-w-[450px] w-full flex items-end gap-3 pointer-events-auto"
                 >
                     {/* LEFT: Character Avatar */}
                     <div className="w-20 h-20 flex-shrink-0 bg-neutral-800 border-[4px] border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex items-center justify-center overflow-hidden">
-                        <img
-                            src="/assets/isometric/Spritesheet/character/bob/bob.png"
-                            alt="Bob"
-                            className="w-full h-full object-contain"
-                            style={{ imageRendering: 'pixelated' }}
-                        />
+                        <AnimatedAvatar character="bob" isTalking={isTyping} />
                     </div>
 
                     {/* RIGHT: Speech Bubble */}
@@ -44,18 +42,36 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
                         </button>
 
                         <h2 className="text-sm font-bold text-emerald-400 mb-1 font-mono uppercase tracking-widest">
-                            Chef de Chantier Bob
+                            Bob
                         </h2>
-                        <p className="text-[11px] text-neutral-200 leading-relaxed font-mono">
-                            {isConnected
-                                ? "Félicitations pour votre élection Maire ! Vous disposez d'un budget municipal de 50 000$ pour commencer les travaux. Vous pouvez construire la ville librement !"
-                                : "Bonjour Maire ! Notre ville a besoin de vous. Pour recevoir vos fonds de départ (10 000 USDC) et commencer à construire, utilisez le bouton de connexion."}
-                        </p>
+                        <div className="min-h-[100px] text-white text-lg font-bold w-full leading-relaxed">
+                            <TypewriterText
+                                text={tBob('greeting')}
+                                speed={30}
+                                onFinished={() => setIsTyping(false)}
+                            />
+                        </div>
+
 
                         {!isConnected && (
                             <div className="mt-4 pt-3 border-t border-emerald-500/30 flex justify-center">
                                 <div className="scale-90 transform origin-top">
-                                    <ConnectButton />
+                                    <ConnectButton.Custom>
+                                        {({ openConnectModal }) => (
+                                            <div
+                                                className="relative flex items-center justify-center w-48 h-14 cursor-pointer hover:scale-105 transition-transform group"
+                                                onClick={openConnectModal}
+                                            >
+                                                {/* SEULEMENT L'IMAGE (qui contient désormais le texte dessiné) */}
+                                                <img
+                                                    src="/assets/isometric/Spritesheet/IU/bouttons/connect_wallet.png"
+                                                    className="absolute inset-0 w-full h-full object-contain pixelated"
+                                                    alt="Connecter le portefeuille"
+                                                    style={{ imageRendering: 'pixelated' }}
+                                                />
+                                            </div>
+                                        )}
+                                    </ConnectButton.Custom>
                                 </div>
                             </div>
                         )}

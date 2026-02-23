@@ -1,0 +1,5 @@
+{
+  "greeting": "Hello Mayor! Welcome to your new land. You can test our building tools freely. Connect your wallet when you are ready!",
+  "error_road": "Cannot build here, Mayor! The building must be adjacent to a road.",
+  "success_build": "Great job! This building will boost our economy."
+}
