@@ -1,4 +1,6 @@
 import React from 'react';
+// Ajoute ton import ici (vérifie que le chemin correspond bien à l'emplacement de ton fichier)
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 
 interface AvatarProps {
     character: 'bob' | 'jordan';
@@ -9,9 +11,9 @@ export const AnimatedAvatar: React.FC<AvatarProps> = ({ character, isTalking }) 
     if (!isTalking) {
         return (
             <img
-                src={`/assets/isometric/Spritesheet/character/${character}.png`}
+                // 1. On protège l'image statique
+                src={withBasePath(`/assets/isometric/Spritesheet/character/${character}.png`)}
                 alt={character}
-                // J'ai retiré le bg-slate-800 qui faisait un carré noir
                 className="w-16 h-16 rounded-full border-2 border-black pixelated object-cover"
             />
         );
@@ -20,7 +22,8 @@ export const AnimatedAvatar: React.FC<AvatarProps> = ({ character, isTalking }) 
     return (
         <div
             className="w-16 h-16 rounded-full border-2 border-black pixelated sprite-talk"
-            style={{ backgroundImage: `url('/assets/isometric/Spritesheet/character/${character}_speak.png')` }}
+            // 2. On protège l'URL de fond (Attention aux guillemets simples à l'intérieur de url() !)
+            style={{ backgroundImage: `url('${withBasePath(`/assets/isometric/Spritesheet/character/${character}_speak.png`)}')` }}
         />
     );
 };

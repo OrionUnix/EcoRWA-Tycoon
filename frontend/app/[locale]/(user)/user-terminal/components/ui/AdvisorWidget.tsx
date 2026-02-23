@@ -5,6 +5,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { AnimatedAvatar } from '../AnimatedAvatar';
 import { TypewriterText } from '../TypewriterText';
 import { useTranslations } from 'next-intl';
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 interface AdvisorWidgetProps {
     isVisible: boolean;
 }
@@ -64,7 +65,7 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
                                             >
                                                 {/* SEULEMENT L'IMAGE (qui contient désormais le texte dessiné) */}
                                                 <img
-                                                    src="/assets/isometric/Spritesheet/IU/bouttons/connect_wallet.png"
+                                                    src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/connect_wallet.png')}
                                                     className="absolute inset-0 w-full h-full object-contain pixelated"
                                                     alt="Connecter le portefeuille"
                                                     style={{ imageRendering: 'pixelated' }}
