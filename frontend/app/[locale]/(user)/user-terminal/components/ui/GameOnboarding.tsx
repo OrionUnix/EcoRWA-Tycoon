@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount, useWriteContract } from 'wagmi';
 import { parseAbi } from 'viem';
 import { getGameEngine } from '../../engine/GameEngine';
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
+
+// NOUVEAUX IMPORTS : Traduction et UI Rétro
+import { useTranslations } from 'next-intl';
+import { AnimatedAvatar } from '../AnimatedAvatar'; // Ajuste le chemin si besoin
+import { TypewriterText } from '../TypewriterText'; // Ajuste le chemin si besoin
 
 // Web3 ABIs & Addresses
 const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
@@ -27,7 +33,7 @@ const RWA_CHOICES = [
         cost: 150,
         apy: '4.2%',
         image: '🏢',
-        color: 'from-blue-500 to-indigo-600'
+        color: 'bg-blue-600' // Couleurs simplifiées pour le pixel art
     },
     {
         id: 2,
@@ -37,7 +43,7 @@ const RWA_CHOICES = [
         cost: 100,
         apy: '7.8%',
         image: '🥐',
-        color: 'from-orange-500 to-red-500'
+        color: 'bg-orange-500'
     },
     {
         id: 3,
@@ -47,20 +53,30 @@ const RWA_CHOICES = [
         cost: 250,
         apy: '6.5%',
         image: '🌱',
-        color: 'from-emerald-500 to-green-600'
+        color: 'bg-emerald-600'
     }
 ];
 
+// AJOUT: onClose pour pouvoir fermer la modale
 interface GameOnboardingProps {
     onComplete: () => void;
+    onClose: () => void;
 }
 
-export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete }) => {
+export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onClose }) => {
     const { address, isConnected } = useAccount();
     const engine = getGameEngine();
+
+    // Initialisation des textes de Jordan
+    const tJordan = useTranslations('jordan');
+
     const [step, setStep] = useState(0); // 0: intro, 1: transaction
     const [selectedRWA, setSelectedRWA] = useState<number | null>(null);
     const [txStatus, setTxStatus] = useState<string>('');
+
+    // NOUVEAUX ETATS UI
+    const [showHelp, setShowHelp] = useState(false);
+    const [isTyping, setIsTyping] = useState(true);
 
     const { writeContractAsync } = useWriteContract();
 
@@ -74,9 +90,8 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete }) =>
         setStep(1);
 
         try {
-            // STEP 1: Faucet (Mint 10,000 USDC)
             setTxStatus('Demande de subvention (10 000 USDC)...');
-            const mintAmount = BigInt(10000 * 1e6); // 10k USDC (6 decimals)
+            const mintAmount = BigInt(10000 * 1e6);
             await writeContractAsync({
                 address: USDC_ADDRESS,
                 abi: MOCK_USDC_ABI,
@@ -84,34 +99,25 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete }) =>
                 args: [address, mintAmount],
             });
 
-            // Note: En mode production, on utiliserait useWaitForTransactionReceipt 
-            // pour attendre la finalisation du bloc. Ici on enchaine pour la démo.
             setTxStatus('Subvention reçue ! Approbation du contrat...');
-
-            // STEP 2: Approve Vault
             await writeContractAsync({
                 address: USDC_ADDRESS,
                 abi: MOCK_USDC_ABI,
                 functionName: 'approve',
                 args: [VAULT_ADDRESS, mintAmount],
             });
-            setTxStatus('Approbation confirmée ! Investissement RWA en cours...');
 
-            // STEP 3: Deposit/Mint RWA in Vault
+            setTxStatus('Approbation confirmée ! Investissement RWA en cours...');
             await writeContractAsync({
                 address: VAULT_ADDRESS,
                 abi: VAULT_ABI,
                 functionName: 'mintBuilding',
                 args: [BigInt(rwaId), BigInt(1)],
             });
+
             setTxStatus('Transaction validée ! Bienvenue maire.');
-
-            // STEP 4: Synchro Game Engine
             engine.map.resources.money = 10000;
-            // Si vous avez un état Zustand pour la ville, vous l'appelleriez ici 
-            // e.g., setPlayerMoney(10000); setActiveRWA(rwaId);
-
-            console.log(`Revenus Web3 activés ! Vous avez acquis le RWA #${rwaId}. Vous pouvez construire.`);
+            console.log(`Revenus Web3 activés ! RWA #${rwaId}.`);
 
             setTimeout(() => {
                 onComplete();
@@ -130,76 +136,96 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete }) =>
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto backdrop-blur-xl bg-black/60"
+                className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto bg-black/70 backdrop-blur-sm"
             >
-                <div className="max-w-4xl w-full p-8 rounded-3xl bg-neutral-900 border border-neutral-800 shadow-2xl text-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -z-10 -translate-x-1/2 translate-y-1/2"></div>
+                {/* CONTENEUR PIXEL ART */}
+                <div className="bg-[#1e293b] border-4 border-black p-6 md:p-8 shadow-[8px_8px_0_rgba(0,0,0,1)] max-w-5xl w-full text-white relative">
+
+                    {/* BOUTONS D'ACTION EN HAUT A DROITE */}
+                    <div className="absolute top-4 right-4 flex gap-3 z-50">
+                        {/* Bouton Help */}
+                        <button onClick={() => setShowHelp(!showHelp)} className="hover:scale-110 transition-transform">
+                            <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/help.png')} alt="Aide" className="w-10 h-10 pixelated" />
+                        </button>
+                        {/* Bouton Close */}
+                        <button onClick={onClose} className="hover:scale-110 transition-transform">
+                            <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')} alt="Fermer" className="w-10 h-10 pixelated" />
+                        </button>
+                    </div>
 
                     {step === 0 && (
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            className="flex flex-col items-center text-center space-y-8"
+                            className="flex flex-col space-y-6"
                         >
-                            <div className="flex flex-col md:flex-row items-center gap-6 max-w-4xl mx-auto bg-neutral-800/50 p-6 rounded-2xl border border-neutral-700 shadow-inner">
-                                <div className="w-32 h-32 flex-shrink-0 bg-neutral-900 border-[3px] border-emerald-500 overflow-hidden shadow-[4px_4px_0_0_rgba(16,185,129,0.3)]">
-                                    <img
-                                        src="/assets/isometric/Spritesheet/character/jordan/jordan_speak.png"
-                                        alt="Jordan"
-                                        className="w-full h-full object-cover scale-150 origin-top"
-                                        style={{ imageRendering: 'pixelated' }}
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                            e.currentTarget.parentElement!.innerHTML = '<div class="text-6xl flex items-center justify-center h-full">👔</div>';
-                                        }}
-                                    />
+                            {/* ZONE DE DIALOGUE DE JORDAN */}
+                            <div className="flex flex-col md:flex-row items-start gap-6 bg-black/40 p-4 border-2 border-black">
+                                <div className="mt-2 flex-shrink-0">
+                                    <AnimatedAvatar character="jordan" isTalking={isTyping} />
                                 </div>
-                                <div className="text-left space-y-3">
-                                    <h1 className="text-xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent uppercase tracking-wider font-mono">
+                                <div className="flex-1 min-h-[120px] text-white text-lg font-bold leading-relaxed">
+                                    <h1 className="text-xl text-yellow-400 mb-2 font-black tracking-widest uppercase">
                                         Jordan - Head of RWAs
                                     </h1>
-                                    <p className="text-sm text-neutral-200 leading-relaxed italic">
-                                        "Salut Maire ! C'est Jordan. Félicitations pour l'élection, parlons vrai business. Ici, on ne joue pas qu'avec des pixels : on investit dans des actifs du monde réel (RWA) tokenisés. Choisissez une carte d'investissement :"
-                                    </p>
-                                    <ul className="text-xs text-neutral-300 space-y-1.5 mt-2">
-                                        <li>📈 <strong className="text-emerald-400">1. Vrai Rendement :</strong> Vos fonds génèrent du yield réel dans un Vault intouchable.</li>
-                                        <li>🚀 <strong className="text-emerald-400">2. Boost In-Game :</strong> Posséder ces RWA accélère massivement votre progression et débloque des bonus.</li>
-                                        <li>💧 <strong className="text-emerald-400">3. 100% Liquide :</strong> Vous pouvez revendre vos parts tokenisées à d'autres joueurs à tout moment.</li>
-                                    </ul>
-                                    <p className="font-bold text-white text-sm mt-3 border-t border-neutral-700 pt-3">Alors, on signe pour quoi aujourd'hui ?</p>
+                                    <TypewriterText
+                                        text={tJordan('pitch')}
+                                        speed={30}
+                                        onFinished={() => setIsTyping(false)}
+                                    />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-8">
+                            {/* ZONE FAQ (Affichée uniquement si on clique sur Help) */}
+                            {showHelp && (
+                                <div className="p-4 border-4 border-dashed border-yellow-500 bg-black/60 font-bold">
+                                    <h3 className="text-yellow-400 text-xl mb-4 text-center">{tJordan('help_title')}</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                        <div>
+                                            <p className="text-emerald-400 mb-1">{tJordan('faq_1_q')}</p>
+                                            <p className="text-neutral-300">{tJordan('faq_1_a')}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-emerald-400 mb-1">{tJordan('faq_2_q')}</p>
+                                            <p className="text-neutral-300">{tJordan('faq_2_a')}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-emerald-400 mb-1">{tJordan('faq_3_q')}</p>
+                                            <p className="text-neutral-300">{tJordan('faq_3_a')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CARTES RWA PIXEL ART */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pt-4">
                                 {RWA_CHOICES.map((rwa) => (
-                                    <motion.div
+                                    <div
                                         key={rwa.id}
-                                        whileHover={{ y: -5, scale: 1.02 }}
-                                        className="relative p-6 rounded-2xl bg-neutral-800/80 border border-neutral-700 hover:border-emerald-500/50 transition-all flex flex-col h-full"
+                                        className="relative p-4 bg-neutral-800 border-4 border-black hover:-translate-y-2 transition-transform flex flex-col h-full shadow-[4px_4px_0_rgba(0,0,0,1)]"
                                     >
                                         <div className="text-6xl mb-4 text-center">{rwa.image}</div>
-                                        <h3 className="text-2xl font-bold mb-2">{rwa.name}</h3>
-                                        <p className="text-sm text-neutral-400 flex-grow mb-6">{rwa.desc}</p>
+                                        <h3 className="text-xl font-bold mb-2 text-center text-white">{rwa.name}</h3>
+                                        <p className="text-sm text-neutral-300 flex-grow mb-4 text-center font-bold">{rwa.desc}</p>
 
-                                        <div className="flex justify-between items-center mb-6 p-3 bg-black/40 rounded-xl">
-                                            <div>
-                                                <div className="text-xs text-neutral-500">Coût RWA</div>
-                                                <div className="font-bold text-emerald-400">{rwa.cost} USDC</div>
+                                        <div className="flex justify-between items-center mb-4 p-2 bg-black border-2 border-neutral-700">
+                                            <div className="text-left">
+                                                <div className="text-xs text-neutral-400 font-bold">Coût</div>
+                                                <div className="font-black text-emerald-400">{rwa.cost} USDC</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-xs text-neutral-500">Rendement</div>
-                                                <div className="font-bold text-cyan-400">{rwa.apy} APY</div>
+                                                <div className="text-xs text-neutral-400 font-bold">Rendement</div>
+                                                <div className="font-black text-yellow-400">{rwa.apy}</div>
                                             </div>
                                         </div>
 
                                         <button
                                             onClick={() => handleInvest(rwa.id)}
-                                            className={`w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r ${rwa.color} hover:brightness-110 shadow-lg`}
+                                            className={`w-full py-3 ${rwa.color} border-2 border-black border-b-4 active:border-b-2 active:translate-y-[2px] font-black text-white tracking-widest uppercase transition-all`}
                                         >
                                             Investir
                                         </button>
-                                    </motion.div>
+                                    </div>
                                 ))}
                             </div>
                         </motion.div>
@@ -211,17 +237,12 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete }) =>
                             animate={{ scale: 1, opacity: 1 }}
                             className="flex flex-col items-center justify-center py-20 text-center space-y-8"
                         >
-                            <div className="relative w-32 h-32">
-                                <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full"></div>
-                                <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                                <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                                    {RWA_CHOICES.find(r => r.id === selectedRWA)?.image}
-                                </div>
+                            <div className="text-8xl animate-bounce">
+                                {RWA_CHOICES.find(r => r.id === selectedRWA)?.image}
                             </div>
-
-                            <div className="space-y-2">
-                                <h2 className="text-2xl font-bold">Intégration Web3 en cours...</h2>
-                                <p className="text-emerald-400 animate-pulse">{txStatus}</p>
+                            <div className="space-y-4">
+                                <h2 className="text-3xl font-black text-yellow-400 uppercase tracking-widest">Transaction en cours...</h2>
+                                <p className="text-emerald-400 animate-pulse font-bold text-xl">{txStatus}</p>
                             </div>
                         </motion.div>
                     )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 
 export const TopBar: React.FC = () => {
     return (
@@ -56,7 +57,7 @@ export const TopBar: React.FC = () => {
                                             >
                                                 {/* SEULEMENT L'IMAGE (qui contient désormais le texte dessiné) */}
                                                 <img
-                                                    src="/assets/isometric/Spritesheet/IU/bouttons/connect_wallet.png"
+                                                    src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/connect_wallet.png')}
                                                     className="absolute inset-0 w-full h-full object-contain pixelated"
                                                     alt="Connecter le portefeuille"
                                                     style={{ imageRendering: 'pixelated' }}

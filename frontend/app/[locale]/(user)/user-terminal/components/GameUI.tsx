@@ -108,15 +108,23 @@ export default function GameUI({
             {/* ═══════════════════════════════════════ */}
             {/* TODO: Lier l'affichage de l'onboarding au profil on-chain si connecté. */}
             {isConnected && typeof (window as any) !== 'undefined' && !(window as any).localStorage.getItem('onboarding_done') && (
-                <GameOnboarding onComplete={() => {
-                    if (typeof window !== 'undefined') {
-                        window.localStorage.setItem('onboarding_done', 'true');
-                        // Forcer un re-render brutal pour cacher
-                        setViewMode(viewMode);
-                    }
-                }} />
+                <GameOnboarding
+                    onComplete={() => {
+                        if (typeof window !== 'undefined') {
+                            window.localStorage.setItem('onboarding_done', 'true');
+                            setViewMode(viewMode);
+                        }
+                    }}
+                    onClose={() => {
+                        if (typeof window !== 'undefined') {
+                            // On met "onboarding_done" à true pour ne plus l'afficher, 
+                            // ou tu peux gérer ça différemment si 'fermer' = 'remettre à plus tard'
+                            window.localStorage.setItem('onboarding_done', 'true');
+                            setViewMode(viewMode);
+                        }
+                    }}
+                />
             )}
-
             {/* ═══════════════════════════════════════ */}
             {/* SERVICE PANELS (Modal Overlays) */}
             {/* ═══════════════════════════════════════ */}

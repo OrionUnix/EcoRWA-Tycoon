@@ -72,8 +72,6 @@ export class RoadManager {
                     const ni = ny * GRID_SIZE + nx;
 
                     // ✅ SÉCURITÉ : Ici, on ne touche QUE aux animaux.
-                    // On ne modifie PAS engine.resourceMaps.wood[ni].
-                    // Les arbres voisins restent donc intacts.
 
                     if (engine.resourceMaps.animals[ni] > 0) {
                         // Le bruit de la construction fait fuir 50% du gibier
