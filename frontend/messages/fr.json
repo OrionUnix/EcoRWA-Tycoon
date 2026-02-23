@@ -392,5 +392,153 @@
         "desc": "Produits locaux."
       }
     }
+  },
+  "Advisor": {
+    "bob": {
+      "name": "Chef de Chantier Bob",
+      "intro": "Bonjour Maire ! Vous disposez d'un budget municipal de 50 000$ pour commencer les travaux. Vous pouvez construire la ville librement ! Si vous souhaitez tester nos fonctionnalités d'investissement (RWA), connectez votre portefeuille en haut à droite pour recevoir une subvention bonus de 10 000 USDC."
+    }
+  },
+  "TopBar": {
+    "network": "Avalanche (Testnet)"
+  },
+  "Budget": {
+    "title": "Budget & Administration",
+    "currentFunds": "Trésorerie Actuelle",
+    "netProfit": "Bénéfice Net",
+    "tabs": {
+      "revenues": "💰 Revenus",
+      "services": "📉 Services",
+      "finance": "📈 Finance & RWA"
+    },
+    "revenues": {
+      "title": "Revenus Générés",
+      "resTax": "Impôts Résidentiels",
+      "comTax": "Impôts Commerciaux",
+      "indTax": "Impôts Industriels",
+      "trade": "Commerce (Marchés)",
+      "export": "Chiffre d'Affaires Export"
+    },
+    "taxes": {
+      "title": "Taux d'Imposition",
+      "res": "Taxe Résidentielle",
+      "com": "Taxe Commerciale",
+      "ind": "Taxe Industrielle",
+      "warning": "⚠️ Des impôts trop élevés nuiront à l'attractivité et réduiront l'arrivée de RWA."
+    },
+    "services": {
+      "title": "Maintenance des Infrastructures",
+      "power": "Centrales Électriques",
+      "water": "Pompes & Aquifères",
+      "civic": "Services Civiques",
+      "extraction": "Extractions (Mines/Puits)",
+      "food": "Approvisionnement (Pêche..)",
+      "totalExpenses": "Dépenses Totales",
+      "tooltipDisable": "Désactiver le service (Économie)",
+      "tooltipEnable": "Activer le service",
+      "mayorNote": {
+        "title": "Note du Maire :",
+        "text": "Vous pouvez désactiver globalement l'alimentation des services via ces interrupteurs pour réduire drastiquement vos coûts, au prix d'une chute massive de bonheur due aux coupures."
+      }
+    },
+    "finance": {
+      "macroTitle": "Macro-Économie & Emploi",
+      "activeWorkers": "Actifs",
+      "jobs": "Postes",
+      "unemployed": "Chômeurs",
+      "unemploymentRate": "Taux de Chômage",
+      "bondsTitle": "Marché Obligataire Web3 (RWA)",
+      "bondsDesc": "Émettez des obligations municipales (Bonds) garanties par les actifs RWA pour lever des fonds on-chain de manière instantanée.",
+      "bondsFooter": "Remboursement Smart-Contract déduit automatiquement (mensuel).",
+      "interestRate": "Taux:"
+    }
+  },
+  "Inspector": {
+    "level": "Niveau",
+    "features": "Caractéristiques",
+    "wealth": "Richesse",
+    "density": "Densité",
+    "satisfaction": "Satisfaction",
+    "taxesPaid": "Taxes Payées",
+    "servicesReceived": "Services Reçus",
+    "services": {
+      "water": "Eau",
+      "power": "Électricité",
+      "police": "Police",
+      "fire": "Pompiers",
+      "health": "Santé",
+      "education": "Éducation"
+    },
+    "issues": "Problèmes",
+    "noIssues": "✅ Aucun problème détecté",
+    "employment": "Emploi du Foyer",
+    "activeInhabitants": "Habitants actifs",
+    "occupiedJobs": "Emplois occupés",
+    "unemployed": "Sans emploi",
+    "production": {
+      "title": "Production",
+      "output": "Sortie",
+      "workersNeeded": "Travailleurs Requis"
+    },
+    "export": {
+      "title": "Bilan Financier (Export)",
+      "opsCost": "🔴 Coût d'exploitation",
+      "revenue": "🟢 Chiffre d'affaires",
+      "netProfit": "💎 Rentabilité Nette"
+    },
+    "contracts": {
+      "title": "Contrats Commerciaux",
+      "exportStr": "Export"
+    },
+    "upgrade": {
+      "maxLevel": "✨ Niveau Maximum Atteint",
+      "waitingUtilities": "⚠️ Attente Eau/Électricité",
+      "waitingDesirability1": "⚠️ Attente Désirabilité (Services de base)",
+      "waitingDesirability2": "⚠️ Attente Désirabilité (Éducation/Loisirs)",
+      "autoEvo": "(Évolution automatique lente)",
+      "button": "⬆️ Améliorer",
+      "reqUtilities": "⚠️ Eau & Électricité requises",
+      "unavailable": "Pas d'amélioration disponible"
+    }
+  },
+  "Toolbar": {
+    "cost": "Coût :",
+    "resources": {
+      "wood": "Bois",
+      "iron": "Fer",
+      "oil": "Pétrole",
+      "coal": "Charbon",
+      "stone": "Pierre",
+      "glass": "Verre",
+      "concrete": "Béton",
+      "steel": "Acier",
+      "gold": "Or",
+      "silver": "Argent"
+    },
+    "categories": {
+      "roads": "Routes",
+      "zones": "Zones",
+      "power": "Énergie",
+      "water": "Eau",
+      "food": "Nourriture",
+      "extraction": "Industrie",
+      "civic": "Civique",
+      "rwa": "RWA",
+      "data": "Données",
+      "bulldozer": "Raser",
+      "settings": "Options"
+    },
+    "roads": {
+      "dirt": "Terre",
+      "small": "Petite",
+      "asphalt": "Standard",
+      "avenue": "Avenue",
+      "highway": "Autoroute"
+    },
+    "zones": {
+      "residential": "Résidentiel",
+      "commercial": "Commercial",
+      "industrial": "Industriel"
+    }
   }
 }

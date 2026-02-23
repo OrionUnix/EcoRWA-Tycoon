@@ -75,7 +75,7 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
 export function MetricRow({ label, value, max, color = '#4A90E2', icon, suffix = '' }: {
     label: string; value: number; max?: number; color?: string; icon?: string; suffix?: string;
 }) {
-    const displayValue = value === 0 ? 'OK' : `${Math.floor(value).toLocaleString()}${suffix}`;
+    const displayValue = `${Math.floor(value).toLocaleString()}${suffix}`;
     const pct = max ? Math.min((value / max) * 100, 100) : null;
 
     return (

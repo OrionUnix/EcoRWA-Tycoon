@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { useTranslations } from 'next-intl';
+import { useAccount } from 'wagmi';
 
 // --- IMPORTS MOTEUR ---
 import { usePixiApp } from '../hooks/usePixiApp';
@@ -26,6 +27,8 @@ import { VehicleRenderer } from '../components/VehicleRenderer';
 import { BuildingRenderer } from '../engine/BuildingRenderer';
 import { GameRenderer, resetGameRenderer } from '../components/GameRenderer';
 import { useECS } from '../hooks/useECS';
+import { TopBar } from '../components/ui/TopBar';
+import { AdvisorWidget } from '../components/ui/AdvisorWidget';
 
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
@@ -36,6 +39,8 @@ export default function UserTerminalClient() {
     const terrainContainerRef = useRef<PIXI.Container | null>(null);
     const staticGRef = useRef<PIXI.Graphics | null>(null);
     const uiGRef = useRef<PIXI.Graphics | null>(null);
+
+    const { isConnected } = useAccount();
 
     // 2. ÉTATS DE JEU
     const [assetsLoaded, setAssetsLoaded] = useState(false);
@@ -304,93 +309,99 @@ export default function UserTerminalClient() {
     const t = useTranslations();
 
     return (
-        <div style={{
-            position: 'relative',
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: '#000',
-            overflow: 'hidden'
-        }}>
-            <div
-                ref={containerRef}
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 1
-                }}
-            />
+        <>
+            {/* UI Fixée qui doit toujours intercepter les clics en priorité et survivre aux contextes d'empilement */}
+            <TopBar />
+            <AdvisorWidget isVisible={!isConnected} />
 
-            {!assetsLoaded && (
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 50,
-                    backgroundColor: '#111',
-                    color: 'white',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'sans-serif'
-                }}>
-                    <div className="loader"></div>
-                    <h1 style={{ marginTop: '20px' }}>Génération du territoire...</h1>
-                </div>
-            )}
+            <div style={{
+                position: 'relative',
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: '#000',
+                overflow: 'hidden'
+            }}>
 
-            {assetsLoaded && (
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 10,
-                    pointerEvents: 'none'
-                }}>
-                    <div style={{ width: '100%', height: '100%' }}>
-                        <GameUI
-                            t={t}
-                            viewMode={viewMode}
-                            setViewMode={setViewMode}
-                            selectedRoadType={selectedRoad}
-                            setSelectedRoadType={setSelectedRoad}
-                            selectedZoneType={selectedZone}
-                            setSelectedZoneType={setSelectedZone}
-                            selectedBuildingType={selectedBuilding}
-                            setSelectedBuildingType={setSelectedBuilding}
-                            totalCost={totalCost}
-                            isValidBuild={isValidBuild}
-                            fps={fps}
-                            cursorPos={cursorPos}
-                            hoverInfo={hoverInfo}
-                            resources={resources}
-                            stats={stats}
-                            summary={summary}
-                            onRegenerate={() => {
-                                if (terrainContainerRef.current) {
-                                    ResourceRenderer.clearAll(terrainContainerRef.current);
-                                    VehicleRenderer.clearAll();
-                                }
-                                const randomWallet = "0x" + Math.floor(Math.random() * 1e16).toString(16);
-                                engine.map.generateWorld(randomWallet);
-                                engine.map.revision++;
-                            }}
-                            speed={speed}
-                            paused={paused}
-                            onSetSpeed={(s: number) => {
-                                setSpeed(s);
-                                engine.setSpeed(s);
-                            }}
-                            onTogglePause={() => {
-                                const newPaused = !paused;
-                                setPaused(newPaused);
-                                engine.isPaused = newPaused;
-                            }}
-                            selectedBuildingId={selectedBuildingId}
-                            setSelectedBuildingId={setSelectedBuildingId}
-                        />
+                <div
+                    ref={containerRef}
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 1
+                    }}
+                />
+
+                {!assetsLoaded && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 50,
+                        backgroundColor: '#111',
+                        color: 'white',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'sans-serif'
+                    }}>
+                        <div className="loader"></div>
+                        <h1 style={{ marginTop: '20px' }}>Génération du territoire...</h1>
                     </div>
-                    <ChunkExpandOverlay viewportRef={viewportRef} isReady={isReady} />
-                </div>
-            )}
-        </div>
+                )}
+
+                {assetsLoaded && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 10,
+                        pointerEvents: 'none'
+                    }}>
+                        <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
+                            <GameUI
+                                t={t}
+                                viewMode={viewMode}
+                                setViewMode={setViewMode}
+                                selectedRoadType={selectedRoad}
+                                setSelectedRoadType={setSelectedRoad}
+                                selectedZoneType={selectedZone}
+                                setSelectedZoneType={setSelectedZone}
+                                selectedBuildingType={selectedBuilding}
+                                setSelectedBuildingType={setSelectedBuilding}
+                                totalCost={totalCost}
+                                isValidBuild={isValidBuild}
+                                fps={fps}
+                                cursorPos={cursorPos}
+                                hoverInfo={hoverInfo}
+                                resources={resources}
+                                stats={stats}
+                                summary={summary}
+                                onRegenerate={() => {
+                                    if (terrainContainerRef.current) {
+                                        ResourceRenderer.clearAll(terrainContainerRef.current);
+                                        VehicleRenderer.clearAll();
+                                    }
+                                    const randomWallet = "0x" + Math.floor(Math.random() * 1e16).toString(16);
+                                    engine.map.generateWorld(randomWallet);
+                                    engine.map.revision++;
+                                }}
+                                speed={speed}
+                                paused={paused}
+                                onSetSpeed={(s: number) => {
+                                    setSpeed(s);
+                                    engine.setSpeed(s);
+                                }}
+                                onTogglePause={() => {
+                                    const newPaused = !paused;
+                                    setPaused(newPaused);
+                                    engine.isPaused = newPaused;
+                                }}
+                                selectedBuildingId={selectedBuildingId}
+                                setSelectedBuildingId={setSelectedBuildingId}
+                            />
+                        </div>
+                        <ChunkExpandOverlay viewportRef={viewportRef} isReady={isReady} />
+                    </div>
+                )}
+            </div></>
     );
 }

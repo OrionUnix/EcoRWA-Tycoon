@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { RoadType, ZoneType, BuildingType, PlayerResources, CityStats, ResourceSummary, BuildingCategory, BUILDING_SPECS } from '../engine/types';
 import {
     ROADS, LAYERS, formatNumber,
     ResourceItem, ToolButton, ResourceCard, GameTooltip, NeedsDisplay
 } from './ui/GameWidgets';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { BuildingInspector } from './ui/BuildingInspector';
 import { getGameEngine } from '../engine/GameEngine';
 
@@ -20,6 +20,8 @@ import { PowerPanel } from './ui/PowerPanel';
 import { FirePanel } from './ui/FirePanel';
 import { JobsPanel } from './ui/JobsPanel';
 import { DataLayersPanel } from './ui/DataLayersPanel';
+import { GameOnboarding } from './ui/GameOnboarding';
+import { BobAlertBox } from './ui/BobAlertBox';
 
 interface GameUIProps {
     t: any;
@@ -61,10 +63,18 @@ export default function GameUI({
     onRegenerate,
     speed, paused, onSetSpeed, onTogglePause
 }: GameUIProps) {
+    const { isConnected } = useAccount();
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [activeToolInfo, setActiveToolInfo] = useState<string | null>(null);
     const [activePanel, setActivePanel] = useState<string | null>(null);
     const [activeDataLayer, setActiveDataLayer] = useState<string | null>(null);
     const engine = getGameEngine();
+
+    // Onboarding s'affiche si le joueur n'a pas encore reçu sa subvention de départ (par ex < 10k)
+    // En production on vérifierait un flag `hasCompletedOnboarding`
+    const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+        return engine.map.resources.money < 10000;
+    });
 
     // Cancel active tool
     const cancelTool = () => setViewMode('NAVIGATE');
@@ -92,6 +102,22 @@ export default function GameUI({
             )}
 
             {/* ═══════════════════════════════════════ */}
+
+            {/* ═══════════════════════════════════════ */}
+            {/* ONBOARDING (Starter RWA) */}
+            {/* ═══════════════════════════════════════ */}
+            {/* TODO: Lier l'affichage de l'onboarding au profil on-chain si connecté. */}
+            {isConnected && typeof (window as any) !== 'undefined' && !(window as any).localStorage.getItem('onboarding_done') && (
+                <GameOnboarding onComplete={() => {
+                    if (typeof window !== 'undefined') {
+                        window.localStorage.setItem('onboarding_done', 'true');
+                        // Forcer un re-render brutal pour cacher
+                        setViewMode(viewMode);
+                    }
+                }} />
+            )}
+
+            {/* ═══════════════════════════════════════ */}
             {/* SERVICE PANELS (Modal Overlays) */}
             {/* ═══════════════════════════════════════ */}
             {activePanel === 'BUDGET' && <BudgetPanel stats={stats} resources={resources} onClose={() => setActivePanel(null)} />}
@@ -105,12 +131,11 @@ export default function GameUI({
             {/* ═══════════════════════════════════════ */}
             {/* TOP-RIGHT: Misc Controls */}
             {/* ═══════════════════════════════════════ */}
-            <div className="fixed top-4 right-4 pointer-events-auto z-50 flex gap-2 items-center">
+            <div className="fixed top-4 right-4 pointer-events-auto z-50 flex gap-2 items-center mt-12">
                 <button onClick={onRegenerate} className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105"
                     style={{ background: 'rgba(208,2,27,0.15)', color: '#D0021B', border: '1px solid rgba(208,2,27,0.3)' }}>
                     RESET
                 </button>
-                <LanguageSwitcher />
             </div>
 
             {/* ═══════════════════════════════════════ */}

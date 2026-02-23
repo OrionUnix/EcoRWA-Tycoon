@@ -68,11 +68,21 @@ export class EconomySystem {
                 // Feature : Permet de désactiver temporairement un service/bâtiment 
                 // Pour l'instant on facture tout ce qui est actif
                 if (building.state !== 'CONSTRUCTION') {
-                    maintenanceCost += specs.maintenance;
+                    let cost = specs.maintenance;
+
+                    // --- Dynamic override for Mines ---
+                    if (building.type === BuildingType.MINE && building.mining) {
+                        const res = building.mining.resource;
+                        if (res === 'STONE') cost = 300;
+                        else if (res === 'COAL' || res === 'IRON') cost = 500;
+                        else if (res === 'GOLD' || res === 'SILVER') cost = 1000;
+                    }
+
+                    maintenanceCost += cost;
 
                     const cat = specs.category as string;
                     if (!maintenanceDetail[cat]) maintenanceDetail[cat] = 0;
-                    maintenanceDetail[cat] += specs.maintenance;
+                    maintenanceDetail[cat] += cost;
                 }
             }
 
@@ -96,13 +106,19 @@ export class EconomySystem {
 
             // ✅ NOUVEAU: Exportations directes (Mines, Puits, Bûcheron...)
             if (building.state === 'ACTIVE') {
-                const exportRate = EconomySystem.RESOURCE_EXPORT_RATES[building.type];
+                let exportRate = EconomySystem.RESOURCE_EXPORT_RATES[building.type];
+
+                // --- Dynamic override for Mines ---
+                if (building.type === BuildingType.MINE && building.mining) {
+                    const res = building.mining.resource;
+                    if (res === 'STONE') exportRate = 600;
+                    else if (res === 'COAL' || res === 'IRON') exportRate = 1400;
+                    else if (res === 'GOLD' || res === 'SILVER') exportRate = 3500;
+                }
+
                 if (exportRate) {
                     // Le niveau du bâtiment multiplie le revenu généré
                     const levelMultiplier = building.level || 1;
-
-                    // Si c'est une mine spécifique, on pourrait pondérer, 
-                    // mais pour l'instant on se fiera au niveau et au type de base.
                     exportIncome += exportRate * levelMultiplier;
                 }
             }
@@ -121,6 +137,7 @@ export class EconomySystem {
                 income: 0,
                 expenses: 0,
                 taxIncome: { residential: 0, commercial: 0, industrial: 0 },
+                taxRate: { residential: 9, commercial: 9, industrial: 9 },
                 tradeIncome: 0,
                 exportIncome: 0, // ✅ NOUVEAU
                 maintenance: 0,

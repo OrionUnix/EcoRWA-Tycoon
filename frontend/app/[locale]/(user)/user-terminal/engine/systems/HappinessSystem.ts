@@ -36,19 +36,28 @@ export class HappinessSystem {
 
             // A. LOGIQUE COMMERCIALE
             if (building.type === BuildingType.COMMERCIAL) {
-                if (!hasIndustryOrMarket) {
-                    // Pas de biens à vendre -> Malheureux / Abandon
-                    building.happiness = Math.max(0, building.happiness - 5);
-                    building.statusFlags |= BuildingStatus.NO_GOODS; // Supposons un flag custom ou UNHAPPY
+                let score = 50;
 
-                    // Si trop malheureux -> Abandon
-                    if (building.happiness === 0) {
-                        building.state = 'ABANDONED';
-                    }
+                if (!hasIndustryOrMarket) {
+                    score -= 30; // Pénalité si pas de marchandises
+                    building.statusFlags |= BuildingStatus.NO_GOODS;
                 } else {
-                    building.happiness = 100;
-                    building.statusFlags &= ~BuildingStatus.NO_GOODS; // Remove flag
+                    building.statusFlags &= ~BuildingStatus.NO_GOODS;
                 }
+
+                // Besoins de base
+                if (building.statusFlags & BuildingStatus.NO_WATER) score -= 30;
+                if (building.statusFlags & BuildingStatus.NO_POWER) score -= 30;
+
+                // Taxes commerciales
+                const taxCom = map.stats.budget.taxRate?.commercial || 9;
+                if (taxCom > 10) score -= (taxCom - 10) * 2; // -2% par point au dessus de 10%
+                else if (taxCom < 5) score += 5; // Bonus si taxes basses
+
+                score += this.calculateLocalInfluence(map, x, y);
+                building.happiness = Math.max(0, Math.min(100, score));
+
+                if (building.happiness === 0) building.state = 'ABANDONED';
             }
 
             // B. LOGIQUE RÉSIDENTIELLE
@@ -56,12 +65,17 @@ export class HappinessSystem {
                 let score = 50; // Base score (Neutral)
 
                 // 2.1 BESOINS DE BASE (Facteur Majeur)
-                if (building.statusFlags & BuildingStatus.NO_WATER) score -= 20;
-                if (building.statusFlags & BuildingStatus.NO_POWER) score -= 20;
-                if (building.statusFlags & BuildingStatus.NO_FOOD) score -= 20;
-                if (building.statusFlags & BuildingStatus.NO_JOBS) score -= 10;
+                if (building.statusFlags & BuildingStatus.NO_WATER) score -= 30;
+                if (building.statusFlags & BuildingStatus.NO_POWER) score -= 30;
+                if (building.statusFlags & BuildingStatus.NO_FOOD) score -= 15;
+                if (building.statusFlags & BuildingStatus.NO_JOBS) score -= 15;
 
-                // 2.2 INFLUENCE LOCALE (AoE Scan)
+                // 2.2 TAXES RÉSIDENTIELLES
+                const taxRes = map.stats.budget.taxRate?.residential || 9;
+                if (taxRes > 10) score -= (taxRes - 10) * 3; // -3% par point au dessus de 10%
+                else if (taxRes < 5) score += 10; // Bonus si taxes très basses
+
+                // 2.3 INFLUENCE LOCALE (AoE Scan)
                 // On regarde autour pour trouver des Services ou de la Pollution
                 const localInfluence = this.calculateLocalInfluence(map, x, y);
                 score += localInfluence;
@@ -69,13 +83,7 @@ export class HappinessSystem {
                 // Clamp
                 score = Math.max(0, Math.min(100, score));
 
-                // Lissage (Inertie)
-                // building.happiness = building.happiness * 0.9 + score * 0.1; 
-                // Pour l'instant on met direct pour feedback immédiat
                 building.happiness = score;
-
-                // Debug Info pour le Tooltip (On pourrait stocker ça dans building pour l'UI)
-                // building.debugInfluence = localInfluence; 
             }
         }
     }

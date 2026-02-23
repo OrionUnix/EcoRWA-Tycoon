@@ -401,5 +401,153 @@
         "desc": "Local goods."
       }
     }
+  },
+  "Advisor": {
+    "bob": {
+      "name": "Foreman Bob",
+      "intro": "Hello Mayor! You have a municipal budget of $50,000 to start operations. You can build the city freely! If you want to try our investment options (RWA), connect your wallet in the top right to receive a $10,000 USDC bonus grant."
+    }
+  },
+  "TopBar": {
+    "network": "Avalanche (Testnet)"
+  },
+  "Budget": {
+    "title": "Budget & Administration",
+    "currentFunds": "Current Treasury",
+    "netProfit": "Net Profit",
+    "tabs": {
+      "revenues": "💰 Revenues",
+      "services": "📉 Services",
+      "finance": "📈 Finance & RWA"
+    },
+    "revenues": {
+      "title": "Generated Revenues",
+      "resTax": "Residential Taxes",
+      "comTax": "Commercial Taxes",
+      "indTax": "Industrial Taxes",
+      "trade": "Commerce (Markets)",
+      "export": "Export Earnings"
+    },
+    "taxes": {
+      "title": "Tax Rates",
+      "res": "Residential Tax",
+      "com": "Commercial Tax",
+      "ind": "Industrial Tax",
+      "warning": "⚠️ Taxes that are too high will hurt attractiveness and reduce RWA investments."
+    },
+    "services": {
+      "title": "Infrastructure Maintenance",
+      "power": "Power Plants",
+      "water": "Pumps & Aquifers",
+      "civic": "Civic Services",
+      "extraction": "Extraction (Mines/Pumps)",
+      "food": "Supply (Fishing/Hunting..)",
+      "totalExpenses": "Total Expenses",
+      "tooltipDisable": "Disable service (Save Money)",
+      "tooltipEnable": "Enable service",
+      "mayorNote": {
+        "title": "Mayor's Note:",
+        "text": "You can globally disable service power via these switches to severely cut your costs, at the price of a massive happiness drop due to outages."
+      }
+    },
+    "finance": {
+      "macroTitle": "Macro-Economy & Employment",
+      "activeWorkers": "Workforce",
+      "jobs": "Jobs",
+      "unemployed": "Unemployed",
+      "unemploymentRate": "Unemployment Rate",
+      "bondsTitle": "Web3 Bond Market (RWA)",
+      "bondsDesc": "Issue municipal bonds backed by RWA assets to instantly raise on-chain funds.",
+      "bondsFooter": "Smart-Contract repayment automatically deducted (monthly).",
+      "interestRate": "Rate:"
+    }
+  },
+  "Inspector": {
+    "level": "Level",
+    "features": "Features",
+    "wealth": "Wealth",
+    "density": "Density",
+    "satisfaction": "Satisfaction",
+    "taxesPaid": "Taxes Paid",
+    "servicesReceived": "Received Services",
+    "services": {
+      "water": "Water",
+      "power": "Power",
+      "police": "Police",
+      "fire": "Fire Dept",
+      "health": "Health",
+      "education": "Education"
+    },
+    "issues": "Issues",
+    "noIssues": "✅ No issues detected",
+    "employment": "Household Employment",
+    "activeInhabitants": "Active inhabitants",
+    "occupiedJobs": "Occupied jobs",
+    "unemployed": "Unemployed",
+    "production": {
+      "title": "Production",
+      "output": "Output",
+      "workersNeeded": "Required Workers"
+    },
+    "export": {
+      "title": "Financial Statement (Export)",
+      "opsCost": "🔴 Operating Cost",
+      "revenue": "🟢 Revenue",
+      "netProfit": "💎 Net Profit"
+    },
+    "contracts": {
+      "title": "Commercial Contracts",
+      "exportStr": "Export"
+    },
+    "upgrade": {
+      "maxLevel": "✨ Maximum Level Reached",
+      "waitingUtilities": "⚠️ Waiting for Water/Power",
+      "waitingDesirability1": "⚠️ Waiting for Desirability (Basic Services)",
+      "waitingDesirability2": "⚠️ Waiting for Desirability (Education/Leisure)",
+      "autoEvo": "(Slow automatic evolution)",
+      "button": "⬆️ Upgrade",
+      "reqUtilities": "⚠️ Water & Power required",
+      "unavailable": "No upgrade available"
+    }
+  },
+  "Toolbar": {
+    "cost": "Cost:",
+    "resources": {
+      "wood": "Wood",
+      "iron": "Iron",
+      "oil": "Oil",
+      "coal": "Coal",
+      "stone": "Stone",
+      "glass": "Glass",
+      "concrete": "Concrete",
+      "steel": "Steel",
+      "gold": "Gold",
+      "silver": "Silver"
+    },
+    "categories": {
+      "roads": "Roads",
+      "zones": "Zones",
+      "power": "Power",
+      "water": "Water",
+      "food": "Food",
+      "extraction": "Industry",
+      "civic": "Civic",
+      "rwa": "RWA",
+      "data": "Data",
+      "bulldozer": "Bulldoze",
+      "settings": "Settings"
+    },
+    "roads": {
+      "dirt": "Dirt",
+      "small": "Small",
+      "asphalt": "Standard",
+      "avenue": "Avenue",
+      "highway": "Highway"
+    },
+    "zones": {
+      "residential": "Residential",
+      "commercial": "Commercial",
+      "industrial": "Industrial"
+    }
   }
 }

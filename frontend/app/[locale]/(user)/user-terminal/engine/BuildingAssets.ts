@@ -107,7 +107,14 @@ export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
     },
     'RESTAURANT': { levels: [['/assets/isometric/Spritesheet/Buildings/special/restaurant_A.png', '/assets/isometric/Spritesheet/Buildings/special/restaurant_B.png']] },
     'CAFE': { levels: [['/assets/isometric/Spritesheet/Buildings/special/coffee_shop.png']] },
-    'FOOD_MARKET': { levels: [['/assets/isometric/Spritesheet/Buildings/special/market01.png', '/assets/isometric/Spritesheet/Buildings/special/market02.png']] },
+    'FOOD_MARKET': {
+        construction: '/assets/isometric/Spritesheet/Buildings/market/construction_market01.png',
+        levels: [
+            ['/assets/isometric/Spritesheet/Buildings/market/market01_A.png', '/assets/isometric/Spritesheet/Buildings/market/market01_B.png'],
+            ['/assets/isometric/Spritesheet/Buildings/market/market02_A.png', '/assets/isometric/Spritesheet/Buildings/market/market02_B.png'],
+            ['/assets/isometric/Spritesheet/Buildings/market/market03_A.png', '/assets/isometric/Spritesheet/Buildings/market/market03_B.png']
+        ]
+    },
     'PHARMACY': { levels: [['/assets/isometric/Spritesheet/Buildings/special/pharmacy_A.png', '/assets/isometric/Spritesheet/Buildings/special/pharmacy_B.png']] },
     'LUMBER_HUT': {
         levels: [

@@ -54,6 +54,18 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
         maintenance: 0,
         maxLevel: 1
     };
+
+    // --- Dynamic override for Mine name ---
+    let displayName = specs.name;
+    if (building.type === 'MINE' && building.mining) {
+        const res = building.mining.resource;
+        if (res === 'STONE') displayName = 'Carrière de Pierre';
+        else if (res === 'COAL') displayName = 'Mine de Charbon';
+        else if (res === 'IRON') displayName = 'Mine de Fer';
+        else if (res === 'GOLD') displayName = "Mine d'Or";
+        else if (res === 'SILVER') displayName = "Mine d'Argent";
+    }
+
     const maxLevel = specs.maxLevel || 1;
     const isMaxLevel = building.level >= maxLevel;
     const upgradeCost = (specs.upgradeCost || 0) * building.level;
@@ -110,7 +122,7 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                             {isResidential ? '🏠' : isCommercial ? '🏢' : isIndustrial ? '🏭' : '🏗️'}
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-[14px] font-bold" style={{ color: '#2C2C2C' }}>{specs.name}</h3>
+                            <h3 className="text-[14px] font-bold" style={{ color: '#2C2C2C' }}>{displayName}</h3>
                             <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: headerColor }}>
                                 Niveau {building.level} / {maxLevel}
                             </div>
@@ -196,8 +208,18 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
 
                         {/* ═══ EXPORTATION (Mines, Pêche, Bois) ═══ */}
                         {EconomySystem.RESOURCE_EXPORT_RATES[building.type] && (() => {
-                            const exportRev = (EconomySystem.RESOURCE_EXPORT_RATES[building.type] || 0) * (building.level || 1);
-                            const opsCost = specs.maintenance || 0;
+                            let baseExport = EconomySystem.RESOURCE_EXPORT_RATES[building.type] || 0;
+                            let baseMaint = specs.maintenance || 0;
+
+                            if (building.type === 'MINE' && building.mining) {
+                                const res = building.mining.resource;
+                                if (res === 'STONE') { baseExport = 600; baseMaint = 300; }
+                                else if (res === 'COAL' || res === 'IRON') { baseExport = 1400; baseMaint = 500; }
+                                else if (res === 'GOLD' || res === 'SILVER') { baseExport = 3500; baseMaint = 1000; }
+                            }
+
+                            const exportRev = baseExport * (building.level || 1);
+                            const opsCost = baseMaint;
                             const profit = exportRev - opsCost;
                             const isProfitable = profit >= 0;
 

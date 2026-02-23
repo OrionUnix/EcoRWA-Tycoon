@@ -126,17 +126,7 @@ export const ActiveToolHUD: React.FC<ActiveToolHUDProps> = ({
                     {/* Separator */}
                     <div style={{ width: '1px', height: '32px', background: 'rgba(0,0,0,0.1)' }} />
 
-                    {/* Shortcuts */}
-                    <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-1.5">
-                            <kbd className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: 'rgba(0,0,0,0.08)', color: '#666' }}>R</kbd>
-                            <span className="text-[10px]" style={{ color: '#999' }}>Rotation</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <kbd className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: 'rgba(0,0,0,0.08)', color: '#666' }}>ESC</kbd>
-                            <span className="text-[10px]" style={{ color: '#999' }}>Annuler</span>
-                        </div>
-                    </div>
+
 
                     {/* Cancel button */}
                     <button

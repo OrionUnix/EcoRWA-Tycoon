@@ -126,7 +126,7 @@ export const CityInfoBar: React.FC<CityInfoBarProps> = ({
                 >
                     <span className="text-sm">👥</span>
                     <span className="text-base font-bold font-mono" style={{ color: '#fff' }}>
-                        {population === 0 ? 'OK' : formatNumber(population)}
+                        {formatNumber(population)}
                     </span>
                 </button>
 
@@ -137,7 +137,7 @@ export const CityInfoBar: React.FC<CityInfoBarProps> = ({
                 >
                     <span className="text-sm">{happiness > 70 ? '😊' : happiness > 40 ? '😐' : '😟'}</span>
                     <span className="text-sm font-bold" style={{ color: happiness > 70 ? '#7ED321' : happiness > 40 ? '#F5A623' : '#D0021B' }}>
-                        {population === 0 ? 'OK' : `${happiness}%`}
+                        {`${happiness}%`}
                     </span>
                 </button>
 

@@ -96,13 +96,19 @@ function RibbonItem({
             </span>
             {/* Prix */}
             {cost !== undefined && (
-                <span className="text-[9px] font-mono flex items-center gap-1 flex-wrap justify-center mt-0.5" style={{ color: active ? '#fbbf24' : '#6b7280' }}>
-                    ${cost}
-                    {resourceCost && Object.entries(resourceCost).map(([res, amt]) => (
-                        <span key={res} title={res} className="flex flex-row items-center gap-0.5 ml-0.5">
-                            , {amt} {RES_ICONS[res] || ''}
-                        </span>
-                    ))}
+                <span className="text-[10px] flex items-center gap-1 flex-wrap justify-center mt-0.5 leading-tight" style={{ color: active ? '#fbbf24' : '#d1d5db', whiteSpace: 'pre-wrap', textAlign: 'center' }}>
+                    Coût : {cost}$
+                    {resourceCost && Object.entries(resourceCost).map(([res, amt]) => {
+                        const resNames: Record<string, string> = {
+                            wood: 'Bois', iron: 'Fer', oil: 'Pétrole', coal: 'Charbon', stone: 'Pierre', glass: 'Verre', concrete: 'Béton', steel: 'Acier', gold: 'Or', silver: 'Argent'
+                        };
+                        const formatRes = `${amt} ${RES_ICONS[res] || ''} ${resNames[res] || res}`;
+                        return (
+                            <span key={res} className="whitespace-nowrap">
+                                , {formatRes}
+                            </span>
+                        );
+                    })}
                 </span>
             )}
         </button>
@@ -191,15 +197,7 @@ function SubMenu({ category, viewMode, setViewMode, selectedRoadType, setSelecte
                             onClick={() => selectAndClose(() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.INDUSTRIAL); })}
                             icon="🏭" label="Industriel" color="#F5A623"
                         />
-                        <RibbonSep />
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[9px] text-white/40 uppercase tracking-wider px-1">Pinceau</span>
-                            <div className="flex gap-1">
-                                {['1×1', '3×3', '5×5'].map(s => (
-                                    <button key={s} className="px-2 py-1 rounded-lg text-[10px] font-bold text-white/60 hover:text-white hover:bg-white/10 transition-all">{s}</button>
-                                ))}
-                            </div>
-                        </div>
+
                     </>
                 )}
 

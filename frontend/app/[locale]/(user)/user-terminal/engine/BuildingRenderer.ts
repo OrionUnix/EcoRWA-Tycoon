@@ -110,6 +110,7 @@ export class BuildingRenderer {
                 // Recreate emote text above sprite
                 const text = new PIXI.Text({ text: '', style: { fontSize: 24, fontWeight: 'bold', stroke: { color: 0x000000, width: 2 } } });
                 text.anchor.set(0.5, 1);
+                text.eventMode = 'none'; // Prevent emotes from capturing clicks
                 container.addChild(text);
             } else {
                 // Mettre à jour la texture si le bâtiment a évolué
@@ -145,16 +146,17 @@ export class BuildingRenderer {
             }
 
             // HitArea isométrique
+            // Le sprite est ancré à (0.5, 1.0), donc le point (0,0) local est au milieu-bas de l'image.
+            // La base isométrique du bâtiment a pour largeur = TILE_WIDTH et hauteur = TILE_HEIGHT / 2
+            // On divise par currentScale pour compenser le scaling appliqué au sprite.
             const hw = (TILE_WIDTH / 2) / currentScale;
             const hh = (TILE_HEIGHT / 2) / currentScale;
-            // Centre local de la tuile iso par rapport au point d'ancrage du sprite
-            const cy = -(sprite.y) / currentScale;
 
             sprite.hitArea = new PIXI.Polygon([
-                new PIXI.Point(0, cy - hh),
-                new PIXI.Point(hw, cy),
-                new PIXI.Point(0, cy + hh),
-                new PIXI.Point(-hw, cy)
+                new PIXI.Point(0, 0),             // Bas (South)
+                new PIXI.Point(hw, -hh),          // Droite (East)
+                new PIXI.Point(0, -hh * 2),       // Haut (North)
+                new PIXI.Point(-hw, -hh)          // Gauche (West)
             ]);
 
             // Gestion de l'emote (toujours au dessus du sprite)
@@ -166,7 +168,7 @@ export class BuildingRenderer {
                     emoteText.visible = true;
                     const bounce = Math.sin(Date.now() / 200) * 5;
                     emoteText.x = 0;
-                    emoteText.y = -(TILE_HEIGHT + 30) + bounce; // Emote juste au-dessus du diamant iso
+                    emoteText.y = -(TILE_HEIGHT - 20) + bounce; // Emote juste au-dessus du diamant iso
                 } else {
                     emoteText.visible = false;
                 }
@@ -197,6 +199,7 @@ export class BuildingRenderer {
 
             emoteText = new PIXI.Text({ text: '', style: { fontSize: 24, fontWeight: 'bold', stroke: { color: 0x000000, width: 2 } } });
             emoteText.anchor.set(0.5, 1);
+            emoteText.eventMode = 'none'; // Prevent emotes from capturing clicks
             container.addChild(emoteText);
         }
 
@@ -269,7 +272,7 @@ export class BuildingRenderer {
                 emoteText.text = emote;
                 emoteText.visible = true;
                 const bounce = Math.sin(Date.now() / 200) * 5;
-                emoteText.y = -height - 40 + bounce;
+                emoteText.y = -height - 15 + bounce;
             } else {
                 emoteText.visible = false;
             }

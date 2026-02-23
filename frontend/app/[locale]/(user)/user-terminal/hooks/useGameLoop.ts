@@ -12,10 +12,9 @@ export function useGameLoop(
     appRef: React.MutableRefObject<PIXI.Application | null>,
     terrainContainerRef: React.MutableRefObject<PIXI.Container | null>,
     staticGRef: React.MutableRefObject<PIXI.Graphics | null>,
-
     uiGRef: React.MutableRefObject<PIXI.Graphics | null>,
     isReady: boolean,
-    isReloading: boolean, // ✅ NOUVEAU : Bloque la boucle si rechargement
+    isReloading: boolean,
     viewMode: string,
     cursorPos: { x: number, y: number },
     previewPathRef: React.MutableRefObject<number[]>,
@@ -23,21 +22,30 @@ export function useGameLoop(
     setFps: (fps: number) => void,
     setResources: (res: any) => void,
     setStats: (stats: any) => void,
-    selectedBuildingType: React.MutableRefObject<BuildingType>, // ✅ Ajout
-    updateECS?: (delta: number, elapsed: number) => void // ✅ NOUVEAU: Callback ECS
+    selectedBuildingType: React.MutableRefObject<BuildingType>,
+    updateECS?: (delta: number, elapsed: number) => void
 ) {
     const lastRevRef = useRef(-2);
     const lastViewModeRef = useRef('FORCE_INIT');
     const lastZoomRef = useRef(1);
 
-    // ✅ EFFET 1 : GESTION DU RESIZE (Redimensionnement)
-    // Cet effet gère uniquement la taille du canvas quand la fenêtre change
+    // ✅ REFS FOR DYNAMIC VALUES (Prevents re-running useEffect)
+    const viewModeRef = useRef(viewMode);
+    const cursorPosRef = useRef(cursorPos);
+    const isReloadingRef = useRef(isReloading);
+    const updateECSRef = useRef(updateECS);
+
+    useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
+    useEffect(() => { cursorPosRef.current = cursorPos; }, [cursorPos]);
+    useEffect(() => { isReloadingRef.current = isReloading; }, [isReloading]);
+    useEffect(() => { updateECSRef.current = updateECS; }, [updateECS]);
+
+    // ✅ EFFET 1 : GESTION DU RESIZE
     useEffect(() => {
         const app = appRef.current;
         if (!app || !app.renderer) return;
 
         const handleResize = () => {
-            // On cherche le canvas HTML pour trouver son parent
             const canvas = app.canvas as HTMLCanvasElement;
             const parent = canvas?.parentElement;
 
@@ -50,14 +58,12 @@ export function useGameLoop(
         };
 
         window.addEventListener('resize', handleResize);
-
-        // Appel initial après un court délai pour laisser le DOM se monter
         setTimeout(handleResize, 100);
 
         return () => {
             window.removeEventListener('resize', handleResize);
         };
-    }, [isReady]); // On le lance quand isReady change (donc quand app est créé)
+    }, [isReady]);
 
 
     // ✅ EFFET 2 : LA BOUCLE DE JEU (GAMELOOP)
@@ -67,14 +73,15 @@ export function useGameLoop(
         const app = appRef.current;
         const engine = getGameEngine();
 
-        // Chargement des Assets (Atlas + Routes + Bâtiments)
-        ResourceAssets.load(); // Au cas où
+        // Chargement des Assets
+        ResourceAssets.load();
         import('../engine/BuildingAssets').then(m => m.BuildingAssets.load());
 
-        console.log("🎬 GameLoop: Running with Resource Support.");
+        console.log("🎬 GameLoop: Running Loop Setup.");
 
         const tick = (ticker: PIXI.Ticker) => {
-            // ✅ SÉCURITÉ : Arrêt immédiat si l'app ou les refs sont détruites
+            if (isReloadingRef.current) return;
+
             if (!app || (app.renderer as any)?.destroyed || !terrainContainerRef.current || !staticGRef.current || !uiGRef.current) {
                 return;
             }
@@ -83,30 +90,19 @@ export function useGameLoop(
             }
 
             // 0. MISE À JOUR ECS
-            if (updateECS) {
-                // ticker.deltaTime est en frames corrigées (1 = 60fps), 
-                // ticker.lastTime est en ms
-                const delta = ticker.deltaTime;
-                const elapsed = ticker.lastTime;
-                updateECS(delta, elapsed);
+            if (updateECSRef.current) {
+                updateECSRef.current(ticker.deltaTime, ticker.lastTime);
             }
 
-            // 1. LOGIQUE DU MOTEUR (Trafic, etc.)
-            // engine.tick() gère le déplacement des camions/voitures
-            // Note: engine est un singleton, donc c'est bien la même instance partagée
-            // Si ta classe GameEngine a une méthode update() ou tick(), appelle-la ici.
+            // 1. LOGIQUE DU MOTEUR (Trafic, Economy, etc.)
             if (engine['tick']) (engine as any).tick();
-
 
             // 2. RENDU
             const currentZoom = staticGRef.current.parent?.scale.x || 1.0;
-            const mapData = engine.map; // mapData est l'instance de MapEngine
+            const mapData = engine.map;
 
             if (mapData) {
-                // Détection de changement pour redessiner la couche statique (Lourde)
                 const zoomChanged = Math.abs(currentZoom - lastZoomRef.current) > 0.1;
-
-                // LOD (Level of Detail) : On redessine si on passe un seuil de zoom
                 const lodCrossed =
                     (currentZoom < 0.6 && lastZoomRef.current >= 0.6) ||
                     (currentZoom >= 0.6 && lastZoomRef.current < 0.6) ||
@@ -115,92 +111,65 @@ export function useGameLoop(
 
                 const shouldRenderStatic =
                     mapData.revision !== lastRevRef.current ||
-                    viewMode !== lastViewModeRef.current ||
+                    viewModeRef.current !== lastViewModeRef.current ||
                     zoomChanged ||
                     lodCrossed;
 
                 if (shouldRenderStatic) {
-                    // ✅ RENDU STATIQUE (Sol + Arbres + Routes + Bâtiments)
                     const success = GameRenderer.renderStaticLayer(
                         terrainContainerRef.current,
                         staticGRef.current,
                         mapData,
-                        viewMode,
-                        false, // showGrid (tu peux passer une prop si tu veux)
+                        viewModeRef.current,
+                        false,
                         currentZoom
                     );
 
-                    // ✅ PROTECTION RACE CONDITION
-                    // On ne valide la révision QUE si le rendu a réussi (Assets chargés)
-                    // Sinon, shouldRenderStatic restera true à la prochaine frame
                     if (success) {
                         lastRevRef.current = mapData.revision;
-                        lastViewModeRef.current = viewMode;
+                        lastViewModeRef.current = viewModeRef.current;
                         lastZoomRef.current = currentZoom;
                     }
                 }
 
-                // ✅ RENDU DYNAMIQUE (Curseur, Preview, Véhicules)
-                // On passe le graphics UI (uiGRef) pour dessiner par-dessus tout
                 GameRenderer.renderDynamicLayer(
                     uiGRef.current,
                     mapData,
-                    cursorPos,
+                    cursorPosRef.current,
                     previewPathRef.current,
-                    viewMode, // currentMode
+                    viewModeRef.current,
                     isValidBuildRef.current,
                     currentZoom,
-                    selectedBuildingType.current // ✅ Ajout
+                    selectedBuildingType.current
                 );
 
-                // ✅ RENDU VÉHICULES (Sprites)
-                // Doit être fait à chaque frame pour l'animation et le mouvement
-                // Maintenant on dessine dans le vehicleContainer pour le tri Z (Occlusion correcte)
                 if (terrainContainerRef.current) {
                     const vehicleLayer = (terrainContainerRef.current.getChildByLabel("vehicleContainer") as PIXI.Container) || terrainContainerRef.current;
                     VehicleRenderer.drawVehicles(vehicleLayer, mapData, currentZoom);
                 }
-
-                // ✅ SYSTÈME DE PARTICULES
-                // Initialisation si nécessaire (Idempotent)
-                if (terrainContainerRef.current) {
-                    // On pourrait le faire ailleurs, mais ici on est sûr d'avoir le conteneur
-                    // ParticleSystem.init vérifie s'il est déjà init ou pas
-                    // Mais ParticleSystem.init(container) réinitialise tout...
-                    // On va le faire une fois via un flag ou dans UserTerminalClient ?
-                    // Plus simple : On l'update juste ici. L'init doit être fait ailleurs.
-                    // ParticleSystem.update();
-                }
             }
 
-            // 3. MISE À JOUR UI (React States)
-            // On ne met à jour React que toutes les 30 frames pour ne pas tuer les perfs
-            // app.ticker.lastTime est en millisecondes, on utilise un compteur simple
-
-            // Note: Une façon simple de limiter les updates UI
-            if (Math.random() < 0.05) { // ~3 fois par seconde (à 60fps)
+            // 3. MISE À JOUR UI (React States) throttled
+            if (Math.random() < 0.05) {
                 setFps(Math.round(app.ticker.FPS));
-
-                // Mise à jour des ressources (Argent, Bois, etc.)
                 if (mapData && mapData.resources) {
                     setResources({ ...mapData.resources });
                 }
-
-                // Mise à jour des stats (Population, Energie...)
                 if (mapData && mapData.stats) {
                     setStats({ ...mapData.stats });
                 }
             }
         };
 
-        // Ajout à la boucle Pixi
+        // Ajout explicite à la boucle Pixi
         app.ticker.add(tick);
 
-        // Nettoyage
+        // Nettoyage strict garanti de ne se lancer qu'une seule fois au démontage (ou changement isReady)
         return () => {
+            console.log("🛑 GameLoop: Cleaning up TICKER");
             if (app.ticker) {
                 app.ticker.remove(tick);
             }
         };
-    }, [isReady, viewMode, cursorPos, updateECS]); // ✅ updateECS ajouté aux dépendances
+    }, [isReady]); // ✅ Dépendance Unique: isReady
 }

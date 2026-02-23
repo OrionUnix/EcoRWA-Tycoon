@@ -385,13 +385,13 @@ export function NeedsDisplay({ stats }: { stats: CityStats | null }) {
     if (!stats || !stats.needs) return null;
 
     const getStatus = (demand: number, supply: number) => {
-        if (supply >= demand) return 'OK';
+        if (supply >= demand) return 'SATISFAIT';
         if (supply >= demand * 0.7) return 'WARNING';
         return 'DANGER';
     };
 
     const getStatusColor = (status: string) => {
-        if (status === 'OK') return 'text-green-400';
+        if (status === 'SATISFAIT') return 'text-green-400';
         if (status === 'WARNING') return 'text-yellow-400';
         return 'text-red-400';
     };
@@ -428,7 +428,7 @@ export function NeedsDisplay({ stats }: { stats: CityStats | null }) {
                 const unemployed = Math.max(0, workforce - totalJobs);
                 const vacancies = Math.max(0, totalJobs - workforce);
 
-                let status = 'OK';
+                let status = 'ÉQUILIBRÉ';
                 let color = 'text-green-400';
 
                 if (unemployed > 0) {
@@ -445,7 +445,7 @@ export function NeedsDisplay({ stats }: { stats: CityStats | null }) {
                         <div className="flex flex-col leading-tight">
                             <span className="text-[9px] text-gray-500 uppercase font-black">{t('jobs')}</span>
                             <span className={`font-mono font-bold ${color}`}>
-                                {workers} / {totalJobs} <span className="text-[9px] opacity-70">({vacancies > 0 ? `+${vacancies} Libres` : `-${unemployed} Chômeurs`})</span>
+                                {workers} / {totalJobs} <span className="text-[9px] opacity-70">({vacancies > 0 ? `+${vacancies} Libres` : unemployed > 0 ? `-${unemployed} Chômeurs` : 'Stable'})</span>
                             </span>
                         </div>
                     </div>

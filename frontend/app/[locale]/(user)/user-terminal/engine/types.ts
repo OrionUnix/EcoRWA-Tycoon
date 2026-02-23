@@ -152,6 +152,7 @@ export interface CityStats {
         income: number;
         expenses: number;
         taxIncome: { residential: number; commercial: number; industrial: number };
+        taxRate?: { residential: number; commercial: number; industrial: number };
         tradeIncome: number; // Export
         exportIncome: number; // ✅ NOUVEAU: Revenu des mines / extraction
         maintenance: number;

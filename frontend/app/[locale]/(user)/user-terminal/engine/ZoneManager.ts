@@ -1,3 +1,4 @@
+import { advisorStore } from '../store/AdvisorStore';
 import { MapEngine } from './MapEngine';
 import { ZoneType, ZoneData } from './types';
 import { GRID_SIZE } from './config';
@@ -92,6 +93,7 @@ export class ZoneManager {
         console.log(`🛣️ Validation: hasAdjacentRoad=${hasRoad}`);
         if (!hasRoad) {
             console.log('❌ Validation: Pas de route adjacente');
+            advisorStore.triggerAdvice("Impossible de bâtir ici, Maire ! Il faut absolument coller le bâtiment à une route pour qu'il soit relié aux services.", true);
             return { valid: false, reason: "Doit être adjacent à une route" };
         }
 
