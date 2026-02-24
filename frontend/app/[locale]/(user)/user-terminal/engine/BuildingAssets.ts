@@ -84,7 +84,10 @@ export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
     // SERVICES CIVIQUES
     'POLICE_STATION': { levels: [['/assets/isometric/Spritesheet/Buildings/services/policestation/policestation01.png'], ['/assets/isometric/Spritesheet/Buildings/services/policestation/policestation02.png'], ['/assets/isometric/Spritesheet/Buildings/services/policestation/policestation03.png']] },
     'FIRE_STATION': { levels: [['/assets/isometric/Spritesheet/Buildings/services/firestation/firestation01.png'], ['/assets/isometric/Spritesheet/Buildings/services/firestation/firestation02.png'], ['/assets/isometric/Spritesheet/Buildings/services/firestation/firestation03.png']] },
-    'CLINIC': { levels: [['/assets/isometric/Spritesheet/Buildings/services/hospital/hospital01.png'], ['/assets/isometric/Spritesheet/Buildings/services/hospital/hospital02.png'], ['/assets/isometric/Spritesheet/Buildings/services/hospital/hospital03.png']] },
+    'CLINIC': {
+        levels: [
+            ['/assets/isometric/Spritesheet/Buildings/services/hospital/hospital01.png'], ['/assets/isometric/Spritesheet/Buildings/services/hospital/hospital02.png'], ['/assets/isometric/Spritesheet/Buildings/services/hospital/hospital03.png']]
+    },
     'CITY_HALL': { levels: [['/assets/isometric/Spritesheet/Buildings/services/cityhall/mairie01.png'], ['/assets/isometric/Spritesheet/Buildings/services/cityhall/mairie02.png'], ['/assets/isometric/Spritesheet/Buildings/services/cityhall/mairie03.png']] },
 
     // PARCS & LOISIRS
@@ -106,13 +109,13 @@ export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
         ]
     },
     'RESTAURANT': { levels: [['/assets/isometric/Spritesheet/Buildings/special/restaurant_A.png', '/assets/isometric/Spritesheet/Buildings/special/restaurant_B.png']] },
-    'CAFE': { levels: [['/assets/isometric/Spritesheet/Buildings/special/coffee_shop.png']] },
+
     'FOOD_MARKET': {
         construction: '/assets/isometric/Spritesheet/Buildings/market/construction_market01.png',
         levels: [
-            ['/assets/isometric/Spritesheet/Buildings/market/market01_A.png', '/assets/isometric/Spritesheet/Buildings/market/market01_B.png'],
-            ['/assets/isometric/Spritesheet/Buildings/market/market02_A.png', '/assets/isometric/Spritesheet/Buildings/market/market02_B.png'],
-            ['/assets/isometric/Spritesheet/Buildings/market/market03_A.png', '/assets/isometric/Spritesheet/Buildings/market/market03_B.png']
+            ['/assets/isometric/Spritesheet/Buildings/market/market01_A.png'],
+            ['/assets/isometric/Spritesheet/Buildings/market/market02_A.png'],
+            ['/assets/isometric/Spritesheet/Buildings/market/market03_A.png']
         ]
     },
     'PHARMACY': { levels: [['/assets/isometric/Spritesheet/Buildings/special/pharmacy_A.png', '/assets/isometric/Spritesheet/Buildings/special/pharmacy_B.png']] },
@@ -138,7 +141,7 @@ export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
             ['/assets/isometric/Spritesheet/Buildings/culture/sport/stade03.png']
         ]
     },
-    'THEATER': { levels: [['/assets/isometric/Spritesheet/Buildings/culture/theater.png']] }
+
 };
 
 

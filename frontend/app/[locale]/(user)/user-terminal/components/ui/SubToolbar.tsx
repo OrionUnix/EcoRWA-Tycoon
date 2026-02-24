@@ -49,6 +49,7 @@ const BUILDING_ICON_MAP: Record<string, { icon: string; color: string }> = {
     OIL_RIG: { icon: '🛢️', color: '#4A4A4A' },
 };
 
+// 🔴 MODIFICATION ICI : On ajoute onOpenRWA dans l'interface
 interface SubToolbarProps {
     activeCategory: string | null;
     viewMode: string;
@@ -59,6 +60,7 @@ interface SubToolbarProps {
     setSelectedZoneType: (type: ZoneType) => void;
     setSelectedBuildingType: (type: BuildingType) => void;
     setActiveCategory: (cat: string | null) => void;
+    onOpenRWA?: () => void; // Fonction optionnelle pour ouvrir Jordan
 }
 
 // SimCity 2013 Sub-Toolbar Item (48px icon + label, horizontal layout)
@@ -124,11 +126,13 @@ function DataLayerItem({ active, onClick, icon, label }: {
     );
 }
 
+// 🔴 MODIFICATION ICI : On récupère onOpenRWA dans les paramètres
 export const SubToolbar: React.FC<SubToolbarProps> = ({
     activeCategory, viewMode, setViewMode,
     selectedRoadType, setSelectedRoadType,
     selectedZoneType, setSelectedZoneType,
     setSelectedBuildingType, setActiveCategory,
+    onOpenRWA, // Ajouté ici !
 }) => {
     if (!activeCategory) return null;
 
@@ -250,11 +254,20 @@ export const SubToolbar: React.FC<SubToolbarProps> = ({
                         )}
 
                         {/* ══════ RWA / GameFi ══════ */}
+                        {/* 🔴 MODIFICATION ICI : On ajoute l'action sur le bouton Real-World Assets */}
                         {activeCategory === 'RWA' && (
                             <>
-                                <SubToolItem active={false} onClick={() => { }} icon="💼" label="Wallet" color={SC_COLORS.rwa} />
-                                <SubToolItem active={false} onClick={() => { }} icon="💎" label="Staking" color={SC_COLORS.rwa} />
-                                <SubToolItem active={false} onClick={() => { }} icon="🌍" label="Real-World Assets" color={SC_COLORS.rwa} />
+                                <SubToolItem
+                                    active={false}
+                                    onClick={() => {
+                                        if (onOpenRWA) onOpenRWA(); // Appelle la fonction d'ouverture
+                                        setActiveCategory(null);    // Referme ce petit menu
+                                    }}
+                                    icon="🌍"
+                                    label="Real-World Assets"
+                                    color={SC_COLORS.rwa}
+                                />
+
                                 <SubToolItem active={false} onClick={() => { }} icon="📈" label="Yield Dashboard" color={SC_COLORS.rwa} />
                                 <SubToolItem active={false} onClick={() => { }} icon="🪙" label="Tokenization" color={SC_COLORS.rwa} />
                                 <SubToolItem active={false} onClick={() => { }} icon="🔄" label="Marché / Exchange" color={SC_COLORS.rwa} />

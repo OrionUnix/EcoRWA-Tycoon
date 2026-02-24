@@ -115,13 +115,9 @@ function RibbonItem({
     );
 }
 
-// ── Séparateur vertical ──
-function RibbonSep() {
-    return <div className="self-stretch w-px bg-white/10 mx-1" />;
-}
-
 // ── Popup "baïonnette" horizontal au-dessus du bouton ──
-function SubMenu({ category, viewMode, setViewMode, selectedRoadType, setSelectedRoadType, selectedZoneType, setSelectedZoneType, setSelectedBuildingType, onClose }: {
+// 🔥 MODIFICATION : Ajout de onOpenRWA dans les propriétés du SubMenu
+function SubMenu({ category, viewMode, setViewMode, selectedRoadType, setSelectedRoadType, selectedZoneType, setSelectedZoneType, setSelectedBuildingType, onClose, onOpenRWA }: {
     category: string;
     viewMode: string;
     setViewMode: (m: any) => void;
@@ -131,6 +127,7 @@ function SubMenu({ category, viewMode, setViewMode, selectedRoadType, setSelecte
     setSelectedZoneType: (t: ZoneType) => void;
     setSelectedBuildingType: (t: BuildingType) => void;
     onClose: () => void;
+    onOpenRWA?: () => void;
 }) {
     const color = SC_COLORS[category] || '#888';
 
@@ -222,9 +219,17 @@ function SubMenu({ category, viewMode, setViewMode, selectedRoadType, setSelecte
                 {/* —— RWA —— */}
                 {category === 'RWA' && (
                     <>
-                        <RibbonItem active={false} onClick={() => { }} icon="💼" label="Wallet" color={color} />
-                        <RibbonItem active={false} onClick={() => { }} icon="💎" label="Staking" color={color} />
-                        <RibbonItem active={false} onClick={() => { }} icon="🌍" label="RWA" color={color} />
+                        {/* 🔥 MODIFICATION ICI : On lance la fonction pour ouvrir Jordan ! */}
+                        <RibbonItem
+                            active={false}
+                            onClick={() => {
+                                if (onOpenRWA) onOpenRWA(); // Appelle l'ouverture de Jordan
+                                onClose(); // Ferme le menu ruban RWA
+                            }}
+                            icon="🌍"
+                            label="RWA"
+                            color={color}
+                        />
                         <RibbonItem active={false} onClick={() => { }} icon="📈" label="Yield" color={color} />
                         <RibbonItem active={false} onClick={() => { }} icon="🪙" label="Tokens" color={color} />
                         <RibbonItem active={false} onClick={() => { }} icon="🔄" label="Exchange" color={color} />
@@ -271,6 +276,7 @@ function MainBtn({
     );
 }
 
+// 🔥 MODIFICATION : Ajout de onOpenRWA ici aussi
 interface MainToolbarProps {
     activeCategory: string | null;
     setActiveCategory: (cat: string | null) => void;
@@ -283,6 +289,7 @@ interface MainToolbarProps {
     setSelectedBuildingType: (t: BuildingType) => void;
     activeDataLayer: string | null;
     setActiveDataLayer: (layer: string | null) => void;
+    onOpenRWA?: () => void;
 }
 
 export const MainToolbar: React.FC<MainToolbarProps> = ({
@@ -291,7 +298,8 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
     selectedRoadType, setSelectedRoadType,
     selectedZoneType, setSelectedZoneType,
     setSelectedBuildingType,
-    activeDataLayer, setActiveDataLayer
+    activeDataLayer, setActiveDataLayer,
+    onOpenRWA // <-- Réception de la prop
 }) => {
     const toggle = (cat: string) => setActiveCategory(activeCategory === cat ? null : cat);
 
@@ -345,6 +353,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                                     setSelectedZoneType={setSelectedZoneType}
                                     setSelectedBuildingType={setSelectedBuildingType}
                                     onClose={() => setActiveCategory(null)}
+                                    onOpenRWA={onOpenRWA} // 🔥 TRANSFERT FINAL ICI !
                                 />
                             )}
 

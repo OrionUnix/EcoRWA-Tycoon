@@ -48,6 +48,7 @@ interface GameUIProps {
     paused: boolean;
     onSetSpeed: (s: number) => void;
     onTogglePause: () => void;
+    onOpenRWA?: () => void;
 }
 
 export default function GameUI({
@@ -61,7 +62,8 @@ export default function GameUI({
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
     onRegenerate,
-    speed, paused, onSetSpeed, onTogglePause
+    speed, paused, onSetSpeed, onTogglePause,
+    onOpenRWA
 }: GameUIProps) {
     const { isConnected } = useAccount();
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -216,6 +218,7 @@ export default function GameUI({
                 setSelectedBuildingType={setSelectedBuildingType}
                 activeDataLayer={activeDataLayer}
                 setActiveDataLayer={setActiveDataLayer}
+                onOpenRWA={onOpenRWA}
             />
         </div>
     );

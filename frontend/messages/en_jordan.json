@@ -1,11 +1,29 @@
 {
-    "pitch": "Hi Mayor! I'm Jordan. Congratulations on the election! I'm here to propose speeding up your city's development by investing in tokenized Real World Assets (RWA). Take time to study the market!",
-    "help_title": "Beginner Investor Guide",
+    "pitch": "Hi Mayor! It's Jordan. Congratulations on the election! Before building, you'll need funds. Claim your grant below. You can then close this dialog if you want to play and explore first, or invest right away!",
+    "welcome_back": "Welcome back Mayor! Would you like to buy real estate fractions? Don't forget: these shares also act as powerful boosters for your city's progression!",
+    "faucet_button": "Grant (10k)",
+    "invest_button": "Invest",
+    "faucet_claim_first": "Claim your grant first!",
+    "help_title": "Investor's Guide",
     "faq_1_q": "What is an RWA?",
-    "faq_1_a": "A 'Real World Asset'. It's a tangible physical asset (like real estate or a business) whose shares are transformed into digital tokens on the blockchain.",
-    "faq_2_q": "What is Tokenization?",
-    "faq_2_a": "It's the action of splitting a real-world contract into thousands of small digital tickets, allowing investment with just a few dollars.",
-    "faq_3_q": "What is APY?",
-    "faq_3_a": "Annual Percentage Yield. It's the estimated annual return your investment will generate continuously in your Vault.",
-    "close_text": "No thanks, I'll look later."
+    "faq_1_a": "A 'Real World Asset'. It's a physical asset (building, business) whose shares are on the blockchain.",
+    "faq_2_q": "Tokenization?",
+    "faq_2_a": "It's dividing a real contract into thousands of digital tickets accessible to everyone.",
+    "faq_3_q": "APY?",
+    "faq_3_a": "It's the annual yield that your investment generates in your Vault.",
+    "close_text": "Close",
+    "choices": {
+        "loft": {
+            "name": "Industrial Loft",
+            "desc": "Modern downtown housing. Steady yield."
+        },
+        "bistrot": {
+            "name": "Parisian Bistro",
+            "desc": "Highly frequented local business."
+        },
+        "tower": {
+            "name": "Eco-Tower",
+            "desc": "Ultra-modern and eco-friendly mixed-use tower."
+        }
+    }
 }

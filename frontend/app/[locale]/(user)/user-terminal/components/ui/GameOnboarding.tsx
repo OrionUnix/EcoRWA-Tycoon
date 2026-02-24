@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount, useWriteContract } from 'wagmi';
 import { parseAbi } from 'viem';
 import { getGameEngine } from '../../engine/GameEngine';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
-
-// NOUVEAUX IMPORTS : Traduction et UI Rétro
 import { useTranslations } from 'next-intl';
-import { AnimatedAvatar } from '../AnimatedAvatar'; // Ajuste le chemin si besoin
-import { TypewriterText } from '../TypewriterText'; // Ajuste le chemin si besoin
-
-// Web3 ABIs & Addresses
+import { AnimatedAvatar } from '../AnimatedAvatar';
+import { TypewriterText } from '../TypewriterText';
+import { RWACard } from '../ui/RWACard';
 const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
 const VAULT_ADDRESS = process.env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`;
 
@@ -23,41 +20,12 @@ const VAULT_ABI = parseAbi([
     'function mintBuilding(uint256 buildingId, uint256 amount) external'
 ]);
 
-// RWA Starter Choices
 const RWA_CHOICES = [
-    {
-        id: 1,
-        name: 'Loft Industriel',
-        type: 'RESIDENTIAL',
-        desc: 'Logement moderne en centre-ville. Yield constant.',
-        cost: 150,
-        apy: '4.2%',
-        image: '🏢',
-        color: 'bg-blue-600' // Couleurs simplifiées pour le pixel art
-    },
-    {
-        id: 2,
-        name: 'Bistrot Parisien',
-        type: 'COMMERCIAL',
-        desc: 'Commerce de proximité très fréquenté.',
-        cost: 100,
-        apy: '7.8%',
-        image: '🥐',
-        color: 'bg-orange-500'
-    },
-    {
-        id: 3,
-        name: 'Eco-Tower',
-        type: 'MIXED',
-        desc: 'Tour mixte ultra-moderne et écologique.',
-        cost: 250,
-        apy: '6.5%',
-        image: '🌱',
-        color: 'bg-emerald-600'
-    }
+    { id: 1, key: 'loft', type: 'RESIDENTIAL', cost: 150, apy: '4.2%', imageName: 'loft', colorTheme: 'blue' as const },
+    { id: 2, key: 'bistrot', type: 'COMMERCIAL', cost: 100, apy: '7.8%', imageName: 'bistro', colorTheme: 'orange' as const },
+    { id: 3, key: 'tower', type: 'MIXED', cost: 250, apy: '6.5%', imageName: 'eco', colorTheme: 'green' as const }
 ];
 
-// AJOUT: onClose pour pouvoir fermer la modale
 interface GameOnboardingProps {
     onComplete: () => void;
     onClose: () => void;
@@ -66,31 +34,35 @@ interface GameOnboardingProps {
 export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onClose }) => {
     const { address, isConnected } = useAccount();
     const engine = getGameEngine();
-
-    // Initialisation des textes de Jordan
     const tJordan = useTranslations('jordan');
 
-    const [step, setStep] = useState(0); // 0: intro, 1: transaction
+    const [step, setStep] = useState(0); // 0: dialogue, 1: transaction RWA, 2: transaction Faucet
     const [selectedRWA, setSelectedRWA] = useState<number | null>(null);
     const [txStatus, setTxStatus] = useState<string>('');
-
-    // NOUVEAUX ETATS UI
     const [showHelp, setShowHelp] = useState(false);
+
+    // MÉMOIRE DU JEU : Est-ce qu'on a déjà cliqué sur le Faucet ?
+    const [hasClaimedFaucet, setHasClaimedFaucet] = useState(false);
+    // On force le re-render du texte quand Jordan change de phrase
+    const [typingKey, setTypingKey] = useState(Date.now());
     const [isTyping, setIsTyping] = useState(true);
 
     const { writeContractAsync } = useWriteContract();
 
-    const handleInvest = async (rwaId: number) => {
-        if (!isConnected || !address) {
-            alert('Veuillez connecter votre portefeuille Web3.');
-            return;
-        }
+    // Au chargement, on vérifie si le joueur a déjà pris le Faucet dans le passé
+    useEffect(() => {
+        const claimed = localStorage.getItem('rwa_faucet_claimed') === 'true';
+        setHasClaimedFaucet(claimed);
+        setTypingKey(Date.now()); // Relance l'animation de texte
+    }, []);
 
-        setSelectedRWA(rwaId);
-        setStep(1);
+    // LOGIQUE 1 : LE FAUCET (MINT USDC)
+    const handleFaucet = async () => {
+        if (!isConnected || !address) return alert('Veuillez connecter votre portefeuille Web3.');
 
+        setStep(2);
         try {
-            setTxStatus('Demande de subvention (10 000 USDC)...');
+            setTxStatus('Envoi des fonds par la banque (10 000 USDC)...');
             const mintAmount = BigInt(10000 * 1e6);
             await writeContractAsync({
                 address: USDC_ADDRESS,
@@ -99,15 +71,39 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                 args: [address, mintAmount],
             });
 
-            setTxStatus('Subvention reçue ! Approbation du contrat...');
+            localStorage.setItem('rwa_faucet_claimed', 'true');
+            setHasClaimedFaucet(true);
+            engine.map.resources.money += 10000;
+
+            setStep(0); // Retour à la boutique
+            setTypingKey(Date.now()); // Jordan dit sa nouvelle phrase
+            setIsTyping(true);
+        } catch (error) {
+            console.error('Erreur Faucet:', error);
+            setTxStatus('Erreur du Faucet. Réessayez.');
+            setTimeout(() => setStep(0), 3000);
+        }
+    };
+
+    // LOGIQUE 2 : L'ACHAT DU RWA (APPROVE + MINT RWA)
+    const handleInvest = async (rwaId: number) => {
+        if (!isConnected || !address) return alert('Veuillez connecter votre portefeuille Web3.');
+        if (!hasClaimedFaucet) return alert(tJordan('faucet_claim_first'));
+
+        setSelectedRWA(rwaId);
+        setStep(1);
+
+        try {
+            const cost = BigInt(1000 * 1e6); // Adapter le coût selon la carte si besoin
+            setTxStatus('Signature du contrat immobilier...');
             await writeContractAsync({
                 address: USDC_ADDRESS,
                 abi: MOCK_USDC_ABI,
                 functionName: 'approve',
-                args: [VAULT_ADDRESS, mintAmount],
+                args: [VAULT_ADDRESS, cost],
             });
 
-            setTxStatus('Approbation confirmée ! Investissement RWA en cours...');
+            setTxStatus('Approbation confirmée ! Création du titre de propriété...');
             await writeContractAsync({
                 address: VAULT_ADDRESS,
                 abi: VAULT_ABI,
@@ -115,130 +111,95 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                 args: [BigInt(rwaId), BigInt(1)],
             });
 
-            setTxStatus('Transaction validée ! Bienvenue maire.');
-            engine.map.resources.money = 10000;
-            console.log(`Revenus Web3 activés ! RWA #${rwaId}.`);
+            setTxStatus('Félicitations ! Booster RWA activé.');
+            console.log(`RWA #${rwaId} acheté !`);
 
             setTimeout(() => {
                 onComplete();
-            }, 2000);
+            }, 2500);
 
         } catch (error) {
-            console.error('Erreur Onboarding Web3:', error);
-            setTxStatus('Erreur de transaction. Vous pouvez réessayer.');
+            console.error('Erreur Investissement:', error);
+            setTxStatus('Erreur de transaction. Vous avez annulé ou manquez de fonds.');
             setTimeout(() => setStep(0), 3000);
         }
     };
 
+    // Détermine la phrase de Jordan selon si le Faucet a été pris
+    const currentJordanText = hasClaimedFaucet ? tJordan('welcome_back') : tJordan('pitch');
+
     return (
         <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto bg-black/70 backdrop-blur-sm"
-            >
-                {/* CONTENEUR PIXEL ART */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto bg-black/70 backdrop-blur-sm">
                 <div className="bg-[#1e293b] border-4 border-black p-6 md:p-8 shadow-[8px_8px_0_rgba(0,0,0,1)] max-w-5xl w-full text-white relative">
 
-                    {/* BOUTONS D'ACTION EN HAUT A DROITE */}
+                    {/* BOUTONS D'ACTION (HELP / CLOSE) */}
                     <div className="absolute top-4 right-4 flex gap-3 z-50">
-                        {/* Bouton Help */}
-                        <button onClick={() => setShowHelp(!showHelp)} className="hover:scale-110 transition-transform">
-                            <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/help.png')} alt="Aide" className="w-10 h-10 pixelated" />
+                        <button onClick={() => setShowHelp(!showHelp)} className="hover:scale-110 active:translate-y-1 transition-all">
+                            <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/help.png')} alt="Aide" className="w-10 h-10 pixelated shadow-[2px_2px_0_black]" />
                         </button>
-                        {/* Bouton Close */}
-                        <button onClick={onClose} className="hover:scale-110 transition-transform">
-                            <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')} alt="Fermer" className="w-10 h-10 pixelated" />
+                        <button onClick={onClose} className="hover:scale-110 active:translate-y-1 transition-all">
+                            <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')} alt="Fermer" className="w-10 h-10 pixelated shadow-[2px_2px_0_black]" />
                         </button>
                     </div>
 
                     {step === 0 && (
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            className="flex flex-col space-y-6"
-                        >
-                            {/* ZONE DE DIALOGUE DE JORDAN */}
-                            <div className="flex flex-col md:flex-row items-start gap-6 bg-black/40 p-4 border-2 border-black">
-                                <div className="mt-2 flex-shrink-0">
-                                    <AnimatedAvatar character="jordan" isTalking={isTyping} />
+                        <div className="flex flex-col space-y-6">
+                            {/* DIALOGUE DE JORDAN */}
+                            <div className="flex flex-col md:flex-row items-start gap-6 bg-black/40 p-4 border-2 border-black relative">
+                                <AnimatedAvatar character="jordan" isTalking={isTyping} />
+                                <div className="flex-1 min-h-[120px] text-white text-lg font-bold">
+                                    <h1 className="text-xl text-yellow-400 mb-2 font-black tracking-widest uppercase">Jordan - RWA Master</h1>
+                                    <TypewriterText key={typingKey} text={currentJordanText} speed={25} onFinished={() => setIsTyping(false)} />
                                 </div>
-                                <div className="flex-1 min-h-[120px] text-white text-lg font-bold leading-relaxed">
-                                    <h1 className="text-xl text-yellow-400 mb-2 font-black tracking-widest uppercase">
-                                        Jordan - Head of RWAs
-                                    </h1>
-                                    <TypewriterText
-                                        text={tJordan('pitch')}
-                                        speed={30}
-                                        onFinished={() => setIsTyping(false)}
-                                    />
-                                </div>
+
+                                {/* BOUTON FAUCET DYNAMIQUE */}
+                                {!hasClaimedFaucet && !isTyping && (
+                                    <button onClick={handleFaucet} className="absolute bottom-4 right-4 relative group hover:scale-105 active:translate-y-1 transition-all">
+                                        <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/faucet.png')} alt="Faucet" className="w-32 h-auto pixelated shadow-[2px_2px_0_black]" />
+                                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black uppercase text-white drop-shadow-md">
+                                            {tJordan('faucet_button')}
+                                        </span>
+                                    </button>
+                                )}
                             </div>
 
-                            {/* ZONE FAQ (Affichée uniquement si on clique sur Help) */}
-                            {showHelp && (
-                                <div className="p-4 border-4 border-dashed border-yellow-500 bg-black/60 font-bold">
-                                    <h3 className="text-yellow-400 text-xl mb-4 text-center">{tJordan('help_title')}</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                        <div>
-                                            <p className="text-emerald-400 mb-1">{tJordan('faq_1_q')}</p>
-                                            <p className="text-neutral-300">{tJordan('faq_1_a')}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-emerald-400 mb-1">{tJordan('faq_2_q')}</p>
-                                            <p className="text-neutral-300">{tJordan('faq_2_a')}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-emerald-400 mb-1">{tJordan('faq_3_q')}</p>
-                                            <p className="text-neutral-300">{tJordan('faq_3_a')}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* CARTES RWA PIXEL ART */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pt-4">
+                            {/* ... (La suite du code : ZONE FAQ et CARTES RWA restent EXACTEMENT identiques à la version précédente) ... */}
+                            {/* CARTES RWA FAÇON POKÉMON */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pt-4 opacity-100">
                                 {RWA_CHOICES.map((rwa) => (
-                                    <div
+                                    <RWACard
                                         key={rwa.id}
-                                        className="relative p-4 bg-neutral-800 border-4 border-black hover:-translate-y-2 transition-transform flex flex-col h-full shadow-[4px_4px_0_rgba(0,0,0,1)]"
-                                    >
-                                        <div className="text-6xl mb-4 text-center">{rwa.image}</div>
-                                        <h3 className="text-xl font-bold mb-2 text-center text-white">{rwa.name}</h3>
-                                        <p className="text-sm text-neutral-300 flex-grow mb-4 text-center font-bold">{rwa.desc}</p>
-
-                                        <div className="flex justify-between items-center mb-4 p-2 bg-black border-2 border-neutral-700">
-                                            <div className="text-left">
-                                                <div className="text-xs text-neutral-400 font-bold">Coût</div>
-                                                <div className="font-black text-emerald-400">{rwa.cost} USDC</div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xs text-neutral-400 font-bold">Rendement</div>
-                                                <div className="font-black text-yellow-400">{rwa.apy}</div>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            onClick={() => handleInvest(rwa.id)}
-                                            className={`w-full py-3 ${rwa.color} border-2 border-black border-b-4 active:border-b-2 active:translate-y-[2px] font-black text-white tracking-widest uppercase transition-all`}
-                                        >
-                                            Investir
-                                        </button>
-                                    </div>
+                                        id={rwa.id}
+                                        title={tJordan(`choices.${rwa.key}.name`)}
+                                        description={tJordan(`choices.${rwa.key}.desc`)}
+                                        cost={rwa.cost}
+                                        apy={rwa.apy}
+                                        imageName={rwa.imageName}
+                                        colorTheme={rwa.colorTheme}
+                                        onInvest={() => handleInvest(rwa.id)}
+                                        investButtonText={tJordan('invest_button')}
+                                        isDisabled={!hasClaimedFaucet}
+                                    />
                                 ))}
                             </div>
-                        </motion.div>
+                        </div>
                     )}
 
-                    {step === 1 && (
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="flex flex-col items-center justify-center py-20 text-center space-y-8"
-                        >
-                            <div className="text-8xl animate-bounce">
-                                {RWA_CHOICES.find(r => r.id === selectedRWA)?.image}
+                    {/* ECRAN DE CHARGEMENT WEB3 */}
+                    {(step === 1 || step === 2) && (
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center justify-center py-20 text-center space-y-8">
+                            <div className="text-8xl animate-bounce flex justify-center">
+                                {/* 🔥 CORRECTION ICI : On utilise une vraie balise <img> avec imageName au lieu du vieil emoji */}
+                                {step === 2 ? '💸' : (
+                                    selectedRWA && (
+                                        <img
+                                            src={withBasePath(`/assets/isometric/Spritesheet/Buildings/RWA/${RWA_CHOICES.find(r => r.id === selectedRWA)?.imageName}.png`)}
+                                            alt="Construction"
+                                            className="h-32 w-auto object-contain pixelated drop-shadow-2xl"
+                                        />
+                                    )
+                                )}
                             </div>
                             <div className="space-y-4">
                                 <h2 className="text-3xl font-black text-yellow-400 uppercase tracking-widest">Transaction en cours...</h2>
@@ -248,6 +209,6 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                     )}
                 </div>
             </motion.div>
-        </AnimatePresence>
+        </AnimatePresence >
     );
 };

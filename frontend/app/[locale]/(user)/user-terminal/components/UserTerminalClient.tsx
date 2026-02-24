@@ -29,12 +29,12 @@ import { GameRenderer, resetGameRenderer } from '../components/GameRenderer';
 import { useECS } from '../hooks/useECS';
 import { TopBar } from '../components/ui/TopBar';
 import { AdvisorWidget } from '../components/ui/AdvisorWidget';
-
+import { GameOnboarding } from '../components/ui/GameOnboarding';
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
     const containerRef = useRef<HTMLDivElement>(null);
     const { appRef, viewportRef, stageRef, isReady } = usePixiApp(containerRef);
-
+    const [showOnboarding, setShowOnboarding] = useState(false);
     // Conteneurs Pixi (Layers)
     const terrainContainerRef = useRef<PIXI.Container | null>(null);
     const staticGRef = useRef<PIXI.Graphics | null>(null);
@@ -329,7 +329,13 @@ export default function UserTerminalClient() {
             {/* UI Fixée qui doit toujours intercepter les clics en priorité et survivre aux contextes d'empilement */}
             <TopBar />
             <AdvisorWidget isVisible={!isConnected} />
-
+            {/* 🔥 LA BOUTIQUE DE JORDAN EST ICI 🔥 */}
+            {showOnboarding && (
+                <GameOnboarding
+                    onComplete={() => setShowOnboarding(false)}
+                    onClose={() => setShowOnboarding(false)}
+                />
+            )}
             <div style={{
                 position: 'relative',
                 width: '100vw',
@@ -413,6 +419,7 @@ export default function UserTerminalClient() {
                                 }}
                                 selectedBuildingId={selectedBuildingId}
                                 setSelectedBuildingId={setSelectedBuildingId}
+                                onOpenRWA={() => setShowOnboarding(true)}
                             />
                         </div>
                         <ChunkExpandOverlay viewportRef={viewportRef} isReady={isReady} />
