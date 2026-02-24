@@ -13,8 +13,10 @@ export const RWAInventory: React.FC = () => {
     const [inventory, setInventory] = useState<any[]>([]);
 
     const [showGovernance, setShowGovernance] = useState(false);
+    const [govTargetItem, setGovTargetItem] = useState<any | null>(null);
     const [isTypingGov, setIsTypingGov] = useState(true);
     const [voteSuccess, setVoteSuccess] = useState(false);
+    const [showGovDetails, setShowGovDetails] = useState(false);
 
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [liveYield, setLiveYield] = useState<number>(0);
@@ -36,14 +38,21 @@ export const RWAInventory: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (inventory.length > 0 && !localStorage.getItem('governance_done')) {
-            const timer = setTimeout(() => {
-                setShowGovernance(true);
-                setIsTypingGov(true);
-            }, 8000);
-            return () => clearTimeout(timer);
+        if (inventory.length > 0 && !showGovernance) {
+            const pendingGovItem = inventory.find(item => localStorage.getItem(`gov_done_${item.id}`) !== 'true');
+
+            if (pendingGovItem) {
+                const timer = setTimeout(() => {
+                    setGovTargetItem(pendingGovItem);
+                    setShowGovernance(true);
+                    setIsTypingGov(true);
+                    setVoteSuccess(false);
+                    setShowGovDetails(false);
+                }, 8000);
+                return () => clearTimeout(timer);
+            }
         }
-    }, [inventory]);
+    }, [inventory, showGovernance]);
 
     useEffect(() => {
         if (selectedItem) setIsTypingImpact(true);
@@ -64,11 +73,16 @@ export const RWAInventory: React.FC = () => {
     }, [selectedItem]);
 
     const handleVote = (choice: string) => {
-        console.log(`A voté : ${choice}`);
-        localStorage.setItem('governance_done', 'true');
+        if (!govTargetItem) return;
+        console.log(`A voté : ${choice} pour RWA ${govTargetItem.id}`);
+        localStorage.setItem(`gov_done_${govTargetItem.id}`, 'true');
+
         setVoteSuccess(true);
         setIsTypingGov(true);
-        setTimeout(() => setShowGovernance(false), 4000);
+        setTimeout(() => {
+            setShowGovernance(false);
+            setGovTargetItem(null);
+        }, 4000);
     };
 
     const handleClaim = () => {
@@ -88,7 +102,8 @@ export const RWAInventory: React.FC = () => {
     const getAssetDetails = (id: number) => {
         switch (id) {
             case 1: return { key: 'loft', apy: '4.2%', totalShares: 10000, loc: 'New York', price: '$14 230', vac: '1.5%', pop: '8.3M', cost: 150 };
-            case 2: return { key: 'bistrot', apy: '7.8%', totalShares: 5000, loc: 'Paris', price: '10 580 €', vac: '2.8%', pop: '2.1M', cost: 100 };
+            // 🔥 CORRECTION ICI : "bistro" au lieu de "bistrot" pour matcher le JSON
+            case 2: return { key: 'bistro', apy: '7.8%', totalShares: 5000, loc: 'Paris', price: '10 580 €', vac: '2.8%', pop: '2.1M', cost: 100 };
             case 3: return { key: 'tower', apy: '6.5%', totalShares: 20000, loc: 'Paris', price: '11 200 €', vac: '1.2%', pop: '2.1M', cost: 250 };
             default: return { key: 'loft', apy: '0.0%', totalShares: 1000, loc: 'Unknown', price: '-', vac: '-', pop: '-', cost: 100 };
         }
@@ -96,7 +111,7 @@ export const RWAInventory: React.FC = () => {
 
     const getDynamicPrice = (id: number) => {
         const basePrice = getAssetDetails(id).cost;
-        const hasGov = localStorage.getItem('governance_done') === 'true';
+        const hasGov = localStorage.getItem(`gov_done_${id}`) === 'true';
         if (hasGov) {
             if (id === 2) return basePrice * 0.92;
             return basePrice * 1.08;
@@ -104,7 +119,6 @@ export const RWAInventory: React.FC = () => {
         return basePrice;
     };
 
-    // 🔥 Générateur de Hash propre (64 caractères hexadécimaux)
     const generateRandomTxID = () => {
         const chars = '0123456789abcdef';
         let hash = '0x';
@@ -112,12 +126,11 @@ export const RWAInventory: React.FC = () => {
         return hash;
     };
 
-    // 🔥 GESTION ACHAT/REVENTE OTC ET ENREGISTREMENT TXID 🔥
     const handleTrade = (type: 'buy' | 'sell') => {
         if (!selectedItem) return;
 
         const price = getDynamicPrice(selectedItem.id);
-        const newTxHash = generateRandomTxID(); // Génère une fausse TxID
+        const newTxHash = generateRandomTxID();
         const shortTx = `${newTxHash.slice(0, 6)}...${newTxHash.slice(-4)}`;
 
         let currentInventory = JSON.parse(localStorage.getItem('rwa_inventory') || '[]');
@@ -126,7 +139,7 @@ export const RWAInventory: React.FC = () => {
         if (type === 'sell') {
             if (currentInventory[itemIndex].amount > 1) {
                 currentInventory[itemIndex].amount -= 1;
-                currentInventory[itemIndex].otcTxHash = newTxHash; // Sauvegarde la transaction OTC
+                currentInventory[itemIndex].otcTxHash = newTxHash;
                 setSelectedItem({ ...selectedItem, amount: selectedItem.amount - 1, otcTxHash: newTxHash });
                 setClaimStatus(tInv('sell_success', { price: price.toFixed(2), tx: shortTx }));
             } else {
@@ -135,7 +148,7 @@ export const RWAInventory: React.FC = () => {
             }
         } else if (type === 'buy') {
             currentInventory[itemIndex].amount += 1;
-            currentInventory[itemIndex].otcTxHash = newTxHash; // Sauvegarde la transaction OTC
+            currentInventory[itemIndex].otcTxHash = newTxHash;
             setSelectedItem({ ...selectedItem, amount: selectedItem.amount + 1, otcTxHash: newTxHash });
             setClaimStatus(tInv('buy_success', { price: price.toFixed(2), tx: shortTx }));
         }
@@ -252,8 +265,8 @@ export const RWAInventory: React.FC = () => {
                                             <span className="text-xl font-black text-yellow-400">{getDynamicPrice(selectedItem.id).toFixed(2)} USDC</span>
                                         </div>
 
-                                        {localStorage.getItem('governance_done') === 'true' && (
-                                            <p className="text-[10px] text-orange-400 mb-4 italic leading-tight">
+                                        {localStorage.getItem(`gov_done_${selectedItem.id}`) === 'true' && (
+                                            <p className={`text-[10px] mb-4 italic leading-tight ${selectedItem.id === 2 ? 'text-red-400' : 'text-emerald-400'}`}>
                                                 {tInv('trade_impact')}
                                             </p>
                                         )}
@@ -278,11 +291,12 @@ export const RWAInventory: React.FC = () => {
                                 <div className="space-y-6 flex flex-col">
                                     <div className="flex-1">
                                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{tInv('dao_history')}</h3>
-                                        {localStorage.getItem('governance_done') === 'true' ? (
+
+                                        {localStorage.getItem(`gov_done_${selectedItem.id}`) === 'true' ? (
                                             <div className="bg-purple-900/20 border border-purple-500/50 p-4 rounded-xl flex flex-col gap-4">
                                                 <div className="flex justify-between items-center border-b border-purple-500/30 pb-2">
-                                                    <p className="text-sm text-purple-300 font-bold">{tInv('vote_passed')}</p>
-                                                    <p className="text-xs text-purple-400 font-mono">{tInv('funds_released')}</p>
+                                                    <p className="text-sm text-purple-300 font-bold">{tInv(`gov_scenarios.${getAssetDetails(selectedItem.id).key}.history_title`)}</p>
+                                                    <p className="text-xs text-purple-400 font-mono">{tInv(`gov_scenarios.${getAssetDetails(selectedItem.id).key}.history_sub`)}</p>
                                                 </div>
                                                 <div className="bg-black/60 p-3 rounded-lg border border-gray-700 flex gap-3 items-start relative overflow-hidden shadow-inner min-h-[90px]">
                                                     <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
@@ -291,10 +305,10 @@ export const RWAInventory: React.FC = () => {
                                                     </div>
                                                     <div className="flex-1">
                                                         <span className="text-[10px] font-black text-yellow-400 uppercase tracking-widest block mb-1">
-                                                            {tInv('gov_impact_title')}
+                                                            {tInv(`gov_scenarios.${getAssetDetails(selectedItem.id).key}.impact_title`)}
                                                         </span>
                                                         <div className="text-xs text-gray-300 leading-snug font-bold">
-                                                            <TypewriterText key={`impact-${selectedItem.id}`} text={tInv('gov_impact_text')} speed={15} onFinished={() => setIsTypingImpact(false)} />
+                                                            <TypewriterText key={`impact-${selectedItem.id}`} text={tInv(`gov_scenarios.${getAssetDetails(selectedItem.id).key}.impact_text`)} speed={15} onFinished={() => setIsTypingImpact(false)} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -327,7 +341,6 @@ export const RWAInventory: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* 🔥 LA NOUVELLE LIGNE POUR LE TRADE OTC (S'affiche uniquement si un trade a eu lieu) 🔥 */}
                                             {selectedItem.otcTxHash && (
                                                 <div className="bg-gray-800 border border-gray-700 p-2.5 rounded-lg flex justify-between items-center">
                                                     <span className="text-xs font-bold text-blue-400">{tInv('tx_otc')}</span>
@@ -337,11 +350,12 @@ export const RWAInventory: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            {localStorage.getItem('governance_done') === 'true' && (
+                                            {/* 🔥 CORRECTION DE LA TXID GOUVERNANCE ICI 🔥 */}
+                                            {localStorage.getItem(`gov_done_${selectedItem.id}`) === 'true' && (
                                                 <div className="bg-gray-800 border border-gray-700 p-2.5 rounded-lg flex justify-between items-center">
                                                     <span className="text-xs font-bold text-purple-400">{tInv('tx_gov')}</span>
                                                     <span className="text-[10px] font-mono text-purple-400 bg-purple-900/30 px-2 py-1 rounded border border-purple-500/30">
-                                                        Tx: 0x5179...312b
+                                                        Tx: 0x5179b438f7a9...312b2
                                                     </span>
                                                 </div>
                                             )}
@@ -361,7 +375,7 @@ export const RWAInventory: React.FC = () => {
             </AnimatePresence>
 
             <AnimatePresence>
-                {showGovernance && (
+                {showGovernance && govTargetItem && (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: 50 }}
                         className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 pointer-events-auto"
@@ -374,24 +388,71 @@ export const RWAInventory: React.FC = () => {
                                 </div>
                                 <div className="flex-1 w-full">
                                     <div className={`font-black tracking-widest uppercase text-xs mb-2 border-b border-gray-700 pb-1 ${voteSuccess ? 'text-emerald-400' : 'text-purple-400'}`}>
-                                        {tInv('gov_title')}
+                                        {tInv('gov_title')} - {tJordan(`choices.${getAssetDetails(govTargetItem.id).key}.name`)}
                                     </div>
+
                                     <div className="text-white text-sm font-bold min-h-[40px] mb-4">
                                         {!voteSuccess ? (
-                                            <TypewriterText key="question" text={tInv('gov_alert', { buildingName: tJordan(`choices.${getAssetDetails(inventory[0]?.id).key}.name`) })} speed={25} onFinished={() => setIsTypingGov(false)} />
+                                            <TypewriterText
+                                                key={`question-${govTargetItem.id}`}
+                                                text={tInv(`gov_scenarios.${getAssetDetails(govTargetItem.id).key}.alert`)}
+                                                speed={20}
+                                                onFinished={() => setIsTypingGov(false)}
+                                            />
                                         ) : (
-                                            <TypewriterText key="success" text={tInv('gov_success')} speed={25} onFinished={() => setIsTypingGov(false)} />
+                                            <TypewriterText
+                                                key={`success-${govTargetItem.id}`}
+                                                text={tInv(`gov_scenarios.${getAssetDetails(govTargetItem.id).key}.success`)}
+                                                speed={20}
+                                                onFinished={() => setIsTypingGov(false)}
+                                            />
                                         )}
                                     </div>
 
+                                    <AnimatePresence>
+                                        {showGovDetails && !voteSuccess && !isTypingGov && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="bg-gray-900 border border-gray-700 rounded-lg p-4 mb-4 text-xs space-y-3 overflow-hidden"
+                                            >
+                                                <div>
+                                                    <span className="text-emerald-400 font-bold block mb-1">{tInv('impact_yes')}</span>
+                                                    <p className="text-gray-300">{tInv(`gov_scenarios.${getAssetDetails(govTargetItem.id).key}.details_yes`)}</p>
+                                                </div>
+                                                <div className="border-t border-gray-700 pt-2">
+                                                    <span className="text-red-400 font-bold block mb-1">{tInv('impact_no')}</span>
+                                                    <p className="text-gray-300">{tInv(`gov_scenarios.${getAssetDetails(govTargetItem.id).key}.details_no`)}</p>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
                                     {!isTypingGov && !voteSuccess && (
-                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-4 mt-4">
-                                            <button onClick={() => handleVote('OUI')} className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest rounded transition-transform active:scale-95 shadow-[0_4px_0_rgb(126,34,206)]">
-                                                {tInv('btn_yes')}
-                                            </button>
-                                            <button onClick={() => handleVote('NON')} className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 text-white font-black uppercase tracking-widest rounded transition-transform active:scale-95 shadow-[0_4px_0_rgb(71,85,105)]">
-                                                {tInv('btn_no')}
-                                            </button>
+                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3 mt-2">
+                                            {!showGovDetails && (
+                                                <button
+                                                    onClick={() => setShowGovDetails(true)}
+                                                    className="w-full py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 rounded text-xs font-bold uppercase tracking-widest transition-colors"
+                                                >
+                                                    {tInv('btn_details')}
+                                                </button>
+                                            )}
+                                            <div className="flex gap-4">
+                                                <button onClick={() => {
+                                                    setShowGovDetails(false);
+                                                    handleVote('OUI');
+                                                }} className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest rounded transition-transform active:scale-95 shadow-[0_4px_0_rgb(126,34,206)]">
+                                                    {tInv('btn_yes')}
+                                                </button>
+                                                <button onClick={() => {
+                                                    setShowGovDetails(false);
+                                                    handleVote('NON');
+                                                }} className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 text-white font-black uppercase tracking-widest rounded transition-transform active:scale-95 shadow-[0_4px_0_rgb(71,85,105)]">
+                                                    {tInv('btn_no')}
+                                                </button>
+                                            </div>
                                         </motion.div>
                                     )}
                                 </div>

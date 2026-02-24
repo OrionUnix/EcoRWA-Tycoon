@@ -564,16 +564,15 @@
     "tx_error": "Erreur de transaction. Vous avez annulé ou manquez de fonds.",
     "active_yield": "Yield Actif 📈",
     "gov_title": "⚖️ Vote de Gouvernance DAO",
-    "gov_alert": "Alerte Maire ! En tant que détenteur de tokens du \"{buildingName}\", vous devez voter. La façade nécessite une rénovation complète pour conserver les locataires. Approuvez-vous le déblocage des fonds de la trésorerie ?",
-    "btn_yes": "OUI (Débloquer Fonds)",
-    "btn_no": "NON (Ignorer)",
-    "gov_success": "Vote on-chain confirmé ! Les travaux vont démarrer et l'attractivité locative est maintenue.",
+    "btn_yes": "OUI (Valider)",
+    "btn_no": "NON (Refuser)",
+    "btn_details": "🔍 Détails du Vote",
+    "impact_yes": "🔹 Impact si OUI :",
+    "impact_no": "🔻 Impact si NON :",
     "details_title": "Tableau de Bord de l'Actif",
     "live_yield": "Revenus Générés (Live)",
     "dao_history": "Historique de Gouvernance",
     "tx_ledger": "Registre On-Chain (Avalanche C-Chain)",
-    "vote_passed": "✅ Résolution adoptée : Rénovation de la façade",
-    "funds_released": "Fonds débloqués : 5 000.00 USDC",
     "vote_pending": "⏳ Aucun historique de vote pour le moment.",
     "tx_purchase": "Mint des parts ERC-1155",
     "tx_gov": "Vote Smart Contract",
@@ -584,8 +583,6 @@
     "claim_success": "Yield réclamé avec succès ! Ajouté au Wallet.",
     "economic_data": "Indicateurs Économiques",
     "vault_contract": "Contrat Vault (Avalanche)",
-    "gov_impact_title": "Analyse Post-Vote - Jordan",
-    "gov_impact_text": "Excellente décision ! La rénovation va augmenter la valeur perçue du bien et attirer des locataires Premium. Attention toutefois à la légère baisse de revenus pendant les travaux.",
     "trade_market": "Marché Secondaire (OTC)",
     "current_price": "Prix actuel / part :",
     "btn_buy": "Acheter (+1)",
@@ -593,6 +590,38 @@
     "trade_impact": "⚠️ Prix impacté par la récente décision de gouvernance.",
     "sell_success": "Vendue pour {price} USDC. (Tx: {tx})",
     "buy_success": "Achetée pour {price} USDC. (Tx: {tx})",
-    "tx_otc": "Trade OTC (Marché Secondaire)"
+    "tx_otc": "Trade OTC (Marché Secondaire)",
+    "gov_scenarios": {
+      "loft": {
+        "alert": "Alerte Maire ! Les locataires du Loft se plaignent du syndic actuel. Voulez-vous voter pour le remplacer ? Cela coûtera un peu plus cher à court terme mais valorisera l'immeuble.",
+        "details_yes": "Paiement de 1 200 USDC de frais de résiliation, mais augmentation de la valeur du bien de +5% sur le marché secondaire.",
+        "details_no": "Aucun frais immédiat, mais risque de départ des locataires et stagnation du prix.",
+        "success": "✅ Vote confirmé : Nouveau syndic approuvé.",
+        "history_title": "✅ Résolution adoptée : Nouveau Syndic",
+        "history_sub": "Frais engagés : 1 200 USDC",
+        "impact_title": "Analyse Post-Vote - Jordan",
+        "impact_text": "Bon choix. La hausse légère des charges est largement compensée par l'augmentation de la valeur du bien sur le marché secondaire (+5%)."
+      },
+      "bistro": {
+        "alert": "Alerte Maire ! La mairie annonce des travaux de voirie dans 8 mois. Le commerçant demande une baisse préventive du loyer de 10% pour ne pas faire faillite. Acceptez-vous ?",
+        "details_yes": "Le rendement (Yield) baisse légèrement. Le prix du bien subit une décote de -8% pendant les travaux, mais le locataire est sécurisé.",
+        "details_no": "Rendement maintenu à court terme, mais risque très élevé (80%) de faillite du commerçant entraînant une vacance locative totale.",
+        "success": "✅ Vote confirmé : Baisse du loyer accordée.",
+        "history_title": "✅ Résolution adoptée : Baisse de Loyer",
+        "history_sub": "Ajustement : -10% sur 12 mois",
+        "impact_title": "Analyse Stratégique - Jordan",
+        "impact_text": "C'est de la bonne gestion ! Le rendement baisse un peu, mais on évite une vacance locative désastreuse. Le prix du bien subit une légère décote (-8%) pendant les travaux."
+      },
+      "tower": {
+        "alert": "Alerte Maire ! La façade de l'Eco-Tower nécessite une rénovation pour conserver son label écologique. Débloquer les fonds de la trésorerie ?",
+        "details_yes": "Déblocage de 5 000 USDC. Le label écologique est conservé, ce qui augmente la valeur du bien de +8%.",
+        "details_no": "Perte du label HQE/LEED. Les investisseurs ESG se retireront, causant une chute libre de la valeur de l'actif.",
+        "success": "✅ Vote confirmé : Rénovation de la façade validée.",
+        "history_title": "✅ Résolution adoptée : Rénovation Façade",
+        "history_sub": "Fonds débloqués : 5 000 USDC",
+        "impact_title": "Analyse Post-Vote - Jordan",
+        "impact_text": "Excellente décision ! La rénovation va augmenter la valeur perçue du bien (+8%) et attirer des locataires Premium. Attendez-vous à une légère baisse temporaire des revenus."
+      }
+    }
   }
 }

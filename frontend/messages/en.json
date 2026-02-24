@@ -568,22 +568,21 @@
     "chart_evolution": "5-Year Evolution"
   },
   "inventory": {
-    "tx_signing": "Signing property deed...",
-    "tx_approving": "Approval confirmed! Creating ownership titles...",
+    "tx_signing": "Signing the real estate contract...",
+    "tx_approving": "Approval confirmed! Minting property titles...",
     "tx_success": "Congratulations! {amount} shares acquired.",
     "tx_error": "Transaction error. You cancelled or lack funds.",
     "active_yield": "Active Yield 📈",
     "gov_title": "⚖️ DAO Governance Vote",
-    "gov_alert": "Mayor Alert! As a token holder of \"{buildingName}\", you must vote. The facade needs a complete renovation to retain tenants. Do you approve the release of funds from the treasury?",
-    "btn_yes": "YES (Unlock Funds)",
-    "btn_no": "NO (Ignore)",
-    "gov_success": "On-chain vote confirmed! The renovation will start and rental attractiveness is maintained.",
+    "btn_yes": "YES (Approve)",
+    "btn_no": "NO (Reject)",
+    "btn_details": "🔍 Vote Details",
+    "impact_yes": "🔹 If YES:",
+    "impact_no": "🔻 If NO:",
     "details_title": "Asset Dashboard",
     "live_yield": "Generated Revenue (Live)",
     "dao_history": "Governance History",
     "tx_ledger": "On-Chain Ledger (Avalanche C-Chain)",
-    "vote_passed": "✅ Resolution passed: Facade renovation",
-    "funds_released": "Funds released: 5,000.00 USDC",
     "vote_pending": "⏳ No voting history at the moment.",
     "tx_purchase": "ERC-1155 Shares Mint",
     "tx_gov": "Smart Contract Vote",
@@ -594,15 +593,45 @@
     "claim_success": "Yield claimed successfully! Added to Wallet.",
     "economic_data": "Economic Indicators",
     "vault_contract": "Vault Contract (Avalanche)",
-    "gov_impact_title": "Post-Vote Impact Analysis - Jordan",
-    "gov_impact_text": "Excellent decision! The renovation will increase the perceived value of the property and attract premium tenants. However, be aware of the slight drop in revenue during the works.",
     "trade_market": "Secondary Market (OTC)",
-    "current_price": "Current price / share:",
+    "current_price": "Current Price / share:",
     "btn_buy": "Buy (+1)",
     "btn_sell": "Sell (-1)",
     "trade_impact": "⚠️ Price impacted by recent governance decision.",
     "sell_success": "Sold for {price} USDC. (Tx: {tx})",
     "buy_success": "Bought for {price} USDC. (Tx: {tx})",
-    "tx_otc": "OTC Trade (Secondary Market)"
+    "tx_otc": "OTC Trade (Secondary Market)",
+    "gov_scenarios": {
+      "loft": {
+        "alert": "Mayor Alert! Loft tenants are complaining about the current property manager. Do you vote to replace them? It will cost more short-term but increase building value.",
+        "details_yes": "Payment of 1,200 USDC in termination fees, but property value increases by +5% on the secondary market.",
+        "details_no": "No immediate fees, but risk of tenant departure and price stagnation.",
+        "success": "✅ Vote confirmed: New property manager approved.",
+        "history_title": "✅ Resolution passed: New Manager",
+        "history_sub": "Fees incurred: 1,200 USDC",
+        "impact_title": "Post-Vote Analysis - Jordan",
+        "impact_text": "Good choice. The slight fee increase is largely offset by the property's value increase on the secondary market (+5%)."
+      },
+      "bistro": {
+        "alert": "Mayor Alert! The city announced roadworks in 8 months. The business owner requests a 10% rent decrease to avoid bankruptcy. Do you accept?",
+        "details_yes": "Yield drops slightly. Property price takes a -8% hit during works, but the tenant is secured.",
+        "details_no": "Yield maintained short-term, but very high risk (80%) of bankruptcy leading to total vacancy.",
+        "success": "✅ Vote confirmed: Rent decrease granted.",
+        "history_title": "✅ Resolution passed: Rent Decrease",
+        "history_sub": "Adjustment: -10% for 12 months",
+        "impact_title": "Strategic Analysis - Jordan",
+        "impact_text": "Good management! Yield drops slightly, but we avoid a disastrous vacancy. The property price takes a slight hit (-8%) during the works."
+      },
+      "tower": {
+        "alert": "Mayor Alert! The Eco-Tower facade requires renovation to keep its green certification. Release funds from the treasury?",
+        "details_yes": "Release of 5,000 USDC. Green label is kept, increasing property value by +8%.",
+        "details_no": "Loss of HQE/LEED label. ESG investors will withdraw, causing a freefall in asset value.",
+        "success": "✅ Vote confirmed: Facade renovation validated.",
+        "history_title": "✅ Resolution passed: Facade Renovation",
+        "history_sub": "Funds released: 5,000 USDC",
+        "impact_title": "Post-Vote Analysis - Jordan",
+        "impact_text": "Excellent decision! Renovation increases perceived value (+8%) and attracts Premium tenants. Expect a slight temporary revenue drop."
+      }
+    }
   }
 }
