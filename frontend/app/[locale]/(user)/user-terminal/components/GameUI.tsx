@@ -12,7 +12,7 @@ import { getGameEngine } from '../engine/GameEngine';
 import { CityInfoBar } from './ui/CityInfoBar';
 import { MainToolbar } from './ui/MainToolbar';
 import { ActiveToolHUD } from './ui/ActiveToolHUD';
-
+import { RWAInventory } from './ui/RWAInventory';
 // ✅ SERVICE PANELS
 import { BudgetPanel } from './ui/BudgetPanel';
 import { WaterPanel } from './ui/WaterPanel';
@@ -220,6 +220,7 @@ export default function GameUI({
                 setActiveDataLayer={setActiveDataLayer}
                 onOpenRWA={onOpenRWA}
             />
+            <RWAInventory />
         </div>
     );
 }

@@ -9,7 +9,7 @@ import { AnimatedAvatar } from '../AnimatedAvatar';
 import { TypewriterText } from '../TypewriterText';
 import { RWACard } from '../ui/RWACard';
 import { FaucetButton } from '../ui/FaucetButton';
-import { RWAPurchaseModal } from '../ui/RWAPurchaseModal'; // LE MODAL !
+import { RWAPurchaseModal } from '../ui/RWAPurchaseModal';
 
 const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
 const VAULT_ADDRESS = process.env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`;
@@ -36,10 +36,7 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
     const [selectedRWA, setSelectedRWA] = useState<number | null>(null);
     const [txStatus, setTxStatus] = useState<string>('');
     const [showHelp, setShowHelp] = useState(false);
-
-    // État pour contrôler l'ouverture du terminal de trading
     const [purchasingRWA, setPurchasingRWA] = useState<any | null>(null);
-
     const [hasClaimedFaucet, setHasClaimedFaucet] = useState(false);
     const [typingKey, setTypingKey] = useState(Date.now());
     const [isTyping, setIsTyping] = useState(true);
@@ -52,48 +49,66 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
         setTypingKey(Date.now());
     }, []);
 
-    // La VRAIE fonction d'achat avec la quantité
+    // La VRAIE fonction d'achat avec l'intégration de l'inventaire
+    const tInv = useTranslations('inventory');
+
     const executeWeb3Purchase = async (rwaId: number, amount: number) => {
         if (!isConnected || !address) return alert('Veuillez connecter votre portefeuille Web3.');
 
-        setPurchasingRWA(null); // Ferme le modal d'achat
+        if (!hasClaimedFaucet) return alert(tJordan('faucet_claim_first'));
+
+        setPurchasingRWA(null);
         setSelectedRWA(rwaId);
-        setStep(1); // Passe à l'écran de chargement
+        setStep(1);
 
         try {
             const selectedData = RWA_CHOICES.find(r => r.id === rwaId);
             if (!selectedData) return;
 
-            const totalCost = BigInt(selectedData.cost * amount * 1e6); // USDC a 6 décimales
+            const totalCost = BigInt(selectedData.cost * amount * 1e6);
 
-            setTxStatus('Signature du contrat immobilier...');
-            await writeContractAsync({
-                address: USDC_ADDRESS,
-                abi: MOCK_USDC_ABI,
-                functionName: 'approve',
-                args: [VAULT_ADDRESS, totalCost],
-            });
+            // 🔥 TRADUCTIONS UTILISÉES ICI 🔥
+            setTxStatus(tInv('tx_approving'));
 
-            setTxStatus('Approbation confirmée ! Création des titres de propriété...');
-            await writeContractAsync({
+            // 🔥 1. ON CAPTURE LE VRAI TX HASH ICI 🔥
+            const txHash = await writeContractAsync({
                 address: VAULT_ADDRESS,
                 abi: VAULT_ABI,
                 functionName: 'mintBuilding',
-                args: [BigInt(rwaId), BigInt(amount)], // Envoi de la quantité au contrat
+                args: [BigInt(rwaId), BigInt(amount)],
             });
 
-            setTxStatus(`Félicitations ! ${amount} parts acquises.`);
+            setTxStatus(tInv('tx_success', { amount: amount }));
+
+            // 🔥 2. ON LE SAUVEGARDE DANS L'INVENTAIRE 🔥
+            const currentInventory = JSON.parse(localStorage.getItem('rwa_inventory') || '[]');
+            const existingItem = currentInventory.find((item: any) => item.id === rwaId);
+            if (existingItem) {
+                existingItem.amount += amount;
+                existingItem.txHash = txHash; // Met à jour avec la dernière Tx
+            } else {
+                currentInventory.push({
+                    id: rwaId,
+                    amount: amount,
+                    name: tJordan(`choices.${selectedData.key}.name`),
+                    imageName: selectedData.imageName,
+                    colorTheme: selectedData.colorTheme,
+                    txHash: txHash
+                });
+            }
+            localStorage.setItem('rwa_inventory', JSON.stringify(currentInventory));
+            window.dispatchEvent(new Event('rwa_purchased'));
+
             setTimeout(() => {
                 onComplete();
             }, 2500);
 
         } catch (error) {
             console.error('Erreur Investissement:', error);
-            setTxStatus('Erreur de transaction. Vous avez annulé ou manquez de fonds.');
+            setTxStatus(tInv('tx_error'));
             setTimeout(() => setStep(0), 3000);
         }
     };
-
     const currentJordanText = hasClaimedFaucet ? tJordan('welcome_back') : tJordan('pitch');
 
     return (
@@ -174,7 +189,7 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                                         apy={rwa.apy}
                                         imageName={rwa.imageName}
                                         colorTheme={rwa.colorTheme}
-                                        // 🔥 LE CHANGEMENT MAGIQUE EST ICI : Au lieu d'acheter, ça ouvre le Modal !
+                                        // Ouvre le terminal de trading
                                         onInvest={() => setPurchasingRWA({
                                             id: rwa.id,
                                             name: tJordan(`choices.${rwa.key}.name`),
@@ -211,14 +226,13 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                 </div>
             </motion.div>
 
-            {/* 🔥 LE NOUVEAU MODAL DE TRADING (Il se superpose par dessus le reste) 🔥 */}
+            {/* MODAL DE TRADING */}
             <RWAPurchaseModal
                 isOpen={!!purchasingRWA}
                 rwa={purchasingRWA}
                 onClose={() => setPurchasingRWA(null)}
                 onConfirm={(amount) => executeWeb3Purchase(purchasingRWA.id, amount)}
             />
-
         </AnimatePresence>
     );
 };
