@@ -25,5 +25,27 @@
             "name": "Eco-Tower",
             "desc": "Ultra-modern and eco-friendly mixed-use tower."
         }
+    },
+    "analysis_title": "AI Analysis - Jordan",
+    "analysis_intro": "Let me pull up the file for this property...",
+    "pros": "👍 Pros:",
+    "cons": "⚠️ Risks:",
+    "admin": "📄 Legal & Admin:",
+    "analysis": {
+        "loft": {
+            "pros": "High rental demand (young tech professionals). Located in a rapidly gentrifying neighborhood.",
+            "cons": "Risk of property tax increase during the next cadastral review.",
+            "admin": "Co-op Board approval required for major work. Roof entirely redone in 2022."
+        },
+        "bistro": {
+            "pros": "International Tourist Zone (ZTI), constant foot traffic guaranteeing steady revenue.",
+            "cons": "Strict regulations: listed historic facade, requires approval from heritage architects.",
+            "admin": "Secure 3-6-9 commercial lease. Energy class E: plan a budget for insulation."
+        },
+        "eco": {
+            "pros": "LEED environmental certification. Attracts premium corporate tenants (ESG criteria).",
+            "cons": "Very high maintenance costs for solar panels and advanced ventilation systems.",
+            "admin": "10-year builder's warranty active until 2032. Partial exemption from green taxes."
+        }
     }
 }

@@ -1,0 +1,18 @@
+{
+    "trading": {
+        "modal_title": "Données du Marché",
+        "shares_label": "Nombre de parts (Fractions)",
+        "unit_cost": "Coût unitaire",
+        "total_cost": "Total à payer",
+        "market_data": "Données du Marché ({location})",
+        "price_m2": "Prix au m² (2024)",
+        "yearly_trend": "Tendance Annuelle",
+        "vacancy_rate": "Taux de vacance",
+        "demography": "Démographie",
+        "yield_projection": "Projections de Rendement",
+        "est_yearly_yield": "Revenu Annuel Estimé",
+        "est_monthly_yield": "Revenu Mensuel Estimé",
+        "sign_contract": "Signer le Contrat",
+        "loading_data": "Chargement des données..."
+    }
+}

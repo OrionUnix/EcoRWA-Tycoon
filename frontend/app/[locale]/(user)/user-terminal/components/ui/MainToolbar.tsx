@@ -231,7 +231,6 @@ function SubMenu({ category, viewMode, setViewMode, selectedRoadType, setSelecte
                             color={color}
                         />
                         <RibbonItem active={false} onClick={() => { }} icon="📈" label="Yield" color={color} />
-                        <RibbonItem active={false} onClick={() => { }} icon="🪙" label="Tokens" color={color} />
                         <RibbonItem active={false} onClick={() => { }} icon="🔄" label="Exchange" color={color} />
                     </>
                 )}

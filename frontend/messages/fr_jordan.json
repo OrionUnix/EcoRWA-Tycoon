@@ -1,5 +1,5 @@
 {
-    "pitch": "Salut Maire ! C'est Jordan. Félicitations pour l'élection ! Avant de bâtir, vous aurez besoin de fonds. Réclamez votre subvention ci-dessous. Vous pouvez ensuite fermer cette boîte de dialogue si vous souhaitez d'abord jouer et explorer, ou investir tout de suite !",
+    "pitch": "Salut Maire ! C'est Jordan. Félicitations pour l'élection ! Pour dynamiser notre économie, la banque vous offre une subvention d'investissement. Réclamez-la ci-dessous pour acheter vos premières parts d'actifs réels tokenisés (RWA) et générer du rendement ! Vous pouvez investir tout de suite, ou fermer cette fenêtre pour d'abord construire et explorer votre ville",
     "welcome_back": "Heureux de vous revoir Maire ! Souhaitez-vous acheter des fractions de biens immobiliers ? N'oubliez pas : ces parts agissent également comme de puissants boosters pour la progression de votre ville !",
     "faucet_button": "Subvention (10k)",
     "invest_button": "Investir",
@@ -24,6 +24,28 @@
         "tower": {
             "name": "Eco-Tower",
             "desc": "Tour mixte ultra-moderne et écologique."
+        }
+    },
+    "analysis_title": "Analyse IA - Jordan",
+    "analysis_intro": "Laissez-moi consulter le dossier de ce bien...",
+    "pros": "👍 Avantage :",
+    "cons": "⚠️ Alerte :",
+    "admin": "📄 Administratif :",
+    "analysis": {
+        "loft": {
+            "pros": "Forte demande locative (jeunes actifs tech). Emplacement en pleine gentrification.",
+            "cons": "Risque de hausse de la taxe foncière lors de la prochaine révision du cadastre.",
+            "admin": "Approbation du 'Co-op Board' requise. Toiture refaite à neuf en 2022."
+        },
+        "bistro": {
+            "pros": "Zone Touristique Internationale (ZTI), flux piéton constant garantissant le CA.",
+            "cons": "Réglementation stricte : façade classée, accord des Bâtiments de France requis.",
+            "admin": "Bail commercial 3-6-9 sécurisé. DPE classe E : prévoir un budget d'isolation."
+        },
+        "eco": {
+            "pros": "Certification HQE/LEED. Attire des locataires premiums (ESG).",
+            "cons": "Frais de maintenance très élevés pour les panneaux solaires.",
+            "admin": "Garantie décennale active jusqu'en 2032. Exonération de taxes vertes."
         }
     }
 }
