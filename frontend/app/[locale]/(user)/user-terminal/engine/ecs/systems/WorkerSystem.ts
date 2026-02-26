@@ -138,8 +138,11 @@ export const createWorkerSystem = (world: GameWorld) => {
 
                     if (homePos) {
                         addComponent(w, MoveTo, eid);
-                        MoveTo.targetX[eid] = homePos.x + 0.5;
-                        MoveTo.targetY[eid] = homePos.y + 0.5;
+                        // ✅ Offset pseudo-aléatoire stable pour ne pas qu'ils se superposent au centre du bâtiment
+                        const angle = eid * 1.618;
+                        const radius = 0.6;
+                        MoveTo.targetX[eid] = homePos.x + 0.5 + Math.cos(angle) * radius;
+                        MoveTo.targetY[eid] = homePos.y + 0.5 + Math.sin(angle) * radius;
                         MoveTo.speed[eid] = WORKER_SPEED;
                     } else {
                         // Maison détruite ? On tue le worker (ou idle)
@@ -211,8 +214,11 @@ export const createWorkerSystem = (world: GameWorld) => {
                             addComponent(w, Renderable, wid);
                             addComponent(w, Worker, wid);
 
-                            Position.x[wid] = bx + 0.5;
-                            Position.y[wid] = by + 0.5;
+                            // ✅ Spawn avec offset
+                            const angle = wid * 1.618;
+                            const radius = 0.6;
+                            Position.x[wid] = bx + 0.5 + Math.cos(angle) * radius;
+                            Position.y[wid] = by + 0.5 + Math.sin(angle) * radius;
 
                             Worker.type[wid] = wType;
                             Worker.homeBuildingId[wid] = bid;

@@ -9,6 +9,7 @@ import { InteractionSystem } from './systems/InteractionSystem';
 import { EconomySystem } from './systems/EconomySystem';
 import { HappinessSystem } from './systems/HappinessSystem';
 import { RWABuildingSpawner } from './RWABuildingSpawner'; // ✅ Bridge React↔PixiJS
+import { SaveSystem } from './systems/SaveSystem';         // ✅ Sauvegarde persistante
 import { FAKE_WALLET_ADDRESS } from './constants';
 import { BUILDING_SPECS, BuildingType } from './types';
 
@@ -37,6 +38,15 @@ export class GameEngine {
         // ✅ Bridge React↔PixiJS : écoute les achats RWA pour spawner sur la map
         if (typeof window !== 'undefined') {
             RWABuildingSpawner.initialize(this.map);
+
+            // ✅ Auto-Save : initialise le SaveSystem et tente un chargement
+            SaveSystem.initialize(this.map);
+            const loaded = SaveSystem.loadIntoEngine(this.map);
+            if (loaded) {
+                console.log('📂 [GameEngine] Ville chargée depuis la sauvegarde.');
+            } else {
+                console.log('🌱 [GameEngine] Nouvelle partie (aucune sauvegarde trouvée).');
+            }
         }
     }
 

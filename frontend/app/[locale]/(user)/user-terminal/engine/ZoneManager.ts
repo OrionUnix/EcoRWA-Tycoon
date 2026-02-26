@@ -138,6 +138,12 @@ export class ZoneManager {
         WildlifeRenderer.removeWildlifeAt(index, engine);
 
         console.log(`✅ ZoneManager: Zone ${type} placée à index ${index}`);
+
+        // ✅ Auto-Save : signal "le monde a changé"
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('city_mutated'));
+        }
+
         return { success: true, message: `Zone ${type} créée.`, zoneData: zoneData };
     }
 }

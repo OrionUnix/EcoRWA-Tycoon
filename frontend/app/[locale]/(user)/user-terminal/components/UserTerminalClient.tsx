@@ -15,6 +15,7 @@ import { AssetLoader } from '../engine/core/AssetLoader';
 import { PixiStageSetup } from '../engine/core/PixiStageSetup';
 import { ResourceRenderer } from '../engine/ResourceRenderer';
 import { VehicleRenderer } from '../components/VehicleRenderer';
+import { SaveSystem } from '../engine/systems/SaveSystem';
 
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
@@ -38,6 +39,11 @@ export default function UserTerminalClient() {
 
     const { isConnected, address } = useAccount();
 
+    // ✅ Wallet-gate : active/désactive la sauvegarde selon la connexion
+    useEffect(() => {
+        SaveSystem.setWalletConnected(isConnected);
+    }, [isConnected]);
+
     // 2. ÉTATS DE JEU
     const [assetsLoaded, setAssetsLoaded] = useState(false);
     const [isReloading, setIsReloading] = useState(false);
@@ -46,6 +52,9 @@ export default function UserTerminalClient() {
     const [selectedZone, setSelectedZone] = useState(ZoneType.RESIDENTIAL);
     const [selectedBuilding, setSelectedBuilding] = useState(BuildingType.POWER_PLANT);
     const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+
+    // ✅ Couche DataLayer active (pour les icônes ressources souterraines)
+    const [activeResourceLayer, setActiveResourceLayer] = useState<string | null>(null);
 
     // ÉTATS UI
     const [fps, setFps] = useState(0);
@@ -137,7 +146,7 @@ export default function UserTerminalClient() {
         appRef, terrainContainerRef, staticGRef, uiGRef,
         isReady && assetsLoaded, isReloading, viewMode, cursorPos,
         previewPathRef, isValidBuildRef, setFps, setResources, setStats,
-        selectedBuildingTypeRef, updateECS
+        selectedBuildingTypeRef, updateECS, activeResourceLayer
     );
 
     // ✅ NOUVEAU: Écoute de l'événement d'équipement RWA depuis l'inventaire
@@ -148,8 +157,16 @@ export default function UserTerminalClient() {
             engine.currentRwaPayload = detail;
             setViewMode('BUILD_RWA');
         };
+        // ✅ Écoute du DataLayer ressource pour les icônes de minerais
+        const handleResourceLayer = (e: Event) => {
+            setActiveResourceLayer((e as CustomEvent).detail ?? null);
+        };
         window.addEventListener('equip_rwa_building', handleEquip);
-        return () => window.removeEventListener('equip_rwa_building', handleEquip);
+        window.addEventListener('set_resource_layer', handleResourceLayer);
+        return () => {
+            window.removeEventListener('equip_rwa_building', handleEquip);
+            window.removeEventListener('set_resource_layer', handleResourceLayer);
+        };
     }, []);
 
     useGameInput(

@@ -82,15 +82,25 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
         return acc;
     }, {} as Record<string, DataLayer[]>);
 
+    // Couches qui correspondent à des ressources souterraines affichées par RawResourceIconRenderer
+    const RAW_RESOURCE_LAYERS = new Set(['coal', 'iron', 'stone', 'oil', 'gold', 'silver', 'groundwater']);
+
     const handleSelectLayer = (layer: DataLayer) => {
         if (activeLayer === layer.id) {
-            // Deselect → return to normal view
+            // Désélection → retour vue normale
             onSelectLayer(null);
             onSetViewMode('ALL');
+            // Cacher les icônes de ressources
+            window.dispatchEvent(new CustomEvent('set_resource_layer', { detail: null }));
         } else {
-            // Select → activate overlay
+            // Sélection → activer l'overlay
             onSelectLayer(layer.id);
             onSetViewMode(layer.viewMode);
+            // Activer les icônes si c'est une ressource souterraine
+            const resKey = RAW_RESOURCE_LAYERS.has(layer.id)
+                ? layer.id.toUpperCase().replace('GROUNDWATER', 'WATER')
+                : null;
+            window.dispatchEvent(new CustomEvent('set_resource_layer', { detail: resKey }));
         }
     };
 

@@ -30,6 +30,20 @@ const STANDALONE_TREE_PATHS = [
     '/assets/isometric/Spritesheet/resources/trees/tree12.png',
 ];
 
+// Cache des textures ressources brutes
+let rawResourceTexturesCache: Map<string, PIXI.Texture> = new Map();
+let rawResourceLoading = false;
+
+const RAW_RESOURCE_PATHS: Record<string, string> = {
+    COAL: '/assets/isometric/Spritesheet/resources/raw/coa.png',
+    GOLD: '/assets/isometric/Spritesheet/resources/raw/gold.png',
+    IRON: '/assets/isometric/Spritesheet/resources/raw/iron.png',
+    OIL: '/assets/isometric/Spritesheet/resources/raw/oil.png',
+    SILVER: '/assets/isometric/Spritesheet/resources/raw/silver.png',
+    STONE: '/assets/isometric/Spritesheet/resources/raw/stone.png',
+    WATER: '/assets/isometric/Spritesheet/resources/raw/walter.png',
+};
+
 export async function loadStandaloneTreeTextures(): Promise<void> {
     if (treeTexturesCache || treeTexturesLoading) return;
     treeTexturesLoading = true;
@@ -40,13 +54,10 @@ export async function loadStandaloneTreeTextures(): Promise<void> {
             const url = asset(path);
             const tex = await PIXI.Assets.load(url);
             if (tex && !tex.destroyed) {
-                // ✅ PIXEL ART CRISP
                 if (tex.source) tex.source.scaleMode = 'nearest';
                 loaded.push(tex);
             }
-        } catch (e) {
-            // Silencieux — on essaiera l'atlas en fallback
-        }
+        } catch (e) { }
     }
 
     if (loaded.length > 0) {
@@ -56,6 +67,27 @@ export async function loadStandaloneTreeTextures(): Promise<void> {
         treeTexturesCache = [];
     }
     treeTexturesLoading = false;
+
+    // Lancer le chargement des ressources brutes aussi
+    loadRawResourceTextures();
+}
+
+export async function loadRawResourceTextures(): Promise<void> {
+    if (rawResourceLoading) return;
+    rawResourceLoading = true;
+
+    for (const [key, path] of Object.entries(RAW_RESOURCE_PATHS)) {
+        try {
+            const url = asset(path);
+            const tex = await PIXI.Assets.load(url);
+            if (tex && !tex.destroyed) {
+                if (tex.source) tex.source.scaleMode = 'nearest';
+                rawResourceTexturesCache.set(key, tex);
+            }
+        } catch (e) { }
+    }
+    rawResourceLoading = false;
+    console.log(`⛏️ ResourceRenderer: ${rawResourceTexturesCache.size} ressources brutes chargées !`);
 }
 
 function getTreeTextures(): PIXI.Texture[] {
@@ -100,16 +132,18 @@ export class ResourceRenderer {
         else if (engine.resourceMaps.stone[i] > 0.5) resType = 'STONE';
 
         // ════════════════════════════════════════════════════
-        // ✅ CORRECTION LOGIQUE DES ARBRES (Des vraies forêts !)
+        // ✅ AFFICHER LES RESSOURCES BRUTES SUR LA CARTE
         // ════════════════════════════════════════════════════
-        // Règle stricte: Les arbres n'apparaissent QUE là où il y a concrètement du bois
         if (woodAmount > 0.5) {
             resType = 'WOOD';
+        } else if (engine.resourceMaps.silver && engine.resourceMaps.silver[i] > 0.5) {
+            resType = 'SILVER';
         }
-
-        // Masquer les minerais (pas de formes noires sur la carte)
-        if (resType !== 'WOOD') {
-            resType = 'NONE';
+        // L'eau souterraine est gérée via le calque d'eau de surface en temps normal, 
+        // on ajoute l'icône seulement si c'est vraiment un point d'eau fort souterrain 
+        // (optionnel car sinon on sature l'écran d'icônes bleues).
+        else if (engine.resourceMaps.undergroundWater && engine.resourceMaps.undergroundWater[i] > 0.8) {
+            resType = 'WATER';
         }
 
         const waterLevel = engine.getLayer(1)[i];
@@ -123,36 +157,33 @@ export class ResourceRenderer {
                 let tint = 0xFFFFFF;
 
                 if (resType === 'WOOD') {
-                    // ═══════════════════════════════════════
-                    // PRIORITÉ 1: Standalone 128px > Atlas > Procédural
-                    // ═══════════════════════════════════════
                     const treeFrames = getTreeTextures();
                     if (treeFrames.length > 0) {
                         const frameIndex = i % treeFrames.length;
                         texture = treeFrames[frameIndex];
-                    }
-                    // ═══════════════════════════════════════
-                    // FALLBACK: Procédural (ResourceAssets.forestFrames)
-                    // ═══════════════════════════════════════
-                    else if (ResourceAssets.forestFrames.length > 0) {
+                    } else if (ResourceAssets.forestFrames.length > 0) {
                         const frameIndex = i % ResourceAssets.forestFrames.length;
                         texture = ResourceAssets.forestFrames[frameIndex];
                     }
+                } else if (resType !== 'NONE') {
+                    // Charger la ressource brute (OR, FER, CHARBON, ETC.)
+                    texture = rawResourceTexturesCache.get(resType) || null;
                 }
 
                 if (!texture) return;
 
                 sprite = new PIXI.Sprite(texture);
 
-                // ════════════════════════════════════════════════════
                 // ✅ CORRECTION DE L'ANCRAGE (TRES IMPORTANT)
-                // ════════════════════════════════════════════════════
                 sprite.anchor.set(0.5, 1.0);
                 sprite.tint = tint;
 
-                // ✅ Échelle: on agrandit légèrement l'arbre (1.5x) pour être visible mais pas envahir 3 tuiles adjacentes
-                const treeScale = (TILE_WIDTH / texture.width) * 1.5;
-                sprite.scale.set(treeScale);
+                // ✅ Échelle: on agrandit légèrement l'arbre (1.5x), mais pour les minerais on ajuste car ils sont déjà 128x128
+                let targetScale = (TILE_WIDTH / texture.width) * 1.5;
+                if (resType !== 'WOOD') {
+                    targetScale = (TILE_WIDTH * 0.7) / texture.width; // Plus petit pour les minerais au sol
+                }
+                sprite.scale.set(targetScale);
 
                 container.addChild(sprite);
                 resourceCache.set(i, sprite);

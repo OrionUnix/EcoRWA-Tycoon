@@ -74,6 +74,10 @@ export default function ChunkExpandOverlay({ viewportRef, isReady }: Props) {
             engine.map.resources.money -= cost;
             ChunkManager.unlockChunk(cx, cy);
             engine.map.revision++;
+            // ✅ Déclenche l'auto-save pour persister l'achat du terrain
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('city_mutated'));
+            }
             updatePositions(); // Refresh les positions
         } else {
             console.warn(`💰 Pas assez d'argent ! (${formatNumber(engine.map.resources.money)} / ${formatNumber(cost)})`);

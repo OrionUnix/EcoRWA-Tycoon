@@ -166,6 +166,10 @@ export class MapEngine {
     public placeRoad(idx: number, data: RoadData | null) {
         this.roadLayer[idx] = data;
         this.revision++;
+        // ✅ Auto-Save : signal "le monde a changé"
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('city_mutated'));
+        }
     }
     public removeRoad(idx: number) { this.roadLayer[idx] = null; this.revision++; }
     public setZone(idx: number, zoneData: ZoneData) { this.zoningLayer[idx] = zoneData; this.revision++; }

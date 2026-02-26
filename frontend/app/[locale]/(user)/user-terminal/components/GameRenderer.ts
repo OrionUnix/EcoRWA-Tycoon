@@ -3,6 +3,7 @@ import { MapEngine } from '../engine/MapEngine';
 import { BuildingType } from '../engine/types';
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { WorkerRenderer } from '../engine/WorkerRenderer';
+import { RawResourceIconRenderer } from '../engine/RawResourceIconRenderer';
 
 // ═══════════════════════════════════════
 // RENDER PASSES (Responsabilité unique)
@@ -26,7 +27,8 @@ export class GameRenderer {
         engine: MapEngine,
         viewMode: string,
         showGrid: boolean,
-        zoomLevel: number
+        zoomLevel: number,
+        activeResourceLayer?: string | null,
     ): boolean {
         // Sécurité
         if (container.destroyed || g.destroyed) return false;
@@ -37,10 +39,11 @@ export class GameRenderer {
         if (!engine || !engine.biomes) return false;
 
         // Récupération dynamique des couches Z-Order créées dans UserTerminalClient
-        const terrainLayer = (container.getChildByLabel("terrainContainer") as PIXI.Container) || container;
-        const roadLayer = (container.getChildByLabel("roadContainer") as PIXI.Container) || container;
-        const vehicleLayer = (container.getChildByLabel("vehicleContainer") as PIXI.Container) || container;
-        const zoneLayer = (container.getChildByLabel("zoneContainer") as PIXI.Graphics);
+        const terrainLayer = (container.getChildByLabel('terrainContainer') as PIXI.Container) || container;
+        const roadLayer = (container.getChildByLabel('roadContainer') as PIXI.Container) || container;
+        const vehicleLayer = (container.getChildByLabel('vehicleContainer') as PIXI.Container) || container;
+        const resourceLayer = (container.getChildByLabel('resourceContainer') as PIXI.Container) || container;
+        const zoneLayer = (container.getChildByLabel('zoneContainer') as PIXI.Graphics);
 
         if (zoneLayer) {
             zoneLayer.clear();
@@ -51,7 +54,10 @@ export class GameRenderer {
         RoadPass.render(roadLayer, engine);                  // Routes -> roadContainer (zIndex 20)
         EntityPass.render(container, g, engine, viewMode, showGrid, zoomLevel); // Reste (Bâtiments, Arbres, Zones)
         BorderPass.render(g);                                // Frontière brillante -> vectorLayer (zIndex 150)
-        WorkerRenderer.render(vehicleLayer, zoomLevel);      // Workers -> vehicleContainer (zIndex 40)
+        WorkerRenderer.render(vehicleLayer);                 // Workers -> vehicleContainer (zIndex 40)
+
+        // ✅ Icônes ressources souterraines (actif seulement quand DataLayer 'resource' on)
+        RawResourceIconRenderer.render(resourceLayer, engine, activeResourceLayer ?? null);
 
         return true;
     }

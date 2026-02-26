@@ -77,6 +77,11 @@ export class BuildingPlacementSystem {
         // Notification des managers passifs
         PopulationManager.onBuildingPlaced(specs);
 
+        // ✅ Auto-Save : signal "le monde a changé"
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('city_mutated'));
+        }
+
         return { success: true, message: "Construction terminée." };
     }
 }

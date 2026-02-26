@@ -5,6 +5,7 @@ import { GameRenderer } from '../components/GameRenderer';
 // ✅ Import de sécurité (même si pas utilisé directement ici, utile pour le chargement)
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { VehicleRenderer } from '../components/VehicleRenderer';
+import { WorkerRenderer } from '../engine/WorkerRenderer';
 import { ParticleSystem } from '../engine/systems/ParticleSystem'; // ✅ Import
 import { BuildingType } from '../engine/types'; // ✅ Import BuildingType
 
@@ -23,7 +24,8 @@ export function useGameLoop(
     setResources: (res: any) => void,
     setStats: (stats: any) => void,
     selectedBuildingType: React.MutableRefObject<BuildingType>,
-    updateECS?: (delta: number, elapsed: number) => void
+    updateECS?: (delta: number, elapsed: number) => void,
+    activeResourceLayer?: string | null,
 ) {
     const lastRevRef = useRef(-2);
     const lastViewModeRef = useRef('FORCE_INIT');
@@ -39,6 +41,10 @@ export function useGameLoop(
     useEffect(() => { cursorPosRef.current = cursorPos; }, [cursorPos]);
     useEffect(() => { isReloadingRef.current = isReloading; }, [isReloading]);
     useEffect(() => { updateECSRef.current = updateECS; }, [updateECS]);
+
+    // DataLayer resource ref (mis à jour sans re-mount du ticker)
+    const activeResourceLayerRef = useRef(activeResourceLayer ?? null);
+    useEffect(() => { activeResourceLayerRef.current = activeResourceLayer ?? null; }, [activeResourceLayer]);
 
     // ✅ EFFET 1 : GESTION DU RESIZE
     useEffect(() => {
@@ -122,7 +128,8 @@ export function useGameLoop(
                         mapData,
                         viewModeRef.current,
                         false,
-                        currentZoom
+                        currentZoom,
+                        activeResourceLayerRef.current,
                     );
 
                     if (success) {
@@ -144,8 +151,10 @@ export function useGameLoop(
                 );
 
                 if (terrainContainerRef.current) {
-                    const vehicleLayer = (terrainContainerRef.current.getChildByLabel("vehicleContainer") as PIXI.Container) || terrainContainerRef.current;
+                    const vehicleLayer = (terrainContainerRef.current.getChildByLabel('vehicleContainer') as PIXI.Container) || terrainContainerRef.current;
+                    // ✅ Les deux doivent tourner CHAQUE FRAME pour l'animation
                     VehicleRenderer.drawVehicles(vehicleLayer, mapData, currentZoom);
+                    WorkerRenderer.render(vehicleLayer);
                 }
             }
 

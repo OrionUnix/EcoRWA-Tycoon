@@ -31,17 +31,22 @@ export const PixiStageSetup = {
         buildingContainer.label = "buildingContainer";
         buildingContainer.sortableChildren = true;
 
+        const resourceContainer = new PIXI.Container();
+        resourceContainer.zIndex = 35;
+        resourceContainer.label = 'resourceContainer';
+        resourceContainer.sortableChildren = true;
+
         const vehicleContainer = new PIXI.Container();
         vehicleContainer.zIndex = 40;
-        vehicleContainer.label = "vehicleContainer";
+        vehicleContainer.label = 'vehicleContainer';
         vehicleContainer.sortableChildren = true;
 
         const fxContainer = new PIXI.Container();
         fxContainer.zIndex = 100;
-        fxContainer.label = "fxContainer";
+        fxContainer.label = 'fxContainer';
         fxContainer.sortableChildren = true;
 
-        terrain.addChild(terrainContainer, zoneContainer, roadContainer, buildingContainer, vehicleContainer, fxContainer);
+        terrain.addChild(terrainContainer, zoneContainer, roadContainer, buildingContainer, resourceContainer, vehicleContainer, fxContainer);
 
         const vectorLayer = new PIXI.Graphics();
         vectorLayer.zIndex = 150;
