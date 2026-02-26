@@ -199,7 +199,13 @@ export class InteractionSystem {
             }
             console.log(`✅ Zone ${type} créée avec succès!`);
         } else {
-            console.error(`❌ Zonage impossible: ${result.message}`);
+            console.warn(`❌ Zonage impossible: ${result.message}`);
+            window.dispatchEvent(new CustomEvent('show_bob_warning', {
+                detail: {
+                    title: "Zonage Impossible !",
+                    message: "M. le Maire (Bob) : Vous devez placer ce bâtiment à côté d'une route pour qu'il soit accessible !"
+                }
+            }));
         }
     }
 

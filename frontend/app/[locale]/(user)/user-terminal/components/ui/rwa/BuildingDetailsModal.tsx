@@ -108,7 +108,10 @@ export const BuildingDetailsModal: React.FC<Props> = ({
                                     <span>✅</span><span>{tBob('rwa_placed_confirm')}</span>
                                 </div>
                             ) : (
-                                <button onClick={() => onPlaceOnMap(item)}
+                                <button onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPlaceOnMap(item);
+                                }}
                                     className="w-full py-2.5 bg-yellow-400 text-black font-black text-xs uppercase tracking-widest hover:bg-yellow-300 transition-all shadow-[0_4px_0_rgba(0,0,0,0.4)] active:shadow-none active:translate-y-1">
                                     🏗️ {tBob('rwa_place_title')} →
                                 </button>

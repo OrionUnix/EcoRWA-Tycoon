@@ -140,6 +140,18 @@ export default function UserTerminalClient() {
         selectedBuildingTypeRef, updateECS
     );
 
+    // ✅ NOUVEAU: Écoute de l'événement d'équipement RWA depuis l'inventaire
+    useEffect(() => {
+        const handleEquip = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            const engine = getGameEngine();
+            engine.currentRwaPayload = detail;
+            setViewMode('BUILD_RWA');
+        };
+        window.addEventListener('equip_rwa_building', handleEquip);
+        return () => window.removeEventListener('equip_rwa_building', handleEquip);
+    }, []);
+
     useGameInput(
         viewportRef, appRef, isReady && assetsLoaded,
         viewMode, setViewMode, selectedRoad, selectedZone, selectedBuilding,

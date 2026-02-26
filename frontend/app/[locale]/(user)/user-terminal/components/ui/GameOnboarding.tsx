@@ -20,7 +20,7 @@ const VAULT_ABI = parseAbi(['function mintBuilding(uint256 buildingId, uint256 a
 
 const RWA_CHOICES = [
     { id: 1, key: 'loft', type: 'RESIDENTIAL', cost: 150, apy: '4.2%', imageName: 'loft', colorTheme: 'blue' as const, location: 'New York' as const },
-    { id: 2, key: 'bistrot', type: 'COMMERCIAL', cost: 100, apy: '7.8%', imageName: 'bistro', colorTheme: 'orange' as const, location: 'Paris' as const },
+    { id: 2, key: 'bistro', type: 'COMMERCIAL', cost: 100, apy: '7.8%', imageName: 'bistro', colorTheme: 'orange' as const, location: 'Paris' as const },
     { id: 3, key: 'tower', type: 'MIXED', cost: 250, apy: '6.5%', imageName: 'eco', colorTheme: 'green' as const, location: 'Paris' as const }
 ];
 
@@ -136,7 +136,7 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
 
     return (
         <AnimatePresence>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto bg-black/70 backdrop-blur-sm">
+            <motion.div key="onboarding-modal-jordan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto bg-black/70 backdrop-blur-sm">
                 <div className="bg-[#1e293b] border-4 border-black p-6 md:p-8 shadow-[8px_8px_0_rgba(0,0,0,1)] max-w-5xl w-full text-white relative">
 
                     {/* BOUTONS D'ACTION (HELP / CLOSE) */}

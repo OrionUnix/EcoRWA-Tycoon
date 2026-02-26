@@ -11,6 +11,7 @@ import { COLORS } from '../../engine/constants';
  * Responsabilité unique : feedback visuel de l'interaction utilisateur
  */
 export class CursorPass {
+    private static rwaSprite: PIXI.Sprite | null = null;
 
     static render(
         g: PIXI.Graphics,
@@ -75,6 +76,41 @@ export class CursorPass {
                 g.stroke({ width: 2, color, alpha: 0.5 });
                 g.fill({ color, alpha: 0.1 });
             }
+        }
+        // 4. PREVIEW RWA (Suivi du curseur)
+        if (currentMode !== 'BUILD_RWA') {
+            if (this.rwaSprite) this.rwaSprite.visible = false;
+        } else if ((engine as any).currentRwaPayload) {
+            if (!this.rwaSprite) {
+                this.rwaSprite = new PIXI.Sprite();
+                this.rwaSprite.anchor.set(0.5, 1); // Ancrage isométrique classique au pied
+                g.addChild(this.rwaSprite);
+            }
+            this.rwaSprite.visible = true;
+            this.rwaSprite.x = hl.x;
+            this.rwaSprite.y = hl.y;
+
+            // Rendu de la preview
+            const texPath = (engine as any).currentRwaPayload.texturePath;
+            if (texPath) {
+                try {
+                    const cached = PIXI.Assets.get(texPath);
+                    if (cached) {
+                        this.rwaSprite.texture = cached;
+                    } else {
+                        // Chargement lazy au premier survol
+                        PIXI.Assets.load(texPath).then((tex) => {
+                            if (this.rwaSprite && tex) this.rwaSprite.texture = tex;
+                        }).catch(() => { });
+                    }
+                } catch (e) { /* silent fail pour get */ }
+            }
+
+            // Couleur valide (Blanc) ou invalide (Rouge) selon isNextToRoad
+            const index = cursorPos.y * engine.config.size + cursorPos.x;
+            const valid = BuildingManager.isNextToRoad(engine, index);
+            this.rwaSprite.tint = valid ? 0xFFFFFF : 0xFF8888;
+            this.rwaSprite.alpha = 0.6;
         }
     }
 }

@@ -46,68 +46,40 @@ export class RWABuildingSpawner {
         this.purchaseListener = (_e: Event) => { /* no-op */ };
         window.addEventListener('rwa_purchased', this.purchaseListener);
 
-        // Listener 2 : 'place_building_on_map' — placement manuel depuis RWAInventory
-        this.placeListener = (e: Event) => {
-            const { rwaId, texturePath, imageName } = (e as CustomEvent).detail ?? {};
-            if (!rwaId) return;
-            // texturePath envoyé par React prend priorité sur le RWA_TEXTURE_MAP interne
-            this.handleManualPlacement(rwaId, texturePath, imageName);
-        };
-        window.addEventListener('place_building_on_map', this.placeListener);
-
-        console.log('🏗️ [RWABuildingSpawner] Initialisé (placement road-adjacent activé)');
+        console.log('🏗️ [RWABuildingSpawner] Initialisé (placement manuel actif)');
     }
 
     // ──────────────────────────────────────────────────────────────────────────
     // PLACEMENT
     // ──────────────────────────────────────────────────────────────────────────
 
-    private static handleManualPlacement(rwaId: number, texturePath?: string, imageName?: string): void {
-        if (!this.engine) return;
-
+    /** Placement manuel direct sur un noeud précis cliqué par le joueur */
+    static placeRWAAtNode(engine: MapEngine, idx: number, rwaId: number, texturePath?: string, imageName?: string): boolean {
         if (placedRWAIds.has(rwaId)) {
             console.log(`[RWABuildingSpawner] RWA #${rwaId} déjà sur la carte.`);
-            return;
+            return false;
         }
 
         const buildingType = RWA_BUILDING_TYPE_MAP[rwaId];
-        if (!buildingType) return;
+        if (!buildingType) return false;
 
-        // ✅ POLISH 2 — Trouver une tuile adjacente à une route
-        const targetIdx = this.findTileAdjacentToRoad();
+        const x = idx % GRID_SIZE;
+        const y = Math.floor(idx / GRID_SIZE);
 
-        // Si aucune route trouvée, avertir React via un event Bob
-        if (targetIdx === -1) {
-            const fallback = this.findAvailableTileFallback();
-            if (fallback === -1) {
-                console.warn('[RWABuildingSpawner] Aucune tuile disponible.');
-                window.dispatchEvent(new CustomEvent('show_bob_warning', {
-                    detail: {
-                        messageKey: 'error_road' // Clé i18n de bob
-                    }
-                }));
-                return;
-            }
+        if (!this.isTileAvailable(engine, x, y, idx)) {
+            console.warn('[RWABuildingSpawner] Tuile indisponible pour le RWA.');
+            return false;
         }
 
-        const finalIdx = targetIdx !== -1 ? targetIdx : this.findAvailableTileFallback();
-        if (finalIdx === -1) return;
-
-        const x = finalIdx % GRID_SIZE;
-        const y = Math.floor(finalIdx / GRID_SIZE);
-
-        // ✅ POLISH 1 — Priorité : texturePath React > dictionnaire interne > imageName
+        // Texture resolving
         const resolvedTexture = texturePath
             ?? RWA_TEXTURE_MAP[rwaId]
             ?? (imageName ? `/assets/isometric/Spritesheet/Buildings/RWA/${imageName}.png` : undefined);
 
-        // Injection dans buildingLayer avec le champ rwaTexture
-        this.engine.buildingLayer[finalIdx] = {
+        engine.buildingLayer[idx] = {
             type: buildingType,
-            x,
-            y,
-            variant: 0,
-            level: 3,
+            x, y,
+            variant: 0, level: 3,
             state: 'ACTIVE',
             constructionTimer: 0,
             pollution: 0,
@@ -115,95 +87,25 @@ export class RWABuildingSpawner {
             statusFlags: 0,
             stability: 100,
             jobsAssigned: 0,
-            rwaTexture: resolvedTexture, // ← BuildingRenderer charge ce PNG directement
+            rwaTexture: resolvedTexture,
         };
 
-        this.engine.revision++;
-
-        // Active le bonus x2
+        engine.revision++;
         EconomySystem.activateRWABonus();
         placedRWAIds.add(rwaId);
 
-        console.log(`✅ [RWABuildingSpawner] RWA #${rwaId} placé en [${x}, ${y}] — texture: ${texturePath} — Bonus x2 actif`);
-    }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // PLACEMENT INTELLIGENT : TUILE ADJACENTE À UNE ROUTE
-    // Scan la carte, trouve une route, vérifie ses 4 voisins (N/S/E/W)
-    // ──────────────────────────────────────────────────────────────────────────
-
-    private static findTileAdjacentToRoad(): number {
-        if (!this.engine) return -1;
-
-        const OFFSETS = [
-            { dx: 0, dy: -1 }, // Nord
-            { dx: 0, dy: 1 },  // Sud
-            { dx: -1, dy: 0 }, // Ouest
-            { dx: 1, dy: 0 },  // Est
-        ];
-
-        // Scan depuis le centre de la map vers les bords pour prioriser les zones développées
-        const center = Math.floor(GRID_SIZE / 2);
-
-        for (let radius = 1; radius < GRID_SIZE / 2; radius++) {
-            for (let dy = -radius; dy <= radius; dy++) {
-                for (let dx = -radius; dx <= radius; dx++) {
-                    // Périmètre du rayon uniquement (évite de re-scanner l'intérieur)
-                    if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
-
-                    const rx = center + dx;
-                    const ry = center + dy;
-                    if (rx < 0 || ry < 0 || rx >= GRID_SIZE || ry >= GRID_SIZE) continue;
-
-                    const roadIdx = ry * GRID_SIZE + rx;
-
-                    // Si c'est une route, chercher un voisin libre
-                    if (!this.engine.roadLayer[roadIdx]) continue;
-
-                    for (const { dx: nx, dy: ny } of OFFSETS) {
-                        const vx = rx + nx;
-                        const vy = ry + ny;
-                        if (vx < 0 || vy < 0 || vx >= GRID_SIZE || vy >= GRID_SIZE) continue;
-
-                        const vIdx = vy * GRID_SIZE + vx;
-                        if (this.isTileAvailable(vx, vy, vIdx)) return vIdx;
-                    }
-                }
-            }
-        }
-
-        return -1; // Aucune tuile road-adjacent disponible
+        console.log(`✅ [RWABuildingSpawner] RWA #${rwaId} placé manuellement en [${x}, ${y}]. Bonus x2 actif.`);
+        return true;
     }
 
     /** Détermine si une tuile peut accueillir un bâtiment RWA */
-    private static isTileAvailable(x: number, y: number, idx: number): boolean {
-        if (!this.engine) return false;
+    private static isTileAvailable(engine: MapEngine, x: number, y: number, idx: number): boolean {
         const isUnlocked = ChunkManager.isTileUnlocked(x, y);
-        const hasBuilding = !!this.engine.buildingLayer[idx];
-        const hasRoad = !!this.engine.roadLayer[idx];
-        const biome = this.engine.biomes[idx];
+        const hasBuilding = !!engine.buildingLayer[idx];
+        const hasRoad = !!engine.roadLayer[idx];
+        const biome = engine.biomes[idx];
         const isBuildable = biome >= 2 && biome <= 5; // Pas océan, pas montagne/neige
-
         return isUnlocked && !hasBuilding && !hasRoad && isBuildable;
-    }
-
-    /** Fallback spirale si aucune route n'est posée sur la map */
-    private static findAvailableTileFallback(): number {
-        if (!this.engine) return -1;
-        const center = Math.floor(GRID_SIZE / 2);
-        for (let radius = 2; radius < GRID_SIZE / 2; radius++) {
-            for (let dy = -radius; dy <= radius; dy++) {
-                for (let dx = -radius; dx <= radius; dx++) {
-                    if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
-                    const nx = center + dx;
-                    const ny = center + dy;
-                    if (nx < 0 || ny < 0 || nx >= GRID_SIZE || ny >= GRID_SIZE) continue;
-                    const idx = ny * GRID_SIZE + nx;
-                    if (this.isTileAvailable(nx, ny, idx)) return idx;
-                }
-            }
-        }
-        return -1;
     }
 
     /** Vérifie si un RWA donné est déjà placé sur la carte */
@@ -216,10 +118,6 @@ export class RWABuildingSpawner {
         if (this.purchaseListener) {
             window.removeEventListener('rwa_purchased', this.purchaseListener);
             this.purchaseListener = null;
-        }
-        if (this.placeListener) {
-            window.removeEventListener('place_building_on_map', this.placeListener);
-            this.placeListener = null;
         }
         this.engine = null;
     }

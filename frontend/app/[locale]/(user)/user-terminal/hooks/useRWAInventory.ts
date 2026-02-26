@@ -142,12 +142,12 @@ export function useRWAInventory() {
         if (!item || placedIds.has(item.id)) return;
         const fileName = RWA_FILE_MAP[item.id] ?? `${item.imageName}.png`;
         const texturePath = `/assets/isometric/Spritesheet/Buildings/RWA/${fileName}`;
-        window.dispatchEvent(new CustomEvent('place_building_on_map', {
+
+        // Dispatch "equip" instead of auto-place
+        window.dispatchEvent(new CustomEvent('equip_rwa_building', {
             detail: { rwaId: item.id, texturePath, imageName: item.imageName }
         }));
-        const updated = new Set(placedIds).add(item.id);
-        setPlacedIds(updated);
-        localStorage.setItem('rwa_placed_ids', JSON.stringify([...updated]));
+
         setClaimStatus(tBob('rwa_placed_confirm'));
         setTimeout(() => setClaimStatus(''), 5000);
     }, [placedIds, tBob]);

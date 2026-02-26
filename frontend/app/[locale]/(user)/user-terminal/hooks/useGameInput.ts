@@ -6,6 +6,8 @@ import { screenToGrid, gridToScreen } from '../engine/isometric';
 import { RoadManager } from '../engine/RoadManager';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
 import { ParticleSystem } from '../engine/systems/ParticleSystem';
+import { RWABuildingSpawner } from '../engine/RWABuildingSpawner';
+import { BuildingManager } from '../engine/BuildingManager';
 
 export function useGameInput(
     viewportRef: React.MutableRefObject<Viewport | null>, // ✅ Viewport au lieu de stage
@@ -179,6 +181,29 @@ export function useGameInput(
                 isDraggingRef.current = true;
                 lastPaintedTileRef.current = idx;
                 engine.handleInteraction(idx, 'ZONE', null, selectedZone);
+            } else if (viewMode === 'BUILD_RWA') {
+                const payload = engine.currentRwaPayload;
+                if (!payload) return;
+
+                // 🚨 RÈGLE DE PLACEMENT INTELLIGENT OBLIGATOIRE (Près d'une route)
+                const isNearRoad = BuildingManager.isNextToRoad(engine.map, idx);
+                if (!isNearRoad) {
+                    window.dispatchEvent(new CustomEvent('show_bob_warning', {
+                        detail: { messageKey: 'error_road' }
+                    }));
+                    return; // Stoppe le placement
+                }
+
+                const placed = RWABuildingSpawner.placeRWAAtNode(engine.map, idx, payload.rwaId, payload.texturePath, payload.imageName);
+                if (placed) {
+                    // Reset vers mode sélection
+                    engine.currentRwaPayload = null;
+                    setViewMode('ALL');
+
+                    // Optionnel : particules
+                    // const { x, y } = gridToScreen(gridPos.x, gridPos.y);
+                    // ParticleSystem.spawnPlacementDust(x, y);
+                }
             } else if (viewMode.startsWith('BUILD_')) {
                 const result = engine.handleInteraction(idx, viewMode, null, selectedBuilding);
                 const { x, y } = gridToScreen(gridPos.x, gridPos.y);

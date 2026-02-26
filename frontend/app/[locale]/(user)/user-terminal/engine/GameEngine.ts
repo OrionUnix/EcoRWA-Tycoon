@@ -24,6 +24,7 @@ export class GameEngine {
     // ✅ NOUVEAU : Persistance de la caméra
     public lastCameraPosition: { x: number, y: number } | null = null;
     public lastZoom: number = 1.0;
+    public currentRwaPayload: any = null; // Payload pour le placement manuel RWA
 
     constructor() {
         console.log("🚀 GameEngine: Démarrage...");
