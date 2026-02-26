@@ -17,14 +17,6 @@ export class ProceduralVehicles {
         // Couleur
         g.fill({ color: color });
 
-        // Châssis (Bas)
-        // Iso projection simple : 
-        // Face haut: Rhombe
-        // Face côté: Rectangle
-
-        // On va faire simple : un rectangle pour le côté et un polygone pour le toit
-        // Pour une voiture vue de 3/4 face
-
         // Ombre portée
         g.ellipse(0, 10, 20, 10);
         g.fill({ color: 0x000000, alpha: 0.3 });

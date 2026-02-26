@@ -1,5 +1,10 @@
 {
     "greeting": "Bonjour Maire ! Bienvenue sur votre nouveau terrain. Vous pouvez tester nos outils de construction librement. Connectez votre portefeuille quand vous serez prêt !   (Cliquez sur la croix rouge pour fermer cette fenêtre)",
     "error_road": "Impossible de bâtir ici, Maire ! Il faut absolument coller le bâtiment à une route.",
-    "success_build": "Beau travail ! Ce bâtiment va booster notre économie."
+    "success_build": "Beau travail ! Ce bâtiment va booster notre économie.",
+    "rwa_congrat_title": "Excellent investissement, Maire !",
+    "rwa_congrat_body": "Votre {name} est maintenant dans votre portefeuille ! Placez-le sur la carte depuis votre Inventaire pour activer un Bonus de Rendement ≥2x sur toute l'économie de la ville. La ville vous attend !",
+    "rwa_place_title": "Placer sur la Carte",
+    "rwa_place_tooltip": "Cliquez pour placer ce bâtiment sur la carte et activer le Bonus x2 !",
+    "rwa_placed_confirm": "Bâtiment placé ! Le Bonus de Rendement x2 est maintenant actif !"
 }

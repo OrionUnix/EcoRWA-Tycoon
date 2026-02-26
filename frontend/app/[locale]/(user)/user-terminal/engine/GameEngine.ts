@@ -6,10 +6,11 @@ import { NeedsCalculator } from './systems/NeedsCalculator';
 import { JobSystem } from './systems/JobSystem';
 import { ResourceSystem } from './systems/ResourceSystem';
 import { InteractionSystem } from './systems/InteractionSystem';
-import { EconomySystem } from './systems/EconomySystem'; // ✅ Import EconomySystem
-import { HappinessSystem } from './systems/HappinessSystem'; // ✅ Import HappinessSystem
+import { EconomySystem } from './systems/EconomySystem';
+import { HappinessSystem } from './systems/HappinessSystem';
+import { RWABuildingSpawner } from './RWABuildingSpawner'; // ✅ Bridge React↔PixiJS
 import { FAKE_WALLET_ADDRESS } from './constants';
-import { BUILDING_SPECS, BuildingType } from './types'; // ✅ BuildingType for Market check
+import { BUILDING_SPECS, BuildingType } from './types';
 
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
@@ -27,10 +28,15 @@ export class GameEngine {
     constructor() {
         console.log("🚀 GameEngine: Démarrage...");
         this.map = new MapEngine();
-        this.map.generateWorld(FAKE_WALLET_ADDRESS); // ✅ Seed Injection
+        this.map.generateWorld(FAKE_WALLET_ADDRESS);
 
         // Initialize population tracking
         PopulationManager.initialize(this.map);
+
+        // ✅ Bridge React↔PixiJS : écoute les achats RWA pour spawner sur la map
+        if (typeof window !== 'undefined') {
+            RWABuildingSpawner.initialize(this.map);
+        }
     }
 
     // ✅ NOUVEAU : Méthode pour sauver l'état

@@ -10,6 +10,7 @@ import { TypewriterText } from '../TypewriterText';
 import { RWACard } from '../ui/RWACard';
 import { FaucetButton } from '../ui/FaucetButton';
 import { RWAPurchaseModal } from '../ui/RWAPurchaseModal';
+import { BobCongratModal } from '../ui/BobCongratModal';
 
 const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
 const VAULT_ADDRESS = process.env.NEXT_PUBLIC_VAULT_ADDRESS as `0x${string}`;
@@ -40,6 +41,11 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
     const [hasClaimedFaucet, setHasClaimedFaucet] = useState(false);
     const [typingKey, setTypingKey] = useState(Date.now());
     const [isTyping, setIsTyping] = useState(true);
+
+    // Bob Congrat Modal — affiché une fois après le 1er achat RWA
+    const [showBobModal, setShowBobModal] = useState(false);
+    const [bobBuildingName, setBobBuildingName] = useState('');
+    const [bobBuildingImage, setBobBuildingImage] = useState('');
 
     const { writeContractAsync } = useWriteContract();
 
@@ -80,12 +86,12 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
 
             setTxStatus(tInv('tx_success', { amount: amount }));
 
-            // 🔥 2. ON LE SAUVEGARDE DANS L'INVENTAIRE 🔥
+            // Sauvegarde inventaire
             const currentInventory = JSON.parse(localStorage.getItem('rwa_inventory') || '[]');
             const existingItem = currentInventory.find((item: any) => item.id === rwaId);
             if (existingItem) {
                 existingItem.amount += amount;
-                existingItem.txHash = txHash; // Met à jour avec la dernière Tx
+                existingItem.txHash = txHash;
             } else {
                 currentInventory.push({
                     id: rwaId,
@@ -97,11 +103,28 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                 });
             }
             localStorage.setItem('rwa_inventory', JSON.stringify(currentInventory));
-            window.dispatchEvent(new Event('rwa_purchased'));
 
-            setTimeout(() => {
-                onComplete();
-            }, 2500);
+            // 📡 CustomEvent enrichi → RWABuildingSpawner
+            window.dispatchEvent(new CustomEvent('rwa_purchased', {
+                detail: {
+                    rwaId: rwaId,
+                    imageName: selectedData.imageName,
+                    buildingType: selectedData.type,
+                }
+            }));
+
+            // 🎉 Bob Congrat Modal — afficher une seule fois (1ère expérience)
+            const alreadyShown = localStorage.getItem('rwa_bob_shown') === 'true';
+            if (!alreadyShown) {
+                setBobBuildingName(tJordan(`choices.${selectedData.key}.name`));
+                setBobBuildingImage(selectedData.imageName);
+                setShowBobModal(true);
+                localStorage.setItem('rwa_bob_shown', 'true');
+                // Auto-fermeture après 12s
+                setTimeout(() => setShowBobModal(false), 12000);
+            }
+
+            setTimeout(() => { onComplete(); }, 2500);
 
         } catch (error) {
             console.error('Erreur Investissement:', error);
@@ -225,6 +248,14 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                     )}
                 </div>
             </motion.div>
+
+            {/* 🏛️ BOB CONGRAT MODAL — Post-achat RWA (1 seule fois) */}
+            <BobCongratModal
+                isOpen={showBobModal}
+                buildingName={bobBuildingName}
+                buildingImageName={bobBuildingImage}
+                onClose={() => setShowBobModal(false)}
+            />
 
             {/* MODAL DE TRADING */}
             <RWAPurchaseModal

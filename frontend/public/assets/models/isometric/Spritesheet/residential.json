@@ -1,0 +1,95 @@
+{
+  "category": "RESIDENTIAL",
+  "levels": {
+    "1": {
+      "name": "Small Cabin",
+      "capacity": 4,
+      "taxBase": 15,
+      "requiredRoadQuality": 1,
+      "consumption": {
+        "water": 1,
+        "power": 1
+      },
+      "sprites": [
+        "RESIDENTIAL.LVL1_VAR1",
+        "RESIDENTIAL.LVL1_VAR2",
+        "RESIDENTIAL.LVL1_VAR3"
+      ]
+    },
+    "2": {
+      "name": "Family House",
+      "capacity": 8,
+      "taxBase": 45,
+      "requiredRoadQuality": 2,
+      "consumption": {
+        "water": 2,
+        "power": 3
+      },
+      "sprites": [
+        "RESIDENTIAL.LVL2_VAR1",
+        "RESIDENTIAL.LVL2_VAR2"
+      ]
+    },
+    "3": {
+      "name": "Modern Apartment",
+      "capacity": 25,
+      "taxBase": 150,
+      "requiredRoadQuality": 3,
+      "consumption": {
+        "water": 10,
+        "power": 15
+      },
+      "sprites": [
+        "RESIDENTIAL.LVL3_VAR1",
+        "RESIDENTIAL.LVL3_VAR2"
+      ]
+    },
+    "4": {
+      "name": "Luxury Complex",
+      "capacity": 80,
+      "taxBase": 600,
+      "requiredRoadQuality": 4,
+      "consumption": {
+        "water": 40,
+        "power": 60
+      },
+      "sprites": [
+        "RESIDENTIAL.LVL4_VAR1"
+      ]
+    },
+    "5": {
+      "name": "Eco-Tower",
+      "capacity": 250,
+      "taxBase": 2500,
+      "requiredRoadQuality": 5,
+      "consumption": {
+        "water": 120,
+        "power": 200
+      },
+      "sprites": [
+        "RESIDENTIAL.LVL5_VAR1"
+      ]
+    }
+  },
+  "states": {
+    "CONSTRUCTION": [
+      "RESIDENTIAL.CONSTR_FRAME_1",
+      "RESIDENTIAL.CONSTR_FRAME_2",
+      "RESIDENTIAL.CONSTR_ADVANCED"
+    ],
+    "ABANDONED": [
+      "RESIDENTIAL.ABANDONED_VAR1",
+      "RESIDENTIAL.ABANDONED_VAR2"
+    ],
+    "RUINED": [
+      "RESIDENTIAL.RUIN_SMOKE",
+      "RESIDENTIAL.RUIN_CLEAN"
+    ]
+  },
+  "evolution": {
+    "upgradeThreshold": 0.75,
+    "declineThreshold": 0.35,
+    "abandonThreshold": 0.15,
+    "destructionThreshold": 0.05
+  }
+}

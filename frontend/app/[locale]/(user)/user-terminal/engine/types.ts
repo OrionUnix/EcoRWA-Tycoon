@@ -252,6 +252,10 @@ export interface BuildingData {
         leisure: boolean;
     };
 
+    // ✅ RWA : chemin direct vers le sprite isométrique spécifique
+    // Quand présent, BuildingRenderer le charge via PIXI.Assets.load() (bypass BuildingAssets)
+    rwaTexture?: string;
+
     // ✅ NOUVEAU: Contrats (Pour les Marchés)
     activeContracts?: TradeContract[];
 }

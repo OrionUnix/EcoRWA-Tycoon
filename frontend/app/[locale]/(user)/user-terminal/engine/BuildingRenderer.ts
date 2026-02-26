@@ -1,22 +1,22 @@
 import * as PIXI from 'pixi.js';
-import { BuildingData, BUILDING_SPECS } from '../engine/types';
-import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
-import { BuildingAssets } from './BuildingAssets';
+import { BuildingData } from './types';
+import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from './config';
 import { FXRenderer } from './FXRenderer';
+import { BuildingEmoteSystem } from './renderers/buildings/BuildingEmoteSystem';
+import { BuildingTextureResolver } from './renderers/buildings/BuildingTextureResolver';
+import { BuildingFallbackGraphics } from './renderers/buildings/BuildingFallbackGraphics';
 
-export const RESIDENTIAL_SCALE = 0.5; // Modifiable pour ajuster la taille
-const SURFACE_Y_OFFSET = 0; // Ajustement fin Y pour coller au sol
+export const RESIDENTIAL_SCALE = 0.5;
+const SURFACE_Y_OFFSET = 0;
 
 // ═══════════════════════════════════════════════════════
-// BuildingRenderer — Rendu des bâtiments (Engine)
-// Priorité 1: Sprite depuis l'atlas TexturePacker (PIXI.Sprite)
-// Fallback:   Cube coloré isométrique (PIXI.Graphics + Emote)
+// BuildingRenderer — Orchestrateur Rendu ECS (< 150 lignes)
+// S'occupe du positionnement global, Z-Sorting et HitBox
 // ═══════════════════════════════════════════════════════
 
 const buildingCache = new Map<number, PIXI.Container>();
 
 export class BuildingRenderer {
-
     static drawTile(
         parentContainer: PIXI.Container,
         building: BuildingData,
@@ -29,328 +29,147 @@ export class BuildingRenderer {
         const i = y * GRID_SIZE + x;
         let container = buildingCache.get(i);
 
-        // Validation du cache
+        // 1. Validation du cache
         if (container && (container.destroyed || container.parent !== parentContainer)) {
-            if (!container.destroyed && container.parent) {
-                container.parent.removeChild(container);
-            }
+            if (!container.destroyed && container.parent) container.parent.removeChild(container);
             container = undefined;
             buildingCache.delete(i);
         }
 
-        // Création si inexistant
         if (!container) {
             container = new PIXI.Container();
             parentContainer.addChild(container);
             buildingCache.set(i, container);
         }
 
+        // 2. Position et Z-Sorting (Rigoureux)
         container.visible = true;
         container.x = pos.x;
         container.y = pos.y;
-
-        // Formule de profondeur isométrique stricte
         container.zIndex = x + y + 0.5;
 
         const lvl = building.level || 0;
         const isConstState = building.state === 'CONSTRUCTION' || lvl === 0;
         const isRuined = building.state === 'ABANDONED' || (building as any).isRuined === true;
 
-        // ═══════════════════════════════════════
-        // FX: Particules de construction (Fumée)
-        // ═══════════════════════════════════════
-        if (isConstState) {
-            if (!(building as any)._dustPlayed) {
-                (building as any)._dustPlayed = true;
-
-                // Essayer de trouver la fxContainer s'il existe via la racine du monde (terrainContainerRef)
-                const targetFxContainer = parentContainer.parent?.getChildByLabel("fxContainer") as PIXI.Container || parentContainer;
-
-                FXRenderer.playConstructionDust(
-                    targetFxContainer,
-                    pos.x,
-                    pos.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET, // Centre de la base isométrique
-                    container.zIndex + 0.1 // Juste au dessus du mur/sol
-                );
-            }
+        // 3. Effets Spéciaux (Poussière de construction unique)
+        if (isConstState && !(building as any)._dustPlayed) {
+            (building as any)._dustPlayed = true;
+            const targetFxContainer = parentContainer.parent?.getChildByLabel("fxContainer") as PIXI.Container || parentContainer;
+            FXRenderer.playConstructionDust(targetFxContainer, pos.x, pos.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET, container.zIndex + 0.1);
         }
 
-        // ═══════════════════════════════════════
-        // Tenter le rendu sprite depuis l'atlas ou Custom
-        // ═══════════════════════════════════════
-        // ═══════════════════════════════════════
-        const texture = BuildingAssets.getTexture(
-            building.type as any,
-            lvl || 1,
-            building.variant || 0,
-            isConstState || isRuined // Utilise texture de construction si en ruine (pour faire décombres)
-        );
+        // 4. Résolution de la texture ou dessin géométrique
+        const texture = BuildingTextureResolver.getTexture(building, isConstState, isRuined);
+
+        let sprite = container.children.find(c => c instanceof PIXI.Sprite) as PIXI.Sprite | undefined;
+        let graphics = container.children.find(c => c instanceof PIXI.Graphics) as PIXI.Graphics | undefined;
+        let emoteText = container.children.find(c => c instanceof PIXI.Text) as PIXI.Text | undefined;
 
         if (texture) {
-            // Nettoyer les anciens enfants (Graphics/Text) et remplacer par le sprite
-            let sprite = container.children.find(c => c instanceof PIXI.Sprite) as PIXI.Sprite | undefined;
+            // MODE TEXTURE (Atlas ou RWA)
+            if (graphics) {
+                container.removeChild(graphics);
+                if (!graphics.destroyed) graphics.destroy();
+                graphics = undefined;
+            }
 
             if (!sprite) {
-                // Premier rendu avec atlas — supprimer les anciens Graphics/Text
-                while (container.children.length > 0) {
-                    const child = container.children[0];
-                    container.removeChild(child);
-                    if (!child.destroyed) child.destroy();
-                }
-
                 sprite = new PIXI.Sprite(texture);
-                // ✅ ANCRAGE BASE-CENTRE — aligne la base du sprite avec le centre de la tuile iso
                 sprite.anchor.set(0.5, 1.0);
-
-                // Mission 2: Éviter que les zones transparentes bloquent les clics
                 sprite.eventMode = 'static';
-
                 container.addChild(sprite);
 
-                // Recreate emote text above sprite
-                const text = new PIXI.Text({ text: '', style: { fontSize: 24, fontWeight: 'bold', stroke: { color: 0x000000, width: 2 } } });
-                text.anchor.set(0.5, 1);
-                text.eventMode = 'none'; // Prevent emotes from capturing clicks
-                container.addChild(text);
-            } else {
-                // Mettre à jour la texture si le bâtiment a évolué
-                if (sprite.texture !== texture) {
-                    sprite.texture = texture;
-                }
+                emoteText = new PIXI.Text({ text: '', style: { fontSize: 24, fontWeight: 'bold', stroke: { color: 0x000000, width: 2 } } });
+                emoteText.anchor.set(0.5, 1);
+                emoteText.eventMode = 'none';
+                container.addChild(emoteText);
+            } else if (sprite.texture !== texture) {
+                sprite.texture = texture;
             }
 
-            // MISSION 4 : Assombrir si ruiné
-            if (isRuined) {
-                sprite.tint = 0x555555;
-            } else {
-                sprite.tint = 0xFFFFFF;
-            }
+            sprite.tint = isRuined ? 0x555555 : 0xFFFFFF;
 
-            // Positionnement : le sprite est ancré à (0.5, 1.0)
-            // Le container est déjà positionné au centre de la tuile (pos.x, pos.y)
             const isCustomIso = (texture as any).isCustomIso === true;
             let currentScale = 1.0;
 
             if (isCustomIso) {
-                // ✅ MODE CUSTOM 128x128
                 sprite.x = 0;
                 sprite.y = TILE_HEIGHT / 2 + SURFACE_Y_OFFSET;
                 currentScale = RESIDENTIAL_SCALE;
-                sprite.scale.set(currentScale);
             } else {
-                // ✅ MODE EXISTANT (ATLAS FALLBACK)
                 sprite.x = 0;
                 sprite.y = TILE_HEIGHT / 2;
                 currentScale = TILE_WIDTH / texture.width;
-                sprite.scale.set(currentScale);
             }
+            sprite.scale.set(currentScale);
 
-            // HitArea isométrique
-            // Le sprite est ancré à (0.5, 1.0), donc le point (0,0) local est au milieu-bas de l'image.
-            // La base isométrique du bâtiment a pour largeur = TILE_WIDTH et hauteur = TILE_HEIGHT / 2
-            // On divise par currentScale pour compenser le scaling appliqué au sprite.
+            // HitArea Polygon (Isométrique pur)
             const hw = (TILE_WIDTH / 2) / currentScale;
             const hh = (TILE_HEIGHT / 2) / currentScale;
-
             sprite.hitArea = new PIXI.Polygon([
-                new PIXI.Point(0, 0),             // Bas (South)
-                new PIXI.Point(hw, -hh),          // Droite (East)
-                new PIXI.Point(0, -hh * 2),       // Haut (North)
-                new PIXI.Point(-hw, -hh)          // Gauche (West)
+                new PIXI.Point(0, 0), new PIXI.Point(hw, -hh),
+                new PIXI.Point(0, -hh * 2), new PIXI.Point(-hw, -hh)
             ]);
 
-            // Gestion de l'emote (toujours au dessus du sprite)
-            const emoteText = container.children.find(c => c instanceof PIXI.Text) as PIXI.Text | undefined;
-            if (emoteText) {
-                const emote = this.getEmote(building);
-                if (emote && !isLow) {
-                    emoteText.text = emote;
-                    emoteText.visible = true;
-                    const bounce = Math.sin(Date.now() / 200) * 5;
-                    emoteText.x = 0;
-                    emoteText.y = -(TILE_HEIGHT - 20) + bounce; // Emote juste au-dessus du diamant iso
-                } else {
-                    emoteText.visible = false;
-                }
+            this.updateEmote(container, emoteText, building, isLow, -(TILE_HEIGHT - 20));
+
+        } else {
+            // MODE FALLBACK 3D GEOMETRIQUE (Sans Texture)
+            if (sprite) {
+                container.removeChild(sprite);
+                if (!sprite.destroyed) sprite.destroy();
+                sprite = undefined;
             }
 
-            return; // ✅ Sprite rendu, pas besoin du fallback
-        }
+            if (!graphics) {
+                graphics = new PIXI.Graphics();
+                container.addChild(graphics);
 
-        // ═══════════════════════════════════════
-        // FALLBACK: Cube coloré isométrique 3D
-        // (si atlas manquant ou texture pas trouvée)
-        // ═══════════════════════════════════════
-
-        // S'assurer qu'on a un Graphics + Text enfants
-        let graphics = container.children.find(c => c instanceof PIXI.Graphics) as PIXI.Graphics | undefined;
-        let emoteText = container.children.find(c => c instanceof PIXI.Text) as PIXI.Text | undefined;
-
-        if (!graphics) {
-            // Nettoyer tout et recréer
-            while (container.children.length > 0) {
-                const child = container.children[0];
-                container.removeChild(child);
-                if (!child.destroyed) child.destroy();
+                emoteText = new PIXI.Text({ text: '', style: { fontSize: 24, fontWeight: 'bold', stroke: { color: 0x000000, width: 2 } } });
+                emoteText.anchor.set(0.5, 1);
+                emoteText.eventMode = 'none';
+                container.addChild(emoteText);
             }
 
-            graphics = new PIXI.Graphics();
-            container.addChild(graphics);
-
-            emoteText = new PIXI.Text({ text: '', style: { fontSize: 24, fontWeight: 'bold', stroke: { color: 0x000000, width: 2 } } });
-            emoteText.anchor.set(0.5, 1);
-            emoteText.eventMode = 'none'; // Prevent emotes from capturing clicks
-            container.addChild(emoteText);
-        }
-
-        graphics.clear();
-
-        // Hauteur et couleur selon le type et level
-        const level = building.level || 0;
-        const isConstruction = building.state === 'CONSTRUCTION' || level === 0;
-
-        let height = 10;
-        if (level === 1) height = 40;
-        if (level === 2) height = 80;
-        if (level === 3) height = 150;
-
-        let baseColor = 0x9E9E9E;
-        if (!isConstruction) {
-            switch (building.type) {
-                case 'RESIDENTIAL': baseColor = 0xFF00FF; break;
-                case 'COMMERCIAL': baseColor = 0x2196F3; break;
-                case 'INDUSTRIAL': baseColor = 0xFF9800; break;
-                case 'POWER_PLANT': baseColor = 0xFF5722; break;
-                case 'WATER_PUMP': baseColor = 0x03A9F4; break;
-                case 'PARK': baseColor = 0x8BC34A; break;
-                default: baseColor = 0x607D8B;
-            }
-        }
-
-        const colorTop = baseColor;
-        const colorLeft = this.darkenColor(baseColor, 0.8);
-        const colorRight = this.darkenColor(baseColor, 0.6);
-
-        const halfW = TILE_WIDTH / 2;
-        const halfH = TILE_HEIGHT / 2;
-        const margin = 4;
-        const w = halfW - margin;
-        const h = halfH - (margin / 2);
-
-        // Face du HAUT
-        graphics.beginPath();
-        graphics.moveTo(0, -h - height);
-        graphics.lineTo(w, -height);
-        graphics.lineTo(0, h - height);
-        graphics.lineTo(-w, -height);
-        graphics.closePath();
-        graphics.fill({ color: colorTop });
-        graphics.stroke({ width: 2, color: 0x1B5E20, alpha: 0.8 });
-
-        // Face GAUCHE
-        graphics.beginPath();
-        graphics.moveTo(-w, -height);
-        graphics.lineTo(0, h - height);
-        graphics.lineTo(0, h);
-        graphics.lineTo(-w, 0);
-        graphics.closePath();
-        graphics.fill({ color: colorLeft });
-
-        // Face DROITE
-        graphics.beginPath();
-        graphics.moveTo(0, h - height);
-        graphics.lineTo(w, -height);
-        graphics.lineTo(w, 0);
-        graphics.lineTo(0, h);
-        graphics.closePath();
-        graphics.fill({ color: colorRight });
-
-        // Emote
-        if (emoteText) {
-            const emote = this.getEmote(building);
-            if (emote && !isLow) {
-                emoteText.text = emote;
-                emoteText.visible = true;
-                const bounce = Math.sin(Date.now() / 200) * 5;
-                emoteText.y = -height - 15 + bounce;
-            } else {
-                emoteText.visible = false;
-            }
+            const h = BuildingFallbackGraphics.draw(graphics, building);
+            this.updateEmote(container, emoteText, building, isLow, -h - 15);
         }
     }
 
-    private static darkenColor(color: number, factor: number): number {
-        const r = (color >> 16) & 0xFF;
-        const g = (color >> 8) & 0xFF;
-        const b = color & 0xFF;
-        return ((r * factor) << 16) | ((g * factor) << 8) | (b * factor);
-    }
-
-    static getEmote(building: BuildingData): string | null {
-        // Abandoned / Ruined
-        if (building.state === 'ABANDONED') return '⬇️'; // Ruiné / Downgrade
-
-        // Construction & Upgrades
-        if (building.state === 'CONSTRUCTION') {
-            if (building.level > 1) {
-                return '⬆️'; // Upgrading
-            } else {
-                return '🚧'; // Construcing
-            }
+    private static updateEmote(container: PIXI.Container, text: PIXI.Text | undefined, building: BuildingData, isLow: boolean, baseY: number) {
+        if (!text) return;
+        const emote = BuildingEmoteSystem.getEmote(building);
+        if (emote && !isLow) {
+            text.text = emote;
+            text.visible = true;
+            text.x = 0;
+            text.y = baseY + Math.sin(Date.now() / 200) * 5; // Bobbing animation
+        } else {
+            text.visible = false;
         }
-
-        // Services & Happiness Issues
-        const flags = building.statusFlags;
-        // statusFlags bitmask definitions from types.ts
-        // 1 = NO_WATER, 2 = NO_POWER, 4 = NO_FOOD, 8 = NO_JOBS, 16 = UNHAPPY, 32 = ABANDONED
-        if ((flags & 1) !== 0) return '💧';
-        if ((flags & 2) !== 0) return '⚡';
-        if ((flags & 4) !== 0) return '🍞'; // Food
-        if ((flags & 8) !== 0) return '💼'; // Jobs
-        if ((flags & 16) !== 0) return '😡'; // Unhappy
-
-        return null;
     }
 
     static clearCache() {
         buildingCache.forEach(c => {
-            if (c.parent) {
-                c.parent.removeChild(c);
-            }
-            if (!c.destroyed) {
-                c.destroy({ children: true });
-            }
+            if (c.parent) c.parent.removeChild(c);
+            if (!c.destroyed) c.destroy({ children: true });
         });
         buildingCache.clear();
     }
 
-    /**
-     * Supprime visuellement le sprite du bâtiment
-     */
     static removeBuilding(index: number) {
         const container = buildingCache.get(index);
         if (container) {
-            if (container.parent) {
-                container.parent.removeChild(container);
-            }
-            if (!container.destroyed) {
-                container.destroy({ children: true });
-            }
+            if (container.parent) container.parent.removeChild(container);
+            if (!container.destroyed) container.destroy({ children: true });
             buildingCache.delete(index);
         }
     }
 
-    /**
-     * Joue l'effet de destruction (nuage de poussière)
-     */
     static playDemolitionFX(index: number, map: any) {
-        // Obtenir le premier conteneur parent (du building s'il existe encore dans le cache, sinon on calcule la position absolue)
         const cachedContainer = buildingCache.get(index);
-
-        let targetX = 0;
-        let targetY = 0;
-        let parentContainer: PIXI.Container | null = null;
-        let zIndex = 0;
+        let targetX = 0, targetY = 0, parentContainer: PIXI.Container | null = null, zIndex = 0;
 
         if (cachedContainer && cachedContainer.parent) {
             targetX = cachedContainer.x;
@@ -358,39 +177,18 @@ export class BuildingRenderer {
             parentContainer = cachedContainer.parent;
             zIndex = cachedContainer.zIndex + 0.1;
         } else {
-            // Calcul fallback si le conteneur a déjà été détruit ou n'existait pas en cache
-            const gridX = index % GRID_SIZE;
-            const gridY = Math.floor(index / GRID_SIZE);
-
-            // Calculer la projection isométrique manuellement si pas de container
-            const halfW = TILE_WIDTH / 2;
-            const halfH = TILE_HEIGHT / 2;
-
-            targetX = (gridX - gridY) * halfW;
-            targetY = (gridX + gridY) * halfH + halfH + SURFACE_Y_OFFSET;
+            const gridX = index % GRID_SIZE, gridY = Math.floor(index / GRID_SIZE);
+            targetX = (gridX - gridY) * (TILE_WIDTH / 2);
+            targetY = (gridX + gridY) * (TILE_HEIGHT / 2) + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET;
             zIndex = gridX + gridY + 0.5;
-
-            // On a besoin du conteneur parent du renderer pour ajouter le FX si on n'a pas le conteneur du batiment
-            // Hack : on va chercher un conteneur d'un autre batiment pour trouver le parent `world`
-            // Si on ne trouve rien, on abandonne
-            for (const [_, container] of buildingCache.entries()) {
-                if (container.parent) {
-                    parentContainer = container.parent;
-                    break;
-                }
+            for (const [_, c] of buildingCache.entries()) {
+                if (c.parent) { parentContainer = c.parent; break; }
             }
         }
 
         if (parentContainer) {
-            // Essayer de trouver la fxContainer s'il existe via la racine du monde (terrainContainerRef)
             const targetFxContainer = parentContainer.parent?.getChildByLabel("fxContainer") as PIXI.Container || parentContainer;
-
-            FXRenderer.playConstructionDust(
-                targetFxContainer,
-                targetX,
-                targetY,
-                zIndex
-            );
+            FXRenderer.playConstructionDust(targetFxContainer, targetX, targetY, zIndex);
         }
     }
 }

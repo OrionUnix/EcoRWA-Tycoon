@@ -17,7 +17,7 @@
             "name": "Loft Industriel",
             "desc": "Logement moderne en centre-ville. Yield constant."
         },
-        "bistrot": {
+        "bistro": {
             "name": "Bistrot Parisien",
             "desc": "Commerce de proximité très fréquenté."
         },
@@ -38,11 +38,6 @@
             "admin": "Approbation du 'Co-op Board' requise. Toiture refaite à neuf en 2022."
         },
         "bistro": {
-            "pros": "Zone Touristique Internationale (ZTI), flux piéton constant garantissant le CA.",
-            "cons": "Réglementation stricte : façade classée, accord des Bâtiments de France requis.",
-            "admin": "Bail commercial 3-6-9 sécurisé. DPE classe E : prévoir un budget d'isolation."
-        },
-        "bistrot": {
             "pros": "Zone Touristique Internationale (ZTI), flux piéton constant garantissant le CA.",
             "cons": "Réglementation stricte : façade classée, accord des Bâtiments de France requis.",
             "admin": "Bail commercial 3-6-9 sécurisé. DPE classe E : prévoir un budget d'isolation."

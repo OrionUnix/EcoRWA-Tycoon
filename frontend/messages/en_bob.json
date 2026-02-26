@@ -1,5 +1,10 @@
 {
   "greeting": "Hello Mayor! Welcome to your new land. You can test our building tools freely. Connect your wallet when you are ready!",
   "error_road": "Cannot build here, Mayor! The building must be adjacent to a road.",
-  "success_build": "Great job! This building will boost our economy."
+  "success_build": "Great job! This building will boost our economy.",
+  "rwa_congrat_title": "Excellent investment, Mayor!",
+  "rwa_congrat_body": "Your {name} is now in your portfolio! Place it on the map from your Inventory to activate a ≥2x Yield Bonus on the entire city's economy. The city is waiting for you!",
+  "rwa_place_title": "Place on Map",
+  "rwa_place_tooltip": "Click to place this building on the city map and activate the x2 Yield Bonus!",
+  "rwa_placed_confirm": "Building placed! x2 Yield Bonus is now active!"
 }

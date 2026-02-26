@@ -11,10 +11,24 @@ export class EconomySystem {
     private static readonly TAX_RATE_BASE = 10; // $ per citizen/job (Golden Ratio: 1 Inhabitant = 10$/h)
     private static readonly LEVEL_MULTIPLIERS: Record<number, number> = {
         1: 1.0,
-        2: 1.0, // Multiplier is 1.0 because the population scale naturally multiplies the tax (10 citizens = 10 * 10 = 100$)
+        2: 1.0,
         3: 1.0,
         4: 1.0
     };
+
+    // ✅ RWA Yield Multiplier — défaut 1.0, passe à 2.0 lors d'un placement RWA sur la map
+    public static rwaYieldMultiplier: number = 1.0;
+
+    /** Active le bonus x2 (appelé par RWABuildingSpawner lors du placement) */
+    public static activateRWABonus(): void {
+        this.rwaYieldMultiplier = 2.0;
+        console.log('💰 [EconomySystem] Bonus RWA x2 activé ! Tous les revenus sont doublés.');
+    }
+
+    /** Réinitialise le multiplicateur (utile pour les tests ou reset de partie) */
+    public static resetRWABonus(): void {
+        this.rwaYieldMultiplier = 1.0;
+    }
 
     // ✅ NOUVEAU: Taux d'exportation de base par cycle d'économie pour les industries extractives
 
@@ -124,8 +138,11 @@ export class EconomySystem {
             }
         });
 
-        // 3. Apply to Player Wallet
-        const totalIncome = residentialTax + commercialTax + industrialTax + tradeIncome + exportIncome;
+        // 3. Apply RWA Yield Multiplier → x2 bonus si un bâtiment RWA est placé sur la carte
+        const totalIncome = Math.floor(
+            (residentialTax + commercialTax + industrialTax + tradeIncome + exportIncome)
+            * this.rwaYieldMultiplier
+        );
         const totalExpenses = maintenanceCost;
         const netProfit = totalIncome - totalExpenses;
 

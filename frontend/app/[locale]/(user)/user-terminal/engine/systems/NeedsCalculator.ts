@@ -1,11 +1,6 @@
 /**
  * NeedsCalculator - Calculates resource needs based on population
  * 
- * Formulas:
- * - Food: 1 unit per inhabitant
- * - Water: 1 unit per inhabitant  
- * - Electricity: 0.5 units per inhabitant
- * - Jobs: 1 job per inhabitant
  */
 
 export interface CityNeeds {

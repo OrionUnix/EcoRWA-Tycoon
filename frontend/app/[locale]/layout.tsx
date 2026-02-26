@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Inter } from 'next/font/google';
 import { Web3Providers } from '@/components/providers/Web3Providers';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -33,6 +34,8 @@ export default async function LocaleLayout({
             </main>
           </Web3Providers>
         </NextIntlClientProvider>
+        {/* Vercel Analytics — no-op en local, actif uniquement en prod */}
+        <Analytics />
       </body>
     </html>
   );

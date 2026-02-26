@@ -17,7 +17,7 @@
             "name": "Industrial Loft",
             "desc": "Modern downtown housing. Steady yield."
         },
-        "bistrot": {
+        "bistro": {
             "name": "Parisian Bistro",
             "desc": "Highly frequented local business."
         },
@@ -38,11 +38,6 @@
             "admin": "Co-op Board approval required for major work. Roof entirely redone in 2022."
         },
         "bistro": {
-            "pros": "International Tourist Zone (ZTI), constant foot traffic guaranteeing steady revenue.",
-            "cons": "Strict regulations: listed historic facade, requires approval from heritage architects.",
-            "admin": "Secure 3-6-9 commercial lease. Energy class E: plan a budget for insulation."
-        },
-        "bistrot": {
             "pros": "International Tourist Zone (ZTI), constant foot traffic guaranteeing steady revenue.",
             "cons": "Strict regulations: listed historic facade, requires approval from heritage architects.",
             "admin": "Secure 3-6-9 commercial lease. Energy class E: plan a budget for insulation."
