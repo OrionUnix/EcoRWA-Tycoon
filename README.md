@@ -1,82 +1,73 @@
-🏙️ EcoRWA Tycoon
+# 🏙️ EcoRWA Tycoon
 
 **Gamifying Real World Assets on Avalanche.**
 *SimCity meets Real Estate Investment.*
 
+🔗 **[Play the Live Demo (Vercel)](https://eco-rwa-tycoon.vercel.app/)**
+🎬 **[Watch the Video Pitch](https://youtu.be/Xss202BzPhk?si=MdPvpsbg_zuPfvp4)**
+
 ---
 
 ## 📖 Project Overview
-**EcoRWA Tycoon**  is a decentralized crowdfunding platform that makes investing in Real World Assets (RWA) as simple and engaging as playing a city-building game. We solve the three primary barriers to real estate entry:
+**EcoRWA Tycoon** is a decentralized crowdfunding platform that makes investing in Real World Assets (RWA) as simple and engaging as playing a city-building game. We solve the three primary barriers to real estate entry:
 
-1.  **Complexity:** We use **AI** to analyze complex legal documents (PLU/Zoning laws) and translate them into simple game tips (Risks/Rewards).
-2.  **Cost:** We use **Fractionalization (ERC-1155)** on Avalanche to allow investment starting at $50.
-3.  **Boredom:** We turn passive income into a gamified "Tycoon" experience with visual progression.
+1. **Complexity:** We use **AI** to analyze complex legal documents (PLU/Zoning laws) and translate them into simple game tips (Risks/Rewards).
+2. **Cost:** We use **Fractionalization (ERC-1155)** on Avalanche to allow investment starting at $50.
+3. **Boredom:** We turn passive income into a gamified "Tycoon" experience with visual progression and interactive governance.
+
+---
 
 ## 🎯 Market Analysis & Value Proposition
+
 ### The Problem with Current RWA Platforms
-
-Existing platforms like **RealT** have pioneered the tokenization of real estate, but they face several challenges that **EcoRWA Tycoon** aims to solve:
-
-1.  **Passive vs. Active Management:** Most platforms offer a "set and forget" model where investors have zero say in the asset's lifecycle.
-    
-2.  **Transparency & Compliance:** Issues with local tax compliance and property management often arise due to a lack of community oversight.
-    
-3.  **High Barriers to Entry & Education:** Real estate remains intimidating. Many potential users are afraid to invest because they don't understand the underlying legal and financial mechanisms (e.g., SCI in France, REITs in the US).
+Existing platforms like **RealT** have pioneered the tokenization of real estate, but they face several challenges:
+* **Passive Management:** Most platforms offer a "set and forget" model where investors have zero say in the asset's lifecycle.
+* **Transparency Issues:** Local property management issues often arise due to a lack of community oversight.
+* **High Barriers to Education:** Real estate remains intimidating. Users are afraid to invest because they don't understand the underlying legal mechanisms.
 
 ### Our Solution: The "Active Tycoon" Model
-
 EcoRWA Tycoon shifts the paradigm from passive holding to **Active Governance and Education**:
+* 🏛️ **Interactive Governance (DAO):** Users don't just hold tokens; they vote on-chain for property improvements or management decisions that impact the asset.
+* 🤖 **AI-Powered Due Diligence:** We bridge the gap between complex legal zoning (PLU) and investors by using AI to summarize risks before they invest.
+* 🎮 **Educational "Learn-to-Invest" Mode:** Users can learn the fundamentals of real estate—understanding yields and spotting zoning traps—in a risk-free, gamified environment using Mock Tokens.
 
--   **Interactive Governance:** Unlike passive platforms, our users don't just hold tokens; they participate in a gamified ecosystem where they can visualize the impact of their assets on the local "Parse City" map.
-    
--   **AI-Powered Due Diligence:** We bridge the gap between complex legal zoning (PLU) and investors by using AI to summarize risks. This ensures users are aware of property-specific issues (taxes, roadworks, zoning changes) before they invest.
-    
--   **Educational "Learn-to-Invest" Mode:** For users who cannot or are not yet ready to invest real capital, EcoRWA Tycoon offers a simulated gaming experience. They can learn the fundamentals of real estate—understanding yields, spotting zoning traps, and managing property risks—in a risk-free environment. This creates a pipeline of educated future investors.
-    
--   **Community Voting:** We empower token holders to vote on property improvements or management decisions, ensuring a decentralized and transparent oversight mechanism.
-    
-    ### 📊 Comparative Summary
+### 📊 Comparative Summary
 
-Feature
-Traditional SCI / REIT
-Passive Tokenization (RealT)
-EcoRWA Tycoon
+| Feature | Traditional SCI / REIT | Passive Tokenization (RealT) | 🌟 EcoRWA Tycoon |
+| :--- | :--- | :--- | :--- |
+| **Liquidity** | Low (Months) | Medium (Days) | **High (Instant / Gamified OTC)** |
+| **Governance** | None/Centralized | Limited | **Active On-Chain DAO** |
+| **Accessibility**| High Entry Cost | $50+ | **$50+ & Free Educational Mode** |
+| **Transparency** | Annual Reports | Blockchain Explorer | **AI-Verified & Visual Map** |
+| **Education** | None | Limited | **Gamified Risk Simulation** |
 
-**Liquidity**
-Low (Months)
-Medium (Days)
+---
 
-**High (Instant)**
+## 🛠️ MVP MoSCoW Analysis (March 9 Target)
 
-**Governance**
-None/Centralized
-Limited
+To ensure a focused and functional prototype for the Hackathon evaluation, we applied the MoSCoW framework:
 
-**Active/On-Chain**
+* 🔴 **Must Have (Core Infrastructure):**
+  * Avalanche Smart Contracts (ERC-1155 fractional shares & Yield Vault).
+  * Web3 Wallet Connection (RainbowKit) & true transaction signing.
+  * Interactive Dashboard showing live accumulating yield and on-chain ledger.
+  * Live deployment accessible to judges (Vercel).
+* 🟠 **Should Have (UX & Gamification):**
+  * 2D Isometric City Map rendering (PixiJS) for visual asset location.
+  * Active DAO Governance system with individualized crisis scenarios (Yes/No impact).
+* 🟡 **Could Have (Polish & Scalability):**
+  * Local state/Cloud persistence for cross-session gameplay.
+  * Dynamic OTC Secondary Market reacting to DAO votes.
+  * Real-time LLM API integration for the "Jordan" AI Advisor.
+* ⚪ **Won't Have (Out of Scope for MVP):**
+  * Mainnet deployment with real user funds.
+  * Fully compliant KYC/AML integration.
+  * Multiplayer MMO features.
 
-**Accessibility**
-
-High Entry Cost
-$50+
-
-**$50+ & Free Educational Mode**
-
-**Transparency**
-
-Annual Reports
-Blockchain Explorer
-
-**AI-Verified & Map-Based**
-
-**Education**
-
-None
-Limited
-
-**Gamified Learning & Risk Simulation**
+---
 
 ## 🚀 Key Features
-* **🎮 Interactive Map:** Browse "Parse City" and select buildings visually.
+* **🎮 Interactive Map:** Browse "Parse City" and select buildings visually in a 2D isometric space.
 * **🤖 AI Urban Advisor:** An AI agent analyzes real-world Zoning Plans (PLU) to warn users about risks (e.g., "Roadworks ahead") or opportunities.
 * **💸 One-Click Investing:** Purchase fractional ownership using MockUSDC on the Avalanche C-Chain.
 * **📈 Live Yield System:** Watch your rental income grow in real-time (accelerated for the demo).
@@ -84,7 +75,7 @@ Limited
 
 ---
 
-## 🛠️ Tech Stack
+## 💻 Tech Stack
 
 ### Blockchain & Smart Contracts
 * **Network:** Avalanche C-Chain (Fuji Testnet)
@@ -92,55 +83,27 @@ Limited
 * **Framework:** Foundry
 * **Standards:** ERC-1155 (Fractional Real Estate), ERC-20 (Payment)
 
-### Frontend & Integration
+### Frontend & Game Engine
 * **Framework:** Next.js 14 (React)
-* **Web3:** RainbowKit + Wagmi + Viem
-* **Wallet:** Core Wallet Support
-* **AI:** OpenAI API (for PLU text analysis)
-* **Localization:** ``` next-intl ```
-* **Animations:** Framer Motion (for premium "Tycoon" UI effects)
+* **Game Engine:** PixiJS (WebGL 2D Isometric Rendering)
+* **Web3 Integration:** RainbowKit + Wagmi + Viem
+* **Localization:** `next-intl` (English / French)
+* **UI/UX:** TailwindCSS + Framer Motion
+
 ---
 
 ## 📦 Smart Contracts (Fuji Testnet)
 
 | Contract | Address | Description |
 | :--- | :--- | :--- |
-| **EcoRWATycoon** | `0x3eb8fe6dB6F6cbD4038ddAB73E05D57C8c70C11A`  | Main logic: Minting, Yield, Whitelist |
-| **MockUSDC** | `0x91d5F6B2458ea9f060EDAD50794cc79E7Ec30cE0`  | Faucet token for testing investment |
+| **EcoRWATycoon Vault** | `0x3eb8fe6dB6F6cbD4038ddAB73E05D57C8c70C11A` | Main logic: Minting, Yield, Whitelist |
+| **MockUSDC** | `0x91d5F6B2458ea9f060EDAD50794cc79E7Ec30cE0` | Faucet token for testing investment |
 
 ---
 
-## ⚡ Getting Started
+## ⚡ Getting Started (Local Development)
 
-1.  **Install dependencies:**
-    
-    ```
-    npm install
-    
-    ```
-    
-2.  **Launch development server:**
-    
-    ```
-    npm run dev
-    
-    ```
-    
-3.  **Build for production (Static Export):**
-    
-    ```
-    npm run build
-    
-    ```
-    
-    _Note: The project is configured with `output: export`. Access localized versions at `/en/` or `/fr/`._
-    
-    ## 🛣️ Roadmap & Future Improvements
-
--   [ ] **Multi-Subnet Deployment:** Expansion toward permissioned Avalanche Subnets for regulatory compliance.
-    
--   [ ] **Advanced 3D City:** Integration of Three.js for immersive 3D visualization of owned assets.
-    
--   [ ] **Secondary Market:** Peer-to-peer marketplace for trading asset fractions.
-    
--   [ ] **AI Portfolio Manager:** Personalized investment strategies based on user risk profiles.
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/OrionUnix/EcoRWA-Tycoon.git](https://github.com/OrionUnix/EcoRWA-Tycoon.git)
+   cd EcoRWA-Tycoon/frontend
