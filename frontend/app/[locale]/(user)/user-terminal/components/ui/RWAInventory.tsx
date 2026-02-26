@@ -102,8 +102,7 @@ export const RWAInventory: React.FC = () => {
     const getAssetDetails = (id: number) => {
         switch (id) {
             case 1: return { key: 'loft', apy: '4.2%', totalShares: 10000, loc: 'New York', price: '$14 230', vac: '1.5%', pop: '8.3M', cost: 150 };
-            // 🔥 CORRECTION ICI : "bistro" au lieu de "bistrot" pour matcher le JSON
-            case 2: return { key: 'bistro', apy: '7.8%', totalShares: 5000, loc: 'Paris', price: '10 580 €', vac: '2.8%', pop: '2.1M', cost: 100 };
+            case 2: return { key: 'bistrot', apy: '7.8%', totalShares: 5000, loc: 'Paris', price: '10 580 €', vac: '2.8%', pop: '2.1M', cost: 100 };
             case 3: return { key: 'tower', apy: '6.5%', totalShares: 20000, loc: 'Paris', price: '11 200 €', vac: '1.2%', pop: '2.1M', cost: 250 };
             default: return { key: 'loft', apy: '0.0%', totalShares: 1000, loc: 'Unknown', price: '-', vac: '-', pop: '-', cost: 100 };
         }
@@ -162,9 +161,9 @@ export const RWAInventory: React.FC = () => {
         <>
             <div className="fixed bottom-20 right-8 z-[100] flex items-end gap-2 pointer-events-auto">
                 <AnimatePresence>
-                    {inventory.map((item) => (
+                    {inventory.map((item, index) => (
                         <motion.div
-                            key={item.uniqueKey}
+                            key={item.uniqueKey || `inventory-item-${index}`} // 🛡️ Sécurité de clé
                             initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0 }}
                             className={`relative w-16 h-20 bg-[#1e293b] border-4 ${borderColors[item.colorTheme] || 'border-gray-500'} rounded-lg shadow-[0_10px_20px_rgba(0,0,0,0.5)] flex items-center justify-center group cursor-pointer hover:-translate-y-2 transition-transform`}
                             onClick={() => setSelectedItem(item)}
@@ -185,6 +184,7 @@ export const RWAInventory: React.FC = () => {
             <AnimatePresence>
                 {selectedItem && (
                     <motion.div
+                        key="dashboard-modal" // 🛡️ Clé Framer Motion
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pointer-events-auto"
                     >
@@ -234,7 +234,11 @@ export const RWAInventory: React.FC = () => {
 
                                         <AnimatePresence>
                                             {claimStatus && (
-                                                <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute bottom-2 text-[10px] text-yellow-400 font-bold uppercase tracking-wider">
+                                                <motion.p
+                                                    key="claim-status-toast" // 🛡️ Clé Framer Motion
+                                                    initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                                                    className="absolute bottom-2 text-[10px] text-yellow-400 font-bold uppercase tracking-wider"
+                                                >
                                                     {claimStatus}
                                                 </motion.p>
                                             )}
@@ -350,7 +354,6 @@ export const RWAInventory: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            {/* 🔥 CORRECTION DE LA TXID GOUVERNANCE ICI 🔥 */}
                                             {localStorage.getItem(`gov_done_${selectedItem.id}`) === 'true' && (
                                                 <div className="bg-gray-800 border border-gray-700 p-2.5 rounded-lg flex justify-between items-center">
                                                     <span className="text-xs font-bold text-purple-400">{tInv('tx_gov')}</span>
@@ -377,6 +380,7 @@ export const RWAInventory: React.FC = () => {
             <AnimatePresence>
                 {showGovernance && govTargetItem && (
                     <motion.div
+                        key="gov-modal" // 🛡️ Clé Framer Motion
                         initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: 50 }}
                         className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 pointer-events-auto"
                     >
@@ -412,6 +416,7 @@ export const RWAInventory: React.FC = () => {
                                     <AnimatePresence>
                                         {showGovDetails && !voteSuccess && !isTypingGov && (
                                             <motion.div
+                                                key="gov-details-panel" // 🛡️ Clé Framer Motion
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
                                                 exit={{ opacity: 0, height: 0 }}

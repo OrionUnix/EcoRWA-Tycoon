@@ -42,6 +42,11 @@
             "cons": "Réglementation stricte : façade classée, accord des Bâtiments de France requis.",
             "admin": "Bail commercial 3-6-9 sécurisé. DPE classe E : prévoir un budget d'isolation."
         },
+        "bistrot": {
+            "pros": "Zone Touristique Internationale (ZTI), flux piéton constant garantissant le CA.",
+            "cons": "Réglementation stricte : façade classée, accord des Bâtiments de France requis.",
+            "admin": "Bail commercial 3-6-9 sécurisé. DPE classe E : prévoir un budget d'isolation."
+        },
         "eco": {
             "pros": "Certification HQE/LEED. Attire des locataires premiums (ESG).",
             "cons": "Frais de maintenance très élevés pour les panneaux solaires.",

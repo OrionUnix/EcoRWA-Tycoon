@@ -42,6 +42,11 @@
             "cons": "Strict regulations: listed historic facade, requires approval from heritage architects.",
             "admin": "Secure 3-6-9 commercial lease. Energy class E: plan a budget for insulation."
         },
+        "bistrot": {
+            "pros": "International Tourist Zone (ZTI), constant foot traffic guaranteeing steady revenue.",
+            "cons": "Strict regulations: listed historic facade, requires approval from heritage architects.",
+            "admin": "Secure 3-6-9 commercial lease. Energy class E: plan a budget for insulation."
+        },
         "eco": {
             "pros": "LEED environmental certification. Attracts premium corporate tenants (ESG criteria).",
             "cons": "Very high maintenance costs for solar panels and advanced ventilation systems.",

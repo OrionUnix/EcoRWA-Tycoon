@@ -2,22 +2,15 @@ import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin();
-const isProd = process.env.NODE_ENV === 'production';
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
-  output: 'export', 
-  
 
+  // Vercel gère le rendu SSR/SSG nativement.
+  // Pas besoin de 'output: export', basePath, assetPrefix ou trailingSlash.
   images: {
-    unoptimized: true,
+    unoptimized: true, // Garder true si les assets sont dans /public (pas de domaine externe)
   },
-
-  // Configuration pour GitHub Pages
-  basePath: isProd ? '/EcoRWA-Tycoon' : '',
-  assetPrefix: isProd ? '/EcoRWA-Tycoon/' : '', 
-  
-  trailingSlash: true,
 };
 
 export default withNextIntl(nextConfig);
