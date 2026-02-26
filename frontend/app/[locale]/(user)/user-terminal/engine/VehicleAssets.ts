@@ -12,8 +12,13 @@ export enum VehicleType {
     FREIGHT_TRAIN = 'FREIGHT_TRAIN'
 }
 
+const globalForVehicleAssets = globalThis as unknown as { textureCache: Map<string, PIXI.Texture> };
+if (!globalForVehicleAssets.textureCache) {
+    globalForVehicleAssets.textureCache = new Map<string, PIXI.Texture>();
+}
+
 export class VehicleAssets {
-    private static textureCache = new Map<string, PIXI.Texture>();
+    private static textureCache = globalForVehicleAssets.textureCache;
     private static _loaded = false;
 
     static async load(app?: PIXI.Application) {

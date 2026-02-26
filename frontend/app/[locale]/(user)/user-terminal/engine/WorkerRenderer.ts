@@ -13,8 +13,14 @@ const WORKER_COLORS: { [key: number]: number } = {
     [WorkerType.LUMBERJACK]: 0xB22222 // FireBrick
 };
 
+const globalForWorker = globalThis as unknown as { spriteCache: Map<number, PIXI.Graphics> };
+if (!globalForWorker.spriteCache) {
+    globalForWorker.spriteCache = new Map<number, PIXI.Graphics>();
+}
+
 export class WorkerRenderer {
-    private static spriteCache: Map<number, PIXI.Graphics> = new Map();
+    // 1 Worker = 1 PIXI.Graphics (Point Coloré)
+    private static spriteCache: Map<number, PIXI.Graphics> = globalForWorker.spriteCache;
     private static query = defineQuery([Worker, Position, Renderable]);
 
     static render(container: PIXI.Container, zoomLevel: number) {

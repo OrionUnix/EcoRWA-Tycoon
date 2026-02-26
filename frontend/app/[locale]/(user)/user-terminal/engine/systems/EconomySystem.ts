@@ -174,7 +174,7 @@ export class EconomySystem {
         map.stats.budget.maintenance = maintenanceCost;
         map.stats.budget.maintenanceDetail = maintenanceDetail;
 
-        console.log(`💵 Economy Tick: Profit ${netProfit} (Inc: ${totalIncome}, Exp: ${totalExpenses})`);
+        // Removed console log to avoid spam
     }
 
     /**

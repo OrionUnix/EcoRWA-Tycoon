@@ -10,7 +10,11 @@ import { asset } from '../../../utils/assetUtils';
 // 2. Fallback sur le Spritesheet interne de l'Engine
 // ═══════════════════════════════════════════════════════
 
-const rwaTextureCache = new Map<string, PIXI.Texture>();
+const globalForRWATextures = globalThis as unknown as { rwaTextureCache: Map<string, PIXI.Texture> };
+if (!globalForRWATextures.rwaTextureCache) {
+    globalForRWATextures.rwaTextureCache = new Map<string, PIXI.Texture>();
+}
+const rwaTextureCache = globalForRWATextures.rwaTextureCache;
 
 export class BuildingTextureResolver {
 

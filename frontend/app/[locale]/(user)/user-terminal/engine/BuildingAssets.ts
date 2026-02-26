@@ -145,9 +145,14 @@ export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
 };
 
 
+const globalForBuildingAssets = globalThis as unknown as { textures: Map<string, PIXI.Texture> };
+if (!globalForBuildingAssets.textures) {
+    globalForBuildingAssets.textures = new Map<string, PIXI.Texture>();
+}
+
 export class BuildingAssets {
     private static _loaded = false;
-    public static textures: Map<string, PIXI.Texture> = new Map();
+    public static textures: Map<string, PIXI.Texture> = globalForBuildingAssets.textures;
 
     static async load(): Promise<void> {
         if (this._loaded) return;

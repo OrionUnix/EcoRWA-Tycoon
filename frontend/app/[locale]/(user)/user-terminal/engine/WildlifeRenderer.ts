@@ -7,7 +7,11 @@ import { asset } from '../utils/assetUtils';
 // WildlifeRenderer — Faune Animée (Gibier)
 // ═══════════════════════════════════════════════════════
 
-const wildlifeCache = new Map<number, PIXI.AnimatedSprite>();
+const globalForWildlife = globalThis as unknown as { wildlifeCache: Map<number, PIXI.AnimatedSprite> };
+if (!globalForWildlife.wildlifeCache) {
+    globalForWildlife.wildlifeCache = new Map<number, PIXI.AnimatedSprite>();
+}
+const wildlifeCache = globalForWildlife.wildlifeCache;
 
 // ✅ NOUVELLE CONFIGURATION : Nombre exact de frames calculées
 const ANIMAL_CONFIG = {

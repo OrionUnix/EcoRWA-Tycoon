@@ -4,7 +4,11 @@ import { MapEngine } from './MapEngine';
 import { BiomeType } from './types';
 import { TILE_HEIGHT, GRID_SIZE, TILE_WIDTH, SURFACE_Y_OFFSET } from './config';
 import { asset } from '../utils/assetUtils';
-const resourceCache = new Map<number, PIXI.Sprite>();
+const globalForResources = globalThis as unknown as { resourceCache: Map<number, PIXI.Sprite> };
+if (!globalForResources.resourceCache) {
+    globalForResources.resourceCache = new Map<number, PIXI.Sprite>();
+}
+const resourceCache = globalForResources.resourceCache;
 
 // Cache des textures arbres (chargées une fois)
 let treeTexturesCache: PIXI.Texture[] | null = null;

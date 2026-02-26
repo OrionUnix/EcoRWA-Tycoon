@@ -14,7 +14,11 @@ const SURFACE_Y_OFFSET = 0;
 // S'occupe du positionnement global, Z-Sorting et HitBox
 // ═══════════════════════════════════════════════════════
 
-const buildingCache = new Map<number, PIXI.Container>();
+const globalForBuildings = globalThis as unknown as { buildingCache: Map<number, PIXI.Container> };
+if (!globalForBuildings.buildingCache) {
+    globalForBuildings.buildingCache = new Map<number, PIXI.Container>();
+}
+const buildingCache = globalForBuildings.buildingCache;
 
 export class BuildingRenderer {
     static drawTile(

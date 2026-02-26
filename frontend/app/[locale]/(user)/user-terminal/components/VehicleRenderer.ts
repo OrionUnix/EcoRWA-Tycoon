@@ -6,17 +6,19 @@ import { TILE_WIDTH, TILE_HEIGHT, SURFACE_Y_OFFSET } from '../engine/config';
 
 export const VEHICLE_SCALE = 0.3; // Constante modifiable pour l'échelle globale des véhicules
 
-const vehicleCache = new Map<number, PIXI.Sprite>();
+const globalForVehicles = globalThis as unknown as { vehicleCache: Map<number, PIXI.Sprite> };
+if (!globalForVehicles.vehicleCache) {
+    globalForVehicles.vehicleCache = new Map<number, PIXI.Sprite>();
+}
+const vehicleCache = globalForVehicles.vehicleCache;
 
 export class VehicleRenderer {
 
     static drawVehicles(container: PIXI.Container, engine: MapEngine, zoomLevel: number) {
         if (!engine.vehicles) return;
 
-        // DEBUG: Vérifier le nombre de véhicules (1x/sec environ)
-        if (Math.random() < 0.01) {
-            console.log(`🚗 [VehicleRenderer] Drawing ${engine.vehicles.length} vehicles on container`, container.label || "Unnamed");
-        }
+        // DEBUG: Vérifier le nombre de véhicules
+        // Removed console log to avoid spam
 
         // 1. Mark all as unused (to detect deletions)
         const activeIds = new Set<number>();
