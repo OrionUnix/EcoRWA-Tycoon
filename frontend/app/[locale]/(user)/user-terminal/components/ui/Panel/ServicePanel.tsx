@@ -12,9 +12,10 @@ interface ServicePanelProps {
     color: string;
     onClose: () => void;
     children: React.ReactNode;
+    width?: string; // e.g. 'w-[800px]' or 'max-w-4xl'
 }
 
-export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, onClose, children }) => {
+export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, onClose, children, width = 'w-[420px]' }) => {
     return (
         <div
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] pointer-events-auto"
@@ -24,7 +25,7 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
             <div className="fixed inset-0 -z-10" style={{ background: 'rgba(0,0,0,0.3)' }} onClick={onClose} />
 
             <GlassPanel variant="sub" className="p-0 overflow-hidden max-h-[80vh] flex flex-col">
-                <div className="flex flex-col w-[420px] max-h-[80vh]">
+                <div className={`flex flex-col ${width} max-h-[80vh]`}>
 
                     {/* ═══ HEADER ═══ */}
                     <div

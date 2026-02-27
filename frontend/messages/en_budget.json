@@ -1,0 +1,32 @@
+{
+    "title": "CITY BUDGET",
+    "advisorMessage": "Keep a close eye on your budget! You are in the red.\nOptions: (1) Cut services. (2) Raise taxes. (3) Zone RCI and wait.",
+    "advisorTitle": "Finance Advisor:",
+    "taxWarning": "\"Higher taxes increase immediate revenue but severely decrease long-term commercial growth and RWA investments.\"",
+    "headers": {
+        "expenses": "EXPENSES",
+        "revenues": "REVENUES",
+        "taxes": "TAXES"
+    },
+    "categories": {
+        "residential": "Residential",
+        "commercial": "Commercial",
+        "industrial": "Industrial",
+        "energy": "Power",
+        "water": "Water",
+        "roads": "Roads",
+        "health": "Health",
+        "fire": "Fire",
+        "police": "Police",
+        "education": "Education",
+        "parks": "Parks",
+        "rwaYields": "RWA Yields",
+        "exports": "Exports",
+        "government": "Government"
+    },
+    "summary": {
+        "subtotal": "Subtotal (/Hour)",
+        "netProfitLoss": "Net Profit/Loss",
+        "treasury": "TREASURY"
+    }
+}

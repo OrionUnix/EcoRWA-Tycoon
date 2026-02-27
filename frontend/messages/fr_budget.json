@@ -1,0 +1,32 @@
+{
+    "title": "BUDGET DE LA VILLE",
+    "advisorMessage": "Gardez un œil sur votre budget ! Vous êtes dans le rouge.\nOptions : (1) Couper les services. (2) Augmenter les taxes. (3) Zoner RCI et attendre.",
+    "advisorTitle": "Conseiller Financier :",
+    "taxWarning": "« Des taxes élevées augmentent les revenus immédiats mais réduisent fortement la croissance commerciale et les investissements RWA. »",
+    "headers": {
+        "expenses": "DÉPENSES",
+        "revenues": "REVENUS",
+        "taxes": "TAXES"
+    },
+    "categories": {
+        "residential": "Résidentiel",
+        "commercial": "Commercial",
+        "industrial": "Industriel",
+        "energy": "Énergie",
+        "water": "Eau",
+        "roads": "Routes",
+        "health": "Santé",
+        "fire": "Feu",
+        "police": "Police",
+        "education": "Éducation",
+        "parks": "Parcs",
+        "rwaYields": "Rendus RWA",
+        "exports": "Exportations",
+        "government": "Gouvernement"
+    },
+    "summary": {
+        "subtotal": "Sous-total (/Heure)",
+        "netProfitLoss": "Profit/Perte",
+        "treasury": "TRÉSORERIE"
+    }
+}

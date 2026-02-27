@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: 'PixelifyMedium';
-  src: url('/data/font/PixelifySans-Medium.ttf') format('truetype');
+  font-family: 'Jersey10';
+  src: url('/data/font/Jersey10-Regular.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'PixelifyBold';
-  src: url('/data/font/PixelifySans-Bold.ttf') format('truetype');
+  font-family: 'Jersey10';
+  src: url('/data/font/Jersey10-Regular.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
 
 body {
-  font-family: 'PixelifyMedium', sans-serif;
+  font-family: 'Jersey10', sans-serif;
 }
 
 button,
+input,
+textarea,
 .font-bold {
-  font-family: 'PixelifyBold', sans-serif;
+  font-family: 'Jersey10', sans-serif;
 }
 
 @theme inline {
