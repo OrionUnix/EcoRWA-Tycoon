@@ -1,11 +1,6 @@
 import UserTerminalClient from './components/UserTerminalClient';
 
-export function generateStaticParams() {
-    return [
-        { locale: 'en' },
-        { locale: 'fr' }
-    ];
-}
+export const dynamic = 'force-dynamic';
 
 export default function UserTerminalGame() {
     return <UserTerminalClient />;

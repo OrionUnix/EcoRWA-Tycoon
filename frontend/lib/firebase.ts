@@ -11,15 +11,19 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase (singleton pattern to avoid errors in Next.js hot-reloading)
-let app;
-if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-} else {
-    app = getApp();
-}
+let app: any = null;
+let auth: any = null;
+let db: any = null;
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+if (firebaseConfig.apiKey) {
+    if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
+    }
+
+    auth = getAuth(app);
+    db = getFirestore(app);
+}
 
 export { app, auth, db };
