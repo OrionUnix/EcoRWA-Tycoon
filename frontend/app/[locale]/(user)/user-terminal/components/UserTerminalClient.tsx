@@ -19,12 +19,16 @@ import { SaveSystem } from '../engine/systems/SaveSystem';
 
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
-import ChunkExpandOverlay from '../components/ui/ChunkExpandOverlay';
+import ChunkExpandOverlay from './ui/overlay/ChunkExpandOverlay';
 import { useECS } from '../hooks/useECS';
-import { TopBar } from '../components/ui/TopBar';
-import { AdvisorWidget } from '../components/ui/AdvisorWidget';
-import { GameOnboarding } from '../components/ui/GameOnboarding';
-import { BobWarningModal } from '../components/ui/BobWarningModal';
+import { TopBar } from './ui/hud/TopBar';
+import { AdvisorWidget } from './ui/npcs/AdvisorWidget';
+import { GameOnboarding } from './ui/overlay/GameOnboarding';
+import { BobWarningModal } from './ui/npcs/BobWarningModal';
+import { useFirebaseWeb3Auth } from '../hooks/web3/useFirebaseWeb3Auth';
+import { SoftWelcomeModal } from './ui/overlay/SoftWelcomeModal';
+import { SimCityLoader } from './ui/overlay/SimCityLoader';
+import { JordanPitchModal } from './ui/npcs/JordanPitchModal';
 
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
@@ -39,13 +43,48 @@ export default function UserTerminalClient() {
 
     const { isConnected, address } = useAccount();
 
-    // ✅ Wallet-gate : active/désactive la sauvegarde selon la connexion
+    const prevIsConnectedRef = useRef(isConnected);
+    const [isSavingDisconnect, setIsSavingDisconnect] = useState(false);
+    const [isDemoMode, setIsDemoMode] = useState(false);
+    const [showJordanPitch, setShowJordanPitch] = useState(false);
+
+    const [assetsLoaded, setAssetsLoaded] = useState(false);
+    const { loginAndLoadSave, isAuthenticating } = useFirebaseWeb3Auth();
+
+    // ✅ Déconnexion : On sauvegarde la partie en cours sur le Cloud (plus en Local)
     useEffect(() => {
+        if (prevIsConnectedRef.current && !isConnected && assetsLoaded && address) {
+            console.log("🔌 Déconnexion détectée. Sauvegarde Cloud forcée...");
+            SaveSystem.saveToCloud(getGameEngine().map, address).then(() => {
+                SaveSystem.clearDirty();
+            });
+            setIsSavingDisconnect(true);
+            setTimeout(() => {
+                setIsSavingDisconnect(false);
+            }, 2000); // Animation de 2s
+        }
         SaveSystem.setWalletConnected(isConnected);
-    }, [isConnected]);
+        prevIsConnectedRef.current = isConnected;
+    }, [isConnected, assetsLoaded, address]);
+
+    // ✅ Auto-Save Périodique (Mode Production)
+    // Sauvegarde automatiquement sur le cloud toutes les 120 secondes si la partie a été modifiée
+    useEffect(() => {
+        if (!isConnected || !address || !assetsLoaded || isDemoMode) return;
+
+        const interval = setInterval(() => {
+            if (SaveSystem.isDirty) {
+                console.log("⏱️ Auto-Save Cloud en cours...");
+                SaveSystem.saveToCloud(getGameEngine().map, address).then(() => {
+                    SaveSystem.clearDirty();
+                });
+            }
+        }, 120000); // 120 secondes (2 minutes)
+
+        return () => clearInterval(interval);
+    }, [isConnected, address, assetsLoaded, isDemoMode]);
 
     // 2. ÉTATS DE JEU
-    const [assetsLoaded, setAssetsLoaded] = useState(false);
     const [isReloading, setIsReloading] = useState(false);
     const [viewMode, setViewMode] = useState('ALL');
     const [selectedRoad, setSelectedRoad] = useState(RoadType.DIRT);
@@ -108,17 +147,53 @@ export default function UserTerminalClient() {
         }
     }, [isReady, assetsLoaded]);
 
-    // 5. RÉGÉNÉRATION DU BIOME SUR CONNEXION WEB3
+    // 5. RÉGÉNÉRATION DU BIOME SUR ATTENTE
+    // Actuellement on génère le monde directement ou charge la save si connecté.
+    const lastGeneratedAddress = useRef<string | null>(null);
+
     useEffect(() => {
-        if (isReady && assetsLoaded && isConnected && address) {
+        const initGame = async () => {
+            if (!assetsLoaded || !isReady || !viewportRef.current) return;
+
+            const currentTarget = isConnected && address ? address : "0xDEMO";
+            if (lastGeneratedAddress.current === currentTarget) return;
+
             const engine = getGameEngine();
-            engine.map.generateWorld(address);
+
+            if (isConnected && address) {
+                // IMPORTANT : Si isAuthenticating est en cours, la restoration est couverte par le loader.
+                const saveData = await loginAndLoadSave();
+
+                if (saveData) {
+                    // On a une sauvegarde, on génère d'abord puis on restaure par dessus
+                    engine.map.generateWorld(address);
+                    const restored = SaveSystem.restoreIntoEngine(engine.map, saveData);
+                    if (restored) {
+                        require('../engine/systems/PopulationManager').PopulationManager.initialize(engine.map);
+                        SaveSystem.clearDirty();
+                    }
+                } else {
+                    // Aucune sauvegarde: Monde 100% Neuf
+                    engine.map.generateWorld(address);
+                }
+                setIsDemoMode(false);
+            } else {
+                engine.map.generateWorld("0xDEMO");
+                setIsDemoMode(true);
+            }
+
             engine.map.calculateSummary();
             setSummary(engine.map.currentSummary);
             engine.map.revision++;
             setViewMode(prev => prev);
+            lastGeneratedAddress.current = currentTarget;
+        };
+
+        // Bloquer initGame TANT QUE 'isAuthenticating' est true, pour laisser le loader affiché
+        if (!isAuthenticating && !isSavingDisconnect) {
+            initGame();
         }
-    }, [isReady, assetsLoaded, isConnected, address]);
+    }, [assetsLoaded, isReady, isConnected, address, isAuthenticating, isSavingDisconnect, loginAndLoadSave]);
 
     // 6. SAUVEGARDE DE LA CAMÉRA
     useEffect(() => {
@@ -152,22 +227,30 @@ export default function UserTerminalClient() {
     // ✅ NOUVEAU: Écoute de l'événement d'équipement RWA depuis l'inventaire
     useEffect(() => {
         const handleEquip = (e: Event) => {
+            if (isDemoMode || !isConnected) {
+                setShowJordanPitch(true);
+                return;
+            }
             const detail = (e as CustomEvent).detail;
             const engine = getGameEngine();
             engine.currentRwaPayload = detail;
             setViewMode('BUILD_RWA');
         };
-        // ✅ Écoute du DataLayer ressource pour les icônes de minerais
         const handleResourceLayer = (e: Event) => {
             setActiveResourceLayer((e as CustomEvent).detail ?? null);
         };
+        const handleJordanPitch = () => setShowJordanPitch(true);
+
         window.addEventListener('equip_rwa_building', handleEquip);
         window.addEventListener('set_resource_layer', handleResourceLayer);
+        window.addEventListener('request_jordan_pitch', handleJordanPitch);
+
         return () => {
             window.removeEventListener('equip_rwa_building', handleEquip);
             window.removeEventListener('set_resource_layer', handleResourceLayer);
+            window.removeEventListener('request_jordan_pitch', handleJordanPitch);
         };
-    }, []);
+    }, [isDemoMode, isConnected]);
 
     useGameInput(
         viewportRef, appRef, isReady && assetsLoaded,
@@ -196,6 +279,17 @@ export default function UserTerminalClient() {
                     </div>
                 )}
 
+                <SimCityLoader visible={isAuthenticating} />
+
+                <JordanPitchModal
+                    visible={showJordanPitch}
+                    isConnected={isConnected}
+                    onClose={() => setShowJordanPitch(false)}
+                    onConnectPlay={() => {
+                        setShowJordanPitch(false);
+                    }}
+                />
+
                 {assetsLoaded && (
                     <div style={{ position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none' }}>
                         <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
@@ -208,11 +302,6 @@ export default function UserTerminalClient() {
                                 totalCost={totalCost} isValidBuild={isValidBuild}
                                 fps={fps} cursorPos={cursorPos} hoverInfo={hoverInfo}
                                 resources={resources} stats={stats} summary={summary}
-                                onRegenerate={() => {
-                                    if (terrainContainerRef.current) { ResourceRenderer.clearAll(terrainContainerRef.current); VehicleRenderer.clearAll(); }
-                                    engine.map.generateWorld("0x" + Math.floor(Math.random() * 1e16).toString(16));
-                                    engine.map.revision++;
-                                }}
                                 speed={speed} paused={paused}
                                 onSetSpeed={(s: number) => { setSpeed(s); engine.setSpeed(s); }}
                                 onTogglePause={() => { const newPaused = !paused; setPaused(newPaused); engine.isPaused = newPaused; }}
@@ -224,6 +313,15 @@ export default function UserTerminalClient() {
                     </div>
                 )}
             </div>
+
+            {/* ✅ Animation de Sauvegarde à la déconnexion */}
+            {isSavingDisconnect && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', fontFamily: '"Pixelify Sans", sans-serif' }}>
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-white mb-6"></div>
+                    <h2 className="text-4xl font-bold tracking-widest text-[#FFD700] drop-shadow-[3px_3px_0_#000]">SAUVEGARDE EN COURS...</h2>
+                    <p className="mt-3 text-xl text-gray-300">Vos minerais et avancées sont synchronisés de manière permanente</p>
+                </div>
+            )}
         </>
     );
 }

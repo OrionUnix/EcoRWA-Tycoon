@@ -120,8 +120,8 @@ export class WorkerRenderer {
                 sprite.animationSpeed = ANIM_SPEED;
                 sprite.play();
 
-                // ✅ Plus grand : 90% de la largeur d'une tuile
-                const targetW = TILE_WIDTH * 0.9;
+                // ✅ Taille réduite : ~60% de la largeur d'une tuile
+                const targetW = TILE_WIDTH * 0.6;
                 sprite.scale.set(targetW / frames[0].width);
 
                 container.addChild(sprite);

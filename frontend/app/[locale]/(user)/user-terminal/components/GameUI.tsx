@@ -4,24 +4,24 @@ import { RoadType, ZoneType, BuildingType, PlayerResources, CityStats, ResourceS
 import {
     ROADS, LAYERS, formatNumber,
     ResourceItem, ToolButton, ResourceCard, GameTooltip, NeedsDisplay
-} from './ui/GameWidgets';
+} from './ui/hud/GameWidgets';
 import { BuildingInspector } from './ui/BuildingInspector';
 import { getGameEngine } from '../engine/GameEngine';
 
 // ✅ SIMCITY 2013 UI COMPONENTS
-import { CityInfoBar } from './ui/CityInfoBar';
-import { MainToolbar } from './ui/MainToolbar';
-import { ActiveToolHUD } from './ui/ActiveToolHUD';
-import { RWAInventory } from './ui/RWAInventory';
+import { CityInfoBar } from './ui/hud/CityInfoBar';
+import { MainToolbar } from './ui/hud/MainToolbar';
+import { ActiveToolHUD } from './ui/hud/ActiveToolHUD';
+import { RWAInventory } from './ui/web3/RWAInventory';
 // ✅ SERVICE PANELS
-import { BudgetPanel } from './ui/BudgetPanel';
-import { WaterPanel } from './ui/WaterPanel';
-import { PowerPanel } from './ui/PowerPanel';
-import { FirePanel } from './ui/FirePanel';
-import { JobsPanel } from './ui/JobsPanel';
-import { DataLayersPanel } from './ui/DataLayersPanel';
-import { GameOnboarding } from './ui/GameOnboarding';
-import { BobAlertBox } from './ui/BobAlertBox';
+import { BudgetPanel } from './ui/Panel/BudgetPanel';
+import { WaterPanel } from './ui/Panel/WaterPanel';
+import { PowerPanel } from './ui/Panel/PowerPanel';
+import { FirePanel } from './ui/Panel/FirePanel';
+import { JobsPanel } from './ui/Panel/JobsPanel';
+import { DataLayersPanel } from './ui/Panel/DataLayersPanel';
+import { GameOnboarding } from './ui/overlay/GameOnboarding';
+import { BobAlertBox } from './ui/npcs/BobAlertBox';
 
 interface GameUIProps {
     t: any;
@@ -43,7 +43,6 @@ interface GameUIProps {
     resources: PlayerResources | null;
     stats: CityStats | null;
     summary: ResourceSummary | null;
-    onRegenerate: () => void;
     speed: number;
     paused: boolean;
     onSetSpeed: (s: number) => void;
@@ -61,7 +60,6 @@ export default function GameUI({
     totalCost, isValidBuild,
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
-    onRegenerate,
     speed, paused, onSetSpeed, onTogglePause,
     onOpenRWA
 }: GameUIProps) {
@@ -137,16 +135,6 @@ export default function GameUI({
             {activePanel === 'JOBS' && <JobsPanel stats={stats} onClose={() => setActivePanel(null)} />}
 
             {/* Resources now displayed in CityInfoBar bottom strip */}
-
-            {/* ═══════════════════════════════════════ */}
-            {/* TOP-RIGHT: Misc Controls */}
-            {/* ═══════════════════════════════════════ */}
-            <div className="fixed top-4 right-4 pointer-events-auto z-50 flex gap-2 items-center mt-12">
-                <button onClick={onRegenerate} className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105"
-                    style={{ background: 'rgba(208,2,27,0.15)', color: '#D0021B', border: '1px solid rgba(208,2,27,0.3)' }}>
-                    RESET
-                </button>
-            </div>
 
             {/* ═══════════════════════════════════════ */}
             {/* COST PREVIEW (Floating pill) */}

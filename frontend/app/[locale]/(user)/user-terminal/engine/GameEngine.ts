@@ -39,16 +39,12 @@ export class GameEngine {
         if (typeof window !== 'undefined') {
             RWABuildingSpawner.initialize(this.map);
 
-            // ✅ Auto-Save : initialise le SaveSystem et tente un chargement
+            // ═════════════════════════════════════════════════════════════════════
+            // L'initialisation se fait désormais via le bouton "Jouer" (SIWE Auth)
+            // dans UserTerminalClient.tsx. On ne charge plus automatiquement le local.
+            // ═════════════════════════════════════════════════════════════════════
+            // Initialize save system map reference
             SaveSystem.initialize(this.map);
-            const loaded = SaveSystem.loadIntoEngine(this.map);
-            if (loaded) {
-                console.log('📂 [GameEngine] Ville chargée depuis la sauvegarde.');
-                // Recalcul de la population après restauration de la zoningLayer
-                PopulationManager.initialize(this.map);
-            } else {
-                console.log('🌱 [GameEngine] Nouvelle partie (aucune sauvegarde trouvée).');
-            }
         }
     }
 

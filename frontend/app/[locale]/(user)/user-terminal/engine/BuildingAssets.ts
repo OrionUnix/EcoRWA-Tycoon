@@ -11,9 +11,9 @@ export const CUSTOM_SPRITES_CONFIG: Record<string, CustomSpriteDef> = {
     'RESIDENTIAL': {
         construction: '/assets/isometric/Spritesheet/Buildings/residences/construction_house01.png',
         levels: [
-            ['/assets/isometric/Spritesheet/Buildings/residences/house01_A.png', '/assets/isometric/Spritesheet/Buildings/residences/House01_B.png'], // Niveau 1
-            ['/assets/isometric/Spritesheet/Buildings/residences/House02_A.png', '/assets/isometric/Spritesheet/Buildings/residences/House02_B.png'], // Niveau 2
-            ['/assets/isometric/Spritesheet/Buildings/residences/House03_A.png', '/assets/isometric/Spritesheet/Buildings/residences/House03_B.png'] // Niveau 3
+            ['/assets/isometric/Spritesheet/Buildings/residences/house01_A.png', '/assets/isometric/Spritesheet/Buildings/residences/house01_B.png'],
+            ['/assets/isometric/Spritesheet/Buildings/residences/house02_A.png', '/assets/isometric/Spritesheet/Buildings/residences/house02_B.png'],
+            ['/assets/isometric/Spritesheet/Buildings/residences/house03_A.png', '/assets/isometric/Spritesheet/Buildings/residences/house03_B.png']
         ]
     },
     'COMMERCIAL': {

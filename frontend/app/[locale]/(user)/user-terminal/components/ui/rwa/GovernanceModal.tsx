@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AnimatedAvatar } from '../../AnimatedAvatar';
+import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
 import { TypewriterText } from '../../TypewriterText';
 import { useTranslations } from 'next-intl';
 import { getAssetDetails } from '../../../hooks/useRWAInventory';

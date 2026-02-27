@@ -1,8 +1,8 @@
 import React from 'react';
 import { BuildingData, BUILDING_SPECS, BuildingType, CityStats, BuildingStatus } from '../../engine/types';
 import { BuildingManager } from '../../engine/BuildingManager';
-import { formatNumber } from './GameWidgets';
-import { GlassPanel } from './GlassPanel';
+import { formatNumber } from './hud/GameWidgets';
+import { GlassPanel } from './Panel/GlassPanel';
 import { MapEngine } from '../../engine/MapEngine';
 import { EconomySystem } from '../../engine/systems/EconomySystem';
 

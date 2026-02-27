@@ -1,5 +1,5 @@
 import React from 'react';
-import { GlassPanel } from './GlassPanel';
+import { GlassPanel } from './Panel/GlassPanel';
 import { BuildingCategory, BuildingType, ZoneType, RoadType, BUILDING_SPECS, ROAD_SPECS } from '../../engine/types';
 
 // ═══════════════════════════════════════

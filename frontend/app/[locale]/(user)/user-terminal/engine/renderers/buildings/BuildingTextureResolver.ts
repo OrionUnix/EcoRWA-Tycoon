@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { BuildingData } from '../../types';
 import { BuildingAssets } from '../../BuildingAssets';
+import { AtlasManager } from '../../AtlasManager';
 import { asset } from '../../../utils/assetUtils';
 
 // ═══════════════════════════════════════════════════════
@@ -53,7 +54,7 @@ export class BuildingTextureResolver {
             }
         }
 
-        // PRIORITÉ 1 : Atlas interne standard
+        // PRIORITÉ 1 : Assets Custom HD (BuildingAssets)
         if (!texture) {
             texture = BuildingAssets.getTexture(
                 building.type as any,
@@ -61,6 +62,37 @@ export class BuildingTextureResolver {
                 building.variant || 0,
                 isConstState || isRuined
             );
+        }
+
+        // PRIORITÉ 2 : Atlas interne standard (Low Res)
+        if (!texture) {
+            const typeKey = building.type.toUpperCase();
+            let frame = '';
+
+            // Map the types to atlas frame names correctly
+            if (typeKey === 'RESIDENTIAL') {
+                // house01, house02, house03
+                frame = `residences/house${String(lvl).padStart(2, '0')}`;
+            } else if (typeKey === 'COMMERCIAL') {
+                frame = `commercial/comercial${String(lvl).padStart(2, '0')}`;
+            } else if (typeKey === 'INDUSTRIAL') {
+                frame = `industrial/indus${String(lvl).padStart(2, '0')}_A`;
+            } else if (typeKey === 'POLICE_STATION') {
+                frame = `services/policestation/policestation${String(lvl).padStart(2, '0')}`;
+            } else if (typeKey === 'FIRE_STATION') {
+                frame = `services/firestation/firestation${String(lvl).padStart(2, '0')}`;
+            } else if (typeKey === 'CLINIC') {
+                frame = `services/hospital/hospital${String(lvl).padStart(2, '0')}`;
+            }
+
+            if (frame) {
+                texture = AtlasManager.getTexture(frame);
+            }
+
+            if (!texture && isConstState) {
+                // Generic construction fallback in atlas if available
+                texture = AtlasManager.getTexture('construction_site');
+            }
         }
 
         return texture;

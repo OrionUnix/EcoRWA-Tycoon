@@ -66,102 +66,57 @@ export const createWorkerSystem = (world: GameWorld) => {
             const eid = workers[i];
             const state = Worker.state[eid];
 
-            // A. IDLE -> Chercher Ressource DANS LE RADIUS DU BÂTIMENT
+            // A. IDLE -> Chercher Ressource mais NE PLUS BOUGER (Animation sur place)
             if (state === WorkerState.IDLE) {
                 const homeId = Worker.homeBuildingId[eid];
                 const homePos = buildingPosMap.get(homeId);
 
                 if (homePos) {
-                    // Recherche autour de la MAISON, pas du travailleur
                     const target = findNearestResource(engine, homePos.x, homePos.y, Worker.type[eid]);
                     if (target) {
                         Worker.targetResourceId[eid] = target.index;
-                        Worker.state[eid] = WorkerState.MOVING_TO_RESOURCE;
+                        Worker.state[eid] = WorkerState.GATHERING;
+                        Worker.timer[eid] = GATHER_TIME;
 
-                        addComponent(w, MoveTo, eid);
-                        MoveTo.targetX[eid] = target.x;
-                        MoveTo.targetY[eid] = target.y;
-                        MoveTo.speed[eid] = WORKER_SPEED;
+                        // ✅ Forcer le worker à rester à son offset de maison
+                        const angle = eid * 1.618;
+                        const radius = 0.6;
+                        Position.x[eid] = homePos.x + 0.5 + Math.cos(angle) * radius;
+                        Position.y[eid] = homePos.y + 0.5 + Math.sin(angle) * radius;
                     }
                 }
             }
-            // B. EN MOUVEMENT
-            else if (state === WorkerState.MOVING_TO_RESOURCE) {
-                if (!hasComponent(w, MoveTo, eid)) {
-                    Worker.state[eid] = WorkerState.GATHERING;
-                    Worker.timer[eid] = GATHER_TIME;
-                }
-            }
-            // C. RÉCOLTE
+            // B. RÉCOLTE (Sur place)
             else if (state === WorkerState.GATHERING) {
                 Worker.timer[eid] -= 0.016;
                 if (Worker.timer[eid] <= 0) {
-                    Worker.state[eid] = WorkerState.MOVING_HOME;
+                    Worker.state[eid] = WorkerState.IDLE;
 
                     // ✅ DÉPLÉTION DE LA RESSOURCE SUR LA CARTE
                     const rIndex = Worker.targetResourceId[eid];
-                    // Quantité récoltée (ex: 5 tonnes)
-                    const AMOUNT_MINED = 5;
 
                     if (engine.map.resourceMaps) {
                         const type = Worker.type[eid];
 
                         if (type === WorkerType.HUNTER) {
-                            // Décroissance Animaux (Un chasseur rapporte 40)
                             if (engine.map.resourceMaps.animals && engine.map.resourceMaps.animals[rIndex] > 0) {
                                 engine.map.resourceMaps.animals[rIndex] = Math.max(0, engine.map.resourceMaps.animals[rIndex] - 40);
                             }
                         }
                         else if (type === WorkerType.FISHERMAN) {
-                            // Décroissance Poissons (Un pêcheur rapporte 50)
                             if (engine.map.resourceMaps.fish && engine.map.resourceMaps.fish[rIndex] > 0) {
                                 engine.map.resourceMaps.fish[rIndex] = Math.max(0, engine.map.resourceMaps.fish[rIndex] - 50);
                             }
                         }
                         else if (type === WorkerType.LUMBERJACK) {
-                            // Décroissance Bois (Un bûcheron rapporte 40)
                             if (engine.map.resourceMaps.wood && engine.map.resourceMaps.wood[rIndex] > 0) {
                                 engine.map.resourceMaps.wood[rIndex] = Math.max(0, engine.map.resourceMaps.wood[rIndex] - 40);
-
-                                // Si plus de bois, on enlève la forêt visuellement (Biome -> Plains)
-                                // et on trigger un update du Render
                                 if (engine.map.resourceMaps.wood[rIndex] <= 0) {
                                     engine.map.biomes[rIndex] = 3; // PLAINS
                                 }
                             }
                         }
                     }
-
-                    // Retour Maison via Cache
-                    const homeId = Worker.homeBuildingId[eid];
-                    const homePos = buildingPosMap.get(homeId);
-
-                    if (homePos) {
-                        addComponent(w, MoveTo, eid);
-                        // ✅ Offset pseudo-aléatoire stable pour ne pas qu'ils se superposent au centre du bâtiment
-                        const angle = eid * 1.618;
-                        const radius = 0.6;
-                        MoveTo.targetX[eid] = homePos.x + 0.5 + Math.cos(angle) * radius;
-                        MoveTo.targetY[eid] = homePos.y + 0.5 + Math.sin(angle) * radius;
-                        MoveTo.speed[eid] = WORKER_SPEED;
-                    } else {
-                        // Maison détruite ? On tue le worker (ou idle)
-                        Worker.state[eid] = WorkerState.IDLE;
-                    }
-                }
-            }
-            // D. RETOUR MAISON
-            else if (state === WorkerState.MOVING_HOME) {
-                if (!hasComponent(w, MoveTo, eid)) {
-                    Worker.state[eid] = WorkerState.DEPOSITING;
-                    Worker.timer[eid] = 1.0;
-                }
-            }
-            // E. DÉPÔT
-            else if (state === WorkerState.DEPOSITING) {
-                Worker.timer[eid] -= 0.016;
-                if (Worker.timer[eid] <= 0) {
-                    Worker.state[eid] = WorkerState.IDLE;
                 }
             }
         }
@@ -201,7 +156,7 @@ export const createWorkerSystem = (world: GameWorld) => {
                     const idx = by * GRID_SIZE + bx;
                     const bData = engine.map.buildingLayer[idx];
 
-                    if (bData && bData.statusFlags !== 0) { // Si construit
+                    if (bData && bData.state === 'ACTIVE') { // ✅ Uniquement quand le bâtiment est construit
                         let wType = -1;
                         if (bData.type === BuildingType.HUNTER_HUT) wType = WorkerType.HUNTER;
                         else if (bData.type === BuildingType.FISHERMAN) wType = WorkerType.FISHERMAN;
