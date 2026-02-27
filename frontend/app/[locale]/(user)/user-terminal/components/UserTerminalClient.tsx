@@ -29,6 +29,8 @@ import { useFirebaseWeb3Auth } from '../hooks/web3/useFirebaseWeb3Auth';
 import { SoftWelcomeModal } from './ui/overlay/SoftWelcomeModal';
 import { SimCityLoader } from './ui/overlay/SimCityLoader';
 import { JordanPitchModal } from './ui/npcs/JordanPitchModal';
+import { AlertSystem } from '../engine/systems/AlertSystem';
+import { NpcAlertOverlay } from './ui/widgets/NpcAlertOverlay';
 
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
@@ -106,6 +108,7 @@ export default function UserTerminalClient() {
     const [summary, setSummary] = useState<any>(null);
     const [speed, setSpeed] = useState(1);
     const [paused, setPaused] = useState(false);
+    const [currentAlert, setCurrentAlert] = useState<{ npc: string, messageKey: string } | null>(null);
 
     const previewPathRef = useRef<number[]>([]);
     const isValidBuildRef = useRef(true);
@@ -205,7 +208,21 @@ export default function UserTerminalClient() {
         };
     }, []);
 
-    // 7. GAMELOOP ET INPUT
+    // 7. NPC ALERT SYSTEM LOOP
+    useEffect(() => {
+        if (!assetsLoaded || isDemoMode || !isConnected) return;
+        const interval = setInterval(() => {
+            const engine = getGameEngine();
+            if (!engine.isPaused && engine.map.stats) {
+                AlertSystem.checkMetrics(engine.map, (npc, messageKey) => {
+                    setCurrentAlert({ npc, messageKey });
+                });
+            }
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [assetsLoaded, isDemoMode, isConnected]);
+
+    // 8. GAMELOOP ET INPUT
     const { updateECS } = useECS(isReady);
     const selectedBuildingTypeRef = useRef(BuildingType.POWER_PLANT);
 
@@ -273,6 +290,12 @@ export default function UserTerminalClient() {
             <AdvisorWidget isVisible={!isConnected} />
             <BobWarningModal />
             {showOnboarding && <GameOnboarding onComplete={() => setShowOnboarding(false)} onClose={() => setShowOnboarding(false)} />}
+
+            <NpcAlertOverlay
+                npc={currentAlert?.npc || null}
+                messageKey={currentAlert?.messageKey || null}
+                onClose={() => setCurrentAlert(null)}
+            />
 
             <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#000', overflow: 'hidden' }}>
                 <div ref={containerRef} style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
