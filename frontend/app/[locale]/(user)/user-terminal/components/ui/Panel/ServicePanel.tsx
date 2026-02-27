@@ -22,19 +22,17 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
             style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif", animation: 'panelIn 0.25s ease-out' }}
         >
             {/* Backdrop */}
-            <div className="fixed inset-0 -z-10" style={{ background: 'rgba(0,0,0,0.3)' }} onClick={onClose} />
+            <div className="fixed inset-0 -z-10" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose} />
 
-            <GlassPanel variant="sub" className="p-0 overflow-hidden max-h-[80vh] flex flex-col">
+            <div className="bg-slate-300 border-4 border-black shadow-[8px_8px_0_0_#000] rounded-none p-0 overflow-hidden max-h-[80vh] flex flex-col">
                 <div className={`flex flex-col ${width} max-h-[80vh]`}>
 
                     {/* ═══ HEADER ═══ */}
                     <div
-                        className="flex items-center gap-3 px-5 py-4"
-                        style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+                        className="flex items-center gap-3 px-4 py-3 border-b-4 border-black bg-slate-400"
                     >
-                        {/* Icon bubble */}
                         <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg shadow-md flex-shrink-0"
+                            className="w-10 h-10 border-2 border-black shadow-[2px_2px_0_0_#000] flex items-center justify-center text-white text-lg flex-shrink-0 rounded-none"
                             style={{ background: color }}
                         >
                             {icon}
@@ -44,8 +42,7 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
                         </h2>
                         <button
                             onClick={onClose}
-                            className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                            style={{ background: 'rgba(0,0,0,0.06)', color: '#999', fontSize: '14px' }}
+                            className="w-8 h-8 flex items-center justify-center text-white font-bold bg-red-500 border-2 border-black shadow-[4px_4px_0_0_#000] hover:bg-red-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none rounded-none transition-none"
                         >
                             ✕
                         </button>
@@ -56,7 +53,7 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
                         {children}
                     </div>
                 </div>
-            </GlassPanel>
+            </div>
 
             <style>{`
                 @keyframes panelIn {
