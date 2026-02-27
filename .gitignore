@@ -21,4 +21,6 @@ broadcast/
 deploy.log
 
 ROUTES.md
-.antigravityrules
+antigravityrules    
+*.log
+*.sol
