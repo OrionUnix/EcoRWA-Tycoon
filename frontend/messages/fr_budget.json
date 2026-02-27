@@ -6,27 +6,43 @@
     "headers": {
         "expenses": "DÉPENSES",
         "revenues": "REVENUS",
-        "taxes": "TAXES"
+        "taxes": "TAXES",
+        "category": "Catégorie",
+        "taxRatesTitle": "Taux d'imposition",
+        "bondsTitle": "Emprunts (Bonds)"
     },
     "categories": {
-        "residential": "Résidentiel",
+        "residential": "Impôts (RCI)",
         "commercial": "Commercial",
         "industrial": "Industriel",
         "energy": "Énergie",
         "water": "Eau",
         "roads": "Routes",
-        "health": "Santé",
+        "health": "Santé & Social",
         "fire": "Feu",
-        "police": "Police",
+        "police": "Police & Sécurité",
         "education": "Éducation",
         "parks": "Parcs",
         "rwaYields": "Rendus RWA",
-        "exports": "Exportations",
+        "exports": "Exportations (Mines/Bois)",
         "government": "Gouvernement"
     },
     "summary": {
         "subtotal": "Sous-total (/Heure)",
-        "netProfitLoss": "Profit/Perte",
+        "netProfitLoss": "Net / Heure",
         "treasury": "TRÉSORERIE"
+    },
+    "advisor": {
+        "suicide": "C'est un suicide économique ! La ville sera vide demain !",
+        "panic": "Maire, c'est du vol ! Les entreprises vont fermer et la population va fuir !",
+        "industryDrop": "Maire, les usines ferment ! On va droit vers un chômage massif !",
+        "residentialDrop": "Les gens plient bagage ! Personne ne veut payer autant pour vivre ici.",
+        "warning": "Attention, les citoyens commencent à grincer des dents...",
+        "balanced": "C'est le juste milieu. L'argent rentre, personne ne râle trop.",
+        "generous": "On est trop généreux, Maire ! On pourrait doubler nos profits."
+    },
+    "actions": {
+        "borrow": "Emprunter $10k",
+        "repay": "Rembourser"
     }
 }

@@ -7,7 +7,7 @@ import { GlassPanel } from './GlassPanel';
 // ═══════════════════════════════════════
 
 interface ServicePanelProps {
-    title: string;
+    title: React.ReactNode | string;
     icon: string;
     color: string;
     onClose: () => void;

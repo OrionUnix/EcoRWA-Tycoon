@@ -6,27 +6,43 @@
     "headers": {
         "expenses": "EXPENSES",
         "revenues": "REVENUES",
-        "taxes": "TAXES"
+        "taxes": "TAXES",
+        "category": "Category",
+        "taxRatesTitle": "Tax Rates",
+        "bondsTitle": "Bonds"
     },
     "categories": {
-        "residential": "Residential",
+        "residential": "Taxes (RCI)",
         "commercial": "Commercial",
         "industrial": "Industrial",
         "energy": "Power",
         "water": "Water",
         "roads": "Roads",
-        "health": "Health",
+        "health": "Health & Social",
         "fire": "Fire",
-        "police": "Police",
+        "police": "Police & Security",
         "education": "Education",
         "parks": "Parks",
         "rwaYields": "RWA Yields",
-        "exports": "Exports",
+        "exports": "Exports (Mining/Logging)",
         "government": "Government"
     },
     "summary": {
         "subtotal": "Subtotal (/Hour)",
-        "netProfitLoss": "Net Profit/Loss",
+        "netProfitLoss": "Net / Hour",
         "treasury": "TREASURY"
+    },
+    "advisor": {
+        "suicide": "It's economic suicide! The city will be empty tomorrow!",
+        "panic": "Mayor, this is theft! Businesses will close and people will flee!",
+        "industryDrop": "Mayor, factories are closing! We're heading for mass unemployment!",
+        "residentialDrop": "People are packing their bags! No one wants to pay this much to live here.",
+        "warning": "Careful, citizens are starting to complain...",
+        "balanced": "This is the sweet spot. Money is flowing in, no one is complaining too much.",
+        "generous": "We are too generous, Mayor! We could double our profits."
+    },
+    "actions": {
+        "borrow": "Borrow $10k",
+        "repay": "Repay"
     }
 }
