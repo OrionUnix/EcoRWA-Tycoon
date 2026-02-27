@@ -1,0 +1,14 @@
+export const GAME_ICONS = {
+    money: "/assets/isometric/Spritesheet/IU/icones/money.png",
+    residential: "/assets/isometric/Spritesheet/IU/icones/residential.png",
+    commercial: "/assets/isometric/Spritesheet/IU/icones/commercial.png",
+    industrial: "/assets/isometric/Spritesheet/IU/icones/industrial.png",
+    power: "/assets/isometric/Spritesheet/IU/icones/elect.png",
+    water: "/assets/isometric/Spritesheet/IU/icones/water.png",
+    rwa: "/assets/isometric/Spritesheet/IU/icones/rwa_property.png",
+    police: "/assets/isometric/Spritesheet/IU/icones/police.png",
+    fire: "/assets/isometric/Spritesheet/IU/icones/firestation.png",
+    medical: "/assets/isometric/Spritesheet/IU/icones/medical.png",
+    export: "/assets/isometric/Spritesheet/IU/icones/exportation_importation.png",
+    administration: "/assets/isometric/Spritesheet/IU/icones/administration.png",
+};
