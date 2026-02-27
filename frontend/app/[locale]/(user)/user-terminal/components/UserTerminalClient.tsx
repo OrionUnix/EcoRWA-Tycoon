@@ -264,7 +264,12 @@ export default function UserTerminalClient() {
 
     return (
         <>
-            <TopBar />
+            <TopBar
+                speed={speed}
+                paused={paused}
+                onSetSpeed={(s: number) => { setSpeed(s); engine.setSpeed(s); }}
+                onTogglePause={() => { const newPaused = !paused; setPaused(newPaused); engine.isPaused = newPaused; }}
+            />
             <AdvisorWidget isVisible={!isConnected} />
             <BobWarningModal />
             {showOnboarding && <GameOnboarding onComplete={() => setShowOnboarding(false)} onClose={() => setShowOnboarding(false)} />}
@@ -302,9 +307,6 @@ export default function UserTerminalClient() {
                                 totalCost={totalCost} isValidBuild={isValidBuild}
                                 fps={fps} cursorPos={cursorPos} hoverInfo={hoverInfo}
                                 resources={resources} stats={stats} summary={summary}
-                                speed={speed} paused={paused}
-                                onSetSpeed={(s: number) => { setSpeed(s); engine.setSpeed(s); }}
-                                onTogglePause={() => { const newPaused = !paused; setPaused(newPaused); engine.isPaused = newPaused; }}
                                 selectedBuildingId={selectedBuildingId} setSelectedBuildingId={setSelectedBuildingId}
                                 onOpenRWA={() => setShowOnboarding(true)}
                             />

@@ -5,17 +5,55 @@ import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUti
 import { useAccount } from 'wagmi';
 import { FaucetButton } from '../web3/FaucetButton';
 
-export const TopBar: React.FC = () => {
+interface TopBarProps {
+    speed: number;
+    paused: boolean;
+    onSetSpeed: (s: number) => void;
+    onTogglePause: () => void;
+}
+
+export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTogglePause }) => {
     const { isConnected } = useAccount();
 
     return (
         <div className="fixed top-0 w-full h-16 bg-gray-900/90 text-white z-50 flex justify-between items-center px-6 shadow-md pointer-events-auto">
-            {/* LEFT: Title & Network Badge */}
+            {/* LEFT: Title & Network Badge & Speed Controls */}
             <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-black italic tracking-wider text-emerald-400 drop-shadow-md">
                     EcoRWA Tycoon
                 </h1>
 
+                {/* SEPARATOR */}
+                <div className="w-px h-6 mx-2" style={{ background: 'rgba(255,255,255,0.15)' }} />
+
+                {/* ⏯ PAUSE/PLAY */}
+                <button
+                    onClick={onTogglePause}
+                    className="w-8 h-8 rounded flex items-center justify-center text-sm transition-all hover:scale-110"
+                    style={{
+                        background: paused ? 'rgba(208,2,27,0.4)' : 'rgba(74,144,226,0.3)',
+                        color: 'white',
+                    }}
+                >
+                    {paused ? '⏸' : '▶'}
+                </button>
+
+                {/* SPEED */}
+                <div className="flex items-center gap-1">
+                    {[1, 2, 4].map(s => (
+                        <button
+                            key={s}
+                            onClick={() => onSetSpeed(s)}
+                            className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold transition-all"
+                            style={{
+                                background: speed === s && !paused ? 'rgba(74,144,226,0.5)' : 'transparent',
+                                color: speed === s && !paused ? '#fff' : 'rgba(255,255,255,0.4)',
+                            }}
+                        >
+                            {s}×
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* RIGHT: Web3 Connect Button & Faucet & Language */}

@@ -10,10 +10,6 @@ import { CityStats, PlayerResources } from '../../../engine/types';
 
 interface CityInfoBarProps {
     fps: number;
-    speed: number;
-    paused: boolean;
-    onTogglePause: () => void;
-    onSetSpeed: (s: number) => void;
     stats: CityStats | null;
     resources: PlayerResources | null;
     onOpenPanel?: (panel: string) => void;
@@ -44,7 +40,7 @@ function ResourceMini({ icon, value, max, color, onClick, label }: {
 }
 
 export const CityInfoBar: React.FC<CityInfoBarProps> = ({
-    fps, speed, paused, onTogglePause, onSetSpeed, stats, resources, onOpenPanel
+    fps, stats, resources, onOpenPanel
 }) => {
     const population = stats?.population || 0;
     const happiness = stats?.happiness || 0;
@@ -64,36 +60,6 @@ export const CityInfoBar: React.FC<CityInfoBarProps> = ({
             }}
         >
             <div className="flex items-center h-full px-4 gap-6">
-
-                {/* ⏯ PAUSE/PLAY */}
-                <button
-                    onClick={onTogglePause}
-                    className="w-8 h-8 rounded flex items-center justify-center text-sm transition-all hover:scale-110"
-                    style={{
-                        background: paused ? 'rgba(208,2,27,0.4)' : 'rgba(74,144,226,0.3)',
-                        color: 'white',
-                    }}
-                >
-                    {paused ? '⏸' : '▶'}
-                </button>
-
-                {/* SPEED */}
-                {[1, 2, 4].map(s => (
-                    <button
-                        key={s}
-                        onClick={() => onSetSpeed(s)}
-                        className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold transition-all"
-                        style={{
-                            background: speed === s && !paused ? 'rgba(74,144,226,0.5)' : 'transparent',
-                            color: speed === s && !paused ? '#fff' : 'rgba(255,255,255,0.4)',
-                        }}
-                    >
-                        {s}×
-                    </button>
-                ))}
-
-                {/* SEPARATOR */}
-                <div className="w-px h-6 mx-1.5" style={{ background: 'rgba(255,255,255,0.15)' }} />
 
                 {/* 💲 FUNDS */}
                 <button

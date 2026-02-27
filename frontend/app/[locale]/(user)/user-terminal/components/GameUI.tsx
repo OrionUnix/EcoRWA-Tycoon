@@ -43,10 +43,6 @@ interface GameUIProps {
     resources: PlayerResources | null;
     stats: CityStats | null;
     summary: ResourceSummary | null;
-    speed: number;
-    paused: boolean;
-    onSetSpeed: (s: number) => void;
-    onTogglePause: () => void;
     onOpenRWA?: () => void;
 }
 
@@ -60,7 +56,6 @@ export default function GameUI({
     totalCost, isValidBuild,
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
-    speed, paused, onSetSpeed, onTogglePause,
     onOpenRWA
 }: GameUIProps) {
     const { isConnected } = useAccount();
@@ -176,10 +171,6 @@ export default function GameUI({
             {/* ═══════════════════════════════════════ */}
             <CityInfoBar
                 fps={fps}
-                speed={speed}
-                paused={paused}
-                onTogglePause={onTogglePause}
-                onSetSpeed={onSetSpeed}
                 stats={stats}
                 resources={resources}
                 onOpenPanel={setActivePanel}
