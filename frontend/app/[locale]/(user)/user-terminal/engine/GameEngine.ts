@@ -44,6 +44,8 @@ export class GameEngine {
             const loaded = SaveSystem.loadIntoEngine(this.map);
             if (loaded) {
                 console.log('📂 [GameEngine] Ville chargée depuis la sauvegarde.');
+                // Recalcul de la population après restauration de la zoningLayer
+                PopulationManager.initialize(this.map);
             } else {
                 console.log('🌱 [GameEngine] Nouvelle partie (aucune sauvegarde trouvée).');
             }

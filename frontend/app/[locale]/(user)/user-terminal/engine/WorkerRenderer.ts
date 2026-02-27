@@ -33,7 +33,7 @@ const WORKER_SHEETS: Record<number, SpritesheetConfig> = {
 };
 
 // Vitesse d'animation : frames par seconde
-const ANIM_SPEED = 0.12; // 0.1 = lent, 0.2 = rapide
+const ANIM_SPEED = 0.05; // Plaque l'animation pour correspondre au nouveau WORKER_SPEED plus lent
 
 // ── Cache global HMR-safe ─────────────────────────────────────────────────────
 const g = globalThis as any;

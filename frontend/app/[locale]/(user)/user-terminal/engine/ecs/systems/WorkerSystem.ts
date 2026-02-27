@@ -10,7 +10,7 @@ import { GRID_SIZE } from '../../config';
 import { getGameEngine } from '../../GameEngine'; // Pour accéder à la map (Biomes/Ressources)
 
 // Configuration
-const WORKER_SPEED = 0.05; // Vitesse de déplacement (cases par tick)
+const WORKER_SPEED = 0.015; // Vitesse de déplacement (cases par tick)
 const GATHER_TIME = 2.0; // Temps de récolte en secondes
 
 export const createWorkerSystem = (world: GameWorld) => {
