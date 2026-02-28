@@ -1,9 +1,9 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 import { useAccount } from 'wagmi';
 import { FaucetButton } from '../web3/FaucetButton';
+import { useGameMusic } from '../../../hooks/audio/useGameMusic';
 
 interface TopBarProps {
     speed: number;
@@ -14,75 +14,91 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTogglePause }) => {
     const { isConnected } = useAccount();
+    const { isPlaying, volume, togglePlay, nextTrack, setVolume } = useGameMusic();
 
     return (
-        <div className="fixed top-0 w-full h-16 bg-gray-900/90 text-white z-50 flex justify-between items-center px-6 shadow-md pointer-events-auto">
-            {/* LEFT: Title & Network Badge & Speed Controls */}
-            <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-black italic tracking-wider text-emerald-400 drop-shadow-md">
+        <div className="fixed top-0 w-full h-16 bg-[#c3c7cb] text-black z-50 flex justify-between items-center px-6 border-b-4 border-black pointer-events-auto font-sans rounded-none shadow-none">
+            {/* LEFT: Title & Speed Controls */}
+            <div className="flex items-center gap-6">
+                <h1 className="text-3xl font-black tracking-widest text-[#000] drop-shadow-[2px_2px_0_#fff]">
                     EcoRWA Tycoon
                 </h1>
 
                 {/* SEPARATOR */}
-                <div className="w-px h-6 mx-2" style={{ background: 'rgba(255,255,255,0.15)' }} />
+                <div className="w-1 h-8 bg-slate-500 border-r-2 border-white" />
 
-                {/* ⏯ PAUSE/PLAY */}
-                <button
-                    onClick={onTogglePause}
-                    className="w-8 h-8 rounded flex items-center justify-center text-sm transition-all hover:scale-110"
-                    style={{
-                        background: paused ? 'rgba(208,2,27,0.4)' : 'rgba(74,144,226,0.3)',
-                        color: 'white',
-                    }}
-                >
-                    {paused ? '⏸' : '▶'}
-                </button>
-
-                {/* SPEED */}
-                <div className="flex items-center gap-1">
-                    {[1, 2, 4].map(s => (
-                        <button
-                            key={s}
-                            onClick={() => onSetSpeed(s)}
-                            className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold transition-all"
-                            style={{
-                                background: speed === s && !paused ? 'rgba(74,144,226,0.5)' : 'transparent',
-                                color: speed === s && !paused ? '#fff' : 'rgba(255,255,255,0.4)',
-                            }}
-                        >
-                            {s}×
-                        </button>
-                    ))}
+                {/* GAME SPEED CONTROLS */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onTogglePause}
+                        className={`w-10 h-10 flex items-center justify-center text-sm font-black border-2 border-black transition-none rounded-none ${paused
+                            ? 'bg-slate-400 translate-y-[2px] translate-x-[2px] shadow-none'
+                            : 'bg-slate-200 shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none'
+                            }`}
+                        title="Pause"
+                    >
+                        ||
+                    </button>
+                    {[1, 2, 4].map(s => {
+                        const isActive = speed === s && !paused;
+                        return (
+                            <button
+                                key={s}
+                                onClick={() => onSetSpeed(s)}
+                                className={`w-10 h-10 flex items-center justify-center text-sm font-black border-2 border-black transition-none rounded-none ${isActive
+                                    ? 'bg-slate-400 translate-y-[2px] translate-x-[2px] shadow-none'
+                                    : 'bg-slate-200 shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none'
+                                    }`}
+                            >
+                                {s}x
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* RIGHT: Web3 Connect Button & Faucet & Language */}
-            <div className="flex items-center gap-4">
+            {/* RIGHT: Audio, Language, Faucet, Wallet */}
+            <div className="flex items-center gap-6">
 
-                {/* 🔥 BOUTON FAUCET CORRIGÉ 🔥 */}
+                {/* AUDIO PLAYER */}
+                <div className="flex items-center gap-2 bg-[#a9afb5] border-2 border-black p-1 shadow-[4px_4px_0_0_#000] rounded-none">
+                    <button
+                        onClick={togglePlay}
+                        className="w-10 h-8 flex items-center justify-center bg-slate-200 border-2 border-black text-sm transition-none rounded-none"
+                        style={{ boxShadow: isPlaying ? 'none' : '4px 4px 0 0 #000', transform: isPlaying ? 'translate(2px, 2px)' : 'none' }}
+                    >
+                        {isPlaying ? '🔊' : '🔇'}
+                    </button>
+                    <button
+                        onClick={nextTrack}
+                        className="w-10 h-8 flex items-center justify-center bg-slate-200 border-2 border-black text-sm shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-none rounded-none"
+                    >
+                        {'>|'}
+                    </button>
+                    <div className="mx-2 flex flex-col items-center">
+                        <input
+                            type="range"
+                            min="0" max="1" step="0.05"
+                            value={volume}
+                            onChange={(e) => setVolume(parseFloat(e.target.value))}
+                            className="w-24 h-2 bg-slate-800 appearance-none cursor-pointer border-2 border-black rounded-none"
+                        />
+                    </div>
+                </div>
+
                 {isConnected && (
-                    // J'ai enlevé le div wrapper avec -mt-2. Le bouton est directement ici.
-                    // scale-75 : réduit la taille
-                    // origin-center : le réduit vers son centre, donc il reste bien aligné verticalement
+                    // Conserve le composant tel quel, ajuste juste la scale si nécessaire
                     <FaucetButton
-                        className="scale-75 origin-center transform transition-transform"
-                        // PAS DE buttonText ICI ! Donc pas de texte en dessous.
-                        onStart={() => {
-                            console.log('Transaction Faucet démarrée depuis la TopBar...');
-                        }}
-                        onSuccess={() => {
-                            console.log('Faucet réclamé avec succès depuis la TopBar !');
-                        }}
-                        onError={(error) => {
-                            console.error('Erreur Faucet depuis TopBar:', error);
-                        }}
+                        className="scale-90 origin-center transform transition-none"
+                        onStart={() => { console.log('Transaction Faucet démarrée...'); }}
+                        onSuccess={() => { console.log('Faucet réclamé avec succès !'); }}
+                        onError={(error) => { console.error('Erreur Faucet:', error); }}
                     />
                 )}
 
                 <LanguageSwitcher />
 
                 <ConnectButton.Custom>
-                    {/* ... (Le reste du code du ConnectButton reste identique) ... */}
                     {({ account, chain, openAccountModal, openChainModal, openConnectModal, authenticationStatus, mounted }) => {
                         const ready = mounted && authenticationStatus !== 'loading';
                         const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === 'authenticated');
@@ -91,21 +107,43 @@ export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTog
                                 {(() => {
                                     if (!connected) {
                                         return (
-                                            <div className="relative flex items-center justify-center w-48 h-14 cursor-pointer hover:scale-105 transition-transform group" onClick={openConnectModal}>
-                                                <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/connect_wallet.png')} className="absolute inset-0 w-full h-full object-contain pixelated" alt="Connecter le portefeuille" style={{ imageRendering: 'pixelated' }} />
-                                            </div>
+                                            <button
+                                                onClick={openConnectModal}
+                                                className="bg-orange-500 text-white font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0_0_#000] hover:bg-orange-600 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none px-6 py-2 transition-none rounded-none text-sm"
+                                            >
+                                                CONNECT WALLET
+                                            </button>
                                         );
                                     }
                                     if (chain.unsupported) {
-                                        return (<button onClick={openChainModal} type="button" className="btn-retro text-red-500">Wrong network</button>);
+                                        return (
+                                            <button
+                                                onClick={openChainModal}
+                                                className="bg-red-500 text-white font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0_0_#000] hover:bg-red-600 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none px-6 py-2 transition-none rounded-none text-sm"
+                                            >
+                                                WRONG NETWORK
+                                            </button>
+                                        );
                                     }
                                     return (
-                                        <div style={{ display: 'flex', gap: 12 }}>
-                                            <button onClick={openChainModal} style={{ display: 'flex', alignItems: 'center' }} type="button" className="btn-retro text-xs">
-                                                {chain.hasIcon && (<div style={{ background: chain.iconBackground, width: 12, height: 12, borderRadius: 999, overflow: 'hidden', marginRight: 4 }}>{chain.iconUrl && (<img alt={chain.name ?? 'Chain icon'} src={chain.iconUrl} style={{ width: 12, height: 12 }} />)}</div>)}
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={openChainModal}
+                                                className="flex items-center bg-slate-200 text-black font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0_0_#000] hover:bg-slate-300 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none px-4 py-2 transition-none rounded-none text-sm"
+                                            >
+                                                {chain.hasIcon && (
+                                                    <div className="w-5 h-5 rounded-none overflow-hidden mr-2 border-2 border-black bg-white">
+                                                        {chain.iconUrl && <img alt={chain.name ?? 'Chain icon'} src={chain.iconUrl} className="w-full h-full" />}
+                                                    </div>
+                                                )}
                                                 {chain.name}
                                             </button>
-                                            <button onClick={openAccountModal} type="button" className="btn-retro text-xs">{account.displayName}{account.displayBalance ? ` (${account.displayBalance})` : ''}</button>
+                                            <button
+                                                onClick={openAccountModal}
+                                                className="bg-slate-200 text-black font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0_0_#000] hover:bg-slate-300 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none px-4 py-2 transition-none rounded-none text-sm"
+                                            >
+                                                {account.displayName}{account.displayBalance ? ` (${account.displayBalance})` : ''}
+                                            </button>
                                         </div>
                                     );
                                 })()}

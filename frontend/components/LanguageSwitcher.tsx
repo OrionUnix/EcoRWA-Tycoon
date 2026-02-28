@@ -11,7 +11,6 @@ export default function LanguageSwitcher() {
     if (newLocale === currentLocale) return;
 
     // On remplace le préfixe de la langue dans l'URL actuelle
-    // Exemple: /fr/marketplace -> /en/marketplace
     const newPath = pathname.replace(`/${currentLocale}`, `/${newLocale}`);
 
     // On met à jour le cookie pour que next-intl s'en souvienne
@@ -22,21 +21,21 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <div className="flex items-center bg-[#020617]/30 border border-white/10 rounded-full p-0.5 backdrop-blur-sm">
+    <div className="flex items-center gap-2">
       <button
         onClick={() => switchLanguage('fr')}
-        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${currentLocale === 'fr'
-            ? 'bg-[#E84142] text-white shadow-sm shadow-[#E84142]/40'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+        className={`px-3 py-2 text-xs font-black uppercase tracking-widest transition-none border-2 border-black rounded-none ${currentLocale === 'fr'
+          ? 'bg-slate-400 text-black translate-y-[2px] translate-x-[2px] shadow-none'
+          : 'bg-slate-200 text-black shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none hover:bg-slate-300'
           }`}
       >
         FR
       </button>
       <button
         onClick={() => switchLanguage('en')}
-        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${currentLocale === 'en'
-            ? 'bg-[#E84142] text-white shadow-sm shadow-[#E84142]/40'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+        className={`px-3 py-2 text-xs font-black uppercase tracking-widest transition-none border-2 border-black rounded-none ${currentLocale === 'en'
+          ? 'bg-slate-400 text-black translate-y-[2px] translate-x-[2px] shadow-none'
+          : 'bg-slate-200 text-black shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none hover:bg-slate-300'
           }`}
       >
         EN
