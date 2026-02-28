@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
-import { TypewriterText } from '../../TypewriterText';
+import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 import { useTranslations } from 'next-intl';
 import { getAssetDetails } from '../../../hooks/useRWAInventory';
 
@@ -12,16 +12,18 @@ interface Props {
     showGovDetails: boolean;
     onVote: (choice: string) => void;
     onShowDetails: (show: boolean) => void;
-    onTypingFinished: () => void;
 }
 
 export const GovernanceModal: React.FC<Props> = ({
     govTargetItem, voteSuccess, isTypingGov, showGovDetails,
-    onVote, onShowDetails, onTypingFinished,
+    onVote, onShowDetails,
 }) => {
     const tInv = useTranslations('inventory');
     const tJordan = useTranslations('jordan');
     const details = getAssetDetails(govTargetItem.id);
+
+    const activeText = tInv(`gov_scenarios.${details.key}.${voteSuccess ? 'success' : 'alert'}`);
+    const { displayedText, isTyping } = useTypewriterWithSound(activeText, 20);
 
     return (
         <motion.div
@@ -33,7 +35,7 @@ export const GovernanceModal: React.FC<Props> = ({
                 <div className="flex flex-col sm:flex-row gap-4 items-start relative">
                     <div className={`absolute top-0 left-0 w-1 h-full ${voteSuccess ? 'bg-emerald-500' : 'bg-purple-500'}`} />
                     <div className="flex-shrink-0 mt-1 pl-2">
-                        <AnimatedAvatar character="jordan" isTalking={isTypingGov} />
+                        <AnimatedAvatar character="jordan" isTalking={isTyping} />
                     </div>
                     <div className="flex-1 w-full">
                         <div className={`font-black tracking-widest uppercase text-xs mb-2 border-b border-gray-700 pb-1 ${voteSuccess ? 'text-emerald-400' : 'text-purple-400'}`}>
@@ -41,17 +43,12 @@ export const GovernanceModal: React.FC<Props> = ({
                         </div>
 
                         <div className="text-white text-sm font-bold min-h-[40px] mb-4">
-                            <TypewriterText
-                                key={voteSuccess ? `success-${govTargetItem.id}` : `question-${govTargetItem.id}`}
-                                text={tInv(`gov_scenarios.${details.key}.${voteSuccess ? 'success' : 'alert'}`)}
-                                speed={20}
-                                onFinished={onTypingFinished}
-                            />
+                            <p>{displayedText}</p>
                         </div>
 
                         {/* Détails oui/non */}
                         <AnimatePresence>
-                            {showGovDetails && !voteSuccess && !isTypingGov && (
+                            {showGovDetails && !voteSuccess && !isTyping && (
                                 <motion.div
                                     key="gov-details-panel"
                                     initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
@@ -70,7 +67,7 @@ export const GovernanceModal: React.FC<Props> = ({
                         </AnimatePresence>
 
                         {/* Boutons de vote */}
-                        {!isTypingGov && !voteSuccess && (
+                        {!isTyping && !voteSuccess && (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3 mt-2">
                                 {!showGovDetails && (
                                     <button onClick={() => onShowDetails(true)}

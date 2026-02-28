@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 export const useTypewriterWithSound = (text: string, speed: number = 30) => {
     const [displayedText, setDisplayedText] = useState("");
+    const [isTyping, setIsTyping] = useState(false);
 
     useEffect(() => {
         // Check if window is defined (to prevent SSR errors)
@@ -13,9 +14,9 @@ export const useTypewriterWithSound = (text: string, speed: number = 30) => {
 
         let i = 0;
         setDisplayedText("");
+        setIsTyping(true);
 
-        // Auto-play might be blocked by browser policy without interaction, 
-        // catch potential DOMExceptions
+        // Auto-play might be blocked by browser policy without interaction
         audio.play().catch(e => console.warn('Audio play prevented:', e));
 
         const timer = setInterval(() => {
@@ -24,6 +25,7 @@ export const useTypewriterWithSound = (text: string, speed: number = 30) => {
                 i++;
             } else {
                 clearInterval(timer);
+                setIsTyping(false);
                 audio.pause();
                 audio.currentTime = 0;
             }
@@ -31,9 +33,10 @@ export const useTypewriterWithSound = (text: string, speed: number = 30) => {
 
         return () => {
             clearInterval(timer);
+            setIsTyping(false);
             audio.pause();
         };
     }, [text, speed]);
 
-    return displayedText;
+    return { displayedText, isTyping };
 };

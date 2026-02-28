@@ -6,7 +6,7 @@ import { getGameEngine } from '../../../engine/GameEngine';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 import { useTranslations } from 'next-intl';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
-import { TypewriterText } from '../../TypewriterText';
+import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 import { RWACard } from '../web3/RWACard';
 import { FaucetButton } from '../web3/FaucetButton';
 import { RWAPurchaseModal } from '../web3/RWAPurchaseModal';
@@ -41,8 +41,7 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
     const [showHelp, setShowHelp] = useState(false);
     const [purchasingRWA, setPurchasingRWA] = useState<any | null>(null);
     const [hasClaimedFaucet, setHasClaimedFaucet] = useState(false);
-    const [typingKey, setTypingKey] = useState(Date.now());
-    const [isTyping, setIsTyping] = useState(true);
+
 
     // Bob Congrat Modal — affiché une fois après le 1er achat RWA
     const [showBobModal, setShowBobModal] = useState(false);
@@ -54,7 +53,6 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
     useEffect(() => {
         const claimed = localStorage.getItem('rwa_faucet_claimed') === 'true';
         setHasClaimedFaucet(claimed);
-        setTypingKey(Date.now());
     }, []);
 
     // La VRAIE fonction d'achat avec l'intégration de l'inventaire
@@ -135,6 +133,7 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
         }
     };
     const currentJordanText = hasClaimedFaucet ? tJordan('welcome_back') : tJordan('pitch');
+    const { displayedText, isTyping } = useTypewriterWithSound(currentJordanText, 25);
 
     return (
         <>
@@ -163,7 +162,7 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                                     <div className="flex-1 w-full flex flex-col min-h-[120px]">
                                         <div className="text-white text-lg font-bold mb-4">
                                             <h1 className="text-xl text-yellow-400 mb-2 font-black tracking-widest uppercase">Jordan - RWA Master</h1>
-                                            <TypewriterText key={typingKey} text={currentJordanText} speed={25} onFinished={() => setIsTyping(false)} />
+                                            <p>{displayedText}</p>
                                         </div>
 
                                         {!hasClaimedFaucet && !isTyping && (
@@ -177,8 +176,6 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                                                     onSuccess={() => {
                                                         setHasClaimedFaucet(true);
                                                         setStep(0);
-                                                        setTypingKey(Date.now());
-                                                        setIsTyping(true);
                                                     }}
                                                     onError={(error) => {
                                                         console.error('Erreur Faucet:', error);

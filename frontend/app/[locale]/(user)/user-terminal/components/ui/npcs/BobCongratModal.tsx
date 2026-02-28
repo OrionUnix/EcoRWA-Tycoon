@@ -3,7 +3,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { AnimatedAvatar } from './AnimatedAvatar';
-import { TypewriterText } from '../../TypewriterText';
+import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 
 interface BobCongratModalProps {
@@ -26,12 +26,8 @@ export const BobCongratModal: React.FC<BobCongratModalProps> = ({
     onClose,
 }) => {
     const tBob = useTranslations('bob');
-    const [isTyping, setIsTyping] = React.useState(true);
-
-    // Reset animation si le modal réapparaît
-    React.useEffect(() => {
-        if (isOpen) setIsTyping(true);
-    }, [isOpen]);
+    const activeText = tBob('rwa_congrat_body', { name: buildingName });
+    const { displayedText, isTyping } = useTypewriterWithSound(isOpen ? activeText : "", 18);
 
     return (
         <AnimatePresence>
@@ -74,12 +70,7 @@ export const BobCongratModal: React.FC<BobCongratModalProps> = ({
                                     {tBob('rwa_congrat_title')}
                                 </p>
                                 <div className="text-gray-200 text-xs leading-snug font-bold">
-                                    <TypewriterText
-                                        key={`bob-congrat-${buildingName}`}
-                                        text={tBob('rwa_congrat_body', { name: buildingName })}
-                                        speed={18}
-                                        onFinished={() => setIsTyping(false)}
-                                    />
+                                    <p>{displayedText}</p>
                                 </div>
                             </div>
                         </div>

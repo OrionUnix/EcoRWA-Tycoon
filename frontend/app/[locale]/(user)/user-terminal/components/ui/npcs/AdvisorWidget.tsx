@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { AnimatedAvatar } from './AnimatedAvatar';
-import { TypewriterText } from '../../TypewriterText';
+import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 import { useTranslations } from 'next-intl';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 interface AdvisorWidgetProps {
@@ -13,8 +13,8 @@ interface AdvisorWidgetProps {
 export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
     const [isClosed, setIsClosed] = useState(false);
     const { isConnected } = useAccount();
-    const [isTyping, setIsTyping] = useState(true);
     const tBob = useTranslations('bob');
+    const { displayedText, isTyping } = useTypewriterWithSound(tBob('greeting'), 30);
     return (
         <AnimatePresence>
             {isVisible && !isClosed && (
@@ -50,11 +50,7 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
                             Bob
                         </h2>
                         <div className="min-h-[100px] text-white text-lg font-bold w-full leading-relaxed">
-                            <TypewriterText
-                                text={tBob('greeting')}
-                                speed={30}
-                                onFinished={() => setIsTyping(false)}
-                            />
+                            <p>{displayedText}</p>
                         </div>
 
 

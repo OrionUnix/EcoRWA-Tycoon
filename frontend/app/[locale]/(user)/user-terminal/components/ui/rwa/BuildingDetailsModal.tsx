@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
-import { TypewriterText } from '../../TypewriterText';
+import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 import { useTranslations } from 'next-intl';
 import { getAssetDetails, getDynamicPrice } from '../../../hooks/useRWAInventory';
 
@@ -24,12 +24,11 @@ interface Props {
     onClaim: () => void;
     onTrade: (type: 'buy' | 'sell') => void;
     onPlaceOnMap: (item: any) => void;
-    onTypingFinished: () => void;
 }
 
 export const BuildingDetailsModal: React.FC<Props> = ({
     item, liveYield, claimStatus, placedIds, isTypingImpact,
-    onClose, onClaim, onTrade, onPlaceOnMap, onTypingFinished,
+    onClose, onClaim, onTrade, onPlaceOnMap,
 }) => {
     const tInv = useTranslations('inventory');
     const tJordan = useTranslations('jordan');
@@ -37,6 +36,10 @@ export const BuildingDetailsModal: React.FC<Props> = ({
     const tBob = useTranslations('bob');
     const details = getAssetDetails(item.id);
     const govDone = localStorage.getItem(`gov_done_${item.id}`) === 'true';
+
+    // Hook based text generation
+    const impactText = tInv(`gov_scenarios.${details.key}.impact_text`);
+    const { displayedText, isTyping } = useTypewriterWithSound(govDone ? impactText : "", 15);
 
     return (
         <motion.div
@@ -170,19 +173,14 @@ export const BuildingDetailsModal: React.FC<Props> = ({
                                     <div className="bg-black/60 p-3 rounded-lg border border-gray-700 flex gap-3 items-start relative overflow-hidden shadow-inner min-h-[90px]">
                                         <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400" />
                                         <div className="flex-shrink-0 mt-1 pl-1">
-                                            <AnimatedAvatar character="jordan" isTalking={isTypingImpact} />
+                                            <AnimatedAvatar character="jordan" isTalking={isTyping} />
                                         </div>
                                         <div className="flex-1">
                                             <span className="text-[10px] font-black text-yellow-400 uppercase tracking-widest block mb-1">
                                                 {tInv(`gov_scenarios.${details.key}.impact_title`)}
                                             </span>
                                             <div className="text-xs text-gray-300 leading-snug font-bold">
-                                                <TypewriterText
-                                                    key={`impact-${item.id}`}
-                                                    text={tInv(`gov_scenarios.${details.key}.impact_text`)}
-                                                    speed={15}
-                                                    onFinished={onTypingFinished}
-                                                />
+                                                <p>{displayedText}</p>
                                             </div>
                                         </div>
                                     </div>

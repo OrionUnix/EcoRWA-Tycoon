@@ -20,12 +20,12 @@ function BudgetRow({ label, expense = 0, income = 0, icon }: { label: string, ex
         <tr className="border-b border-slate-400 hover:bg-slate-200/50 transition-none group">
             <td className="py-1 px-2 flex items-center gap-2">
                 <img src={icon} className="w-5 h-5 object-contain pixelated" alt="" />
-                <span className="text-[13px] font-bold text-slate-800 truncate" title={label}>{label}</span>
+                <span className="text-[21px] font-bold text-slate-800 truncate" title={label}>{label}</span>
             </td>
-            <td className="py-1 px-2 text-right font-mono text-sm text-red-600 font-bold whitespace-nowrap w-24">
+            <td className="py-1 px-2 text-right font-mono text-[16px] text-red-600 font-bold whitespace-nowrap w-24">
                 {expense > 0 ? `-$${formatNumber(expense)}` : "§0"}
             </td>
-            <td className="py-1 px-2 text-right font-mono text-sm text-green-600 font-bold border-l border-slate-300 whitespace-nowrap w-24">
+            <td className="py-1 px-2 text-right font-mono text-[16px] text-green-600 font-bold border-l border-slate-300 whitespace-nowrap w-24">
                 {income > 0 ? `+$${formatNumber(income)}` : "§0"}
             </td>
         </tr>
@@ -65,7 +65,7 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ stats, resources, onCl
         activeMessage = t('advisor.balanced');
     }
 
-    const displayedMessage = useTypewriterWithSound(activeMessage, 30);
+    const { displayedText, isTyping } = useTypewriterWithSound(activeMessage, 30);
 
     return (
         <ServicePanel
@@ -84,11 +84,11 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ stats, resources, onCl
                 {/* TOP: JORDAN ADVISOR (Compact Row) */}
                 <div className="flex gap-2 bg-slate-100 border-b-4 border-black p-2 items-center shrink-0">
                     <div className="w-16 h-16 border-2 border-black rounded-full overflow-hidden bg-slate-300 shrink-0 shadow-[2px_2px_0_0_#000]">
-                        <AnimatedAvatar npcId="jordan" size={64} />
+                        <AnimatedAvatar character="jordan" isTalking={isTyping} />
                     </div>
                     <div className="flex-1 bg-white border-2 border-black p-2 shadow-[inset_2px_2px_0_0_rgba(0,0,0,0.1)] h-16 flex items-center">
                         <p className="text-[13px] leading-tight font-medium">
-                            <span className="font-bold border-b border-black">{t('advisorTitle')}</span> <span className="italic">"{displayedMessage}"</span>
+                            <span className="font-bold border-b border-black">{t('advisorTitle')}</span> <span className="italic">"{displayedText}"</span>
                         </p>
                     </div>
                 </div>
@@ -106,7 +106,7 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ stats, resources, onCl
                                     <th className="p-2 text-right w-1/4">{t('headers.revenues')}</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody >
                                 <BudgetRow label={t('categories.residential')} income={(revenues.residential || 0) + (revenues.commercial || 0) + (revenues.industrial || 0)} icon={GAME_ICONS.residential} />
                                 <BudgetRow label={t('categories.energy')} expense={maint['POWER'] || 0} icon={GAME_ICONS.power} />
                                 <BudgetRow label={t('categories.water')} expense={maint['WATER'] || 0} icon={GAME_ICONS.water} />
@@ -123,10 +123,10 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ stats, resources, onCl
                     <div className="md:w-64 flex flex-col gap-2 shrink-0">
                         {/* TAXES SECTION */}
                         <div className="bg-white border-2 border-black p-3 shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]">
-                            <h4 className="text-[12px] font-black uppercase mb-3 border-b-2 border-black pb-1">{t('headers.taxRatesTitle')}</h4>
+                            <h4 className="text-[14px] font-black uppercase mb-3 border-b-2 border-black pb-1">{t('headers.taxRatesTitle')}</h4>
                             {['res', 'com', 'ind'].map((type) => (
                                 <div key={type} className="flex items-center justify-between mb-2 last:mb-0">
-                                    <span className="text-[11px] font-bold uppercase">{t(`categories.${type === 'res' ? 'residential' : type === 'com' ? 'commercial' : 'industrial'}`)}</span>
+                                    <span className="text-[16px] font-bold uppercase">{t(`categories.${type === 'res' ? 'residential' : type === 'com' ? 'commercial' : 'industrial'}`)}</span>
                                     <div className="flex items-center gap-1">
                                         <button onClick={() => setTax(p => ({ ...p, [type]: Math.max(0, p[type as keyof typeof tax] - 1) }))} className="w-6 h-6 bg-slate-200 border border-black shadow-[1px_1px_0_0_#000] active:translate-y-px active:shadow-none font-bold flex items-center justify-center">-</button>
                                         <div className="w-10 text-center text-xs font-black bg-slate-50 border border-slate-300 py-0.5">{tax[type as keyof typeof tax]}%</div>
@@ -141,8 +141,8 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ stats, resources, onCl
                         <div className="bg-slate-200 border-2 border-black p-3 shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] flex-1">
                             <h4 className="text-[12px] font-black uppercase mb-2 border-b border-slate-400 pb-1">{t('headers.bondsTitle')}</h4>
                             <div className="grid grid-cols-1 gap-2">
-                                <button className="text-[11px] bg-blue-600 text-white py-1.5 px-2 border-2 border-black shadow-[2px_2px_0_0_#000] uppercase font-bold hover:bg-blue-700 active:translate-y-px active:shadow-none transition-none">{t('actions.borrow')}</button>
-                                <button className="text-[11px] bg-slate-400 text-black py-1.5 px-2 border-2 border-black shadow-[2px_2px_0_0_#000] uppercase font-bold opacity-50 cursor-not-allowed">{t('actions.repay')}</button>
+                                <button className="text-[16px] bg-blue-600 text-white py-1.5 px-2 border-2 border-black shadow-[2px_2px_0_0_#000] uppercase font-bold hover:bg-blue-700 active:translate-y-px active:shadow-none transition-none">{t('actions.borrow')}</button>
+                                <button className="text-[16px] bg-slate-400 text-black py-1.5 px-2 border-2 border-black shadow-[2px_2px_0_0_#000] uppercase font-bold opacity-50 cursor-not-allowed">{t('actions.repay')}</button>
                             </div>
                         </div>
                     </div>

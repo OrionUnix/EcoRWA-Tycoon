@@ -47,7 +47,6 @@ export const RWAInventory: React.FC = () => {
                         onClaim={handleClaim}
                         onTrade={handleTrade}
                         onPlaceOnMap={handlePlaceOnMap}
-                        onTypingFinished={() => setIsTypingImpact(false)}
                     />
                 )}
             </AnimatePresence>
@@ -62,7 +61,6 @@ export const RWAInventory: React.FC = () => {
                         showGovDetails={showGovDetails}
                         onVote={handleVote}
                         onShowDetails={setShowGovDetails}
-                        onTypingFinished={() => setIsTypingGov(false)}
                     />
                 )}
             </AnimatePresence>

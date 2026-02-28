@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 import { useTranslations } from 'next-intl';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
-import { TypewriterText } from '../../TypewriterText';
+import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 
 // 📈 COMPOSANT MINI-GRAPHIQUE (Sparkline)
 const MiniChart = ({ data, color }: { data: number[], color: string }) => {
@@ -65,14 +65,11 @@ export const RWAPurchaseModal: React.FC<RWAPurchaseModalProps> = ({
     const tTrading = useTranslations('trading');
 
     const [shares, setShares] = useState<number>(1);
-    const [isTyping, setIsTyping] = useState(true);
-    const [typingKey, setTypingKey] = useState(Date.now());
+    const { displayedText, isTyping } = useTypewriterWithSound(tJordan('analysis_intro'), 20);
 
     useEffect(() => {
         if (isOpen) {
             setShares(1);
-            setIsTyping(true);
-            setTypingKey(Date.now());
         }
     }, [isOpen, rwa]);
 
@@ -170,7 +167,7 @@ export const RWAPurchaseModal: React.FC<RWAPurchaseModalProps> = ({
                                         {tJordan('analysis_title')}
                                     </div>
                                     <div className="text-white text-sm font-bold min-h-[20px]">
-                                        <TypewriterText key={typingKey} text={tJordan('analysis_intro')} speed={20} onFinished={() => setIsTyping(false)} />
+                                        <p>{displayedText}</p>
                                     </div>
                                     {!isTyping && (
                                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5 mt-2">
