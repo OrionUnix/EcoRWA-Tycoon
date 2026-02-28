@@ -5,13 +5,18 @@ import { auth } from '@/lib/firebase';
 import { SaveSystem } from '../../engine/systems/SaveSystem';
 
 export const useFirebaseWeb3Auth = () => {
-    const { address } = useAccount();
+    const { address, connector, isReconnecting, isConnecting } = useAccount();
     const { signMessageAsync } = useSignMessage();
     const [isAuthenticating, setIsAuthenticating] = useState(false);
 
     const loginAndLoadSave = async () => {
-        if (!address) {
+        if (!address || !connector) {
             alert("Veuillez d'abord connecter votre portefeuille MetaMak !");
+            return null;
+        }
+
+        if (isReconnecting || isConnecting) {
+            console.log("⏳ Wagmi est en train de se reconnecter, veuillez patienter...");
             return null;
         }
 
@@ -23,7 +28,7 @@ export const useFirebaseWeb3Auth = () => {
 
             // 2. On demande la signature via MetaMask/Wagmi
             console.log("📝 Web3Auth: Demande de signature MetaMask...");
-            const signature = await signMessageAsync({ message });
+            const signature = await signMessageAsync({ message, connector });
 
             // 3. On envoie la preuve cryptographique à notre backend 
             console.log("🔐 Web3Auth: Vérification de la signature par le serveur...");

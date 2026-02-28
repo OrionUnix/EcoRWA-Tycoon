@@ -2,6 +2,7 @@ import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAccount } from 'wagmi';
+import { useTranslations } from 'next-intl';
 import { FaucetButton } from '../web3/FaucetButton';
 import { useGameMusic } from '../../../hooks/audio/useGameMusic';
 
@@ -15,6 +16,7 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTogglePause }) => {
     const { isConnected } = useAccount();
     const { isPlaying, volume, togglePlay, nextTrack, setVolume } = useGameMusic();
+    const t = useTranslations('TopBar');
 
     return (
         <div className="fixed top-0 w-full h-16 bg-[#c3c7cb] text-black z-50 flex justify-between items-center px-6 border-b-4 border-black pointer-events-auto font-sans rounded-none shadow-none">
@@ -60,34 +62,38 @@ export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTog
             {/* RIGHT: Audio, Language, Faucet, Wallet */}
             <div className="flex items-center gap-6">
 
-                {/* AUDIO PLAYER */}
-                <div className="flex items-center gap-2 bg-[#a9afb5] border-2 border-black p-1 shadow-[4px_4px_0_0_#000] rounded-none">
-                    <button
-                        onClick={togglePlay}
-                        className="w-10 h-8 flex items-center justify-center bg-slate-200 border-2 border-black text-sm transition-none rounded-none"
-                        style={{ boxShadow: isPlaying ? 'none' : '4px 4px 0 0 #000', transform: isPlaying ? 'translate(2px, 2px)' : 'none' }}
-                    >
-                        {isPlaying ? '🔊' : '🔇'}
-                    </button>
-                    <button
-                        onClick={nextTrack}
-                        className="w-10 h-8 flex items-center justify-center bg-slate-200 border-2 border-black text-sm shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-none rounded-none"
-                    >
-                        {'>|'}
-                    </button>
-                    <div className="mx-2 flex flex-col items-center">
-                        <input
-                            type="range"
-                            min="0" max="1" step="0.05"
-                            value={volume}
-                            onChange={(e) => setVolume(parseFloat(e.target.value))}
-                            className="w-24 h-2 bg-slate-800 appearance-none cursor-pointer border-2 border-black rounded-none"
-                        />
+                {/* AUDIO PLAYER WITH LABEL */}
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] uppercase font-black tracking-widest text-[#000] drop-shadow-[1px_1px_0_#fff]">
+                        {t('music')}
+                    </span>
+                    <div className="flex items-center gap-2 bg-[#a9afb5] border-2 border-black p-1 shadow-[4px_4px_0_0_#000] rounded-none">
+                        <button
+                            onClick={togglePlay}
+                            className="w-10 h-8 flex items-center justify-center bg-slate-200 border-2 border-black text-sm transition-none rounded-none"
+                            style={{ boxShadow: isPlaying ? 'none' : '4px 4px 0 0 #000', transform: isPlaying ? 'translate(2px, 2px)' : 'none' }}
+                        >
+                            {isPlaying ? '🔊' : '🔇'}
+                        </button>
+                        <button
+                            onClick={nextTrack}
+                            className="w-10 h-8 flex items-center justify-center bg-slate-200 border-2 border-black text-sm shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-none rounded-none"
+                        >
+                            {'>|'}
+                        </button>
+                        <div className="mx-2 flex flex-col items-center">
+                            <input
+                                type="range"
+                                min="0" max="1" step="0.05"
+                                value={volume}
+                                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                                className="w-24 h-2 bg-slate-800 appearance-none cursor-pointer border-2 border-black rounded-none"
+                            />
+                        </div>
                     </div>
                 </div>
 
                 {isConnected && (
-                    // Conserve le composant tel quel, ajuste juste la scale si nécessaire
                     <FaucetButton
                         className="scale-90 origin-center transform transition-none"
                         onStart={() => { console.log('Transaction Faucet démarrée...'); }}

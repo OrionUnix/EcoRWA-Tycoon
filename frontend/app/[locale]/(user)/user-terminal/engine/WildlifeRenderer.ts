@@ -153,6 +153,7 @@ export class WildlifeRenderer {
     }
 
     static fleeAnimal(sprite: PIXI.AnimatedSprite, i: number, animalType: string, targetIdx: number) {
+        if (!sprite || sprite.destroyed) return;
         if ((sprite as any).isFleeing) return;
         (sprite as any).isFleeing = true; // Marque en fuite
 

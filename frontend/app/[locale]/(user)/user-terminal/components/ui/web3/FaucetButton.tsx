@@ -106,21 +106,12 @@ export const FaucetButton: React.FC<FaucetButtonProps> = ({
             <button
                 onClick={handleClaim}
                 disabled={isDisabled}
-                className={`relative group transition-all ${isDisabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-105 active:translate-y-1'}`}
+                className={`relative group px-6 py-2 border-2 border-black text-xs font-black uppercase tracking-widest transition-none rounded-none text-white ${isDisabled
+                        ? 'bg-slate-400 translate-y-[2px] translate-x-[2px] shadow-none cursor-not-allowed'
+                        : 'bg-emerald-500 shadow-[4px_4px_0_0_#000] hover:bg-emerald-600 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none'
+                    }`}
             >
-                <img
-                    src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/faucet.png')}
-                    alt="Faucet"
-                    className="w-32 h-auto pixelated shadow-[2px_2px_0_black]"
-                />
-
-                {(isLoading || cooldownTime) && (
-                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center border-2 border-black">
-                        <span className="text-[10px] font-black uppercase text-yellow-400 text-center px-1">
-                            {isLoading ? "En cours..." : `Attente : ${timeString}`}
-                        </span>
-                    </div>
-                )}
+                {isLoading ? "Minting..." : (cooldownTime ? timeString : "FAUCET")}
             </button>
 
             {/* 🔥 CHANGEMENT ICI : On affiche le span SEULEMENT si buttonText existe */}

@@ -409,7 +409,8 @@
     }
   },
   "TopBar": {
-    "network": "Avalanche (Testnet)"
+    "network": "Avalanche (Testnet)",
+    "music": "Music"
   },
   "Budget": {
     "title": "Budget & Administration",

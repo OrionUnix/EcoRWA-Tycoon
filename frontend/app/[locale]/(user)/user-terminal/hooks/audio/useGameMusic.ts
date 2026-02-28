@@ -10,7 +10,7 @@ const TRACKS = [
 
 export function useGameMusic() {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [volume, setVolumeState] = useState(0.5);
+    const [volume, setVolumeState] = useState(0.15);
     const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
