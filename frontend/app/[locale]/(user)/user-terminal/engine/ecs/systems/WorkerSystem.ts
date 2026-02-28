@@ -62,29 +62,52 @@ export const createWorkerSystem = (world: GameWorld) => {
             buildingPosMap.set(bid, { x: Position.x[bid], y: Position.y[bid] });
         }
 
-        for (let i = 0; i < workers.length; i++) {
+        for (let i = workers.length - 1; i >= 0; i--) {
             const eid = workers[i];
             const state = Worker.state[eid];
+            const homeId = Worker.homeBuildingId[eid];
 
-            // A. IDLE -> Chercher Ressource mais NE PLUS BOUGER (Animation sur place)
+            // ✅ CORRECTION : Si le bâtiment associé n'existe plus ou n'est plus actif, on supprime le travailleur
+            const homePos = buildingPosMap.get(homeId);
+            let shouldDestroy = true;
+
+            if (homePos) {
+                const idx = Math.floor(homePos.y) * GRID_SIZE + Math.floor(homePos.x);
+                const bData = engine.map.buildingLayer[idx];
+                if (bData && bData.state === 'ACTIVE') {
+                    shouldDestroy = false;
+                }
+            }
+
+            if (shouldDestroy) {
+                console.log(`🧨 Worker ${eid} détruit car son bâtiment est détruit ou inactif.`);
+                removeComponent(w, Worker, eid);
+                removeComponent(w, Position, eid);
+                removeComponent(w, Renderable, eid);
+                continue; // On passe au worker suivant
+            }
+
+            // A. IDLE -> Recherche STRICTE de ressource
             if (state === WorkerState.IDLE) {
-                const homeId = Worker.homeBuildingId[eid];
                 const homePos = buildingPosMap.get(homeId);
-
                 if (homePos) {
                     const target = findNearestResource(engine, homePos.x, homePos.y, Worker.type[eid]);
                     if (target) {
-                        Worker.targetResourceId[eid] = target.index;
-                        Worker.state[eid] = WorkerState.GATHERING;
-                        Worker.timer[eid] = GATHER_TIME;
+                        // RÈGLE STRICTE : On vérifie que la case contient bien la ressource avant de s'y mettre
+                        const canWork = checkResourcePresence(engine, target.index, Worker.type[eid]);
 
-                        // ✅ Forcer le worker à se placer SUR la ressource ciblée
-                        // target index = y * GRID_SIZE + x
-                        const targetX = target.x; // Déjà + 0.5 dans findNearestResource
-                        const targetY = target.y; // Déjà + 0.5 dans findNearestResource
+                        if (canWork) {
+                            Worker.targetResourceId[eid] = target.index;
+                            Worker.state[eid] = WorkerState.GATHERING;
+                            Worker.timer[eid] = GATHER_TIME;
 
-                        Position.x[eid] = targetX;
-                        Position.y[eid] = targetY;
+                            // ✅ Forcer le worker à se placer SUR la ressource ciblée
+                            const targetX = target.x;
+                            const targetY = target.y;
+
+                            Position.x[eid] = targetX;
+                            Position.y[eid] = targetY;
+                        }
                     }
                 }
             }
@@ -244,4 +267,19 @@ function findNearestResource(map: any, x: number, y: number, type: number): { x:
         }
     }
     return target;
+}
+
+// Fonction utilitaire de vérification stricte
+function checkResourcePresence(engine: any, index: number, type: number): boolean {
+    const resMaps = engine.map.resourceMaps;
+    if (type === WorkerType.LUMBERJACK) {
+        return (resMaps.wood && resMaps.wood[index] > 0) || engine.map.biomes[index] === 4; // FOREST
+    }
+    if (type === WorkerType.HUNTER) {
+        return resMaps.animals && resMaps.animals[index] > 0;
+    }
+    if (type === WorkerType.FISHERMAN) {
+        return engine.map.getLayer(1)[index] > 0.3; // WATER
+    }
+    return true;
 }

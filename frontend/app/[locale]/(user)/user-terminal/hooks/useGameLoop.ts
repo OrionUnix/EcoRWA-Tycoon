@@ -152,9 +152,21 @@ export function useGameLoop(
 
                 if (terrainContainerRef.current) {
                     const vehicleLayer = (terrainContainerRef.current.getChildByLabel('vehicleContainer') as PIXI.Container) || terrainContainerRef.current;
+                    const buildingLayer = (terrainContainerRef.current.getChildByLabel('buildingContainer') as PIXI.Container) || terrainContainerRef.current;
+
                     // ✅ Les deux doivent tourner CHAQUE FRAME pour l'animation
                     VehicleRenderer.drawVehicles(vehicleLayer, mapData, currentZoom);
-                    WorkerRenderer.render(vehicleLayer);
+                    WorkerRenderer.render(buildingLayer);
+
+                    // ✅ Tri Isométrique Strict (O(N log N) chaque frame)
+                    // Permet aux workers de passer dynamiquement devant/derrière les bâtiments et arbres
+                    if (buildingLayer.children) {
+                        buildingLayer.children.sort((a, b) => {
+                            // On suppose que Moteur Pixi v7+ et zIndex est bien défini par WorkerRenderer/ResourceRenderer
+                            // Ou à défaut, on utilise l'astuce de la coordonnée Y si zIndex = 0
+                            return a.zIndex - b.zIndex || (a.y + a.x / 100) - (b.y + b.x / 100);
+                        });
+                    }
                 }
             }
 

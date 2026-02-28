@@ -135,9 +135,11 @@ export class WorkerRenderer {
             sprite.y = screenPos.y + SURFACE_Y_OFFSET;
 
             // ✅ Z-Index isométrique ultra précis : 
-            // On se base sur la coordonnée *exacte* (avec décimales) pour se glisser derrière ou devant les ressources.
-            // Les ressources (arbres) utilisent souvent Math.floor(x) + Math.floor(y) + 0.5 (elles sont au centre)
-            sprite.zIndex = wx + wy;
+            // On le force exactement à la base des arbres (Math.floor(x) + Math.floor(y) + 0.5)
+            // On y ajoute une minuscule fraction de leur position locale pour le tri intra-tuile (< 0.5)
+            const baseX = Math.floor(wx);
+            const baseY = Math.floor(wy);
+            sprite.zIndex = baseX + baseY + 0.5 + ((wx - baseX) * 0.1);
             sprite.visible = true;
         }
 
