@@ -78,11 +78,13 @@ export const createWorkerSystem = (world: GameWorld) => {
                         Worker.state[eid] = WorkerState.GATHERING;
                         Worker.timer[eid] = GATHER_TIME;
 
-                        // ✅ Forcer le worker à rester à son offset de maison
-                        const angle = eid * 1.618;
-                        const radius = 0.6;
-                        Position.x[eid] = homePos.x + 0.5 + Math.cos(angle) * radius;
-                        Position.y[eid] = homePos.y + 0.5 + Math.sin(angle) * radius;
+                        // ✅ Forcer le worker à se placer SUR la ressource ciblée
+                        // target index = y * GRID_SIZE + x
+                        const targetX = target.x; // Déjà + 0.5 dans findNearestResource
+                        const targetY = target.y; // Déjà + 0.5 dans findNearestResource
+
+                        Position.x[eid] = targetX;
+                        Position.y[eid] = targetY;
                     }
                 }
             }
@@ -113,6 +115,9 @@ export const createWorkerSystem = (world: GameWorld) => {
                                 engine.map.resourceMaps.wood[rIndex] = Math.max(0, engine.map.resourceMaps.wood[rIndex] - 40);
                                 if (engine.map.resourceMaps.wood[rIndex] <= 0) {
                                     engine.map.biomes[rIndex] = 3; // PLAINS
+                                    if (typeof window !== 'undefined') {
+                                        window.dispatchEvent(new Event('city_mutated')); // Force redraw
+                                    }
                                 }
                             }
                         }

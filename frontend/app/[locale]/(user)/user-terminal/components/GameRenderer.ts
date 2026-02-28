@@ -43,6 +43,7 @@ export class GameRenderer {
         const roadLayer = (container.getChildByLabel('roadContainer') as PIXI.Container) || container;
         const vehicleLayer = (container.getChildByLabel('vehicleContainer') as PIXI.Container) || container;
         const resourceLayer = (container.getChildByLabel('resourceContainer') as PIXI.Container) || container;
+        const buildingLayer = (container.getChildByLabel('buildingContainer') as PIXI.Container) || container;
         const zoneLayer = (container.getChildByLabel('zoneContainer') as PIXI.Graphics);
 
         if (zoneLayer) {
@@ -54,7 +55,7 @@ export class GameRenderer {
         RoadPass.render(roadLayer, engine);                  // Routes -> roadContainer (zIndex 20)
         EntityPass.render(container, g, engine, viewMode, showGrid, zoomLevel); // Reste (Bâtiments, Arbres, Zones)
         BorderPass.render(g);                                // Frontière brillante -> vectorLayer (zIndex 150)
-        WorkerRenderer.render(vehicleLayer);                 // Workers -> vehicleContainer (zIndex 40)
+        WorkerRenderer.render(buildingLayer);                // Workers -> buildingContainer (Pour tri Z-Index avec Bâtiments)
 
         // ✅ Icônes ressources souterraines (actif seulement quand DataLayer 'resource' on)
         RawResourceIconRenderer.render(resourceLayer, engine, activeResourceLayer ?? null);

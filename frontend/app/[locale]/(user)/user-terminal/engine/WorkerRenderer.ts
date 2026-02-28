@@ -116,12 +116,13 @@ export class WorkerRenderer {
             if (!sprite || sprite.destroyed) {
                 // Créer un PIXI.AnimatedSprite avec les frames découpées
                 sprite = new PIXI.AnimatedSprite(frames);
-                sprite.anchor.set(0.5, 1.0);
+                // ✅ Anchor ajusté vers 0.8 pour baisser visuellement le perso dans la case
+                sprite.anchor.set(0.5, 0.8);
                 sprite.animationSpeed = ANIM_SPEED;
                 sprite.play();
 
-                // ✅ Taille réduite : ~60% de la largeur d'une tuile
-                const targetW = TILE_WIDTH * 0.6;
+                // ✅ Taille réduite : ~45% de la largeur d'une tuile pour plus de cohérence (35% pour le chasseur)
+                const targetW = type === WorkerType.HUNTER ? TILE_WIDTH * 0.35 : TILE_WIDTH * 0.45;
                 sprite.scale.set(targetW / frames[0].width);
 
                 container.addChild(sprite);
@@ -132,7 +133,11 @@ export class WorkerRenderer {
             const screenPos = gridToScreen(wx, wy);
             sprite.x = screenPos.x;
             sprite.y = screenPos.y + SURFACE_Y_OFFSET;
-            sprite.zIndex = Math.floor(wx) + Math.floor(wy) + 0.7;
+
+            // ✅ Z-Index isométrique ultra précis : 
+            // On se base sur la coordonnée *exacte* (avec décimales) pour se glisser derrière ou devant les ressources.
+            // Les ressources (arbres) utilisent souvent Math.floor(x) + Math.floor(y) + 0.5 (elles sont au centre)
+            sprite.zIndex = wx + wy;
             sprite.visible = true;
         }
 
