@@ -22,10 +22,10 @@ function BudgetRow({ label, expense = 0, income = 0, icon }: { label: string, ex
                 <img src={icon} className="w-5 h-5 object-contain pixelated" alt="" />
                 <span className="text-[21px] font-bold text-slate-800 truncate" title={label}>{label}</span>
             </td>
-            <td className="py-1 px-2 text-right font-mono text-[16px] text-red-600 font-bold whitespace-nowrap w-24">
+            <td className="py-1 px-2 text-right font-mono text-[21px] text-red-600 font-bold whitespace-nowrap w-24">
                 {expense > 0 ? `-$${formatNumber(expense)}` : "§0"}
             </td>
-            <td className="py-1 px-2 text-right font-mono text-[16px] text-green-600 font-bold border-l border-slate-300 whitespace-nowrap w-24">
+            <td className="py-1 px-2 text-right font-mono text-[21px] text-green-600 font-bold border-l border-slate-300 whitespace-nowrap w-24">
                 {income > 0 ? `+$${formatNumber(income)}` : "§0"}
             </td>
         </tr>

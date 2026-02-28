@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAdvisorStore, advisorStore } from '../../../store/AdvisorStore';
+import { AnimatedAvatar } from './AnimatedAvatar';
+import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 
 export function BobAlertBox() {
     const { isOpen, message, showConnectButton } = useAdvisorStore();
@@ -17,53 +19,50 @@ export function BobAlertBox() {
                     initial={{ y: 50, opacity: 0, scale: 0.9, x: '-50%' }}
                     animate={{ y: 0, opacity: 1, scale: 1, x: '-50%' }}
                     exit={{ y: 50, opacity: 0, scale: 0.9, x: '-50%' }}
-                    className="fixed bottom-32 left-[50%] z-[60] flex items-end gap-3 pointer-events-auto"
+                    className="fixed bottom-32 left-[50%] z-[60] w-[450px] pointer-events-auto"
                 >
-                    {/* Character Avatar */}
-                    <div className="w-16 h-16 flex-shrink-0 bg-neutral-800 border-[3px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] flex items-center justify-center overflow-hidden">
-                        <img
-                            src="/assets/ui/bob_avatar.webp"
-                            alt="Bob"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                                // Fallback pixel art face
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement!.innerHTML = '<div class="text-2xl">👷</div>';
-                            }}
-                        />
-                    </div>
-
-                    {/* Dialog Box */}
-                    <div className="relative bg-[#F4E4BC] border-[3px] border-black p-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)] min-w-[280px] max-w-[400px]">
-                        <button
-                            onClick={advisorStore.closeAdvice}
-                            className="absolute top-1 right-2 text-black font-bold text-lg hover:text-red-600 leading-none"
-                        >
-                            ✕
-                        </button>
-
-                        {/* Speaker Name */}
-                        <div className="absolute -top-4 left-2 bg-[#2C3E50] border-2 border-black text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-                            Chef de Chantier Bob
+                    <div className="flex bg-[#c3c7cb] border-4 border-black p-2 shadow-[8px_8px_0_0_#000] items-center gap-3 w-full">
+                        {/* LEFT: Avatar */}
+                        <div className="w-16 h-16 border-2 border-black rounded-full overflow-hidden bg-slate-300 shrink-0 shadow-[2px_2px_0_0_#000]">
+                            <AnimatedAvatar character="bob" isTalking={true} />
                         </div>
 
-                        {/* Text */}
-                        <p className="text-sm text-black font-medium leading-relaxed mt-1">
-                            {message}
-                        </p>
+                        {/* RIGHT: Speech Bubble */}
+                        <div className="flex-1 bg-white border-2 border-black p-3 shadow-[inset_2px_2px_0_0_rgba(0,0,0,0.1)] relative pr-8 min-h-[80px] flex flex-col justify-center">
+                            {/* Close Button */}
+                            <button
+                                onClick={advisorStore.closeAdvice}
+                                className="absolute top-1 right-1 w-6 h-6 hover:scale-110 active:scale-95 transition-transform"
+                            >
+                                <img
+                                    src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')}
+                                    alt="Close"
+                                    className="w-full h-full pixelated"
+                                />
+                            </button>
 
-                        {/* Optional Web3 Logic */}
-                        {showConnectButton && !isConnected && (
-                            <div className="mt-3 pt-3 border-t-2 border-black/10 flex justify-center">
-                                <div className="scale-90 transform origin-top">
-                                    <ConnectButton />
+                            <p className="text-[14px] leading-tight font-medium text-black">
+                                <span className="font-black border-b border-black uppercase text-xs pb-0.5 mb-1 block w-max">Chef Bob</span>
+                                <span className="italic font-bold block min-h-[50px]">"{message}"</span>
+                            </p>
+
+                            {/* Optional Web3 Logic */}
+                            {showConnectButton && !isConnected && (
+                                <div className="mt-2 flex justify-start">
+                                    <ConnectButton.Custom>
+                                        {({ openConnectModal }) => (
+                                            <button
+                                                onClick={openConnectModal}
+                                                className="bg-yellow-400 text-black border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-yellow-300 active:translate-y-px active:shadow-none transition-none uppercase tracking-widest font-black text-[14px] px-3 py-1 flex items-center gap-2"
+                                            >
+                                                <img src={withBasePath('/assets/isometric/Spritesheet/IU/icones/money.png')} className="w-5 h-5 pixelated" alt="Wallet" />
+                                                Connect Wallet
+                                            </button>
+                                        )}
+                                    </ConnectButton.Custom>
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Pixel Art Tail */}
-                        <div className="absolute -left-3 bottom-4 w-0 h-0 border-y-[6px] border-y-transparent border-r-[12px] border-r-black"></div>
-                        <div className="absolute -left-[9px] bottom-[19px] w-0 h-0 border-y-[4px] border-y-transparent border-r-[8px] border-r-[#F4E4BC]"></div>
+                            )}
+                        </div>
                     </div>
                 </motion.div>
             )}
