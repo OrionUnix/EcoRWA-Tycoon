@@ -59,32 +59,37 @@ export class BuildingAssets {
         if (!baseName) return undefined;
 
         const lvlStr = String(level).padStart(2, '0');
-        const vChar = String.fromCharCode(65 + variant);
+        const vChar = String.fromCharCode(65 + variant); // A, B, C...
 
-        // On prépare les morceaux du nom qu'on cherche
-        const searchPart = `${baseName}_${lvlStr}`;
         const isCst = state === 'construction';
+        const isDst = state === 'destruction';
+        const suffix = isCst ? '_cst' : isDst ? '_dst' : '';
 
-        // ✅ RECHERCHE ULTRA-FLOU (Ignore les dossiers et extensions)
-        const allKeys = Object.keys(spritesheet.textures);
+        // ✅ CONSTRUCTION DU NOM DE FRAME EXACT (ex: ironmine_01_A.png)
+        // On teste d'abord le nom standardisé que tu as mis dans ton nouveau JSON
+        let frameName = `${baseName}_${lvlStr}_${vChar}${suffix}.png`;
 
-        let targetKey = allKeys.find(key => {
-            const k = key.toLowerCase();
-            const b = baseName.toLowerCase();
-            // On vérifie si la clé contient le nom de base ET le niveau
-            // On ignore le chemin (ex: "mines/ironmine_01_A.png" devient valide pour "ironmine_01")
-            const matchBase = k.includes(b) && k.includes(lvlStr);
-
-            if (isCst) return matchBase && k.includes('_cst');
-            return matchBase && !k.includes('_cst') && !k.includes('_dst');
-        });
-
-        // Si on n'a rien trouvé avec le variant, on prend n'importe quoi qui match la base
-        if (!targetKey) {
-            targetKey = allKeys.find(key => key.toLowerCase().includes(baseName.toLowerCase()) && key.includes(lvlStr));
+        // Cas particulier sans variante (ex: water_pum_01.png)
+        if (baseName === 'water_pum') {
+            frameName = `${baseName}_${lvlStr}${suffix}.png`;
         }
 
-        return targetKey ? spritesheet.textures[targetKey] : undefined;
+        let tex = spritesheet.textures[frameName];
+
+        // ✅ FALLBACK : Si la variante B n'existe pas, on force la A
+        if (!tex && vChar !== 'A') {
+            const fallbackA = `${baseName}_${lvlStr}_A${suffix}.png`;
+            tex = spritesheet.textures[fallbackA];
+        }
+
+        // ✅ FALLBACK FINAL : Recherche par inclusion (si dossier présent)
+        if (!tex) {
+            const allKeys = Object.keys(spritesheet.textures);
+            const target = allKeys.find(k => k.includes(frameName));
+            if (target) tex = spritesheet.textures[target];
+        }
+
+        return tex;
     }
     static isLoaded(): boolean { return this._loaded; }
 }

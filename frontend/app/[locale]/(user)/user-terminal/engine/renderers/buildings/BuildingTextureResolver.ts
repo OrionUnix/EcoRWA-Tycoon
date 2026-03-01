@@ -11,60 +11,54 @@ if (!globalForRWATextures.rwaTextureCache) {
 const rwaTextureCache = globalForRWATextures.rwaTextureCache;
 
 export class BuildingTextureResolver {
-
-    /**
-     * Retourne la texture PIXI optimale pour ce bâtiment (Synchrone).
-     */
     static getTexture(building: BuildingData, isConstState: boolean, isRuined: boolean, index?: number): PIXI.Texture | undefined {
         let texture: PIXI.Texture | undefined;
         const lvl = building.level || 1;
-
         let overrideBaseName: string | undefined = undefined;
         let forceNormal = false;
 
-        // 1. RECHERCHE DE LA RESSOURCE DOMINANTE (Strict)
-        // 1. DÉTECTION DE LA RESSOURCE DOMINANTE (Version Blindée)
+        // 1. DÉTECTION DYNAMIQUE DES MINES
         if (building.type === 'MINE' && index !== undefined) {
-            const engine = (globalThis as any).mapEngine;
-            if (engine?.resourceMaps) {
-                // On récupère TOUTES les valeurs
-                const iron = engine.resourceMaps.iron?.[index] || 0;
-                const coal = engine.resourceMaps.coal?.[index] || 0;
-                const gold = engine.resourceMaps.gold?.[index] || 0;
-                const stone = engine.resourceMaps.stone?.[index] || 0;
+            // ✅ On vérifie globalThis ET window pour être sûr de trouver le moteur
+            const engine = (globalThis as any).mapEngine || (window as any).mapEngine;
 
-                // On crée un tableau d'objets pour comparer
-                const scan = [
-                    { id: 'ironmine', val: iron },
-                    { id: 'coalmine', val: coal },
-                    { id: 'goldmine', val: gold },
-                    { id: 'stonemine', val: stone }
-                ];
+            if (engine && engine.resourceMaps) {
+                const r = {
+                    iron: engine.resourceMaps.iron?.[index] || 0,
+                    coal: engine.resourceMaps.coal?.[index] || 0,
+                    gold: engine.resourceMaps.gold?.[index] || 0,
+                    stone: engine.resourceMaps.stone?.[index] || 0
+                };
 
-                // On trie par valeur la plus forte (décroissant)
-                scan.sort((a, b) => b.val - a.val);
+                // On trie par la valeur la plus forte
+                const stats = [
+                    { id: 'ironmine', val: r.iron },
+                    { id: 'coalmine', val: r.coal },
+                    { id: 'goldmine', val: r.gold },
+                    { id: 'stonemine', val: r.stone }
+                ].sort((a, b) => b.val - a.val);
 
-                // La ressource la plus forte gagne, si elle dépasse le seuil de visibilité (0.05)
-                if (scan[0].val > 0.05) {
-                    overrideBaseName = scan[0].id;
+                if (stats[0].val > 0.05) {
+                    overrideBaseName = stats[0].id;
                     forceNormal = true;
-                    // Debug console pour vérifier en temps réel
-                    console.log(`⛏️ Mine à l'index ${index} : Détection dominante -> ${scan[0].id} (${scan[0].val.toFixed(2)})`);
+                    // On ne log que si nécessaire pour ne pas saturer la console
                 }
             }
+            // ❌ Pas de log d'erreur ici : si le moteur n'est pas prêt, on reste silencieux
+            // pour éviter de spammer la console 60 fois par seconde.
         }
 
-        // 2. ÉTAT DU BÂTIMENT
+        // 2. DÉTERMINATION DE L'ÉTAT VISUEL
         const stateToUse = isRuined ? 'destruction' : (isConstState && !forceNormal) ? 'construction' : 'normal';
 
-        // PRIORITÉ 0 : Texture Web3/IPFS
+        // 3. PRIORITÉ 0 : Texture RWA (Load Asynchrone)
         if (building.rwaTexture) {
             const cached = rwaTextureCache.get(building.rwaTexture);
             if (cached && !cached.destroyed) {
                 texture = cached;
             } else if (!cached) {
-                const url = asset(building.rwaTexture) + `?v=2`;
-                PIXI.Assets.load(url).then((tex: PIXI.Texture) => {
+                const cacheBuster = `?v=2`;
+                PIXI.Assets.load(asset(building.rwaTexture) + cacheBuster).then((tex: PIXI.Texture) => {
                     if (tex && !tex.destroyed) {
                         if (tex.source) tex.source.scaleMode = 'nearest';
                         (tex as any).isCustomIso = true;
@@ -74,7 +68,7 @@ export class BuildingTextureResolver {
             }
         }
 
-        // PRIORITÉ 1 : Atlas HD (Nos nouvelles mines de Fer, Charbon, etc.)
+        // 4. PRIORITÉ 1 : Assets HD (BuildingAssets - Atlas Principal)
         if (!texture) {
             texture = BuildingAssets.getTexture(
                 building.type as any,
@@ -85,18 +79,19 @@ export class BuildingTextureResolver {
             );
         }
 
-        // PRIORITÉ 2 : Fallback Atlas standard (Anciens assets)
+        // 5. PRIORITÉ 2 : Atlas Interne Standard (Fallback)
         if (!texture) {
             const typeKey = building.type.toUpperCase();
             let frame = '';
+
             if (typeKey === 'RESIDENTIAL') frame = `residences/house${String(lvl).padStart(2, '0')}`;
             else if (typeKey === 'COMMERCIAL') frame = `commercial/comercial${String(lvl).padStart(2, '0')}`;
             else if (typeKey === 'INDUSTRIAL') frame = `industrial/indus${String(lvl).padStart(2, '0')}_A`;
-            else if (typeKey === 'POLICE_STATION') frame = `services/policestation/policestation${String(lvl).padStart(2, '0')}`;
-            else if (typeKey === 'FIRE_STATION') frame = `services/firestation/firestation${String(lvl).padStart(2, '0')}`;
-            else if (typeKey === 'CLINIC') frame = `services/hospital/hospital${String(lvl).padStart(2, '0')}`;
+            else if (typeKey === 'WATER_PUMP') frame = `services/waterpump/waterpump${String(lvl).padStart(2, '0')}`;
 
-            if (frame) texture = AtlasManager.getTexture(frame);
+            if (frame) {
+                texture = AtlasManager.getTexture(frame);
+            }
         }
 
         return texture;
