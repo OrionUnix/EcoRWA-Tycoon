@@ -3,7 +3,7 @@ import React from 'react';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 
 interface AvatarProps {
-    character: 'bob' | 'jordan';
+    character: 'bob' | 'jordan' | 'nancy' | 'carole' | 'dora' | 'conan' | 'donald' | 'jack';
     isTalking: boolean;
 }
 

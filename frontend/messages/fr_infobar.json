@@ -1,0 +1,19 @@
+{
+    "InfoBar": {
+        "advisor_title": "[ CONSEILLÈRE ]",
+        "msg_welcome": "Bienvenue Maire ! Commencez à construire.",
+        "msg_stable": "La ville est stable. Continuez !",
+        "msg_warning": "Attention, il manque des ressources !",
+        "res_water": "Eau",
+        "res_power": "Électricité",
+        "res_food": "Nourriture",
+        "res_wood": "Bois",
+        "res_stone": "Pierre",
+        "res_coal": "Charbon",
+        "res_iron": "Fer",
+        "res_silver": "Argent",
+        "res_gold": "Or",
+        "res_oil": "Pétrole",
+        "res_rwa": "Actifs RWA"
+    }
+}

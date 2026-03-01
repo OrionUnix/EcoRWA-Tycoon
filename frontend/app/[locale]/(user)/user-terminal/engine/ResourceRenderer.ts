@@ -15,6 +15,7 @@ let treeTexturesCache: PIXI.Texture[] | null = null;
 let treeTexturesLoading = false;
 
 // ✅ Chemins vers les sprites standalone 128x128
+// ── Chargement Arbres HD ──────────────────────────────────────────────────────
 const STANDALONE_TREE_PATHS = [
     '/assets/isometric/Spritesheet/resources/trees/tree.png',
     '/assets/isometric/Spritesheet/resources/trees/tree02.png',
@@ -67,6 +68,7 @@ export async function loadStandaloneTreeTextures(): Promise<void> {
         treeTexturesCache = [];
     }
     treeTexturesLoading = false;
+    console.log(`🌲 ResourceRenderer: ${loaded.length} arbres standalone 128px chargés !`);
 
     // Lancer le chargement des ressources brutes aussi
     loadRawResourceTextures();
@@ -123,26 +125,23 @@ export class ResourceRenderer {
         const hasRoad = engine.roadLayer && engine.roadLayer[i] !== null;
         const hasBuilding = engine.buildingLayer && engine.buildingLayer[i] !== null;
 
-        // DÉTECTION DU TYPE DE RESSOURCE DOMINANTE
+        // DÉTECTION DU TYPE DE RESSOURCE DOMINANTE (Unifiée)
         let resType = 'NONE';
-        if (engine.resourceMaps.oil[i] > 0.5) resType = 'OIL';
-        else if (engine.resourceMaps.gold[i] > 0.5) resType = 'GOLD';
-        else if (engine.resourceMaps.iron[i] > 0.5) resType = 'IRON';
-        else if (engine.resourceMaps.coal[i] > 0.5) resType = 'COAL';
-        else if (engine.resourceMaps.stone[i] > 0.5) resType = 'STONE';
-
-        // ════════════════════════════════════════════════════
-        // ✅ AFFICHER LES RESSOURCES BRUTES SUR LA CARTE
-        // ════════════════════════════════════════════════════
         if (woodAmount > 0.5) {
             resType = 'WOOD';
-        } else if (engine.resourceMaps.silver && engine.resourceMaps.silver[i] > 0.5) {
+        } else if (engine.resourceMaps.oil && engine.resourceMaps.oil[i] > 0.8) {
+            resType = 'OIL';
+        } else if (engine.resourceMaps.gold && engine.resourceMaps.gold[i] > 0.8) {
+            resType = 'GOLD';
+        } else if (engine.resourceMaps.iron && engine.resourceMaps.iron[i] > 0.8) {
+            resType = 'IRON';
+        } else if (engine.resourceMaps.coal && engine.resourceMaps.coal[i] > 0.8) {
+            resType = 'COAL';
+        } else if (engine.resourceMaps.stone && engine.resourceMaps.stone[i] > 0.8) {
+            resType = 'STONE';
+        } else if (engine.resourceMaps.silver && engine.resourceMaps.silver[i] > 0.8) {
             resType = 'SILVER';
-        }
-        // L'eau souterraine est gérée via le calque d'eau de surface en temps normal, 
-        // on ajoute l'icône seulement si c'est vraiment un point d'eau fort souterrain 
-        // (optionnel car sinon on sature l'écran d'icônes bleues).
-        else if (engine.resourceMaps.undergroundWater && engine.resourceMaps.undergroundWater[i] > 0.8) {
+        } else if (engine.resourceMaps.undergroundWater && engine.resourceMaps.undergroundWater[i] > 0.9) {
             resType = 'WATER';
         }
 
@@ -166,7 +165,7 @@ export class ResourceRenderer {
                         texture = ResourceAssets.forestFrames[frameIndex];
                     }
                 } else if (resType !== 'NONE') {
-                    // Charger la ressource brute (OR, FER, CHARBON, ETC.)
+                    // ✅ Restauration du chargement des Roches/Minerais
                     texture = rawResourceTexturesCache.get(resType) || null;
                 }
 
@@ -175,13 +174,13 @@ export class ResourceRenderer {
                 sprite = new PIXI.Sprite(texture);
 
                 // ✅ CORRECTION DE L'ANCRAGE (TRES IMPORTANT)
-                sprite.anchor.set(0.5, 1.0);
+                sprite.anchor.set(0.5, 0.5);
                 sprite.tint = tint;
 
-                // ✅ Échelle: on agrandit légèrement l'arbre (1.5x), mais pour les minerais on ajuste car ils sont déjà 128x128
-                let targetScale = (TILE_WIDTH / texture.width) * 1.5;
+                let targetScale = (TILE_WIDTH / texture.width) * 1.2; // Arbres
                 if (resType !== 'WOOD') {
-                    targetScale = (TILE_WIDTH * 0.7) / texture.width; // Plus petit pour les minerais au sol
+
+                    targetScale = (TILE_WIDTH * 0.35) / texture.width;
                 }
                 sprite.scale.set(targetScale);
 
@@ -202,14 +201,11 @@ export class ResourceRenderer {
                         container.addChild(sprite);
                     }
 
-                    // ════════════════════════════════════════════════════
-                    // ✅ CORRECTION DU PLACEMENT ISOMÉTRIQUE
-                    // Les props (arbres) ont leur racine au centre de la case
-                    // ════════════════════════════════════════════════════
-                    sprite.x = pos.x;
-                    sprite.y = pos.y + SURFACE_Y_OFFSET;
 
-                    // Z-Index : entre le sol et les bâtiments
+                    sprite.x = pos.x;
+                    sprite.y = pos.y;
+
+
                     const x = i % GRID_SIZE;
                     const y = Math.floor(i / GRID_SIZE);
                     sprite.zIndex = x + y + 0.5;

@@ -5,7 +5,7 @@ import { CityStats, PlayerResources } from '../../../engine/types';
 import { formatNumber } from '../hud/GameWidgets';
 import { useTranslations } from 'next-intl';
 import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
-import { GAME_ICONS } from '../../../../../../../hooks/ui/useGameIcons';
+import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
 
 interface BudgetPanelProps {

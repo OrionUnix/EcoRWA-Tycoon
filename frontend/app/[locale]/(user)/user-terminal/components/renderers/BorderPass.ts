@@ -11,8 +11,8 @@ import { ChunkManager } from '../../engine/ChunkManager';
 export class BorderPass {
 
     private static readonly BORDER_COLOR = 0xFFFFFF; // Blanc pur
-    private static readonly BORDER_ALPHA = 0.8;
-    private static readonly BORDER_WIDTH = 4; // Épais
+    private static readonly BORDER_ALPHA = 0.6;
+    private static readonly BORDER_WIDTH = 2; // Épais
 
     static render(g: PIXI.Graphics) {
         // Obtenir l'état des chunks (matrice booléenne)

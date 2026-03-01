@@ -16,6 +16,7 @@ export default getRequestConfig(async ({ locale }) => {
   const conanMessages = (await import(`../messages/${activeLocale}_conan.json`)).default;
   const caroleMessages = (await import(`../messages/${activeLocale}_carole.json`)).default;
   const budgetMessages = (await import(`../messages/${activeLocale}_budget.json`)).default;
+  const infobarMessages = (await import(`../messages/${activeLocale}_infobar.json`)).default;
 
   return {
     locale: activeLocale,
@@ -26,7 +27,8 @@ export default getRequestConfig(async ({ locale }) => {
       dora: doraMessages,
       conan: conanMessages,
       carole: caroleMessages,
-      budget: budgetMessages
+      budget: budgetMessages,
+      ...infobarMessages
     }
   };
 });

@@ -3,7 +3,6 @@ import { MapEngine } from '../engine/MapEngine';
 import { BuildingType } from '../engine/types';
 import { ResourceAssets } from '../engine/ResourceAssets';
 import { WorkerRenderer } from '../engine/WorkerRenderer';
-import { RawResourceIconRenderer } from '../engine/RawResourceIconRenderer';
 
 // ═══════════════════════════════════════
 // RENDER PASSES (Responsabilité unique)
@@ -56,9 +55,6 @@ export class GameRenderer {
         EntityPass.render(container, g, engine, viewMode, showGrid, zoomLevel); // Reste (Bâtiments, Arbres, Zones)
         BorderPass.render(g);                                // Frontière brillante -> vectorLayer (zIndex 150)
         WorkerRenderer.render(buildingLayer);                // Workers -> buildingContainer (Pour tri Z-Index avec Bâtiments)
-
-        // ✅ Icônes ressources souterraines (actif seulement quand DataLayer 'resource' on)
-        RawResourceIconRenderer.render(resourceLayer, engine, activeResourceLayer ?? null);
 
         return true;
     }

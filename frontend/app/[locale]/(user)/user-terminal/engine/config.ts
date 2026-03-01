@@ -9,9 +9,9 @@ export const CHUNKS_PER_SIDE = GRID_SIZE / CHUNK_SIZE; // 3
 export const TILE_WIDTH = 64;
 export const TILE_HEIGHT = 32;
 export const TILE_DEPTH = 4;
-export const SURFACE_Y_OFFSET = 2; // ✅ Léger offset positif pour l'ancrage
-export const RESOURCE_SCALE = 1.5; // ✅ Echelle Arbres/Ressources
-export const VEHICLE_SCALE = 1.1;  // ✅ Echelle Véhicules (Plus petite selon demande)
+export const SURFACE_Y_OFFSET = 2;
+export const RESOURCE_SCALE = 1.5;
+export const VEHICLE_SCALE = 1.1;
 export const CURSOR_DEPTH_OFFSET = 0;
 
 // Zoom par défaut (Réduit pour voir plus de carte)

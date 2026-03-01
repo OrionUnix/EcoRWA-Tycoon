@@ -9,7 +9,7 @@ import { BuildingInspector } from './ui/BuildingInspector';
 import { getGameEngine } from '../engine/GameEngine';
 
 // ✅ SIMCITY 2013 UI COMPONENTS
-import { CityInfoBar } from './ui/hud/CityInfoBar';
+import { ResourceBar } from './ui/toolbar/ResourceBar';
 import { MainToolbar } from './ui/hud/MainToolbar';
 import { ActiveToolHUD } from './ui/hud/ActiveToolHUD';
 import { RWAInventory } from './ui/web3/RWAInventory';
@@ -214,10 +214,9 @@ export default function GameUI({
             />
 
             {/* ═══════════════════════════════════════ */}
-            {/* CITY INFO BAR (Bottom-Left, always visible) */}
+            {/* RESOURCE BAR (Bottom-Left, always visible) */}
             {/* ═══════════════════════════════════════ */}
-            <CityInfoBar
-                fps={fps}
+            <ResourceBar
                 stats={stats}
                 resources={resources}
                 onOpenPanel={setActivePanel}

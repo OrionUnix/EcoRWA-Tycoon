@@ -12,5 +12,21 @@ export const GAME_ICONS = {
     export: "/assets/isometric/Spritesheet/IU/icones/exportation_importation.png",
     administration: "/assets/isometric/Spritesheet/IU/icones/administration.png",
     happy: "/assets/isometric/Spritesheet/IU/icones/happy.png",
+    sad: "/assets/isometric/Spritesheet/IU/icones/sad.png",
+    angry: "/assets/isometric/Spritesheet/IU/icones/angry.png",
     malade: "/assets/isometric/Spritesheet/IU/icones/malade.png",
+    wallet: "/assets/isometric/Spritesheet/IU/icones/wallet.png",
+    food: "/assets/isometric/Spritesheet/IU/icones/food.png",
+    wood: "/assets/isometric/Spritesheet/IU/icones/wood.png",
+    stone: "/assets/isometric/Spritesheet/IU/icones/stone.png",
+    coal: "/assets/isometric/Spritesheet/IU/icones/coal.png",
+    iron: "/assets/isometric/Spritesheet/IU/icones/iron.png",
+    silver: "/assets/isometric/Spritesheet/IU/icones/silver.png",
+    gold: "/assets/isometric/Spritesheet/IU/icones/gold.png",
+    copper: "/assets/isometric/Spritesheet/IU/icones/copper.png",
+    oil: "/assets/isometric/Spritesheet/IU/icones/oil.png",
+    road_dirt: "/assets/isometric/Spritesheet/IU/icones/road_dirt.png",
+    road_asphalt: "/assets/isometric/Spritesheet/IU/icones/road_asphalt.png",
+
+
 };

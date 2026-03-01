@@ -1,0 +1,19 @@
+{
+    "InfoBar": {
+        "advisor_title": "[ ADVISOR ]",
+        "msg_welcome": "Welcome Mayor! Start building.",
+        "msg_stable": "City is stable. Keep building!",
+        "msg_warning": "Warning: Resource shortage!",
+        "res_water": "Water",
+        "res_power": "Power",
+        "res_food": "Food",
+        "res_wood": "Wood",
+        "res_stone": "Stone",
+        "res_coal": "Coal",
+        "res_iron": "Iron",
+        "res_silver": "Silver",
+        "res_gold": "Gold",
+        "res_oil": "Oil",
+        "res_rwa": "RWA Assets"
+    }
+}
