@@ -37,7 +37,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
     onOpenRWA,
 }) => {
     const { toggle } = useToolbarState(activeCategory, setActiveCategory);
-    const t = useTranslations('toolbar'); // ✅ Use toolbar namespace
+    const t = useTranslations('Toolbar'); // ✅ Use Toolbar namespace
 
     return (
         <>

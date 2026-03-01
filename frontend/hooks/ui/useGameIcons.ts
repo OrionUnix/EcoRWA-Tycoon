@@ -1,9 +1,16 @@
+import { Fish } from "lucide-react";
+
 export const GAME_ICONS = {
     money: "/assets/isometric/Spritesheet/IU/icones/money.png",
     residential: "/assets/isometric/Spritesheet/IU/icones/residential.png",
     commercial: "/assets/isometric/Spritesheet/IU/icones/commercial.png",
     industrial: "/assets/isometric/Spritesheet/IU/icones/industrial.png",
     power: "/assets/isometric/Spritesheet/IU/icones/elect.png",
+    power_plant: "/assets/isometric/Spritesheet/IU/icones/central_coal.png",
+    central_coal: "/assets/isometric/Spritesheet/IU/icones/central_coal.png",
+    wind: "/assets/isometric/Spritesheet/IU/icones/wind.png",
+    eolien: "/assets/isometric/Spritesheet/IU/icones/wind.png",
+    solar: "/assets/isometric/Spritesheet/IU/icones/solar.png",
     water: "/assets/isometric/Spritesheet/IU/icones/water.png",
     no_water: "/assets/isometric/Spritesheet/IU/icones/no_water.png",
     rwa: "/assets/isometric/Spritesheet/IU/icones/rwa_property.png",
@@ -19,7 +26,11 @@ export const GAME_ICONS = {
     wallet: "/assets/isometric/Spritesheet/IU/icones/wallet.png",
     food: "/assets/isometric/Spritesheet/IU/icones/food.png",
     market: "/assets/isometric/Spritesheet/IU/icones/market.png",
+    hunter: "/assets/isometric/Spritesheet/IU/icones/hunter.png",
+    lumber: "/assets/isometric/Spritesheet/IU/icones/lumber.png",
+    fish: "/assets/isometric/Spritesheet/IU/icones/fish.png",
     mine: "/assets/isometric/Spritesheet/IU/icones/industrial.png",
+
     wood: "/assets/isometric/Spritesheet/IU/icones/wood.png",
     stone: "/assets/isometric/Spritesheet/IU/icones/stone.png",
     coal: "/assets/isometric/Spritesheet/IU/icones/coal.png",
@@ -33,6 +44,8 @@ export const GAME_ICONS = {
     road_avenue: "/assets/isometric/Spritesheet/IU/icones/road_avenue.png",
     road_grandavenue: "/assets/isometric/Spritesheet/IU/icones/road_grandavenue.png",
     road_highway: "/assets/isometric/Spritesheet/IU/icones/road_highway.png",
+
+
 
 
 

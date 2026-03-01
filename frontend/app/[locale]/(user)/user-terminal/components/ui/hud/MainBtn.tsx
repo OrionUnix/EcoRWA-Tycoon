@@ -9,10 +9,7 @@ interface MainBtnProps {
     onClick: () => void;
 }
 
-/**
- * MainBtn - Modern Borderless Version
- * Standalone pixel-art icon with hover effect and drop-shadow.
- */
+
 export function MainBtn({ id: _id, icon, label, color: _color, active, onClick }: MainBtnProps) {
     return (
         <div className="relative group p-2">
@@ -31,18 +28,18 @@ export function MainBtn({ id: _id, icon, label, color: _color, active, onClick }
                     <img
                         src={icon}
                         alt={label}
-                        className="w-14 h-14 drop-shadow-lg"
+                        className="w-16 h-16 drop-shadow-lg"
                         style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
                     />
                 ) : (
-                    <span className="text-4xl drop-shadow-lg" style={{ imageRendering: 'pixelated' }}>
+                    <span className="text-5xl drop-shadow-lg" style={{ imageRendering: 'pixelated' }}>
                         {icon || '❓'}
                     </span>
                 )}
             </button>
             {/* Label tooltip hover */}
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                <div className="px-3 py-1 bg-black text-white text-xs font-bold rounded-lg whitespace-nowrap shadow-xl">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                <div className="px-3 py-1 bg-black/80 backdrop-blur-sm text-white text-[11px] font-bold rounded-lg whitespace-nowrap shadow-xl border border-white/10 uppercase tracking-tighter">
                     {label}
                 </div>
             </div>

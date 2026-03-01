@@ -64,7 +64,7 @@ export class BuildingRenderer {
         }
 
         // 4. Résolution de la texture ou dessin géométrique
-        const texture = BuildingTextureResolver.getTexture(building, isConstState, isRuined);
+        const texture = BuildingTextureResolver.getTexture(building, isConstState, isRuined, i);
 
         let sprite = container.children.find(c => c instanceof PIXI.Sprite) as PIXI.Sprite | undefined;
         let graphics = container.children.find(c => c instanceof PIXI.Graphics) as PIXI.Graphics | undefined;

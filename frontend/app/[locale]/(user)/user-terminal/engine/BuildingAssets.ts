@@ -1,9 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { BuildingType } from './types';
 
-/**
- * Configuration mapping BuildingType to their atlas base name.
- */
 export const BUILDING_BASE_NAMES: Record<string, string> = {
     [BuildingType.RESIDENTIAL]: 'house',
     [BuildingType.COMMERCIAL]: 'commercial',
@@ -12,10 +9,10 @@ export const BUILDING_BASE_NAMES: Record<string, string> = {
     [BuildingType.POWER_PLANT]: 'coalfire',
     [BuildingType.WIND_TURBINE]: 'eolien',
     [BuildingType.SOLAR_PANEL]: 'solar',
-    [BuildingType.WATER_PUMP]: 'walterpump',
+    [BuildingType.WATER_PUMP]: 'water_pum',
     [BuildingType.FISHERMAN]: 'fishport',
     [BuildingType.POLICE_STATION]: 'police',
-    [BuildingType.FIRE_STATION]: 'fire',
+    [BuildingType.FIRE_STATION]: 'firestation',
     [BuildingType.CLINIC]: 'hospital',
     [BuildingType.CITY_HALL]: 'cityhall',
     [BuildingType.PARK]: 'square',
@@ -35,87 +32,59 @@ export const BUILDING_BASE_NAMES: Record<string, string> = {
 
 export class BuildingAssets {
     private static _loaded = false;
-    public static readonly FALLBACK_TEX = PIXI.Texture.WHITE;
     private static atlasPath = '/assets/isometric/Spritesheet/building_Atlas.json';
 
-    /**
-     * Charges look atlas de bâtiments.
-     * @param onProgress Callback optionnel pour suivre la progression (0 à 1)
-     */
     static async load(onProgress?: (p: number) => void): Promise<void> {
         if (this._loaded) return;
-
-        console.log('🏗️ BuildingAssets: Chargement de l\'atlas...');
-
         try {
-            // PIXI.Assets.load accepte un deuxième argument de progression
             await PIXI.Assets.load(this.atlasPath, onProgress);
-
-            // On force le scaleMode nearest pour le pixel art si nécessaire
-            const atlas = PIXI.Assets.get(this.atlasPath);
-            if (atlas && atlas.baseTexture) {
-                atlas.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
-            }
-
             this._loaded = true;
-            console.log('🦸 BuildingAssets: Atlas chargé avec succès !');
+            console.log('🦸 BuildingAssets v8: Atlas chargé !');
         } catch (error) {
-            console.error('❌ BuildingAssets: Erreur lors du chargement de l\'atlas', error);
+            console.error('❌ BuildingAssets: Erreur atlas', error);
         }
     }
 
-    /**
-     * Récupère une texture depuis l'atlas en fonction des paramètres du bâtiment.
-     * @param type Le type de bâtiment
-     * @param level Niveau (1, 2, 3...)
-     * @param variant Index de la variante (0 -> A, 1 -> B...)
-     * @param state État visuel ('normal', 'construction', 'destruction')
-     */
     static getTexture(
         type: BuildingType,
         level: number = 1,
         variant: number = 0,
-        state: 'normal' | 'construction' | 'destruction' = 'normal'
-    ): PIXI.Texture {
-        const baseName = BUILDING_BASE_NAMES[type];
+        state: 'normal' | 'construction' | 'destruction' = 'normal',
+        overrideBaseName?: string
+    ): PIXI.Texture | undefined {
+        const spritesheet = PIXI.Assets.get(this.atlasPath);
+        if (!spritesheet || !spritesheet.textures) return undefined;
 
-        if (!baseName) {
-            console.warn(`⚠️ BuildingAssets: Pas de mapping baseName pour le type ${type}`);
-            return this.FALLBACK_TEX;
+        const baseName = overrideBaseName || BUILDING_BASE_NAMES[type];
+        if (!baseName) return undefined;
+
+        const lvlStr = String(level).padStart(2, '0');
+        const vChar = String.fromCharCode(65 + variant);
+
+        // On prépare les morceaux du nom qu'on cherche
+        const searchPart = `${baseName}_${lvlStr}`;
+        const isCst = state === 'construction';
+
+        // ✅ RECHERCHE ULTRA-FLOU (Ignore les dossiers et extensions)
+        const allKeys = Object.keys(spritesheet.textures);
+
+        let targetKey = allKeys.find(key => {
+            const k = key.toLowerCase();
+            const b = baseName.toLowerCase();
+            // On vérifie si la clé contient le nom de base ET le niveau
+            // On ignore le chemin (ex: "mines/ironmine_01_A.png" devient valide pour "ironmine_01")
+            const matchBase = k.includes(b) && k.includes(lvlStr);
+
+            if (isCst) return matchBase && k.includes('_cst');
+            return matchBase && !k.includes('_cst') && !k.includes('_dst');
+        });
+
+        // Si on n'a rien trouvé avec le variant, on prend n'importe quoi qui match la base
+        if (!targetKey) {
+            targetKey = allKeys.find(key => key.toLowerCase().includes(baseName.toLowerCase()) && key.includes(lvlStr));
         }
 
-        // Construction du nom de la frame
-        const levelStr = String(level).padStart(2, '0');
-        const variantChar = String.fromCharCode(65 + variant); // 0 -> A, 1 -> B...
-
-        let suffix = '';
-        if (state === 'construction') suffix = '_cst';
-        if (state === 'destruction') suffix = '_dst';
-
-        const frameBase = `${baseName}_${levelStr}_${variantChar}`;
-        const frameFull = `${frameBase}${suffix}.png`;
-
-        // 1. Essai avec le suffixe d'état
-        let texture = PIXI.Assets.get(frameFull);
-
-        if (texture) return texture;
-
-        // 2. Fallback intelligent : si l'état spécial (cst/dst) manque, on essaie la version normale
-        if (state !== 'normal') {
-            const frameNormal = `${frameBase}.png`;
-            texture = PIXI.Assets.get(frameNormal);
-            if (texture) {
-                console.warn(`⚠️ BuildingAssets: Frame d'état "${state}" manquante pour ${frameFull}, fallback sur normal.`);
-                return texture;
-            }
-        }
-
-        // 3. Échec total
-        console.warn(`❌ BuildingAssets: Texture introuvable dans l'atlas : ${frameFull}`);
-        return this.FALLBACK_TEX;
+        return targetKey ? spritesheet.textures[targetKey] : undefined;
     }
-
-    static isLoaded(): boolean {
-        return this._loaded;
-    }
+    static isLoaded(): boolean { return this._loaded; }
 }

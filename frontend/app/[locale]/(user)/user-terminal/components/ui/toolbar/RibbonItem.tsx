@@ -30,7 +30,7 @@ export function RibbonItem({ active, onClick, icon, label, cost, color: _color, 
             <div
                 className="flex items-center justify-center"
                 style={{
-                    width: 48, height: 48,
+                    width: 56, height: 56,
                     imageRendering: 'pixelated',
                 }}
             >
@@ -38,11 +38,11 @@ export function RibbonItem({ active, onClick, icon, label, cost, color: _color, 
                     <img
                         src={icon}
                         alt={label}
-                        className="w-12 h-12 drop-shadow-lg"
+                        className="w-14 h-14 drop-shadow-lg"
                         style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
                     />
                 ) : (
-                    <span className="text-3xl drop-shadow-lg">{icon || '❓'}</span>
+                    <span className="text-4xl drop-shadow-lg">{icon || '❓'}</span>
                 )}
             </div>
 

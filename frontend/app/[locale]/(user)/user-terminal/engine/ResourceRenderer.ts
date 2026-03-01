@@ -16,7 +16,7 @@ const getResourceCache = () => globalForResources.resourceCache;
 let treeTexturesCache: PIXI.Texture[] | null = null;
 let treeTexturesLoading = false;
 
-// ✅ Chemins vers les sprites standalone 128x128
+
 const STANDALONE_TREE_PATHS = [
     '/assets/isometric/Spritesheet/resources/trees/tree.png',
     '/assets/isometric/Spritesheet/resources/trees/tree02.png',
@@ -176,8 +176,8 @@ export class ResourceRenderer {
             }
 
             sprite.x = pos.x;
-            const Y_OFFSET = resType === 'WOOD' ? 16 : 8;
-            sprite.y = pos.y + (TILE_HEIGHT / 2) + Y_OFFSET;
+            const Y_OFFSET = resType === 'WOOD' ? 0 : 4;
+            sprite.y = pos.y + Y_OFFSET;
 
             const x = i % GRID_SIZE;
             const y = Math.floor(i / GRID_SIZE);

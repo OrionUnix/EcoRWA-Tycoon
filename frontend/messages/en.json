@@ -356,6 +356,18 @@
         "name": "Lumberjack Hut",
         "desc": "Produces wood (Requires Forest)."
       },
+      "FOOD_MARKET": {
+        "name": "Food Market",
+        "desc": "Exports your surplus food."
+      },
+      "RESTAURANT": {
+        "name": "Restaurant",
+        "desc": "Local cuisine."
+      },
+      "CAFE": {
+        "name": "Cafe",
+        "desc": "Meeting place."
+      },
       "MUSEUM": {
         "name": "Museum",
         "desc": "Cultural building."

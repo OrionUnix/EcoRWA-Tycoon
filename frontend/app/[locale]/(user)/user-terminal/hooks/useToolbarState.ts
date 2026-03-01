@@ -32,14 +32,14 @@ export const TOOLBAR_CATEGORIES = [
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 export const BUILDING_ICON_MAP: Record<string, string> = {
-    POWER_PLANT: GAME_ICONS.power, WATER_PUMP: GAME_ICONS.water, POLICE_STATION: GAME_ICONS.police,
+    POWER_PLANT: GAME_ICONS.central_coal, WATER_PUMP: GAME_ICONS.water, POLICE_STATION: GAME_ICONS.police,
     FIRE_STATION: GAME_ICONS.fire, SCHOOL: GAME_ICONS.administration, CLINIC: GAME_ICONS.medical,
-    CITY_HALL: GAME_ICONS.administration, FOOD_MARKET: GAME_ICONS.food, PARK: GAME_ICONS.happy, // ✅ Fallback
+    CITY_HALL: GAME_ICONS.administration, FOOD_MARKET: GAME_ICONS.market, PARK: GAME_ICONS.happy,
     MUSEUM: GAME_ICONS.administration, PHARMACY: GAME_ICONS.medical, RESTAURANT: GAME_ICONS.food,
-    CAFE: GAME_ICONS.food, STADIUM: GAME_ICONS.administration, WIND_TURBINE: GAME_ICONS.power,
-    SOLAR_PANEL: GAME_ICONS.power, MINE: GAME_ICONS.iron, OIL_PUMP: GAME_ICONS.oil,
-    FISHERMAN: GAME_ICONS.food, HUNTER_HUT: GAME_ICONS.food, OIL_RIG: GAME_ICONS.oil,
-    COAL_MINE: GAME_ICONS.coal, ORE_MINE: GAME_ICONS.iron, LUMBER_HUT: GAME_ICONS.wood,
+    CAFE: GAME_ICONS.food, STADIUM: GAME_ICONS.administration, WIND_TURBINE: GAME_ICONS.wind,
+    SOLAR_PANEL: GAME_ICONS.solar, MINE: GAME_ICONS.iron, OIL_PUMP: GAME_ICONS.oil,
+    FISHERMAN: GAME_ICONS.fish, HUNTER_HUT: GAME_ICONS.hunter, OIL_RIG: GAME_ICONS.oil,
+    COAL_MINE: GAME_ICONS.coal, ORE_MINE: GAME_ICONS.iron, LUMBER_HUT: GAME_ICONS.lumber,
 };
 
 export const RES_ICONS: Record<string, string> = {
@@ -53,11 +53,7 @@ export const RES_NAMES: Record<string, string> = {
     gold: 'Or', silver: 'Argent',
 };
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-/**
- * useToolbarState — Gestion du toggle des catégories de la Toolbar.
- * Utilisation : const { toggle } = useToolbarState(activeCategory, setActiveCategory);
- */
+
 export function useToolbarState(
     activeCategory: string | null,
     setActiveCategory: (cat: string | null) => void,

@@ -347,6 +347,18 @@
         "name": "Cabane de Bûcheron",
         "desc": "Produit du bois (Forêt requise)."
       },
+      "FOOD_MARKET": {
+        "name": "Marché Alimentaire",
+        "desc": "Exporte vos surplus de nourriture."
+      },
+      "RESTAURANT": {
+        "name": "Restaurant",
+        "desc": "Cuisine locale."
+      },
+      "CAFE": {
+        "name": "Café",
+        "desc": "Lieu de rencontre."
+      },
       "MUSEUM": {
         "name": "Musée",
         "desc": "Bâtiment culturel."
