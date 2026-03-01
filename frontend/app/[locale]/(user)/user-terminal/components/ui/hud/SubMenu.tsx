@@ -1,11 +1,9 @@
 import React from 'react';
 import { BuildingCategory, BuildingType, ZoneType, RoadType, BUILDING_SPECS, ROAD_SPECS } from '../../../engine/types';
 import { SC_COLORS, BUILDING_ICON_MAP } from '../../../hooks/useToolbarState';
+import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
 import { RibbonItem } from '../toolbar/RibbonItem';
-
-const ROAD_LABELS: Record<string, string> = {
-    DIRT: 'Terre', SMALL: 'Petite', ASPHALT: 'Standard', AVENUE: 'Avenue', HIGHWAY: 'Autoroute',
-};
+import { useTranslations } from 'next-intl';
 
 interface SubMenuProps {
     category: string;
@@ -21,7 +19,7 @@ interface SubMenuProps {
 }
 
 /**
- * Popup "baïonnette" horizontal qui s'affiche au-dessus du bouton parent
+ * SubMenu - Modern Borderless Version
  */
 export function SubMenu({
     category, viewMode, setViewMode,
@@ -29,43 +27,32 @@ export function SubMenu({
     selectedZoneType, setSelectedZoneType,
     setSelectedBuildingType, onClose, onOpenRWA,
 }: SubMenuProps) {
+    const t = useTranslations('Toolbar');
+    const tb = useTranslations('Game.buildings'); // ✅ Shared building names
     const color = SC_COLORS[category] || '#888';
     const selectAndClose = (fn: () => void) => { fn(); onClose(); };
 
     return (
         <div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
-            style={{ animation: 'ribbonIn 0.18s cubic-bezier(0.34,1.56,0.64,1)' }}
+            className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+            style={{ animation: 'ribbonIn 0.25s ease-out' }}
         >
-            {/* Ruban glassmorphism sombre */}
+            {/* Main Container : Transparent & Centered Icons */}
             <div
-                className="flex flex-row items-end gap-1 px-3 py-2.5 rounded-2xl"
-                style={{
-                    background: 'rgba(15,20,35,0.92)',
-                    backdropFilter: 'blur(16px)',
-                    border: `1px solid ${color}40`,
-                    boxShadow: '0 -4px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)',
-                }}
+                className="flex flex-row items-end gap-2 px-6 py-3 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10"
             >
-                {/* Flèche pointant vers le bas */}
-                <div
-                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-2 overflow-hidden"
-                    style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
-                >
-                    <div
-                        className="w-3 h-3 rotate-45 mx-auto -mt-1.5"
-                        style={{ background: 'rgba(15,20,35,0.92)', border: `1px solid ${color}40` }}
-                    />
-                </div>
-
                 {/* —— ROADS —— */}
                 {category === 'ROADS' && Object.values(ROAD_SPECS).map(spec => (
                     <RibbonItem
                         key={spec.type}
                         active={viewMode === 'BUILD_ROAD' && selectedRoadType === spec.type}
                         onClick={() => selectAndClose(() => { setViewMode('BUILD_ROAD'); setSelectedRoadType(spec.type); })}
-                        icon="🛣️"
-                        label={ROAD_LABELS[spec.type] || spec.type}
+                        icon={spec.type === 'DIRT' ? GAME_ICONS.road_dirt :
+                            spec.type === 'ASPHALT' ? GAME_ICONS.road_asphalt :
+                                spec.type === 'AVENUE' ? GAME_ICONS.road_avenue :
+                                    spec.type === 'HIGHWAY' ? GAME_ICONS.road_highway :
+                                        GAME_ICONS.road_asphalt}
+                        label={t(`roads.${spec.type.toLowerCase()}` as any)}
                         cost={spec.cost}
                         color={color}
                     />
@@ -77,17 +64,17 @@ export function SubMenu({
                         <RibbonItem
                             active={viewMode === 'ZONE' && selectedZoneType === ZoneType.RESIDENTIAL}
                             onClick={() => selectAndClose(() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.RESIDENTIAL); })}
-                            icon="🏠" label="Résidentiel" color="#7ED321"
+                            icon={GAME_ICONS.residential} label={t('zones.residential')} color="#7ED321"
                         />
                         <RibbonItem
                             active={viewMode === 'ZONE' && selectedZoneType === ZoneType.COMMERCIAL}
                             onClick={() => selectAndClose(() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.COMMERCIAL); })}
-                            icon="🏢" label="Commercial" color="#4A90E2"
+                            icon={GAME_ICONS.commercial} label={t('zones.commercial')} color="#4A90E2"
                         />
                         <RibbonItem
                             active={viewMode === 'ZONE' && selectedZoneType === ZoneType.INDUSTRIAL}
                             onClick={() => selectAndClose(() => { setViewMode('ZONE'); setSelectedZoneType(ZoneType.INDUSTRIAL); })}
-                            icon="🏭" label="Industriel" color="#F5A623"
+                            icon={GAME_ICONS.industrial} label={t('zones.industrial')} color="#F5A623"
                         />
                     </>
                 )}
@@ -102,7 +89,7 @@ export function SubMenu({
                                 active={viewMode === `BUILD_${spec.type}`}
                                 onClick={() => selectAndClose(() => { setViewMode(`BUILD_${spec.type}`); setSelectedBuildingType(spec.type); })}
                                 icon={BUILDING_ICON_MAP[spec.type] || '🏢'}
-                                label={spec.name}
+                                label={tb(`${spec.type}.name` as any)} // ✅ Use Game.buildings namespace
                                 cost={spec.cost}
                                 resourceCost={spec.resourceCost}
                                 color={color}
@@ -116,10 +103,10 @@ export function SubMenu({
                         <RibbonItem
                             active={false}
                             onClick={() => { if (onOpenRWA) onOpenRWA(); onClose(); }}
-                            icon="🌍" label="RWA" color={color}
+                            icon={GAME_ICONS.administration} label="RWA" color={color}
                         />
-                        <RibbonItem active={false} onClick={() => { }} icon="📈" label="Yield" color={color} />
-                        <RibbonItem active={false} onClick={() => { }} icon="🔄" label="Exchange" color={color} />
+                        <RibbonItem active={false} onClick={() => { }} icon={GAME_ICONS.gold} label="Yield" color={color} />
+                        <RibbonItem active={false} onClick={() => { }} icon={GAME_ICONS.export} label="Trade" color={color} />
                     </>
                 )}
             </div>

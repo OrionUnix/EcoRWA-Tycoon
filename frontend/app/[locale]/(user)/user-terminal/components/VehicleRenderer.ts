@@ -51,9 +51,9 @@ export class VehicleRenderer {
                 sprite.x = px;
                 sprite.y = py + (SURFACE_Y_OFFSET); // ✅ Correction Verticale
 
-                // Z-Index Sorting
-                // Car Z should be roughly x + y + small offset to sit above roads
-                sprite.zIndex = car.x + car.y + 0.6; // 0.6 > Road(0.1) and Resource(0.5)
+                // Z-Index Sorting (Ultra-Précis car la voiture bouge)
+                // On utilise les positions interpolées (offset) pour un tri correct entre deux cases
+                sprite.zIndex = (car.x + (car.offsetX || 0)) + (car.y + (car.offsetY || 0)) + 0.6;
 
                 // Texture Update (Animation)
                 const texture = VehicleAssets.getTexture(

@@ -12,35 +12,43 @@ interface RibbonItemProps {
 }
 
 /**
- * Item compact du sous-menu (ruban horizontal)
+ * RibbonItem - Modern Borderless Version
+ * Standalone icon for submenus.
  */
-export function RibbonItem({ active, onClick, icon, label, cost, color, resourceCost }: RibbonItemProps) {
+export function RibbonItem({ active, onClick, icon, label, cost, color: _color, resourceCost }: RibbonItemProps) {
     return (
         <button
             onClick={onClick}
-            className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-150 hover:scale-105 min-w-[64px] group"
+            className={`flex flex-col items-center gap-1 p-2 transition-transform duration-200 cursor-pointer hover:scale-110 active:scale-95 group ${active ? 'scale-110' : ''}`}
             style={{
-                background: active ? `${color}25` : 'rgba(255,255,255,0.04)',
-                border: active ? `1.5px solid ${color}80` : '1.5px solid rgba(255,255,255,0.08)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                outline: 'none',
             }}
         >
             {/* Icône */}
             <div
-                className="flex items-center justify-center text-base transition-transform group-hover:scale-110"
+                className="flex items-center justify-center"
                 style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: `linear-gradient(145deg, ${color}CC, ${color}88)`,
-                    boxShadow: active ? `0 0 12px ${color}60` : '0 2px 6px rgba(0,0,0,0.3)',
-                    fontSize: 16,
+                    width: 48, height: 48,
+                    imageRendering: 'pixelated',
                 }}
             >
-                {icon}
+                {icon && typeof icon === 'string' && icon.startsWith('/') ? (
+                    <img
+                        src={icon}
+                        alt={label}
+                        className="w-12 h-12 drop-shadow-lg"
+                        style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                    />
+                ) : (
+                    <span className="text-3xl drop-shadow-lg">{icon || '❓'}</span>
+                )}
             </div>
 
             {/* Nom */}
             <span
-                className="text-[10px] font-semibold leading-tight text-center whitespace-nowrap max-w-[72px] overflow-hidden text-ellipsis"
-                style={{ color: active ? '#fff' : 'rgba(255,255,255,0.7)' }}
+                className={`text-[11px] font-black uppercase tracking-tight leading-tight text-center drop-shadow-md whitespace-nowrap px-1 py-0.5 rounded ${active ? 'bg-yellow-400 text-black' : 'text-white bg-black/40'}`}
             >
                 {label}
             </span>
@@ -48,13 +56,12 @@ export function RibbonItem({ active, onClick, icon, label, cost, color, resource
             {/* Prix */}
             {cost !== undefined && (
                 <span
-                    className="text-[10px] flex items-center gap-1 flex-wrap justify-center mt-0.5 leading-tight"
-                    style={{ color: active ? '#fbbf24' : '#d1d5db', whiteSpace: 'pre-wrap', textAlign: 'center' }}
+                    className="text-[10px] flex items-center gap-1 flex-wrap justify-center mt-0.5 leading-tight font-bold bg-black/60 text-white px-1.5 rounded-full shadow-lg"
                 >
-                    Coût : {cost}$
+                    ${cost}
                     {resourceCost && Object.entries(resourceCost).map(([res, amt]) => (
-                        <span key={res} className="whitespace-nowrap">
-                            , {amt} {RES_ICONS[res] || ''} {RES_NAMES[res] || res}
+                        <span key={res} className="flex items-center gap-0.5">
+                            | {amt}{RES_ICONS[res] && RES_ICONS[res].startsWith('/') ? <img src={RES_ICONS[res]} className="w-3 h-3 pixelated" alt={res} /> : RES_ICONS[res]}
                         </span>
                     ))}
                 </span>

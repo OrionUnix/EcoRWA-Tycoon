@@ -138,8 +138,8 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
     return (
         <>
             <AnimatePresence>
-                <motion.div key="onboarding-modal-jordan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto bg-black/70 backdrop-blur-sm">
-                    <div className="bg-[#1e293b] border-4 border-black p-6 md:p-8 shadow-[8px_8px_0_rgba(0,0,0,1)] max-w-5xl w-full text-white relative">
+                <motion.div key="onboarding-modal-jordan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none bg-black/70 backdrop-blur-sm">
+                    <div className="bg-[#1e293b] border-4 border-black p-6 md:p-8 shadow-[8px_8px_0_rgba(0,0,0,1)] max-w-5xl w-full text-white relative pointer-events-auto">
 
                         {/* BOUTONS D'ACTION (HELP / CLOSE) */}
                         <div className="absolute top-4 right-4 flex gap-3 z-50">

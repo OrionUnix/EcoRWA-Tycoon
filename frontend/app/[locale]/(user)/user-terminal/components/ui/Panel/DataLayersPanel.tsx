@@ -51,22 +51,20 @@ function LayerButton({ layer, active, onClick }: { layer: DataLayer; active: boo
     return (
         <button
             onClick={onClick}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl transition-all duration-150 hover:bg-white/5 hover:scale-[1.01]"
-            style={{
-                background: active ? `${layer.color}25` : 'transparent',
-                border: active ? `1.5px solid ${layer.color}80` : '1.5px solid transparent',
-            }}
+            className={`flex items-center gap-2.5 w-full px-3 py-1.5 rounded-none border-2 active:border-black active:border-b-white active:border-r-white active:bg-[#a9afb5] ${active
+                    ? 'border-black border-b-white border-r-white bg-[#a9afb5]'
+                    : 'border-white border-b-black border-r-black bg-[#c3c7cb]'
+                }`}
         >
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs shadow-sm flex-shrink-0"
-                style={{ background: active ? layer.color : `${layer.color}66` }}>
+            <div className="w-7 h-7 flex items-center justify-center text-black text-xs flex-shrink-0"
+                style={{ imageRendering: 'pixelated' }}>
                 {layer.icon}
             </div>
-            <span className="text-[11px] font-semibold" style={{ color: active ? 'white' : '#aaa' }}>
+            <span className="text-[11px] font-bold text-black">
                 {layer.label}
             </span>
             {active && (
-                <span className="ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: `${layer.color}20`, color: layer.color }}>
+                <span className="ml-auto text-[8px] font-black px-1.5 py-0.5 border border-black bg-white text-black">
                     ACTIF
                 </span>
             )}
@@ -118,31 +116,29 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
 
     return (
         <div
-            className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-h-[60vh] overflow-y-auto bg-slate-800/95 backdrop-blur-md border border-slate-600 rounded-xl p-4 shadow-2xl origin-bottom animate-in fade-in slide-in-from-bottom-2 z-40 pointer-events-auto"
+            className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-h-[60vh] overflow-y-auto bg-[#c3c7cb] border-4 border-black rounded-none p-4 shadow-[4px_4px_0_0_#000] z-40 pointer-events-auto"
             style={{
                 fontFamily: "'Inter', 'Segoe UI', sans-serif",
             }}
         >
             <div className="w-full flex flex-col h-full">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-2 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="flex items-center justify-between mb-2 pb-2 border-b border-black">
                     <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs shadow-md"
-                            style={{ background: '#4A4A4A' }}>📊</div>
-                        <span className="text-[12px] font-bold text-white">Couches de Données</span>
+                        <div className="w-7 h-7 flex items-center justify-center text-black text-xs"
+                            style={{ imageRendering: 'pixelated' }}>📊</div>
+                        <span className="text-[12px] font-black text-black uppercase">Couches de Données</span>
                     </div>
-                    <button onClick={handleClose} className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] hover:bg-white/10"
-                        style={{ background: 'rgba(255,255,255,0.1)', color: '#ccc' }}>✕</button>
+                    <button onClick={handleClose} className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-black bg-[#c3c7cb] hover:bg-[#a9afb5]">✕</button>
                 </div>
 
                 {/* Clear button */}
                 {activeLayer && (
                     <button
                         onClick={handleClear}
-                        className="w-full mb-2 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-[1.01]"
-                        style={{ background: 'rgba(208,2,27,0.08)', color: '#D0021B', border: '1px solid rgba(208,2,27,0.15)' }}
+                        className="w-full mb-4 py-1.5 rounded-none border-2 border-white border-b-black border-r-black bg-[#c3c7cb] text-[10px] font-black uppercase text-[#D0021B] hover:bg-[#a9afb5] active:border-black active:border-b-white active:border-r-white"
                     >
-                        ✕ Désactiver
+                        ✕ Désactiver l'affichage
                     </button>
                 )}
 
@@ -150,7 +146,7 @@ export const DataLayersPanel: React.FC<DataLayersPanelProps> = ({ activeLayer, o
                 <div className="overflow-y-auto space-y-2">
                     {Object.entries(groups).map(([groupName, layers]) => (
                         <div key={groupName}>
-                            <div className="text-sm font-bold text-slate-400 uppercase mt-4 mb-2 border-b border-slate-600 pb-1">
+                            <div className="text-[10px] font-black text-black uppercase mt-4 mb-2 border-b-2 border-black pb-0.5">
                                 {groupName}
                             </div>
                             <div className="space-y-0.5">

@@ -7,25 +7,18 @@ import { RoadAssets } from '../engine/RoadAssets';
 // Instance pour le rendu des routes (Sprite Caching)
 
 export class RoadRenderer {
-    private container: PIXI.Container;
     private roadCache: Map<number, PIXI.Sprite>; // Cache par index de tuile
 
     constructor() {
-        this.container = new PIXI.Container();
-        this.container.label = "RoadRenderer";
-        this.container.zIndex = 10;
-        this.container.sortableChildren = true;
         this.roadCache = new Map();
     }
 
-    getContainer(): PIXI.Container {
-        return this.container;
-    }
+    // Méthode supprimée car le container est désormais géré par le parent
 
     private hasLoggedError: boolean = false; // ✅ Le flag anti-spam
 
-    render(engine: MapEngine) {
-        if (this.container.destroyed) return;
+    render(engine: MapEngine, parentContainer: PIXI.Container) {
+        if (parentContainer.destroyed) return;
 
         try {
             // On parcourt tout le calque de routes
@@ -64,7 +57,7 @@ export class RoadRenderer {
                         sprite.x = pos.x;
                         sprite.y = pos.y + (SURFACE_Y_OFFSET); // ✅ Application de l'offset 3D
 
-                        this.container.addChild(sprite);
+                        parentContainer.addChild(sprite);
                         this.roadCache.set(i, sprite);
                     }
 
@@ -74,12 +67,14 @@ export class RoadRenderer {
                     }
 
                     // Ré-attachement si nécessaire (Clean-Redraw)
-                    if (sprite.parent !== this.container) {
-                        this.container.addChild(sprite);
+                    if (sprite.parent !== parentContainer) {
+                        parentContainer.addChild(sprite);
                     }
 
                     sprite.visible = true;
-                    sprite.zIndex = i; // Tri basique par index (suffisant pour sol plat)
+                    const x = i % GRID_SIZE;
+                    const y = Math.floor(i / GRID_SIZE);
+                    sprite.zIndex = x + y + 0.4; // Slightly back from buildings/trees to avoid flickering but still sortable
 
                 } else {
                     // Pas de route ici, supprimer le sprite s'il existe
@@ -105,7 +100,6 @@ export class RoadRenderer {
     destroy() {
         this.roadCache.forEach(s => s.destroy());
         this.roadCache.clear();
-        this.container.destroy({ children: true });
     }
 
     // Méthodes legacy (vides pour compatibilité)

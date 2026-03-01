@@ -34,7 +34,7 @@ export class EntityPass {
 
         // Récupération dynamique des couches Z-Order créées dans UserTerminalClient
         const zoneLayer = (container.getChildByLabel("zoneContainer") as PIXI.Graphics) || g;
-        const buildingLayer = (container.getChildByLabel("buildingContainer") as PIXI.Container) || container;
+        const worldEntityLayer = (container.getChildByLabel("worldEntityContainer") as PIXI.Container) || container;
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -54,8 +54,8 @@ export class EntityPass {
 
                 // 2. RESSOURCES (Arbres) & FAUNE
                 if (!isLowDetail && viewMode === 'ALL') {
-                    ResourceRenderer.drawResource(buildingLayer, engine, i, pos, wood, biome);
-                    WildlifeRenderer.drawWildlife(buildingLayer, engine, i, pos, biome);
+                    ResourceRenderer.drawResource(worldEntityLayer, engine, i, pos, wood, biome);
+                    WildlifeRenderer.drawWildlife(worldEntityLayer, engine, i, pos, biome);
                 }
 
                 // 3. GRILLE
@@ -78,7 +78,7 @@ export class EntityPass {
                 // 5. BÂTIMENTS (Utilise Z-Index = 30 -> buildingContainer)
                 if (engine.buildingLayer && engine.buildingLayer[i]) {
                     BuildingRenderer.drawTile(
-                        buildingLayer,
+                        worldEntityLayer,
                         engine.buildingLayer[i]!,
                         x, y, pos,
                         isHighDetail,

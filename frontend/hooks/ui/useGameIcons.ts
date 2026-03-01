@@ -5,6 +5,7 @@ export const GAME_ICONS = {
     industrial: "/assets/isometric/Spritesheet/IU/icones/industrial.png",
     power: "/assets/isometric/Spritesheet/IU/icones/elect.png",
     water: "/assets/isometric/Spritesheet/IU/icones/water.png",
+    no_water: "/assets/isometric/Spritesheet/IU/icones/no_water.png",
     rwa: "/assets/isometric/Spritesheet/IU/icones/rwa_property.png",
     police: "/assets/isometric/Spritesheet/IU/icones/police.png",
     fire: "/assets/isometric/Spritesheet/IU/icones/firestation.png",
@@ -17,6 +18,8 @@ export const GAME_ICONS = {
     malade: "/assets/isometric/Spritesheet/IU/icones/malade.png",
     wallet: "/assets/isometric/Spritesheet/IU/icones/wallet.png",
     food: "/assets/isometric/Spritesheet/IU/icones/food.png",
+    market: "/assets/isometric/Spritesheet/IU/icones/market.png",
+    mine: "/assets/isometric/Spritesheet/IU/icones/industrial.png",
     wood: "/assets/isometric/Spritesheet/IU/icones/wood.png",
     stone: "/assets/isometric/Spritesheet/IU/icones/stone.png",
     coal: "/assets/isometric/Spritesheet/IU/icones/coal.png",
@@ -27,6 +30,10 @@ export const GAME_ICONS = {
     oil: "/assets/isometric/Spritesheet/IU/icones/oil.png",
     road_dirt: "/assets/isometric/Spritesheet/IU/icones/road_dirt.png",
     road_asphalt: "/assets/isometric/Spritesheet/IU/icones/road_asphalt.png",
+    road_avenue: "/assets/isometric/Spritesheet/IU/icones/road_avenue.png",
+    road_grandavenue: "/assets/isometric/Spritesheet/IU/icones/road_grandavenue.png",
+    road_highway: "/assets/isometric/Spritesheet/IU/icones/road_highway.png",
+
 
 
 };

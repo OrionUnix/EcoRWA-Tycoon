@@ -313,24 +313,22 @@ export default function UserTerminalClient() {
                 />
 
                 {assetsLoaded && (
-                    <div style={{ position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none' }}>
-                        <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
-                            <GameUI
-                                t={t}
-                                viewMode={viewMode} setViewMode={setViewMode}
-                                selectedRoadType={selectedRoad} setSelectedRoadType={setSelectedRoad}
-                                selectedZoneType={selectedZone} setSelectedZoneType={setSelectedZone}
-                                selectedBuildingType={selectedBuilding} setSelectedBuildingType={setSelectedBuilding}
-                                totalCost={totalCost} isValidBuild={isValidBuild}
-                                fps={fps} cursorPos={cursorPos} hoverInfo={hoverInfo}
-                                resources={resources} stats={stats} summary={summary}
-                                speed={speed} paused={paused}
-                                onSetSpeed={(s: number) => { setSpeed(s); engine.setSpeed(s); }}
-                                onTogglePause={() => { const newPaused = !paused; setPaused(newPaused); engine.isPaused = newPaused; }}
-                                selectedBuildingId={selectedBuildingId} setSelectedBuildingId={setSelectedBuildingId}
-                                onOpenRWA={() => setShowOnboarding(true)}
-                            />
-                        </div>
+                    <div className="absolute inset-0 z-10 pointer-events-none">
+                        <GameUI
+                            t={t}
+                            viewMode={viewMode} setViewMode={setViewMode}
+                            selectedRoadType={selectedRoad} setSelectedRoadType={setSelectedRoad}
+                            selectedZoneType={selectedZone} setSelectedZoneType={setSelectedZone}
+                            selectedBuildingType={selectedBuilding} setSelectedBuildingType={setSelectedBuilding}
+                            totalCost={totalCost} isValidBuild={isValidBuild}
+                            fps={fps} cursorPos={cursorPos} hoverInfo={hoverInfo}
+                            resources={resources} stats={stats} summary={summary}
+                            speed={speed} paused={paused}
+                            onSetSpeed={(s: number) => { setSpeed(s); engine.setSpeed(s); }}
+                            onTogglePause={() => { const newPaused = !paused; setPaused(newPaused); engine.isPaused = newPaused; }}
+                            selectedBuildingId={selectedBuildingId} setSelectedBuildingId={setSelectedBuildingId}
+                            onOpenRWA={() => setShowOnboarding(true)}
+                        />
                         <ChunkExpandOverlay viewportRef={viewportRef} isReady={isReady} />
                     </div>
                 )}

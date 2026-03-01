@@ -21,7 +21,7 @@ export class InteractionSystem {
     static handleInteraction(map: MapEngine, index: number, mode: string, path: number[] | null, type: any): { success: boolean, placedType?: string } {
 
         // ✅ CHUNK CHECK : Bloque toute interaction sur un chunk verrouillé
-        // Pour les routes, l'index passé est 0 (dummy), on utilise le premier tile du path
+
         const checkIndex = (mode === 'BUILD_ROAD' && path && path.length > 0) ? path[0] : index;
         const col = checkIndex % map.config.size;
         const row = Math.floor(checkIndex / map.config.size);
@@ -94,22 +94,22 @@ export class InteractionSystem {
             map.resources.money -= cost;
 
             path.forEach(idx => {
-                // ✅ M1: OVERRIDE DU BULLDOZER POUR LES BÂTIMENTS STRICTS
-                if (map.buildingLayer[idx]) {
-                    // Si c'est un bâtiment, on ne l'écrase SURTOUT PAS. On skip cette tuile.
-                    return;
+                // 1. 🚜 RÈGLE D'OR : LA ROUTE DÉTRUIT TOUT (Bulldozer automatique)
+                // Si un bâtiment ou une zone est sur le chemin, on appelle le bulldozer pour détruire, rembourser et nettoyer l'ECS
+                if (map.buildingLayer[idx] || map.zoningLayer[idx]) {
+                    this.handleBulldozer(map, idx);
                 }
 
-                // Pour les zones, on nettoie si la route prend la place.
-                if (map.zoningLayer[idx] !== null) {
-                    const zoneData = map.zoningLayer[idx];
-                    if (zoneData) {
-                        PopulationManager.onZoneRemoved(zoneData);
-                    }
-                    map.zoningLayer[idx] = null;
-                }
+                // 2. 🪓 NETTOYAGE DE LA NATURE (Données + Visuel)
+                // On met les données de ressources de surface à 0 pour éviter qu'elles ne repoussent
+                if (map.resourceMaps.wood) map.resourceMaps.wood[idx] = 0;
+                if (map.resourceMaps.stone) map.resourceMaps.stone[idx] = 0;
 
-                // 2. POSE DE LA ROUTE
+                // Suppression visuelle instantanée
+                ResourceRenderer.removeResourceAt(idx);
+                WildlifeRenderer.removeWildlifeAt(idx, map);
+
+                // 3. 🛣️ POSE DE LA ROUTE
                 const existing = map.roadLayer[idx];
                 if (!existing || existing.type !== type) {
                     const isWater = map.getLayer(1)[idx] > 0.3; // 1 = Elevation/Water layer usually
@@ -117,12 +117,9 @@ export class InteractionSystem {
 
                     map.placeRoad(idx, roadData);
 
-                    // 3. IMPACT ENVIRONNEMENT & PATHFINDING
+                    // 4. IMPACT ENVIRONNEMENT & PATHFINDING
                     RoadManager.applyEnvironmentalImpact(map, idx);
                     RoadManager.updateConnections(map, idx);
-                    // ✅ SUPPRESSION VISUELLE DE L'ARBRE ET ANIMAUX
-                    ResourceRenderer.removeResourceAt(idx);
-                    WildlifeRenderer.removeWildlifeAt(idx, map);
                 }
             });
 

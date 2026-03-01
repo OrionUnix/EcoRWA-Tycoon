@@ -39,11 +39,11 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
                     initial={{ x: -100, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: -100, opacity: 0 }}
-                    className="fixed top-[20%] left-1/2 -translate-x-1/2 z-40 max-w-[450px] w-full pointer-events-auto flex items-center justify-center gap-2"
+                    className="fixed top-[20%] left-1/2 -translate-x-1/2 z-40 max-w-[450px] w-full pointer-events-none flex items-center justify-center gap-2"
                 >
                     {!hasStarted ? (
                         <div
-                            className="relative cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+                            className="relative cursor-pointer hover:scale-105 active:scale-95 transition-transform pointer-events-auto"
                             onClick={() => setHasStarted(true)}
                         >
                             <div className="absolute -top-1 -right-1 bg-yellow-400 text-black font-black text-xs px-2 py-0.5 border-2 border-black rounded-full animate-bounce shadow-[2px_2px_0_0_#000] z-10 block">
@@ -54,7 +54,7 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
                             </div>
                         </div>
                     ) : (
-                        <div className="flex bg-[#c3c7cb] border-4 border-black p-2 shadow-[8px_8px_0_0_#000] items-center gap-3 w-full">
+                        <div className="flex bg-[#c3c7cb] border-4 border-black p-2 shadow-[8px_8px_0_0_#000] items-center gap-3 w-full pointer-events-auto">
                             {/* LEFT: Avatar */}
                             <div className="w-16 h-16 border-2 border-black rounded-full overflow-hidden bg-slate-300 shrink-0 shadow-[2px_2px_0_0_#000]">
                                 <AnimatedAvatar character="bob" isTalking={isTyping} />

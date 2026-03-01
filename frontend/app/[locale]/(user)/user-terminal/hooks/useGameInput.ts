@@ -225,6 +225,8 @@ export function useGameInput(
                     // TODO: Play select sound?
                 } else {
                     setSelectedBuildingId(null);
+                    // ✅ AJOUT: Permettre d'ouvrir l'achat de terrain même en mode sélection
+                    engine.handleInteraction(idx, 'ALL', null, null);
                 }
             }
         };

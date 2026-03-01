@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { BuildingCategory } from '@/app/[locale]/(user)/user-terminal/engine/types';
+import { GAME_ICONS } from '../../../../../hooks/ui/useGameIcons';
 
 // ─── Category Colors ──────────────────────────────────────────────────────────
 export const SC_COLORS: Record<string, string> = {
@@ -18,32 +19,32 @@ export const SC_COLORS: Record<string, string> = {
 
 // ─── Category Definitions ─────────────────────────────────────────────────────
 export const TOOLBAR_CATEGORIES = [
-    { id: 'ROADS', icon: '🛣️', label: 'Routes', color: SC_COLORS.ROADS },
-    { id: 'ZONES', icon: '🏘️', label: 'Zones', color: SC_COLORS.ZONES },
-    { id: BuildingCategory.POWER, icon: '⚡', label: 'Énergie', color: SC_COLORS.POWER },
-    { id: BuildingCategory.WATER, icon: '💧', label: 'Eau', color: SC_COLORS.WATER },
-    { id: BuildingCategory.FOOD, icon: '🌾', label: 'Nourriture', color: SC_COLORS.FOOD },
-    { id: BuildingCategory.EXTRACTION, icon: '⛏️', label: 'Industrie', color: SC_COLORS.EXTRACTION },
-    { id: BuildingCategory.CIVIC, icon: '🏛️', label: 'Civique', color: SC_COLORS.CIVIC },
-    { id: 'RWA', icon: '🌍', label: 'RWA', color: SC_COLORS.RWA },
-    { id: 'DATA', icon: '📊', label: 'Données', color: SC_COLORS.DATA },
+    { id: 'ROADS', icon: GAME_ICONS.road_asphalt, label: 'Routes', color: SC_COLORS.ROADS },
+    { id: 'ZONES', icon: GAME_ICONS.residential, label: 'Zones', color: SC_COLORS.ZONES },
+    { id: BuildingCategory.POWER, icon: GAME_ICONS.power, label: 'Énergie', color: SC_COLORS.POWER },
+    { id: BuildingCategory.WATER, icon: GAME_ICONS.water, label: 'Eau', color: SC_COLORS.WATER },
+    { id: BuildingCategory.FOOD, icon: GAME_ICONS.food, label: 'Nourriture', color: SC_COLORS.FOOD },
+    { id: BuildingCategory.EXTRACTION, icon: GAME_ICONS.iron, label: 'Industrie', color: SC_COLORS.EXTRACTION },
+    { id: BuildingCategory.CIVIC, icon: GAME_ICONS.administration, label: 'Civique', color: SC_COLORS.CIVIC },
+    { id: 'RWA', icon: GAME_ICONS.rwa, label: 'RWA', color: SC_COLORS.RWA },
+    { id: 'DATA', icon: GAME_ICONS.export, label: 'Données', color: SC_COLORS.DATA },
 ];
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 export const BUILDING_ICON_MAP: Record<string, string> = {
-    POWER_PLANT: '⚡', WATER_PUMP: '💧', POLICE_STATION: '🚔',
-    FIRE_STATION: '🚒', SCHOOL: '🏫', CLINIC: '🏥',
-    CITY_HALL: '🏛️', FOOD_MARKET: '🛒', PARK: '🌳',
-    MUSEUM: '🏛️', PHARMACY: '💊', RESTAURANT: '🍽️',
-    CAFE: '☕', STADIUM: '🏟️', WIND_TURBINE: '💨',
-    SOLAR_PANEL: '☀️', MINE: '⛏️', OIL_PUMP: '🛢️',
-    FISHERMAN: '🎣', HUNTER_HUT: '🏹', OIL_RIG: '🛢️',
+    POWER_PLANT: GAME_ICONS.power, WATER_PUMP: GAME_ICONS.water, POLICE_STATION: GAME_ICONS.police,
+    FIRE_STATION: GAME_ICONS.fire, SCHOOL: GAME_ICONS.administration, CLINIC: GAME_ICONS.medical,
+    CITY_HALL: GAME_ICONS.administration, FOOD_MARKET: GAME_ICONS.food, PARK: GAME_ICONS.happy, // ✅ Fallback
+    MUSEUM: GAME_ICONS.administration, PHARMACY: GAME_ICONS.medical, RESTAURANT: GAME_ICONS.food,
+    CAFE: GAME_ICONS.food, STADIUM: GAME_ICONS.administration, WIND_TURBINE: GAME_ICONS.power,
+    SOLAR_PANEL: GAME_ICONS.power, MINE: GAME_ICONS.iron, OIL_PUMP: GAME_ICONS.oil,
+    FISHERMAN: GAME_ICONS.food, HUNTER_HUT: GAME_ICONS.food, OIL_RIG: GAME_ICONS.oil,
+    COAL_MINE: GAME_ICONS.coal, ORE_MINE: GAME_ICONS.iron, LUMBER_HUT: GAME_ICONS.wood,
 };
 
 export const RES_ICONS: Record<string, string> = {
-    wood: '🪵', iron: '⛏️', oil: '🛢️', coal: '⚫',
-    stone: '🪨', glass: '🪟', concrete: '🧱', steel: '🏗️',
-    gold: '🪙', silver: '🥈',
+    wood: GAME_ICONS.wood, iron: GAME_ICONS.iron, oil: GAME_ICONS.oil, coal: GAME_ICONS.coal,
+    stone: GAME_ICONS.stone, gold: GAME_ICONS.gold, silver: GAME_ICONS.silver,
 };
 
 export const RES_NAMES: Record<string, string> = {

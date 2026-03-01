@@ -39,10 +39,13 @@ export class GameRenderer {
 
         // Récupération dynamique des couches Z-Order créées dans UserTerminalClient
         const terrainLayer = (container.getChildByLabel('terrainContainer') as PIXI.Container) || container;
-        const roadLayer = (container.getChildByLabel('roadContainer') as PIXI.Container) || container;
-        const vehicleLayer = (container.getChildByLabel('vehicleContainer') as PIXI.Container) || container;
-        const resourceLayer = (container.getChildByLabel('resourceContainer') as PIXI.Container) || container;
-        const buildingLayer = (container.getChildByLabel('buildingContainer') as PIXI.Container) || container;
+        // ✅ Unified Object Layer for z-sorting (Buildings, Trees, Roads, Vehicles)
+        const objectLayer = (container.getChildByLabel('worldEntityContainer') as PIXI.Container) || container;
+
+        const roadLayer = objectLayer;
+        const vehicleLayer = objectLayer;
+        const resourceLayer = objectLayer;
+        const buildingLayer = objectLayer;
         const zoneLayer = (container.getChildByLabel('zoneContainer') as PIXI.Graphics);
 
         if (zoneLayer) {

@@ -19,9 +19,9 @@ export const NpcAlertOverlay: React.FC<NpcAlertOverlayProps> = ({ npc, messageKe
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: 300, opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 100, damping: 15 }}
-                    className="fixed bottom-[80px] right-6 z-[80] flex items-end gap-3 pointer-events-auto"
+                    className="fixed bottom-[80px] right-6 z-[80] flex items-end gap-3 pointer-events-none"
                 >
-                    <div className="bg-slate-900 border-2 border-blue-500 p-4 rounded-xl shadow-2xl max-w-xs relative hover:scale-105 transition-transform" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <div className="bg-slate-900 border-2 border-blue-500 p-4 rounded-xl shadow-2xl max-w-xs relative hover:scale-105 transition-transform pointer-events-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
                         <p className="text-white text-sm leading-tight italic font-mono">
                             "{t(messageKey as any)}"
                         </p>

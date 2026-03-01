@@ -14,18 +14,12 @@ export class RoadPass {
             this.roadRenderer = new RoadRenderer();
         }
 
-        const roadContainer = this.roadRenderer.getContainer();
-        roadContainer.zIndex = 0.5; // Au dessus du tilemap (0), en dessous des objets (1+)
-        if (roadContainer.parent !== container) {
-            container.addChild(roadContainer);
-        }
-
         try {
-            this.roadRenderer.render(engine);
+            this.roadRenderer.render(engine, container);
             // DEBUG: Verify road rendering
             const cacheSize = (this.roadRenderer as any).roadCache?.size || 0;
             if (cacheSize > 0) {
-                console.log(`🛣️ [RoadPass] ${cacheSize} routes rendues, container children: ${roadContainer.children.length}`);
+                console.log(`🛣️ [RoadPass] ${cacheSize} routes rendues dans le container: ${container.label}`);
             }
         } catch (error) {
             console.error("🚨 [RoadPass] RoadRenderer error:", error);

@@ -5,6 +5,8 @@ import { DataLayersPanel } from '../Panel/DataLayersPanel';
 import { MainBtn } from './MainBtn';
 import { SubMenu } from './SubMenu';
 import { SC_COLORS, TOOLBAR_CATEGORIES, useToolbarState } from '../../../hooks/useToolbarState';
+import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
+import { useTranslations } from 'next-intl';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
     onOpenRWA,
 }) => {
     const { toggle } = useToolbarState(activeCategory, setActiveCategory);
+    const t = useTranslations('toolbar'); // ✅ Use toolbar namespace
 
     return (
         <>
@@ -50,15 +53,9 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                 className="fixed z-50 pointer-events-auto"
                 style={{ bottom: 48, left: '50%', transform: 'translateX(-50%)', fontFamily: "'Inter','Segoe UI',sans-serif" }}
             >
-                {/* Barre principale */}
+                {/* Barre principale : Modern Borderless */}
                 <div
-                    className="flex items-center h-[64px] px-4 gap-3 rounded-2xl"
-                    style={{
-                        background: 'rgba(255,255,255,0.92)',
-                        backdropFilter: 'blur(12px)',
-                        boxShadow: '0 4px 24px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.8) inset',
-                        border: '1px solid rgba(255,255,255,0.6)',
-                    }}
+                    className="flex items-center h-[72px] px-6 gap-4 bg-transparent"
                 >
                     {TOOLBAR_CATEGORIES.map(cat => (
                         <div key={cat.id} className="relative z-50 flex items-center justify-center">
@@ -78,18 +75,20 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                                 />
                             )}
                             {activeCategory === cat.id && cat.id === 'DATA' && (
-                                <DataLayersPanel
-                                    activeLayer={activeDataLayer}
-                                    onSelectLayer={setActiveDataLayer}
-                                    onSetViewMode={setViewMode}
-                                    onClose={() => { setActiveCategory(null); setViewMode('ALL'); setActiveDataLayer(null); }}
-                                />
+                                <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2">
+                                    <DataLayersPanel
+                                        activeLayer={activeDataLayer}
+                                        onSelectLayer={setActiveDataLayer}
+                                        onSetViewMode={setViewMode}
+                                        onClose={() => { setActiveCategory(null); setViewMode('ALL'); setActiveDataLayer(null); }}
+                                    />
+                                </div>
                             )}
 
                             <MainBtn
                                 id={cat.id}
                                 icon={cat.icon}
-                                label={cat.label}
+                                label={t(`categories.${cat.id.toLowerCase()}` as any)} // ✅ Correct key
                                 color={cat.color}
                                 active={activeCategory === cat.id}
                                 onClick={() => toggle(cat.id)}
@@ -97,13 +96,10 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                         </div>
                     ))}
 
-                    {/* Séparateur */}
-                    <div style={{ width: 1, height: 32, background: 'rgba(0,0,0,0.1)' }} />
-
                     {/* Bulldozer */}
                     <div className="relative flex items-center justify-center">
                         <MainBtn
-                            id="BULLDOZER" icon="🚜" label="Raser"
+                            id="BULLDOZER" icon={GAME_ICONS.stone} label={t('categories.bulldozer')}
                             color={SC_COLORS.BULLDOZER}
                             active={viewMode === 'BULLDOZER'}
                             onClick={() => { setViewMode('BULLDOZER'); setActiveCategory(null); }}
@@ -113,7 +109,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                     {/* Settings */}
                     <div className="relative flex items-center justify-center">
                         <MainBtn
-                            id="SETTINGS" icon="⚙️" label="Options"
+                            id="SETTINGS" icon={GAME_ICONS.administration} label={t('categories.settings')}
                             color={SC_COLORS.SETTINGS}
                             active={activeCategory === 'SETTINGS'}
                             onClick={() => toggle('SETTINGS')}
