@@ -1,0 +1,6 @@
+public/assets/
+*.png
+*.jpg
+*.mp3
+*.wav
+assets/isometric/Spritesheet/

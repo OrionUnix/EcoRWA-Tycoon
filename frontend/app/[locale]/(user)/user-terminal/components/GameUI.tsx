@@ -22,6 +22,9 @@ import { JobsPanel } from './ui/Panel/JobsPanel';
 import { DataLayersPanel } from './ui/Panel/DataLayersPanel';
 import { GameOnboarding } from './ui/overlay/GameOnboarding';
 import { BobAlertBox } from './ui/npcs/BobAlertBox';
+import { TopBar } from './ui/hud/TopBar';
+import { LandPurchaseModal } from './ui/modals/LandPurchaseModal';
+import { ChunkManager } from '../engine/ChunkManager';
 
 interface GameUIProps {
     t: any;
@@ -43,6 +46,10 @@ interface GameUIProps {
     resources: PlayerResources | null;
     stats: CityStats | null;
     summary: ResourceSummary | null;
+    speed: number;
+    paused: boolean;
+    onSetSpeed: (s: number) => void;
+    onTogglePause: () => void;
     onOpenRWA?: () => void;
 }
 
@@ -56,6 +63,7 @@ export default function GameUI({
     totalCost, isValidBuild,
     fps, cursorPos, hoverInfo,
     resources, stats, summary,
+    speed, paused, onSetSpeed, onTogglePause,
     onOpenRWA
 }: GameUIProps) {
     const { isConnected } = useAccount();
@@ -63,6 +71,8 @@ export default function GameUI({
     const [activeToolInfo, setActiveToolInfo] = useState<string | null>(null);
     const [activePanel, setActivePanel] = useState<string | null>(null);
     const [activeDataLayer, setActiveDataLayer] = useState<string | null>(null);
+    const [isLandModalOpen, setIsLandModalOpen] = useState(false);
+    const [selectedChunkData, setSelectedChunkData] = useState<any>(null);
     const engine = getGameEngine();
 
     // Onboarding s'affiche si le joueur n'a pas encore reçu sa subvention de départ (par ex < 10k)
@@ -74,8 +84,45 @@ export default function GameUI({
     // Cancel active tool
     const cancelTool = () => setViewMode('NAVIGATE');
 
+    // Land Purchase Listener
+    React.useEffect(() => {
+        const handleOpenLandModal = (event: any) => {
+            setSelectedChunkData(event.detail);
+            setIsLandModalOpen(true);
+        };
+
+        window.addEventListener('open_land_purchase', handleOpenLandModal);
+        return () => {
+            window.removeEventListener('open_land_purchase', handleOpenLandModal);
+        };
+    }, []);
+
+    const handleBuyLand = () => {
+        if (!selectedChunkData) return;
+
+        const { cx, cy, price } = selectedChunkData;
+        if (engine.map.resources.money < price) return;
+
+        // Validated purchase
+        engine.map.resources.money -= price;
+        ChunkManager.unlockChunk(cx, cy);
+        engine.map.revision++; // Request redraw
+
+        setIsLandModalOpen(false);
+        console.log(`🔓 Chunk [${cx}, ${cy}] purchased!`);
+    };
+
     return (
         <div className="absolute inset-0 pointer-events-none flex flex-col justify-between overflow-hidden" style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+            <TopBar
+                speed={speed}
+                paused={paused}
+                stats={stats}
+                resources={resources}
+                onSetSpeed={onSetSpeed}
+                onTogglePause={onTogglePause}
+                onOpenPanel={setActivePanel}
+            />
 
             {/* ═══════════════════════════════════════ */}
             {/* BUILDING INSPECTOR (Overlay) */}
@@ -200,6 +247,14 @@ export default function GameUI({
                 onOpenRWA={onOpenRWA}
             />
             <RWAInventory />
+
+            <LandPurchaseModal
+                isOpen={isLandModalOpen}
+                chunkData={selectedChunkData}
+                playerFunds={resources?.money || 0}
+                onBuy={handleBuyLand}
+                onCancel={() => setIsLandModalOpen(false)}
+            />
         </div>
     );
 }

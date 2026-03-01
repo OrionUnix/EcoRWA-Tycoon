@@ -4,6 +4,7 @@ import { BuildingManager } from '../BuildingManager';
 import { ZoneManager } from '../ZoneManager';
 import { PopulationManager } from './PopulationManager';
 import { BuildingType, BUILDING_SPECS, BUILDING_COSTS } from '../types';
+import { CHUNK_SIZE } from '../config';
 import { ResourceRenderer } from '../ResourceRenderer';
 import { WildlifeRenderer } from '../WildlifeRenderer';
 import { BuildingRenderer } from '../BuildingRenderer';
@@ -25,7 +26,37 @@ export class InteractionSystem {
         const col = checkIndex % map.config.size;
         const row = Math.floor(checkIndex / map.config.size);
         if (!ChunkManager.isTileUnlocked(col, row)) {
-            console.warn(`🔒 Chunk verrouillé à [${col},${row}]`);
+            const { cx, cy } = ChunkManager.getChunkCoords(col, row);
+
+            // Collect resources present in this chunk to show in the modal
+            const resources: string[] = [];
+            const startX = cx * CHUNK_SIZE;
+            const startY = cy * CHUNK_SIZE;
+            const endX = startX + CHUNK_SIZE;
+            const endY = startY + CHUNK_SIZE;
+
+            // Simple scan for resources in this chunk
+            const foundRes = new Set<string>();
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    const idx = y * map.config.size + x;
+                    if (map.resourceMaps.coal[idx] > 0.1) foundRes.add('Coal');
+                    if (map.resourceMaps.iron[idx] > 0.1) foundRes.add('Iron');
+                    if (map.resourceMaps.gold[idx] > 0.1) foundRes.add('Gold');
+                    if (map.resourceMaps.wood[idx] > 0.1) foundRes.add('Wood');
+                    if (map.resourceMaps.stone[idx] > 0.1) foundRes.add('Stone');
+                }
+            }
+
+            window.dispatchEvent(new CustomEvent('open_land_purchase', {
+                detail: {
+                    id: `${cx}_${cy}`,
+                    cx, cy,
+                    price: ChunkManager.getUnlockCost(cx, cy),
+                    resources: Array.from(foundRes)
+                }
+            }));
+
             return { success: false };
         }
 

@@ -17,8 +17,8 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
     const { isConnected } = useAccount();
     const tBob = useTranslations('bob');
 
-    // Le texte reste vide tant qu'il n'y a pas eu d'interaction utilisateur, sinon l'audio est bloqué
-    const { displayedText, isTyping } = useTypewriterWithSound(hasStarted ? tBob('greeting') : "", 30);
+    // Le texte reste vide tant qu'il n'y a pas eu d'interaction utilisateur, ou si le widget est fermé
+    const { displayedText, isTyping } = useTypewriterWithSound((isVisible && !isClosed && hasStarted) ? tBob('greeting') : "", 30);
 
     // Déclencheur global au premier clic ou scroll de la molette (interactions valides pour la politique Audio du navigateur)
     useEffect(() => {

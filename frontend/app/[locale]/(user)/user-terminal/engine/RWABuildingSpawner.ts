@@ -23,9 +23,9 @@ const RWA_BUILDING_TYPE_MAP: Record<number, BuildingType> = {
 
 // Mapping rwaId → chemin de texture isométrique RWA
 const RWA_TEXTURE_MAP: Record<number, string> = {
-    1: '/assets/isometric/Spritesheet/Buildings/RWA/RWA_loft.png',
-    2: '/assets/isometric/Spritesheet/Buildings/RWA/RWA_bistro.png',
-    3: '/assets/isometric/Spritesheet/Buildings/RWA/RWA_ecotower.png',
+    1: '/assets/isometric/Spritesheet/Buildings/RWA/loft.png',
+    2: '/assets/isometric/Spritesheet/Buildings/RWA/bistro.png',
+    3: '/assets/isometric/Spritesheet/Buildings/RWA/eco.png',
 };
 
 // Suivi anti-doublon (persistant en mémoire, complété par le localStorage côté React)

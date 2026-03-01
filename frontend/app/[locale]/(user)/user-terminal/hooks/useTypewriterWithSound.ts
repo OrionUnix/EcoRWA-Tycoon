@@ -8,6 +8,13 @@ export const useTypewriterWithSound = (text: string, speed: number = 30) => {
         // Check if window is defined (to prevent SSR errors)
         if (typeof window === 'undefined') return;
 
+        // If text is empty, ensure no sound is playing
+        if (!text) {
+            setDisplayedText("");
+            setIsTyping(false);
+            return;
+        }
+
         const audio = new Audio('/assets/sounds/sound fx/typewrite.mp3');
         audio.volume = 0.2; // Son discret
         audio.loop = true;
@@ -35,6 +42,7 @@ export const useTypewriterWithSound = (text: string, speed: number = 30) => {
             clearInterval(timer);
             setIsTyping(false);
             audio.pause();
+            audio.currentTime = 0;
         };
     }, [text, speed]);
 

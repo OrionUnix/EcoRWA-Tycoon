@@ -42,13 +42,6 @@ function ResourceMini({ icon, value, max, color, onClick, label }: {
 export const CityInfoBar: React.FC<CityInfoBarProps> = ({
     fps, stats, resources, onOpenPanel
 }) => {
-    const population = stats?.population || 0;
-    const happiness = stats?.happiness || 0;
-    const income = stats?.budget?.income || 0;
-    const expenses = stats?.budget?.expenses || 0;
-    const net = income - expenses;
-    const funds = resources?.money || 0;
-
     return (
         <div
             className="fixed bottom-0 left-0 right-0 z-[45] pointer-events-auto"
@@ -60,55 +53,6 @@ export const CityInfoBar: React.FC<CityInfoBarProps> = ({
             }}
         >
             <div className="flex items-center h-full px-4 gap-6">
-
-                {/* 💲 FUNDS */}
-                <button
-                    onClick={() => onOpenPanel?.('BUDGET')}
-                    className="flex items-center gap-2 px-2 py-0.5 rounded hover:bg-white/10 transition-all cursor-pointer"
-                >
-                    <span className="text-sm">💲</span>
-                    <span className="text-base font-bold font-mono" style={{ color: '#7ED321' }}>
-                        {formatNumber(funds)}
-                    </span>
-                </button>
-
-                {/* +INCOME/HR */}
-                <button
-                    onClick={() => onOpenPanel?.('BUDGET')}
-                    className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-white/10 transition-all cursor-pointer"
-                >
-                    <span className="text-sm font-bold font-mono" style={{ color: net >= 0 ? '#7ED321' : '#D0021B' }}>
-                        {net >= 0 ? '+' : ''}{formatNumber(net)}/hr
-                    </span>
-                </button>
-
-                {/* SEPARATOR */}
-                <div className="w-px h-6 mx-1.5" style={{ background: 'rgba(255,255,255,0.15)' }} />
-
-                {/* 👥 POPULATION */}
-                <button
-                    onClick={() => onOpenPanel?.('JOBS')}
-                    className="flex items-center gap-2 px-1.5 py-0.5 rounded hover:bg-white/10 transition-all cursor-pointer"
-                >
-                    <span className="text-sm">👥</span>
-                    <span className="text-base font-bold font-mono" style={{ color: '#fff' }}>
-                        {formatNumber(population)}
-                    </span>
-                </button>
-
-                {/* 😊 HAPPINESS */}
-                <button
-                    onClick={() => onOpenPanel?.('JOBS')}
-                    className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-white/10 transition-all cursor-pointer"
-                >
-                    <span className="text-sm">{happiness > 70 ? '😊' : happiness > 40 ? '😐' : '😟'}</span>
-                    <span className="text-sm font-bold" style={{ color: happiness > 70 ? '#7ED321' : happiness > 40 ? '#F5A623' : '#D0021B' }}>
-                        {`${happiness}%`}
-                    </span>
-                </button>
-
-                {/* SEPARATOR */}
-                <div className="w-px h-6 mx-1.5" style={{ background: 'rgba(255,255,255,0.15)' }} />
 
                 {/* UTILITY BARS (Water, Power) */}
                 <ResourceMini icon="💧" value={stats?.water?.consumed || 0} max={stats?.water?.produced || 1} color="#50E3C2" onClick={() => onOpenPanel?.('WATER')} />

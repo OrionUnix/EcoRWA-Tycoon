@@ -11,4 +11,6 @@ export const GAME_ICONS = {
     medical: "/assets/isometric/Spritesheet/IU/icones/medical.png",
     export: "/assets/isometric/Spritesheet/IU/icones/exportation_importation.png",
     administration: "/assets/isometric/Spritesheet/IU/icones/administration.png",
+    happy: "/assets/isometric/Spritesheet/IU/icones/happy.png",
+    malade: "/assets/isometric/Spritesheet/IU/icones/malade.png",
 };

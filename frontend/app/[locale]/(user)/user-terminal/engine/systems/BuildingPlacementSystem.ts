@@ -55,7 +55,7 @@ export class BuildingPlacementSystem {
             type: type,
             x: index % GRID_SIZE,
             y: Math.floor(index / GRID_SIZE),
-            variant: Math.floor(Math.random() * 3),
+            variant: Math.floor(Math.random() * 2), // Tirage de la variante (0=A, 1=B)
             level: 1,
             state: 'CONSTRUCTION',
             constructionTimer: 0,

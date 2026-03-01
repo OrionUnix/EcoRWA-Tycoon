@@ -65,7 +65,7 @@ export const RWAPurchaseModal: React.FC<RWAPurchaseModalProps> = ({
     const tTrading = useTranslations('trading');
 
     const [shares, setShares] = useState<number>(1);
-    const { displayedText, isTyping } = useTypewriterWithSound(tJordan('analysis_intro'), 20);
+    const { displayedText, isTyping } = useTypewriterWithSound((isOpen && rwa) ? tJordan('analysis_intro') : "", 20);
 
     useEffect(() => {
         if (isOpen) {

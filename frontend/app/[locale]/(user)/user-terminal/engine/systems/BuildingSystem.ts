@@ -200,7 +200,7 @@ export class BuildingSystem {
                                 // 2. Évolution (0.5% par tick si désirable) -> ~200 ticks moy.
                                 if (canEvolve && Math.random() < 0.005) {
                                     building.level++;
-                                    building.variant = Math.floor(Math.random() * 3); // Nouveaux A/B Variants !
+                                    building.variant = Math.floor(Math.random() * 2); // Nouveaux A/B Variants !
 
                                     building.state = 'CONSTRUCTION';
                                     building.constructionTimer = 0;
@@ -239,7 +239,7 @@ export class BuildingSystem {
             type: targetType,
             x: idx % GRID_SIZE,
             y: Math.floor(idx / GRID_SIZE),
-            variant: Math.floor(Math.random() * 3),
+            variant: Math.floor(Math.random() * 2), // 0=A, 1=B
             level: 1,
             state: 'CONSTRUCTION',
             constructionTimer: 0,

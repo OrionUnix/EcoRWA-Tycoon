@@ -34,8 +34,9 @@ export class BuildingTextureResolver {
             if (cached && !cached.destroyed) {
                 texture = cached;
             } else if (!cached) {
-                // Déclencher le load async pour le prochain tick de rendu
-                PIXI.Assets.load(asset(building.rwaTexture)).then((tex: PIXI.Texture) => {
+                // Déclencher le load async pour le prochain tick de rendu avec un cache-buster
+                const cacheBuster = `?v=2`;
+                PIXI.Assets.load(asset(building.rwaTexture) + cacheBuster).then((tex: PIXI.Texture) => {
                     if (tex && !tex.destroyed) {
                         if (tex.source) tex.source.scaleMode = 'nearest';
                         // Flag custom iso pour le resize dans le Renderer
@@ -49,7 +50,7 @@ export class BuildingTextureResolver {
                     building.type as any,
                     lvl,
                     building.variant || 0,
-                    isConstState || isRuined
+                    isConstState ? 'construction' : isRuined ? 'destruction' : 'normal'
                 );
             }
         }
@@ -60,7 +61,7 @@ export class BuildingTextureResolver {
                 building.type as any,
                 lvl,
                 building.variant || 0,
-                isConstState || isRuined
+                isConstState ? 'construction' : isRuined ? 'destruction' : 'normal'
             );
         }
 
