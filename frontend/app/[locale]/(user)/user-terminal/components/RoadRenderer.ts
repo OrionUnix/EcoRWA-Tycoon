@@ -13,8 +13,6 @@ export class RoadRenderer {
         this.roadCache = new Map();
     }
 
-    // Méthode supprimée car le container est désormais géré par le parent
-
     private hasLoggedError: boolean = false; // ✅ Le flag anti-spam
 
     render(engine: MapEngine, parentContainer: PIXI.Container) {

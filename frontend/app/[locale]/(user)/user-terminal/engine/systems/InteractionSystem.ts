@@ -40,18 +40,20 @@ export class InteractionSystem {
             for (let y = startY; y < endY; y++) {
                 for (let x = startX; x < endX; x++) {
                     const idx = y * map.config.size + x;
-                    if (map.resourceMaps.coal[idx] > 0.1) foundRes.add('Coal');
-                    if (map.resourceMaps.iron[idx] > 0.1) foundRes.add('Iron');
-                    if (map.resourceMaps.gold[idx] > 0.1) foundRes.add('Gold');
-                    if (map.resourceMaps.wood[idx] > 0.1) foundRes.add('Wood');
-                    if (map.resourceMaps.stone[idx] > 0.1) foundRes.add('Stone');
+                    if (map.resourceMaps.coal[idx] > 0.1) foundRes.add('coal');
+                    if (map.resourceMaps.iron[idx] > 0.1) foundRes.add('iron');
+                    if (map.resourceMaps.gold[idx] > 0.1) foundRes.add('gold');
+                    if (map.resourceMaps.wood[idx] > 0.1) foundRes.add('wood');
+                    if (map.resourceMaps.stone[idx] > 0.1) foundRes.add('stone');
+                    if (map.resourceMaps.silver[idx] > 0.1) foundRes.add('silver');
+                    if (map.resourceMaps.oil[idx] > 0.1) foundRes.add('oil');
                 }
             }
 
             window.dispatchEvent(new CustomEvent('open_land_purchase', {
                 detail: {
                     id: `${cx}_${cy}`,
-                    cx, cy,
+                    cx, cy, // Essential for dynamic detection
                     price: ChunkManager.getUnlockCost(cx, cy),
                     resources: Array.from(foundRes)
                 }

@@ -17,6 +17,8 @@ export default getRequestConfig(async ({ locale }) => {
   const caroleMessages = (await import(`../messages/${activeLocale}_carole.json`)).default;
   const budgetMessages = (await import(`../messages/${activeLocale}_budget.json`)).default;
   const infobarMessages = (await import(`../messages/${activeLocale}_infobar.json`)).default;
+  const territoryMessages = (await import(`../messages/${activeLocale}_territory.json`)).default;
+  const rwaMessages = (await import(`../messages/${activeLocale}_rwa.json`)).default;
 
   return {
     locale: activeLocale,
@@ -28,6 +30,8 @@ export default getRequestConfig(async ({ locale }) => {
       conan: conanMessages,
       carole: caroleMessages,
       budget: budgetMessages,
+      territory: territoryMessages,
+      rwa: rwaMessages,
       ...infobarMessages
     }
   };

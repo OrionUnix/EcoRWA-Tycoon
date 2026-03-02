@@ -1,0 +1,45 @@
+{
+    "title": "JORDAN - RWA MASTER",
+    "advisor_msg": "Mayor, the RWA market is booming. Here are our best blockchain-certified opportunities.",
+    "faucet": "FAUCET",
+    "grant": "GRANT (10K)",
+    "invest": "INVEST",
+    "connect": "CONNECT WALLET",
+    "yield": "YIELD (APY)",
+    "cost": "ENTRY COST",
+    "network": "NETWORK: ECOCHAIN TESTNET",
+    "help_btn": "HELP (?)",
+    "back_btn": "BACK",
+    "help": {
+        "title": "What is RWA & Tokenization?",
+        "rwa_def": "RWA stands for Real World Assets. It refers to physical assets (real estate, gold, etc.) that are brought onto the blockchain.",
+        "token_def": "Tokenization is the process of converting ownership rights of a physical asset into digital tokens.",
+        "pros_title": "Advantages",
+        "pros": [
+            "Fractional Ownership: Buy a small piece of a big asset.",
+            "Global Access: Invest anywhere, anytime.",
+            "Transparency: Everything is recorded on the blockchain.",
+            "Efficiency: Faster and cheaper transactions."
+        ],
+        "cons_title": "Risks",
+        "cons": [
+            "Regulation: Rules vary by country and can change.",
+            "Smart Contracts: Potential bugs in the code.",
+            "Liquidity: Some assets might be hard to sell quickly."
+        ]
+    },
+    "choices": {
+        "loft": {
+            "name": "Industrial Loft",
+            "desc": "Steady yield"
+        },
+        "bistro": {
+            "name": "Parisian Bistro",
+            "desc": "Highly frequented"
+        },
+        "tower": {
+            "name": "Eco-Tower",
+            "desc": "Ultra-modern"
+        }
+    }
+}

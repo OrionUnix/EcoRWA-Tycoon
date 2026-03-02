@@ -10,11 +10,10 @@ const ATLAS_TILE_SIZE = 32;
 export class TerrainTilemap {
     private container: PIXI.Container;
     private initialized: boolean = false;
-    private spriteCache: PIXI.Sprite[] = []; // Cache pour réutiliser les sprites
-
+    private spriteCache: PIXI.Sprite[] = [];
     constructor() {
         this.container = new PIXI.Container();
-        this.container.sortableChildren = true; // Indispensable pour l'isométrique
+        this.container.sortableChildren = true;
         this.initialized = true;
     }
 
@@ -22,10 +21,7 @@ export class TerrainTilemap {
         return this.container;
     }
 
-    /**
-     * Rebuilds the terrain using simple PIXI.Sprites
-     * (Fixes issues with CompositeTilemap ignoring trims/anchors)
-     */
+
     render(engine: MapEngine, viewMode: string) {
         if (!this.initialized || !engine.biomes) return;
 

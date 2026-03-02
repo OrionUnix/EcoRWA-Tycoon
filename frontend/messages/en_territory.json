@@ -1,0 +1,28 @@
+{
+    "dialogue": "Mayor, our geologists have finished the surveys!",
+    "resources": {
+        "wood": "Wood",
+        "stone": "Stone",
+        "coal": "Coal",
+        "iron": "Iron",
+        "gold": "Gold",
+        "silver": "Silver",
+        "oil": "Oil"
+    },
+    "status": {
+        "abundant": "Abundant!",
+        "more": "More than us!",
+        "less": "Less than us"
+    },
+    "advice": {
+        "early": "But you haven't really built your city yet... Why expand already?",
+        "no_space": "Good idea! We're starting to run out of room for our future projects.",
+        "expensive": "Careful, this has a very high cost... Our economy will struggle to recover!",
+        "default": "It's a fine piece of land. What do you say?"
+    },
+    "price": "Acquisition Price",
+    "buy": "BUY",
+    "cancel": "CANCEL",
+    "insufficient_funds": "INSUFFICIENT FUNDS",
+    "title": "DEED OF SALE - NEW TERRITORY"
+}

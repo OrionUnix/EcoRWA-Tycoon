@@ -1,0 +1,28 @@
+{
+    "dialogue": "Maire, nos géologues ont terminé les sondages !",
+    "resources": {
+        "wood": "Bois",
+        "stone": "Pierre",
+        "coal": "Charbon",
+        "iron": "Fer",
+        "gold": "Or",
+        "silver": "Argent",
+        "oil": "Pétrole"
+    },
+    "status": {
+        "abundant": "Abondant !",
+        "more": "Plus que chez nous !",
+        "less": "Moins que chez nous"
+    },
+    "advice": {
+        "early": "Mais vous n'avez pas encore vraiment construit votre ville... Pourquoi s'étendre déjà ?",
+        "no_space": "Bonne idée ! Nous commençons à manquer de place pour nos futurs projets.",
+        "expensive": "Attention, cela a un coût très élevé... Notre économie va avoir du mal à s'en remettre !",
+        "default": "C'est une belle parcelle. Qu'en dites-vous ?"
+    },
+    "price": "Prix d'Acquisition",
+    "buy": "ACHETER",
+    "cancel": "ANNULER",
+    "insufficient_funds": "FONDS INSUFFISANTS",
+    "title": "ACTE DE VENTE - NOUVEAU TERRITOIRE"
+}

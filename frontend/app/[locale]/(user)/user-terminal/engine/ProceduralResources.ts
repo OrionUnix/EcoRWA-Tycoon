@@ -11,11 +11,10 @@ export class ProceduralResources {
     static generateTree(app: PIXI.Application, color: number = 0x2E7D32, trunkColor: number = 0x5D4037): PIXI.Texture {
         const g = new PIXI.Graphics();
 
-        // ✅ REDIMENSIONNEMENT (x4 par rapport à avant)
-        const scale = TILE_WIDTH / 64; // ex: 256 / 64 = 4
+        const scale = TILE_WIDTH / 64;
 
-        const w = 32 * scale;  // ~128
-        const h = 64 * scale;  // ~256
+        const w = 32 * scale;
+        const h = 64 * scale;
 
         // Tronc
         const trunkW = 8 * scale;

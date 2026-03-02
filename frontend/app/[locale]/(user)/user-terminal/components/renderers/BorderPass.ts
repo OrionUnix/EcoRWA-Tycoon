@@ -1,104 +1,88 @@
 import * as PIXI from 'pixi.js';
 import { gridToScreen } from '../../engine/isometric';
-import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE, CHUNK_SIZE, CHUNKS_PER_SIDE } from '../../engine/config';
+import { TILE_WIDTH, TILE_HEIGHT, CHUNK_SIZE, CHUNKS_PER_SIDE } from '../../engine/config';
 import { ChunkManager } from '../../engine/ChunkManager';
 
-/**
- * BorderPass — Dessine la frontière STYLE SIMCITY
- * Approche VECTORIELLE par CHUNK (et non par tuile)
- * Trace de grandes lignes droites blanches continues.
- */
 export class BorderPass {
-
-    private static readonly BORDER_COLOR = 0xFFFFFF; // Blanc pur
+    private static readonly BORDER_COLOR = 0xFFFFFF;
     private static readonly BORDER_ALPHA = 0.6;
-    private static readonly BORDER_WIDTH = 2; // Épais
+    private static readonly BORDER_WIDTH = 3; // Un peu plus épais pour le style
 
     static render(g: PIXI.Graphics) {
-        // Obtenir l'état des chunks (matrice booléenne)
-        // ChunkManager est déjà exporté comme instance singleton
         const unlocked = ChunkManager.unlocked;
         if (!unlocked) return;
 
-        for (let cy = 0; cy < CHUNKS_PER_SIDE; cy++) {
-            for (let cx = 0; cx < CHUNKS_PER_SIDE; cx++) {
-                // On ne dessine les frontières que pour les chunks DÉBLOQUÉS
-                if (!unlocked[cy][cx]) continue;
+        g.clear();
 
-                // Coordonnées grille (coin haut-gauche du chunk)
-                const startX = cx * CHUNK_SIZE;
-                const startY = cy * CHUNK_SIZE;
+        // 1. MISE EN CACHE DES POINTS AVEC CORRECTION D'OFFSET
+        // On calcule les coins réels (intersections des grilles)
+        const points: PIXI.Point[][] = [];
+        for (let cy = 0; cy <= CHUNKS_PER_SIDE; cy++) {
+            points[cy] = [];
+            for (let cx = 0; cx <= CHUNKS_PER_SIDE; cx++) {
+                // On utilise les coordonnées de grille pures
+                const screenPos = gridToScreen(cx * CHUNK_SIZE, cy * CHUNK_SIZE);
 
-                // Coordonnées grille (coin bas-droit du chunk)
-                const endX = startX + CHUNK_SIZE;
-                const endY = startY + CHUNK_SIZE;
-
-                // 1. Voisin NORD (cy - 1)
-                // Si le voisin est hors map ou verrouillé → dessiner la ligne Nord
-                if (cy === 0 || !unlocked[cy - 1][cx]) {
-                    // Ligne du point (startX, startY) à (endX, startY)
-                    // Dans l'isométrique, c'est le bord "Haut-Droit" visuel du losange global du chunk ?
-                    // Non, Nord c'est Y constant (startY), X varie de startX à endX
-                    this.drawChunkLine(g, startX, startY, endX, startY);
-                }
-
-                // 2. Voisin SUD (cy + 1)
-                if (cy === CHUNKS_PER_SIDE - 1 || !unlocked[cy + 1][cx]) {
-                    // Y constant (endY), X varie de startX à endX
-                    this.drawChunkLine(g, startX, endY, endX, endY);
-                }
-
-                // 3. Voisin OUEST (cx - 1)
-                if (cx === 0 || !unlocked[cy][cx - 1]) {
-                    // X constant (startX), Y varie de startY à endY
-                    this.drawChunkLine(g, startX, startY, startX, endY);
-                }
-
-                // 4. Voisin EST (cx + 1)
-                if (cx === CHUNKS_PER_SIDE - 1 || !unlocked[cy][cx + 1]) {
-                    // X constant (endX), Y varie de startY à endY
-                    this.drawChunkLine(g, endX, startY, endX, endY);
-                }
+                // CORRECTION VISUELLE : 
+                // gridToScreen renvoie le centre de la tuile (x, y).
+                // Pour être sur le BORD HAUT du losange, on remonte de TILE_HEIGHT / 2.
+                points[cy][cx] = new PIXI.Point(screenPos.x, screenPos.y - (TILE_HEIGHT / 2));
             }
         }
-    }
 
-    /**
-     * Trace une ligne isométrique entre deux points de la grille
-     * (gridX1, gridY1) -> (gridX2, gridY2)
-     */
-    private static drawChunkLine(
-        g: PIXI.Graphics,
-        gX1: number, gY1: number,
-        gX2: number, gY2: number
-    ) {
-        // Conversion grille -> écran (pixels)
-        const start = gridToScreen(gX1, gY1);
-        const end = gridToScreen(gX2, gY2);
+        // 2. FUSION DES LIGNES HORIZONTALES (NORD/SUD)
+        for (let cy = 0; cy <= CHUNKS_PER_SIDE; cy++) {
+            let startCx = -1;
+            for (let cx = 0; cx < CHUNKS_PER_SIDE; cx++) {
+                const isBottomEdge = cy === CHUNKS_PER_SIDE;
+                const isTopEdge = cy === 0;
 
-        // Correction d'offset pour que la ligne soit bien SUR le bord de la tuile
-        // gridToScreen renvoie le CENTRE de la tuile.
-        // Mais nous voulons dessiner sur les BORDS.
-        // Avec l'algo actuel, la "frontière" passe techniquement au milieu des tuiles du bord.
-        // Pour un rendu SimCity "Chunk Border", c'est acceptable car la propriété est binaire.
-        // Mais visuellement, on peut vouloir l'ajuster de +/- TILE_WIDTH/2 ?
-        // TEST: Laissons tel quel pour voir, c'est mathématiquement "la grille".
+                const current = !isBottomEdge && unlocked[cy][cx];
+                const above = !isTopEdge && unlocked[cy - 1][cx];
 
-        // Ajustement Y de la caméra/surface
-        // Les tuiles sont décalées si on utilise un offset global, mais gridToScreen est la ref.
+                // On dessine si l'état change entre deux chunks verticaux
+                if (current !== above) {
+                    if (startCx === -1) startCx = cx;
+                } else if (startCx !== -1) {
+                    this.drawLine(g, points[cy][startCx], points[cy][cx]);
+                    startCx = -1;
+                }
+            }
+            if (startCx !== -1) this.drawLine(g, points[cy][startCx], points[cy][CHUNKS_PER_SIDE]);
+        }
 
-        g.moveTo(start.x, start.y);
-        g.lineTo(end.x, end.y);
+        // 3. FUSION DES LIGNES VERTICALES (OUEST/EST)
+        for (let cx = 0; cx <= CHUNKS_PER_SIDE; cx++) {
+            let startCy = -1;
+            for (let cy = 0; cy < CHUNKS_PER_SIDE; cy++) {
+                const isRightEdge = cx === CHUNKS_PER_SIDE;
+                const isLeftEdge = cx === 0;
+
+                const current = !isRightEdge && unlocked[cy][cx];
+                const left = !isLeftEdge && unlocked[cy][cx - 1];
+
+                if (current !== left) {
+                    if (startCy === -1) startCy = cy;
+                } else if (startCy !== -1) {
+                    this.drawLine(g, points[startCy][cx], points[cy][cx]);
+                    startCy = -1;
+                }
+            }
+            if (startCy !== -1) this.drawLine(g, points[startCy][cx], points[CHUNKS_PER_SIDE][cx]);
+        }
+
+        // 4. UN SEUL STROKE POUR TOUT LE RENDU
         g.stroke({
             width: this.BORDER_WIDTH,
             color: this.BORDER_COLOR,
             alpha: this.BORDER_ALPHA,
-            cap: 'round', // Joli rendu aux intersections
+            cap: 'round',
             join: 'round'
         });
     }
 
-    static clear() {
-        // Rien à faire ici, le Graphics est clear par GameRenderer
+    private static drawLine(g: PIXI.Graphics, p1: PIXI.Point, p2: PIXI.Point) {
+        g.moveTo(p1.x, p1.y);
+        g.lineTo(p2.x, p2.y);
     }
 }

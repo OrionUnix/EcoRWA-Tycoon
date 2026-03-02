@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { RoadType, ZoneType, BuildingType, PlayerResources, CityStats, ResourceSummary, BuildingCategory, BUILDING_SPECS } from '../engine/types';
@@ -23,8 +25,9 @@ import { DataLayersPanel } from './ui/Panel/DataLayersPanel';
 import { GameOnboarding } from './ui/overlay/GameOnboarding';
 import { BobAlertBox } from './ui/npcs/BobAlertBox';
 import { TopBar } from './ui/hud/TopBar';
-import { LandPurchaseModal } from './ui/modals/LandPurchaseModal';
+import { TerritorySalePanel } from './ui/modals/TerritorySalePanel';
 import { ChunkManager } from '../engine/ChunkManager';
+import { RWAMasterPanel } from './ui/web3/RWAMasterPanel';
 
 interface GameUIProps {
     t: any;
@@ -72,19 +75,16 @@ export default function GameUI({
     const [activePanel, setActivePanel] = useState<string | null>(null);
     const [activeDataLayer, setActiveDataLayer] = useState<string | null>(null);
     const [isLandModalOpen, setIsLandModalOpen] = useState(false);
+    const [isRWAModalOpen, setIsRWAModalOpen] = useState(false);
     const [selectedChunkData, setSelectedChunkData] = useState<any>(null);
     const engine = getGameEngine();
 
-    // Onboarding s'affiche si le joueur n'a pas encore reçu sa subvention de départ (par ex < 10k)
-    // En production on vérifierait un flag `hasCompletedOnboarding`
     const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
         return engine.map.resources.money < 10000;
     });
 
-    // Cancel active tool
     const cancelTool = () => setViewMode('NAVIGATE');
 
-    // Land Purchase Listener
     React.useEffect(() => {
         const handleOpenLandModal = (event: any) => {
             setSelectedChunkData(event.detail);
@@ -103,10 +103,9 @@ export default function GameUI({
         const { cx, cy, price } = selectedChunkData;
         if (engine.map.resources.money < price) return;
 
-        // Validated purchase
         engine.map.resources.money -= price;
         ChunkManager.unlockChunk(cx, cy);
-        engine.map.revision++; // Request redraw
+        engine.map.revision++;
 
         setIsLandModalOpen(false);
         console.log(`🔓 Chunk [${cx}, ${cy}] purchased!`);
@@ -124,9 +123,6 @@ export default function GameUI({
                 onOpenPanel={setActivePanel}
             />
 
-            {/* ═══════════════════════════════════════ */}
-            {/* BUILDING INSPECTOR (Overlay) */}
-            {/* ═══════════════════════════════════════ */}
             {selectedBuildingId !== null && engine.map.buildingLayer[selectedBuildingId] && (
                 <div className="pointer-events-auto">
                     <BuildingInspector
@@ -143,12 +139,6 @@ export default function GameUI({
                 </div>
             )}
 
-            {/* ═══════════════════════════════════════ */}
-
-            {/* ═══════════════════════════════════════ */}
-            {/* ONBOARDING (Starter RWA) */}
-            {/* ═══════════════════════════════════════ */}
-            {/* TODO: Lier l'affichage de l'onboarding au profil on-chain si connecté. */}
             {isConnected && typeof (window as any) !== 'undefined' && !(window as any).localStorage.getItem('onboarding_done') && (
                 <GameOnboarding
                     onComplete={() => {
@@ -159,28 +149,19 @@ export default function GameUI({
                     }}
                     onClose={() => {
                         if (typeof window !== 'undefined') {
-                            // On met "onboarding_done" à true pour ne plus l'afficher, 
-                            // ou tu peux gérer ça différemment si 'fermer' = 'remettre à plus tard'
                             window.localStorage.setItem('onboarding_done', 'true');
                             setViewMode(viewMode);
                         }
                     }}
                 />
             )}
-            {/* ═══════════════════════════════════════ */}
-            {/* SERVICE PANELS (Modal Overlays) */}
-            {/* ═══════════════════════════════════════ */}
+
             {activePanel === 'BUDGET' && <BudgetPanel stats={stats} resources={resources} onClose={() => setActivePanel(null)} />}
             {activePanel === 'WATER' && <WaterPanel stats={stats} onClose={() => setActivePanel(null)} />}
             {activePanel === 'POWER' && <PowerPanel stats={stats} onClose={() => setActivePanel(null)} />}
             {activePanel === 'FIRE' && <FirePanel stats={stats} onClose={() => setActivePanel(null)} />}
             {activePanel === 'JOBS' && <JobsPanel stats={stats} onClose={() => setActivePanel(null)} />}
 
-            {/* Resources now displayed in CityInfoBar bottom strip */}
-
-            {/* ═══════════════════════════════════════ */}
-            {/* COST PREVIEW (Floating pill) */}
-            {/* ═══════════════════════════════════════ */}
             {totalCost > 0 && (
                 <div className="absolute bottom-36 left-1/2 -translate-x-1/2 pointer-events-auto z-50">
                     <div
@@ -197,14 +178,8 @@ export default function GameUI({
                 </div>
             )}
 
-            {/* ═══════════════════════════════════════ */}
-            {/* TOOLTIP */}
-            {/* ═══════════════════════════════════════ */}
             <GameTooltip hoverInfo={hoverInfo} cursorPos={cursorPos} />
 
-            {/* ═══════════════════════════════════════ */}
-            {/* ACTIVE TOOL HUD (Bottom-Left, above InfoBar) */}
-            {/* ═══════════════════════════════════════ */}
             <ActiveToolHUD
                 viewMode={viewMode}
                 selectedRoadType={selectedRoadType}
@@ -213,24 +188,12 @@ export default function GameUI({
                 onCancel={cancelTool}
             />
 
-            {/* ═══════════════════════════════════════ */}
-            {/* RESOURCE BAR (Bottom-Left, always visible) */}
-            {/* ═══════════════════════════════════════ */}
             <ResourceBar
                 stats={stats}
                 resources={resources}
                 onOpenPanel={setActivePanel}
             />
 
-            {/* ═══════════════════════════════════════ */}
-            {/* DATA LAYERS PANEL MAITENANT RENDU DANS MAINTOOLBAR */}
-            {/* ═══════════════════════════════════════ */}
-
-
-
-            {/* ═══════════════════════════════════════ */}
-            {/* MAIN TOOLBAR (Bottom-Center) */}
-            {/* ═══════════════════════════════════════ */}
             <MainToolbar
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
@@ -243,16 +206,28 @@ export default function GameUI({
                 setSelectedBuildingType={setSelectedBuildingType}
                 activeDataLayer={activeDataLayer}
                 setActiveDataLayer={setActiveDataLayer}
-                onOpenRWA={onOpenRWA}
+                onOpenRWA={() => setIsRWAModalOpen(true)}
             />
             <RWAInventory />
 
-            <LandPurchaseModal
+            <TerritorySalePanel
                 isOpen={isLandModalOpen}
                 chunkData={selectedChunkData}
                 playerFunds={resources?.money || 0}
                 onBuy={handleBuyLand}
                 onCancel={() => setIsLandModalOpen(false)}
+            />
+
+            <RWAMasterPanel
+                isOpen={isRWAModalOpen}
+                onClose={() => setIsRWAModalOpen(false)}
+                onInvest={(rwa) => {
+                    console.log("Invest in:", rwa);
+                    setIsRWAModalOpen(false);
+                    // Open purchase modal or handle directly
+                }}
+                onFaucet={() => console.log("Faucet requested")}
+                onGrant={() => console.log("Grant requested")}
             />
         </div>
     );
