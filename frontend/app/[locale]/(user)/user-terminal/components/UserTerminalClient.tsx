@@ -64,7 +64,15 @@ export default function UserTerminalClient() {
 
         // 🧹 BUG FIX: Reset le jeu à la déconnexion pour éviter le State Leak
         if (prevIsConnectedRef.current && !isConnected) {
-            console.log("🧹 Déconnexion détectée : Nettoyage de la ville...");
+            console.log("🧹 Déconnexion détectée : Nettoyage de la ville et de l'inventaire...");
+            // 1. Vider l'inventaire local des RWA
+            if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('rwa_inventory');
+                // On dispatch l'évènement pour forcer useRWAInventory à se reload (et donc vider la liste)
+                window.dispatchEvent(new Event('rwa_purchased'));
+            }
+
+            // 2. Reset du moteur de jeu
             const engine = getGameEngine();
             engine.resetGame();
             // Force re-render pour nettoyer les résidus UI

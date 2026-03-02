@@ -26,7 +26,7 @@ export const TOOLBAR_CATEGORIES = [
     { id: BuildingCategory.FOOD, icon: GAME_ICONS.food, label: 'Nourriture', color: SC_COLORS.FOOD },
     { id: BuildingCategory.EXTRACTION, icon: GAME_ICONS.iron, label: 'Industrie', color: SC_COLORS.EXTRACTION },
     { id: BuildingCategory.CIVIC, icon: GAME_ICONS.administration, label: 'Civique', color: SC_COLORS.CIVIC },
-    { id: 'RWA', icon: GAME_ICONS.rwa, label: 'RWA', color: SC_COLORS.RWA },
+    // RWA is now accessible via the TopBar "RWA MARKET" button — removed from MainToolbar
     { id: 'DATA', icon: GAME_ICONS.export, label: 'Données', color: SC_COLORS.DATA },
 ];
 

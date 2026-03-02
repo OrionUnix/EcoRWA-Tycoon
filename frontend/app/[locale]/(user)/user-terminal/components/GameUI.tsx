@@ -148,6 +148,7 @@ export default function GameUI({
                 onSetSpeed={onSetSpeed}
                 onTogglePause={onTogglePause}
                 onOpenPanel={setActivePanel}
+                onOpenRWA={() => setIsRWAModalOpen(true)}
             />
 
             {selectedBuildingId !== null && engine.map.buildingLayer[selectedBuildingId] && (
