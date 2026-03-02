@@ -103,6 +103,16 @@ textarea,
   .hard-shadow {
     box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.5);
   }
+
+  /* Pixel Art Optimization */
+  .pixelated,
+  .rwa-building-img,
+  .advisor-portrait,
+  canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+  }
 }
 
 @layer components {

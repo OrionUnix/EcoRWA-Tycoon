@@ -55,7 +55,14 @@ export class PersistenceManager {
                 glass: engine.resources.glass || 0,
                 steel: engine.resources.steel || 0,
                 undergroundWater: engine.resources.undergroundWater || 0
-            }
+            },
+            flags: {
+                hasClaimedGrant: engine.flags.hasClaimedGrant,
+                hasSeenTutorial: engine.flags.hasSeenTutorial,
+                lastFaucetClaim: engine.flags.lastFaucetClaim
+            },
+            seed: engine.mapSeed || "", // ✅ Graine de la carte
+            rwa_balances: engine.rwaBalances || {} // ✅ Balances fractionnées
         };
     }
 

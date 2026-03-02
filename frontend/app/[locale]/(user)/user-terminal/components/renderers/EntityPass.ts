@@ -79,6 +79,7 @@ export class EntityPass {
                 if (engine.buildingLayer && engine.buildingLayer[i]) {
                     BuildingRenderer.drawTile(
                         worldEntityLayer,
+                        engine,
                         engine.buildingLayer[i]!,
                         x, y, pos,
                         isHighDetail,

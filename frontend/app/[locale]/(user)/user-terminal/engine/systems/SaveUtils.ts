@@ -43,25 +43,24 @@ export class SaveUtils {
             // Texture RWA si applicable, pour le fallback visuel
             if (b.rwaTexture) packed.push(b.rwaTexture);
 
+            // ✅ NOUVEAU: Données RWA pour le rendement
+            if (b.rwaId) packed.push(b.rwaId);
+            if (b.lastYieldClaim) packed.push(b.lastYieldClaim);
+
             result.push(packed);
         }
         return JSON.stringify(result);
     }
 
-    /**
-     * Récupère la liste spécifique des RWA pour l'indexage Wallet -> Cell
-     */
-    static packRWA(layer: (BuildingData | null)[]): (number | string)[][] {
+    static packRWA(layer: (BuildingData | null)[]): string {
         const rwaList: (number | string)[][] = [];
         for (let i = 0; i < layer.length; i++) {
             const b = layer[i];
-            // Format exigé: [cellIndex, type, shares (dummy for now)]
             if (b && b.rwaTexture) {
-                // Pour l'instant nous stockons 1 part par défaut, l'économie on-chain gérera le vrai chiffre
                 rwaList.push([i, b.type, 1]);
             }
         }
-        return rwaList;
+        return JSON.stringify(rwaList);
     }
 
     static packRoads(layer: (RoadData | null)[]): string {
@@ -85,11 +84,11 @@ export class SaveUtils {
 
     static packChunks(): string {
         const center = Math.floor(CHUNKS_PER_SIDE / 2);
-        const result: number[][] = [];
+        const result: string[] = [];
         for (let cy = 0; cy < CHUNKS_PER_SIDE; cy++) {
             for (let cx = 0; cx < CHUNKS_PER_SIDE; cx++) {
                 if (ChunkManager.unlocked[cy][cx] && !(cx === center && cy === center)) {
-                    result.push([cx, cy]);
+                    result.push(`${cx},${cy}`);
                 }
             }
         }
@@ -129,12 +128,16 @@ export class SaveUtils {
             const stateIdx = arr[4] as number;
             const state = stateIdx === 2 ? 'ABANDONED' : 'ACTIVE';
             const rwaTexture = arr[5] as string | undefined;
+            const rwaId = arr[6] as number | undefined;
+            const lastYieldClaim = arr[7] as number | undefined;
 
             layer[y * GRID_SIZE + x] = {
                 type, x, y, level, state,
                 variant: 0, constructionTimer: 0, pollution: 0,
                 happiness: 100, statusFlags: 0, stability: 100, jobsAssigned: 0,
                 ...(rwaTexture ? { rwaTexture } : {}),
+                ...(rwaId ? { rwaId } : {}),
+                ...(lastYieldClaim ? { lastYieldClaim } : {}),
             };
         }
         return layer;
@@ -173,13 +176,18 @@ export class SaveUtils {
 
     static unpackChunks(packedString: string): void {
         if (!packedString) return;
-        const packed = JSON.parse(packedString) as number[][];
-        for (const [cx, cy] of packed) {
-            if (cx >= 0 && cx < CHUNKS_PER_SIDE && cy >= 0 && cy < CHUNKS_PER_SIDE) {
-                ChunkManager.unlocked[cy][cx] = true;
-            }
+        try {
+            const packed = JSON.parse(packedString) as string[];
+            packed.forEach(coord => {
+                const [cx, cy] = coord.split(',').map(Number);
+                if (!isNaN(cx) && !isNaN(cy) && cx >= 0 && cx < CHUNKS_PER_SIDE && cy >= 0 && cy < CHUNKS_PER_SIDE) {
+                    ChunkManager.unlocked[cy][cx] = true;
+                }
+            });
+            console.log(`🗺️ [SaveUtils] ${packed.length} chunks additionnels restaurés.`);
+        } catch (e) {
+            console.error("❌ [SaveUtils] Erreur unpackChunks:", e);
         }
-        console.log(`🗺️ [SaveUtils] ${packed.length} chunks additionnels restaurés.`);
     }
 
     static unpackResources(engine: MapEngine, packed: Record<string, string>): void {

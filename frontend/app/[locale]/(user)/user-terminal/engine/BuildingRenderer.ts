@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { BuildingData } from './types';
+import { MapEngine } from './MapEngine';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from './config';
 import { FXRenderer } from './FXRenderer';
 import { BuildingEmoteSystem } from './renderers/buildings/BuildingEmoteSystem';
@@ -23,6 +24,7 @@ const buildingCache = globalForBuildings.buildingCache;
 export class BuildingRenderer {
     static drawTile(
         parentContainer: PIXI.Container,
+        engine: MapEngine, // ✅ AJOUTÉ
         building: BuildingData,
         x: number,
         y: number,
@@ -53,7 +55,20 @@ export class BuildingRenderer {
         container.zIndex = x + y + 0.5;
 
         const lvl = building.level || 0;
-        const isConstState = building.state === 'CONSTRUCTION' || lvl === 0;
+        let isConstState = building.state === 'CONSTRUCTION' || lvl === 0;
+
+        // ═══════════════════════════════════════
+        // LOGIQUE RWA: Seuils de parts (F-RWA)
+        // ═══════════════════════════════════════
+        if (building.rwaId) {
+            const balance = engine.rwaBalances[building.rwaId] || 0;
+            // ✅ RÈGLE: un bâtiment RWA n'est rendu visuellement que si balance >= 100 parts.
+            // En dessous, affiche un sprite de "chantier en cours".
+            if (balance < 100) {
+                isConstState = true;
+            }
+        }
+
         const isRuined = building.state === 'ABANDONED' || (building as any).isRuined === true;
 
         // 3. Effets Spéciaux (Poussière de construction unique)

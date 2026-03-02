@@ -11,6 +11,7 @@ import { CityStats, PlayerResources } from '../../../engine/types';
 import { formatNumber } from './GameWidgets';
 import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
 import { getGameEngine } from '../../../engine/GameEngine';
+import { LogoutButton } from './LogoutButton';
 
 interface TopBarProps {
     speed: number;
@@ -28,27 +29,7 @@ export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTog
     const { isPlaying, volume, togglePlay, nextTrack, setVolume } = useGameMusic();
     const t = useTranslations('TopBar');
     const [isBudgetOpen, setIsBudgetOpen] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSafeDisconnect = async () => {
-        if (!address) {
-            disconnect();
-            return;
-        }
-
-        console.log("📤 Sauvegarde finale avant déconnexion...");
-        setIsSaving(true);
-        try {
-            const engine = getGameEngine();
-            await engine.saveCity(address);
-            console.log("✅ Ville enregistrée avant déconnexion");
-        } catch (e) {
-            console.error("❌ Échec sauvegarde finale", e);
-        } finally {
-            setIsSaving(false);
-            disconnect();
-        }
-    };
     const population = stats?.population || 0;
     const happiness = stats?.happiness || 0;
     const income = stats?.budget?.income || 0;
@@ -213,13 +194,10 @@ export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTog
                                             >
                                                 {account.displayName}{account.displayBalance ? ` (${account.displayBalance})` : ''}
                                             </button>
-                                            <button
-                                                onClick={handleSafeDisconnect}
-                                                disabled={isSaving}
-                                                className="win95-button bg-[#c3c7cb] text-black font-bold border-4 border-black px-4 h-[50px] flex items-center hover:bg-slate-300 disabled:opacity-50"
-                                            >
-                                                {isSaving ? 'SAVING...' : 'LOGOUT'}
-                                            </button>
+                                            <LogoutButton
+                                                engine={getGameEngine().map}
+                                                address={address || ''}
+                                            />
                                         </div>
                                     );
                                 })()}

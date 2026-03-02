@@ -160,6 +160,13 @@ export interface CityStats {
     };
 }
 
+export interface GameFlags {
+    hasClaimedGrant: boolean;
+    hasSeenTutorial: boolean;
+    lastFaucetClaim: number; // Timestamp
+    mapSeed?: string; // ✅ NOUVEAU: Graine de carte
+}
+
 export interface RoadData {
     type: RoadType;
     speedLimit: number;
@@ -254,6 +261,8 @@ export interface BuildingData {
 
     // ✅ RWA : chemin direct vers le sprite isométrique spécifique
     // Quand présent, BuildingRenderer le charge via PIXI.Assets.load() (bypass BuildingAssets)
+    rwaId?: number; // ID unique du RWA (1=Loft, 2=Bistro, 3=Eco...)
+    lastYieldClaim?: number; // Timestamp de la dernière récolte
     rwaTexture?: string;
 
     // ✅ NOUVEAU: Contrats (Pour les Marchés)

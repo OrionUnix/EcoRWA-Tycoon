@@ -38,14 +38,14 @@ export const FaucetButton: React.FC<FaucetButtonProps> = ({
     const COOLDOWN_DURATION = 48 * 60 * 60 * 1000; // 48 heures
 
     useEffect(() => {
-        const lastClaim = localStorage.getItem('last_faucet_claim');
-        if (lastClaim) {
-            const elapsed = Date.now() - parseInt(lastClaim, 10);
+        const lastClaim = engine.map.flags.lastFaucetClaim;
+        if (lastClaim > 0) {
+            const elapsed = Date.now() - lastClaim;
             if (elapsed < COOLDOWN_DURATION) {
-                setCooldownTime(parseInt(lastClaim, 10) + COOLDOWN_DURATION);
+                setCooldownTime(lastClaim + COOLDOWN_DURATION);
             }
         }
-    }, []);
+    }, [engine.map.flags.lastFaucetClaim]);
 
     useEffect(() => {
         if (!cooldownTime) return;
@@ -57,7 +57,7 @@ export const FaucetButton: React.FC<FaucetButtonProps> = ({
             if (diff <= 0) {
                 setCooldownTime(null);
                 setTimeString("");
-                localStorage.removeItem('last_faucet_claim');
+                engine.map.flags.lastFaucetClaim = 0;
                 clearInterval(interval);
             } else {
                 const h = Math.floor(diff / (1000 * 60 * 60));
@@ -86,9 +86,12 @@ export const FaucetButton: React.FC<FaucetButtonProps> = ({
             });
 
             const now = Date.now();
+            engine.map.flags.lastFaucetClaim = now;
+            setCooldownTime(now + COOLDOWN_DURATION);
+
+            // Sync legacy localStorage for safety
             localStorage.setItem('last_faucet_claim', now.toString());
             localStorage.setItem('rwa_faucet_claimed', 'true');
-            setCooldownTime(now + COOLDOWN_DURATION);
 
             engine.map.resources.money += 10000;
             onSuccess();
@@ -107,8 +110,8 @@ export const FaucetButton: React.FC<FaucetButtonProps> = ({
                 onClick={handleClaim}
                 disabled={isDisabled}
                 className={`relative group px-6 py-2 border-2 border-black text-xs font-black uppercase tracking-widest transition-none rounded-none text-white ${isDisabled
-                        ? 'bg-slate-400 translate-y-[2px] translate-x-[2px] shadow-none cursor-not-allowed'
-                        : 'bg-emerald-500 shadow-[4px_4px_0_0_#000] hover:bg-emerald-600 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none'
+                    ? 'bg-slate-400 translate-y-[2px] translate-x-[2px] shadow-none cursor-not-allowed'
+                    : 'bg-emerald-500 shadow-[4px_4px_0_0_#000] hover:bg-emerald-600 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none'
                     }`}
             >
                 {isLoading ? "Minting..." : (cooldownTime ? timeString : "FAUCET")}

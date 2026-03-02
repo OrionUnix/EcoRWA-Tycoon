@@ -18,7 +18,7 @@ import { PopulationManager } from './PopulationManager';
 // - Reconstruction RoadGraph au chargement
 // - Auto-suppression des saves corrompues
 // ═══════════════════════════════════════════════════════════════════════════════
-const SAVE_VERSION = 5;
+const SAVE_VERSION = 6;
 
 // ── Dictionnaires de compression ─────────────────────────────────────────────
 const BUILDING_TYPE_LIST = Object.values(BuildingType);
@@ -129,8 +129,16 @@ export class SaveSystem {
                 food: engine.resources.food || 0,
                 concrete: engine.resources.concrete || 0,
                 glass: engine.resources.glass || 0,
-                steel: engine.resources.steel || 0
-            }
+                steel: engine.resources.steel || 0,
+                undergroundWater: engine.resources.undergroundWater || 0
+            },
+            flags: {
+                hasClaimedGrant: engine.flags.hasClaimedGrant,
+                hasSeenTutorial: engine.flags.hasSeenTutorial,
+                lastFaucetClaim: engine.flags.lastFaucetClaim
+            },
+            seed: engine.mapSeed || "",
+            rwa_balances: engine.rwaBalances || {}
         };
 
         try {
@@ -225,11 +233,76 @@ export class SaveSystem {
                 console.log("📦 Inventaire chargé avec succès !", inv);
             }
 
+            // ── ✅ Restaurer les Flags ────────────────────────────────────────
+            if (data.flags) {
+                engine.flags.hasClaimedGrant = data.flags.hasClaimedGrant || false;
+                engine.flags.hasSeenTutorial = data.flags.hasSeenTutorial || false;
+                engine.flags.lastFaucetClaim = data.flags.lastFaucetClaim || 0;
+            }
+
+            // ── ✅ Restaurer Seed et Balances RWA ────────────────────────────
+            if (data.seed) engine.mapSeed = data.seed;
+            if (data.rwa_balances) engine.rwaBalances = data.rwa_balances;
+
+            // ── ✅ Progression Hors-Ligne ─────────────────────────────────────
+            if (data.ts) {
+                const now = Date.now();
+                const deltaMs = now - data.ts;
+                const deltaHours = deltaMs / (1000 * 60 * 60);
+
+                if (deltaHours > 0.01) { // Plus de 36 secondes d'absence
+                    console.log(`⏳ [SaveSystem] Calcul de la progression hors-ligne (${deltaHours.toFixed(2)}h)...`);
+
+                    let offlineMoney = 0;
+
+                    // 1. Taxes (10$/h par habitant)
+                    const population = data.eco?.totalPopulation ?? 0;
+                    const taxIncome = population * 10 * deltaHours;
+                    offlineMoney += taxIncome;
+
+                    // 2. Yields RWA
+                    let rwaYields = 0;
+                    engine.buildingLayer.forEach(b => {
+                        if (b && b.rwaId) {
+                            // On simule une récolte automatique ou on stocke le "pending"
+                            // Pour simplifier ici, on ajoute au compte : 5$/h par RWA de base (test local)
+                            rwaYields += 5 * deltaHours;
+                            b.lastYieldClaim = now; // On "consomme" le yield
+                        }
+                    });
+                    offlineMoney += rwaYields;
+
+                    if (offlineMoney > 0) {
+                        engine.resources.money += Math.floor(offlineMoney);
+                        console.log(`💰 [SaveSystem] Gain hors-ligne : $${Math.floor(offlineMoney)} (Taxes: $${Math.floor(taxIncome)}, RWA: $${Math.floor(rwaYields)})`);
+
+                        // ✅ Notification UI
+                        if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('offline_gains', {
+                                detail: {
+                                    total: Math.floor(offlineMoney),
+                                    taxes: Math.floor(taxIncome),
+                                    rwa: Math.floor(rwaYields),
+                                    hours: deltaHours
+                                }
+                            }));
+                        }
+                    }
+                }
+            }
+
             engine.revision++;
             console.log(`📂 [SaveSystem] Restauré : ${data.b?.length ?? 0} bâtiments, ${data.r?.length ?? 0} routes, ${(data.c ?? "[]").length} chunks.`);
 
-            if (data.rwa && data.rwa.length > 0) {
-                console.log(`🏢 [SaveSystem] Restauration détectée pour ${data.rwa.length} bâtiments RWA (Data Chain in-tact).`);
+            if (data.rwa) {
+                try {
+                    const rwaList = typeof data.rwa === 'string' ? JSON.parse(data.rwa) : data.rwa;
+                    if (rwaList && rwaList.length > 0) {
+                        console.log(`🏢 [SaveSystem] Restauration détectée pour ${rwaList.length} bâtiments RWA.`);
+                    }
+                } catch (e) {
+                    console.warn("⚠️ [SaveSystem] Erreur parsing RWA data:", e);
+                }
             }
             return true;
 

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
 import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 import { useTranslations } from 'next-intl';
-import { getMapEngine } from '../../../engine/MapEngine';
+import { getGameEngine } from '../../../engine/GameEngine';
 import { CHUNK_SIZE, TOTAL_CELLS } from '../../../engine/config';
 import { ChunkManager } from '../../../engine/ChunkManager';
 
@@ -39,7 +39,7 @@ export const TerritorySalePanel: React.FC<TerritorySalePanelProps> = ({
     playerFunds
 }) => {
     const t = useTranslations('territory');
-    const engine = getMapEngine();
+    const engine = getGameEngine().map;
 
     const resourceEmojis: Record<string, string> = {
         wood: '🪵', stone: '🪨', coal: '⚫', iron: '⛓️', gold: '💰', silver: '🥈', oil: '🛢️'
@@ -171,12 +171,12 @@ export const TerritorySalePanel: React.FC<TerritorySalePanelProps> = ({
 
                         {/* CONTENT BODY */}
                         <div className="p-6 flex flex-col md:flex-row gap-8">
-                            {/* LEFT COLUMN: JORDAN - NO BORDER/CIRCLE/BG */}
+                            {/* LEFT COLUMN: JORDAN */}
                             <div className="flex flex-col items-center gap-2 shrink-0">
-                                <div className="w-24 h-24 flex items-center justify-center">
+                                <div className="w-24 h-24 bg-slate-300 border-4 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_#000] flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-400">
                                     <AnimatedAvatar character="jordan" isTalking={isTyping} />
                                 </div>
-                                <span className="bg-blue-900 text-white text-[11px] px-3 py-1 border-2 border-black font-black uppercase tracking-tighter shadow-[3px_3px_0_0_#000]">
+                                <span className="bg-blue-900 text-white text-[10px] px-2 py-0.5 border-2 border-black font-black uppercase tracking-tighter shadow-[2px_2px_0_0_#000]">
                                     Advisor Jordan
                                 </span>
                             </div>

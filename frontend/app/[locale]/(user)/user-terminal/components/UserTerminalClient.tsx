@@ -61,6 +61,17 @@ export default function UserTerminalClient() {
     // ✅ Gestion du status wallet (Dirty flag / Connection state)
     useEffect(() => {
         SaveSystem.setWalletConnected(isConnected);
+
+        // 🧹 BUG FIX: Reset le jeu à la déconnexion pour éviter le State Leak
+        if (prevIsConnectedRef.current && !isConnected) {
+            console.log("🧹 Déconnexion détectée : Nettoyage de la ville...");
+            const engine = getGameEngine();
+            engine.resetGame();
+            // Force re-render pour nettoyer les résidus UI
+            setIsReloading(true);
+            setTimeout(() => setIsReloading(false), 100);
+        }
+
         prevIsConnectedRef.current = isConnected;
     }, [isConnected]);
 

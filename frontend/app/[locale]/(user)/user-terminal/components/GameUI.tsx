@@ -111,6 +111,33 @@ export default function GameUI({
         console.log(`🔓 Chunk [${cx}, ${cy}] purchased!`);
     };
 
+    const handleGrant = () => {
+        if (engine.map.flags.hasClaimedGrant) {
+            alert("Vous avez déjà reçu votre Grant de démarrage !");
+            return;
+        }
+        engine.map.resources.money += 10000;
+        engine.map.flags.hasClaimedGrant = true;
+        window.dispatchEvent(new Event('city_mutated'));
+        alert("Félicitations ! Vous avez reçu un Grant de 10 000$ pour booster votre ville.");
+    };
+
+    const handleFaucet = () => {
+        // Le Faucet est déjà géré par son propre composant FaucetButton dans Onboarding,
+        // mais ici on peut ajouter un feedback ou ouvrir le bon menu.
+        setActivePanel('RWA'); // Hypothetical
+    };
+
+    // Notification de gain hors-ligne
+    React.useEffect(() => {
+        const handleOfflineGains = (e: any) => {
+            const { total, taxes, rwa, hours } = e.detail;
+            alert(`💰 Bon retour ! Pendant votre absence de ${hours.toFixed(1)}h, votre ville a généré $${total}.\n\n(Taxes: $${taxes}, RWA: $${rwa})`);
+        };
+        window.addEventListener('offline_gains', handleOfflineGains);
+        return () => window.removeEventListener('offline_gains', handleOfflineGains);
+    }, []);
+
     return (
         <div className="absolute inset-0 pointer-events-none flex flex-col justify-between overflow-hidden" style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
             <TopBar
@@ -224,10 +251,9 @@ export default function GameUI({
                 onInvest={(rwa) => {
                     console.log("Invest in:", rwa);
                     setIsRWAModalOpen(false);
-                    // Open purchase modal or handle directly
                 }}
-                onFaucet={() => console.log("Faucet requested")}
-                onGrant={() => console.log("Grant requested")}
+                onFaucet={() => setIsRWAModalOpen(false)} // Le faucet est dans l'onboarding ou via bouton dédié
+                onGrant={handleGrant}
             />
         </div>
     );

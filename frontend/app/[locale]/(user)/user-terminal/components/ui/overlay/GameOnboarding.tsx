@@ -51,8 +51,8 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
     const { writeContractAsync } = useWriteContract();
 
     useEffect(() => {
-        const claimed = localStorage.getItem('rwa_faucet_claimed') === 'true';
-        setHasClaimedFaucet(claimed);
+        const engine = getGameEngine();
+        setHasClaimedFaucet(engine.map.flags.lastFaucetClaim > 0);
     }, []);
 
     // La VRAIE fonction d'achat avec l'intégration de l'inventaire
@@ -113,13 +113,14 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                 }
             }));
 
-            // 🎉 Bob Congrat Modal — afficher une seule fois (1ère expérience)
-            const alreadyShown = localStorage.getItem('rwa_bob_shown') === 'true';
+            // 🎉 Bob Congrat Modal — afficher une seule fois (1ÈRE EXPÉRIENCE)
+            const engine = getGameEngine();
+            const alreadyShown = engine.map.flags.hasSeenTutorial;
             if (!alreadyShown) {
                 setBobBuildingName(tJordan(`choices.${selectedData.key}.name`));
                 setBobBuildingImage(selectedData.imageName);
                 setShowBobModal(true);
-                localStorage.setItem('rwa_bob_shown', 'true');
+                engine.map.flags.hasSeenTutorial = true;
                 // Auto-fermeture après 12s
                 setTimeout(() => setShowBobModal(false), 12000);
             }

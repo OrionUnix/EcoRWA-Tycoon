@@ -33,6 +33,13 @@ export default getRequestConfig(async ({ locale }) => {
       territory: territoryMessages,
       rwa: rwaMessages,
       ...infobarMessages
+    },
+    onError(error) {
+      if (error.code !== 'MISSING_MESSAGE') console.error(error);
+    },
+    getMessageFallback({ key }) {
+      console.warn(`[i18n] Missing: ${key}`);
+      return key;
     }
   };
 });

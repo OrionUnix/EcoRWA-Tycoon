@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { BuildingData, BUILDING_SPECS } from '../engine/types';
+import { MapEngine } from '../engine/MapEngine';
 import { BuildingAssets } from '../engine/BuildingAssets';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from '../engine/config';
 
@@ -20,6 +21,7 @@ export class BuildingRenderer {
      */
     static drawTile(
         container: PIXI.Container,
+        engine: MapEngine, // ✅ AJOUTÉ
         building: BuildingData,
         x: number,
         y: number,
@@ -31,12 +33,26 @@ export class BuildingRenderer {
         const zIdx = x + y + 1; // Au-dessus des routes (0.5) et arbres (0.5)
 
         // ═══════════════════════════════════════
+        // LOGIQUE RWA: Seuils de parts (F-RWA)
+        // ═══════════════════════════════════════
+        let renderState: 'normal' | 'construction' | 'destruction' = 'normal';
+        if (building.rwaId) {
+            const balance = engine.rwaBalances[building.rwaId] || 0;
+            // ✅ RÈGLE: un bâtiment RWA n'est rendu visuellement que si balance >= 100 parts.
+            // En dessous, affiche un sprite de "chantier en cours".
+            if (balance < 100) {
+                renderState = 'construction';
+            }
+        }
+
+        // ═══════════════════════════════════════
         // TENTATIVE 1: Sprite depuis l'atlas
         // ═══════════════════════════════════════
         const texture = BuildingAssets.getTexture(
             building.type,
             building.level || 1,
-            building.variant || 0
+            building.variant || 0,
+            renderState // ✅ État géré selon balance RWA
         );
 
         if (texture) {

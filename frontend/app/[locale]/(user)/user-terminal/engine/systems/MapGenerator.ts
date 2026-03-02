@@ -65,15 +65,15 @@ export class MapGenerator {
     static generate(engine: MapEngine, walletAddress?: string) {
         console.log("🌱 MapGenerator: Démarrage de la génération...");
 
-        // Utilisation de la Seed du Wallet si disponible
-        let rng: () => number;
-        if (walletAddress) {
-            console.log(`🔑 Generating map for wallet: ${walletAddress}`);
-            rng = this.createSeededRandom(walletAddress);
-        } else {
-            console.log(`🎲 Generating random map`);
-            rng = Math.random;
+        // 🔑 GARANTIE DU SEED: On utilise engine.mapSeed si présent, 
+        // sinon on utilise wallet pour la première fois, sinon du random.
+        if (!engine.mapSeed) {
+            engine.mapSeed = walletAddress || Math.random().toString(36).substring(7);
+            console.log(`✨ Nouvelle graine générée : ${engine.mapSeed}`);
         }
+
+        const rng = this.createSeededRandom(engine.mapSeed);
+        console.log(`🎲 World Seed: ${engine.mapSeed}`);
 
         // Création des générateurs de bruit
         // createNoise2D attend une fonction () => number. rng est compatible.

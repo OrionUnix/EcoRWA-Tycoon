@@ -259,6 +259,24 @@ export class GameEngine {
         }
         return result;
     }
+
+    /**
+     * Réinitialise complètement l'état du moteur (ex: à la déconnexion)
+     */
+    public resetGame() {
+        console.log("🧹 [GameEngine] Réinitialisation du jeu...");
+        this.map = new MapEngine();
+        this.tickCount = 0;
+
+        // Ré-initialiser les systèmes dépendants
+        PopulationManager.initialize(this.map);
+        SaveSystem.initialize(this.map);
+        if (typeof window !== 'undefined') {
+            RWABuildingSpawner.initialize(this.map);
+        }
+
+        console.log("✨ [GameEngine] Jeu réinitialisé avec succès.");
+    }
 }
 
 export function getGameEngine(): GameEngine {

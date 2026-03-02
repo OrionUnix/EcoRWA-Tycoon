@@ -1,4 +1,4 @@
-import { LayerType, GridConfig, ResourceSummary, RoadData, Vehicle, ZoneType, ZoneData, PlayerResources, BuildingData, CityStats } from './types';
+import { LayerType, GridConfig, ResourceSummary, RoadData, Vehicle, ZoneType, ZoneData, PlayerResources, BuildingData, CityStats, GameFlags } from './types';
 import { RoadGraph } from './Pathfinding';
 import { GRID_SIZE, TOTAL_CELLS } from './config';
 import { MapGenerator } from './systems/MapGenerator';
@@ -37,6 +37,9 @@ export class MapEngine {
     public buildingLayer: (BuildingData | null)[];
     public resources: PlayerResources;
     public stats: CityStats;
+    public flags: GameFlags;
+    public mapSeed: string = ""; // ✅ Graine de carte persistante
+    public rwaBalances: Record<string, number> = {}; // ✅ Parts possédées par actif (id -> balance)
 
     constructor() {
         console.log("🗺️ MapEngine: Initialisation...");
@@ -97,6 +100,11 @@ export class MapEngine {
                 maintenance: 0,
                 maintenanceDetail: {}
             }
+        };
+        this.flags = {
+            hasClaimedGrant: false,
+            hasSeenTutorial: false,
+            lastFaucetClaim: 0
         };
         this.currentSummary = {
             oil: 0, coal: 0, iron: 0, wood: 0, water: 0, fertile: 0,
