@@ -18,7 +18,7 @@ import { PopulationManager } from './PopulationManager';
 // - Reconstruction RoadGraph au chargement
 // - Auto-suppression des saves corrompues
 // ═══════════════════════════════════════════════════════════════════════════════
-const SAVE_VERSION = 4;
+const SAVE_VERSION = 5;
 
 // ── Dictionnaires de compression ─────────────────────────────────────────────
 const BUILDING_TYPE_LIST = Object.values(BuildingType);
@@ -28,7 +28,6 @@ const ZONE_TYPE_LIST = Object.values(ZoneType);
 export interface SaveResult { sizeKB: number; timestamp: number; }
 
 export class SaveSystem {
-
     // ── État interne static ───────────────────────────────────────────────────
     private static _isDirty = false;
     private static _debounceId: ReturnType<typeof setTimeout> | null = null;
@@ -119,6 +118,19 @@ export class SaveSystem {
                 totalJobs: totalJobs,
                 unemployed: unemployed
             },
+            inventory: {
+                wood: engine.resources.wood || 0,
+                stone: engine.resources.stone || 0,
+                coal: engine.resources.coal || 0,
+                iron: engine.resources.iron || 0,
+                gold: engine.resources.gold || 0,
+                silver: engine.resources.silver || 0,
+                oil: engine.resources.oil || 0,
+                food: engine.resources.food || 0,
+                concrete: engine.resources.concrete || 0,
+                glass: engine.resources.glass || 0,
+                steel: engine.resources.steel || 0
+            }
         };
 
         try {
@@ -193,6 +205,24 @@ export class SaveSystem {
                 const popToRestore = data.eco.totalPopulation ?? 0;
                 // Le PopulationManager va recalculer unitairement, mais au cas où il nous faut écraser l'affichage :
                 PopulationManager.reset(); // Règle demandée : on réinitialise pour éviter le cumul !
+            }
+
+            // ── ✅ Restaurer l'inventaire ─────────────────────────────────────
+            if (data.inventory && engine.resources) {
+                const inv = data.inventory;
+                engine.resources.wood = inv.wood || 0;
+                engine.resources.stone = inv.stone || 0;
+                engine.resources.coal = inv.coal || 0;
+                engine.resources.iron = inv.iron || 0;
+                engine.resources.gold = inv.gold || 0;
+                engine.resources.silver = inv.silver || 0;
+                engine.resources.oil = inv.oil || 0;
+                engine.resources.food = inv.food || 0;
+                engine.resources.concrete = inv.concrete || 0;
+                engine.resources.glass = inv.glass || 0;
+                engine.resources.steel = inv.steel || 0;
+                engine.resources.undergroundWater = inv.undergroundWater || 0;
+                console.log("📦 Inventaire chargé avec succès !", inv);
             }
 
             engine.revision++;

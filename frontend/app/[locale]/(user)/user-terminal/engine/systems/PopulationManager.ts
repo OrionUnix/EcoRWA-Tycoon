@@ -42,26 +42,38 @@ export class PopulationManager {
      */
     public static initialize(engine: MapEngine): void {
         console.log('👥 PopulationManager: Initializing...');
+        this.recalculateGlobalStats(engine);
+    }
+
+    /**
+     * ✅ RECALCUL GLOBAL (Anti-ville fantôme)
+     * Recalcule toutes les stats à partir des couches de données brutes
+     */
+    public static recalculateGlobalStats(engine: MapEngine): void {
         this.totalPopulation = 0;
         this.totalJobs = 0;
         this.totalWaterCapacity = 0;
         this.totalEnergyCapacity = 0;
         this.totalFoodCapacity = 0;
 
-        // Scan all zones to build initial population cache
+        // 1. Scan des zones (R/C/I)
         for (let i = 0; i < engine.zoningLayer.length; i++) {
             const zoneData = engine.zoningLayer[i];
             if (zoneData) {
                 if (zoneData.type === ZoneType.RESIDENTIAL) {
-                    this.totalPopulation += zoneData.population;
+                    // On recalcule la population basée sur le niveau actuel pour être sûr
+                    const cap = this.getCapacityForLevel(ZoneType.RESIDENTIAL, zoneData.level);
+                    zoneData.population = cap; // On synchronise l'objet zone
+                    this.totalPopulation += cap;
                 } else if (zoneData.type === ZoneType.COMMERCIAL || zoneData.type === ZoneType.INDUSTRIAL) {
-                    // Calcul des jobs basés sur le niveau (approximatif pour l'init)
-                    this.totalJobs += zoneData.population;
+                    const jobs = this.getCapacityForLevel(zoneData.type, zoneData.level);
+                    zoneData.population = jobs;
+                    this.totalJobs += jobs;
                 }
             }
         }
 
-        // Scan des bâtiments de service pour les jobs et la production
+        // 2. Scan des bâtiments de service
         for (let i = 0; i < engine.buildingLayer.length; i++) {
             const building = engine.buildingLayer[i];
             if (building) {
@@ -77,7 +89,7 @@ export class PopulationManager {
             }
         }
 
-        console.log(`👥 PopulationManager: Initialized with ${this.totalPopulation} inhabitants, ${this.totalJobs} jobs`);
+        console.log(`📊 Recalcul effectué: Pop ${this.totalPopulation}, Jobs ${this.totalJobs}`);
     }
 
     private static addProduction(production: { type: string, amount: number }) {

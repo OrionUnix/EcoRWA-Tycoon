@@ -1488,7 +1488,7 @@
         "y": 0.5
       }
     },
-    "goldmine_01_A.png": {
+    "ironmine_01_A.png": {
       "frame": {
         "x": 768,
         "y": 896,
@@ -1512,154 +1512,10 @@
         "y": 0.5
       }
     },
-    "goldmine_01_B.png": {
+    "ironmine_01_B.png": {
       "frame": {
         "x": 896,
         "y": 896,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "goldmine_02_A.png": {
-      "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "goldmine_02_B.png": {
-      "frame": {
-        "x": 1024,
-        "y": 128,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "goldmine_03_A.png": {
-      "frame": {
-        "x": 1024,
-        "y": 256,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "goldmine_03_B.png": {
-      "frame": {
-        "x": 1024,
-        "y": 384,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "ironmine_01_A.png": {
-      "frame": {
-        "x": 1024,
-        "y": 512,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "ironmine_01_B.png": {
-      "frame": {
-        "x": 1024,
-        "y": 640,
         "w": 128,
         "h": 128
       },
@@ -1683,7 +1539,7 @@
     "ironmine_02_A.png": {
       "frame": {
         "x": 1024,
-        "y": 768,
+        "y": 0,
         "w": 128,
         "h": 128
       },
@@ -1707,7 +1563,7 @@
     "ironmine_02_B.png": {
       "frame": {
         "x": 1024,
-        "y": 896,
+        "y": 128,
         "w": 128,
         "h": 128
       },
@@ -1730,8 +1586,8 @@
     },
     "ironmine_03_A.png": {
       "frame": {
-        "x": 0,
-        "y": 1024,
+        "x": 1024,
+        "y": 256,
         "w": 128,
         "h": 128
       },
@@ -1754,296 +1610,8 @@
     },
     "ironmine_03_B.png": {
       "frame": {
-        "x": 128,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "lmine_03_A_dst.png": {
-      "frame": {
-        "x": 256,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "lmine_03_B_dst.png": {
-      "frame": {
-        "x": 384,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_01_A_cst.png": {
-      "frame": {
-        "x": 512,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_01_A_dst.png": {
-      "frame": {
-        "x": 640,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_01_B_cst.png": {
-      "frame": {
-        "x": 768,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_01_B_dst.png": {
-      "frame": {
-        "x": 896,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_02_A_cst.png": {
-      "frame": {
         "x": 1024,
-        "y": 1024,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_02_A_dst.png": {
-      "frame": {
-        "x": 1152,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_02_B_cst.png": {
-      "frame": {
-        "x": 1152,
-        "y": 128,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_02_B_dst.png": {
-      "frame": {
-        "x": 1152,
-        "y": 256,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_03_A_cst.png": {
-      "frame": {
-        "x": 1152,
         "y": 384,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "mine_03_B_cst.png": {
-      "frame": {
-        "x": 1152,
-        "y": 512,
         "w": 128,
         "h": 128
       },
@@ -2066,8 +1634,8 @@
     },
     "stonemine_01_A.png": {
       "frame": {
-        "x": 1152,
-        "y": 640,
+        "x": 1024,
+        "y": 512,
         "w": 128,
         "h": 128
       },
@@ -2090,8 +1658,8 @@
     },
     "stonemine_01_B.png": {
       "frame": {
-        "x": 1152,
-        "y": 768,
+        "x": 1024,
+        "y": 640,
         "w": 128,
         "h": 128
       },
@@ -2114,8 +1682,8 @@
     },
     "stonemine_02_A.png": {
       "frame": {
-        "x": 1152,
-        "y": 896,
+        "x": 1024,
+        "y": 768,
         "w": 128,
         "h": 128
       },
@@ -2138,8 +1706,8 @@
     },
     "stonemine_02_B.png": {
       "frame": {
-        "x": 1152,
-        "y": 1024,
+        "x": 1024,
+        "y": 896,
         "w": 128,
         "h": 128
       },
@@ -2163,7 +1731,7 @@
     "stonemine_03_A.png": {
       "frame": {
         "x": 0,
-        "y": 1152,
+        "y": 1024,
         "w": 128,
         "h": 128
       },
@@ -2187,6 +1755,414 @@
     "stonemine_03_B.png": {
       "frame": {
         "x": 128,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "goldmine_01_A.png": {
+      "frame": {
+        "x": 256,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "goldmine_01_B.png": {
+      "frame": {
+        "x": 384,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "goldmine_02_A.png": {
+      "frame": {
+        "x": 512,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "goldmine_02_B.png": {
+      "frame": {
+        "x": 640,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "goldmine_03_A.png": {
+      "frame": {
+        "x": 768,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "goldmine_03_B.png": {
+      "frame": {
+        "x": 896,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "ironmine_01_A.png": {
+      "frame": {
+        "x": 1024,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "ironmine_01_B.png": {
+      "frame": {
+        "x": 1152,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "ironmine_02_A.png": {
+      "frame": {
+        "x": 1152,
+        "y": 128,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "ironmine_02_B.png": {
+      "frame": {
+        "x": 1152,
+        "y": 256,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "ironmine_03_A.png": {
+      "frame": {
+        "x": 1152,
+        "y": 384,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "ironmine_03_B.png": {
+      "frame": {
+        "x": 1152,
+        "y": 512,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "lmine_03_A_dst.png": {
+      "frame": {
+        "x": 1152,
+        "y": 640,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "lmine_03_B_dst.png": {
+      "frame": {
+        "x": 1152,
+        "y": 768,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "mine_01_A_cst.png": {
+      "frame": {
+        "x": 1152,
+        "y": 896,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "mine_01_A_dst.png": {
+      "frame": {
+        "x": 1152,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "mine_01_B_cst.png": {
+      "frame": {
+        "x": 0,
         "y": 1152,
         "w": 128,
         "h": 128
@@ -2208,7 +2184,31 @@
         "y": 0.5
       }
     },
-    "fishport_01_A.png": {
+    "mine_01_B_dst.png": {
+      "frame": {
+        "x": 128,
+        "y": 1152,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "mine_02_A_cst.png": {
       "frame": {
         "x": 256,
         "y": 1152,
@@ -2232,7 +2232,7 @@
         "y": 0.5
       }
     },
-    "fishport_01_A_cst.png": {
+    "mine_02_A_dst.png": {
       "frame": {
         "x": 384,
         "y": 1152,
@@ -2256,7 +2256,7 @@
         "y": 0.5
       }
     },
-    "fishport_01_B.png": {
+    "mine_02_B_cst.png": {
       "frame": {
         "x": 512,
         "y": 1152,
@@ -2280,7 +2280,7 @@
         "y": 0.5
       }
     },
-    "fishport_01_B_cst.png": {
+    "mine_02_B_dst.png": {
       "frame": {
         "x": 640,
         "y": 1152,
@@ -2304,7 +2304,7 @@
         "y": 0.5
       }
     },
-    "fishport_01_B_dst.png": {
+    "mine_03_A_cst.png": {
       "frame": {
         "x": 768,
         "y": 1152,
@@ -2328,9 +2328,297 @@
         "y": 0.5
       }
     },
-    "fishport_02_A.png": {
+    "mine_03_B_cst.png": {
       "frame": {
         "x": 896,
+        "y": 1152,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "stonemine_01_A.png": {
+      "frame": {
+        "x": 1024,
+        "y": 1152,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "stonemine_01_B.png": {
+      "frame": {
+        "x": 1152,
+        "y": 1152,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "stonemine_02_A.png": {
+      "frame": {
+        "x": 1280,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "stonemine_02_B.png": {
+      "frame": {
+        "x": 1280,
+        "y": 128,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "stonemine_03_A.png": {
+      "frame": {
+        "x": 1280,
+        "y": 256,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "stonemine_03_B.png": {
+      "frame": {
+        "x": 1280,
+        "y": 384,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "fishport_01_A.png": {
+      "frame": {
+        "x": 1280,
+        "y": 512,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "fishport_01_A_cst.png": {
+      "frame": {
+        "x": 1280,
+        "y": 640,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "fishport_01_B.png": {
+      "frame": {
+        "x": 1280,
+        "y": 768,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "fishport_01_B_cst.png": {
+      "frame": {
+        "x": 1280,
+        "y": 896,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "fishport_01_B_dst.png": {
+      "frame": {
+        "x": 1280,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "fishport_02_A.png": {
+      "frame": {
+        "x": 1280,
         "y": 1152,
         "w": 128,
         "h": 128
@@ -2354,8 +2642,8 @@
     },
     "fishport_02_A_cst.png": {
       "frame": {
-        "x": 1024,
-        "y": 1152,
+        "x": 0,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2378,8 +2666,8 @@
     },
     "fishport_02_B_cst.png": {
       "frame": {
-        "x": 1152,
-        "y": 1152,
+        "x": 128,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2402,8 +2690,8 @@
     },
     "fishport_02_B_dst.png": {
       "frame": {
-        "x": 1280,
-        "y": 0,
+        "x": 256,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2426,8 +2714,8 @@
     },
     "fishport_03_A.png": {
       "frame": {
-        "x": 1280,
-        "y": 128,
+        "x": 384,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2450,8 +2738,8 @@
     },
     "fishport_O2_B.png": {
       "frame": {
-        "x": 1280,
-        "y": 256,
+        "x": 512,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2474,8 +2762,8 @@
     },
     "fishport_O3_A_cst.png": {
       "frame": {
-        "x": 1280,
-        "y": 384,
+        "x": 640,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2498,8 +2786,8 @@
     },
     "fishport_O3_B.png": {
       "frame": {
-        "x": 1280,
-        "y": 512,
+        "x": 768,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2522,8 +2810,8 @@
     },
     "fishport_O3_B_cst.png": {
       "frame": {
-        "x": 1280,
-        "y": 640,
+        "x": 896,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2546,8 +2834,8 @@
     },
     "fishport_O3_B_dst.png": {
       "frame": {
-        "x": 1280,
-        "y": 768,
+        "x": 1024,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2570,8 +2858,8 @@
     },
     "hunter_01_A.png": {
       "frame": {
-        "x": 1280,
-        "y": 896,
+        "x": 1152,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2595,7 +2883,7 @@
     "hunter_01_A_cst.png": {
       "frame": {
         "x": 1280,
-        "y": 1024,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -2618,8 +2906,8 @@
     },
     "hunter_01_A_dst.png": {
       "frame": {
-        "x": 1280,
-        "y": 1152,
+        "x": 1408,
+        "y": 0,
         "w": 128,
         "h": 128
       },
@@ -2642,8 +2930,8 @@
     },
     "hunter_01_B.png": {
       "frame": {
-        "x": 0,
-        "y": 1280,
+        "x": 1408,
+        "y": 128,
         "w": 128,
         "h": 128
       },
@@ -2666,8 +2954,8 @@
     },
     "hunter_01_B_cst.png": {
       "frame": {
-        "x": 128,
-        "y": 1280,
+        "x": 1408,
+        "y": 256,
         "w": 128,
         "h": 128
       },
@@ -2690,8 +2978,8 @@
     },
     "hunter_01_B_dst.png": {
       "frame": {
-        "x": 256,
-        "y": 1280,
+        "x": 1408,
+        "y": 384,
         "w": 128,
         "h": 128
       },
@@ -2714,8 +3002,8 @@
     },
     "hunter_02_A.png": {
       "frame": {
-        "x": 384,
-        "y": 1280,
+        "x": 1408,
+        "y": 512,
         "w": 128,
         "h": 128
       },
@@ -2738,8 +3026,8 @@
     },
     "hunter_02_A_cst.png": {
       "frame": {
-        "x": 512,
-        "y": 1280,
+        "x": 1408,
+        "y": 640,
         "w": 128,
         "h": 128
       },
@@ -2762,8 +3050,8 @@
     },
     "hunter_02_A_dst.png": {
       "frame": {
-        "x": 640,
-        "y": 1280,
+        "x": 1408,
+        "y": 768,
         "w": 128,
         "h": 128
       },
@@ -2786,8 +3074,8 @@
     },
     "hunter_02_B.png": {
       "frame": {
-        "x": 768,
-        "y": 1280,
+        "x": 1408,
+        "y": 896,
         "w": 128,
         "h": 128
       },
@@ -2810,8 +3098,8 @@
     },
     "hunter_02_B_cst.png": {
       "frame": {
-        "x": 896,
-        "y": 1280,
+        "x": 1408,
+        "y": 1024,
         "w": 128,
         "h": 128
       },
@@ -2834,8 +3122,8 @@
     },
     "hunter_02_B_dst.png": {
       "frame": {
-        "x": 1024,
-        "y": 1280,
+        "x": 1408,
+        "y": 1152,
         "w": 128,
         "h": 128
       },
@@ -2858,7 +3146,7 @@
     },
     "hunter_03_A.png": {
       "frame": {
-        "x": 1152,
+        "x": 1408,
         "y": 1280,
         "w": 128,
         "h": 128
@@ -2882,8 +3170,8 @@
     },
     "hunter_03_A_cst.png": {
       "frame": {
-        "x": 1280,
-        "y": 1280,
+        "x": 0,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -2906,8 +3194,8 @@
     },
     "hunter_03_A_dst.png": {
       "frame": {
-        "x": 1408,
-        "y": 0,
+        "x": 128,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -2930,8 +3218,8 @@
     },
     "hunter_03_B.png": {
       "frame": {
-        "x": 1408,
-        "y": 128,
+        "x": 256,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -2954,8 +3242,8 @@
     },
     "hunter_03_B_cst.png": {
       "frame": {
-        "x": 1408,
-        "y": 256,
+        "x": 384,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -2978,8 +3266,8 @@
     },
     "hunter_03_B_dst.png": {
       "frame": {
-        "x": 1408,
-        "y": 384,
+        "x": 512,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3002,8 +3290,8 @@
     },
     "indus_01_A.png": {
       "frame": {
-        "x": 1408,
-        "y": 512,
+        "x": 640,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3026,8 +3314,8 @@
     },
     "indus_01_A_cst.png": {
       "frame": {
-        "x": 1408,
-        "y": 640,
+        "x": 768,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3050,8 +3338,8 @@
     },
     "indus_01_A_dst.png": {
       "frame": {
-        "x": 1408,
-        "y": 768,
+        "x": 896,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3074,8 +3362,8 @@
     },
     "indus_01_B.png": {
       "frame": {
-        "x": 1408,
-        "y": 896,
+        "x": 1024,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3098,8 +3386,8 @@
     },
     "indus_01_B_cst.png": {
       "frame": {
-        "x": 1408,
-        "y": 1024,
+        "x": 1152,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3122,8 +3410,8 @@
     },
     "indus_01_B_dst.png": {
       "frame": {
-        "x": 1408,
-        "y": 1152,
+        "x": 1280,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3147,7 +3435,7 @@
     "indus_02_A.png": {
       "frame": {
         "x": 1408,
-        "y": 1280,
+        "y": 1408,
         "w": 128,
         "h": 128
       },
@@ -3170,8 +3458,8 @@
     },
     "indus_02_A_cst.png": {
       "frame": {
-        "x": 0,
-        "y": 1408,
+        "x": 1536,
+        "y": 0,
         "w": 128,
         "h": 128
       },
@@ -3194,8 +3482,8 @@
     },
     "indus_02_A_dst.png": {
       "frame": {
-        "x": 128,
-        "y": 1408,
+        "x": 1536,
+        "y": 128,
         "w": 128,
         "h": 128
       },
@@ -3218,8 +3506,8 @@
     },
     "indus_02_B.png": {
       "frame": {
-        "x": 256,
-        "y": 1408,
+        "x": 1536,
+        "y": 256,
         "w": 128,
         "h": 128
       },
@@ -3242,8 +3530,8 @@
     },
     "indus_02_B_cst.png": {
       "frame": {
-        "x": 384,
-        "y": 1408,
+        "x": 1536,
+        "y": 384,
         "w": 128,
         "h": 128
       },
@@ -3266,8 +3554,8 @@
     },
     "indus_02_B_dst.png": {
       "frame": {
-        "x": 512,
-        "y": 1408,
+        "x": 1536,
+        "y": 512,
         "w": 128,
         "h": 128
       },
@@ -3290,8 +3578,8 @@
     },
     "indus_03_A.png": {
       "frame": {
-        "x": 640,
-        "y": 1408,
+        "x": 1536,
+        "y": 640,
         "w": 128,
         "h": 128
       },
@@ -3314,8 +3602,8 @@
     },
     "indus_03_A_cst.png": {
       "frame": {
-        "x": 768,
-        "y": 1408,
+        "x": 1536,
+        "y": 768,
         "w": 128,
         "h": 128
       },
@@ -3338,8 +3626,8 @@
     },
     "indus_03_A_dst.png": {
       "frame": {
-        "x": 896,
-        "y": 1408,
+        "x": 1536,
+        "y": 896,
         "w": 128,
         "h": 128
       },
@@ -3362,8 +3650,8 @@
     },
     "indus_03_B.png": {
       "frame": {
-        "x": 1024,
-        "y": 1408,
+        "x": 1536,
+        "y": 1024,
         "w": 128,
         "h": 128
       },
@@ -3386,8 +3674,8 @@
     },
     "indus_03_B_cst.png": {
       "frame": {
-        "x": 1152,
-        "y": 1408,
+        "x": 1536,
+        "y": 1152,
         "w": 128,
         "h": 128
       },
@@ -3410,8 +3698,8 @@
     },
     "indus_03_B_dst.png": {
       "frame": {
-        "x": 1280,
-        "y": 1408,
+        "x": 1536,
+        "y": 1280,
         "w": 128,
         "h": 128
       },
@@ -3434,7 +3722,7 @@
     },
     "market_01_A.png": {
       "frame": {
-        "x": 1408,
+        "x": 1536,
         "y": 1408,
         "w": 128,
         "h": 128
@@ -3458,8 +3746,8 @@
     },
     "market_01_A_cst.png": {
       "frame": {
-        "x": 1536,
-        "y": 0,
+        "x": 0,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3482,8 +3770,8 @@
     },
     "market_01_A_dst.png": {
       "frame": {
-        "x": 1536,
-        "y": 128,
+        "x": 128,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3506,8 +3794,8 @@
     },
     "market_01_B.png": {
       "frame": {
-        "x": 1536,
-        "y": 256,
+        "x": 256,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3530,8 +3818,8 @@
     },
     "market_01_B_cst.png": {
       "frame": {
-        "x": 1536,
-        "y": 384,
+        "x": 384,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3554,8 +3842,8 @@
     },
     "market_01_B_dst.png": {
       "frame": {
-        "x": 1536,
-        "y": 512,
+        "x": 512,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3578,8 +3866,8 @@
     },
     "market_02_A.png": {
       "frame": {
-        "x": 1536,
-        "y": 640,
+        "x": 640,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3602,8 +3890,8 @@
     },
     "market_02_A_cst.png": {
       "frame": {
-        "x": 1536,
-        "y": 768,
+        "x": 768,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3626,8 +3914,8 @@
     },
     "market_02_A_dst.png": {
       "frame": {
-        "x": 1536,
-        "y": 896,
+        "x": 896,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3650,8 +3938,8 @@
     },
     "market_02_B.png": {
       "frame": {
-        "x": 1536,
-        "y": 1024,
+        "x": 1024,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3674,8 +3962,8 @@
     },
     "market_02_B_cst.png": {
       "frame": {
-        "x": 1536,
-        "y": 1152,
+        "x": 1152,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3698,8 +3986,8 @@
     },
     "market_02_B_dst.png": {
       "frame": {
-        "x": 1536,
-        "y": 1280,
+        "x": 1280,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3722,8 +4010,8 @@
     },
     "market_03_A.png": {
       "frame": {
-        "x": 1536,
-        "y": 1408,
+        "x": 1408,
+        "y": 1536,
         "w": 128,
         "h": 128
       },
@@ -3746,7 +4034,7 @@
     },
     "market_03_A_cst.png": {
       "frame": {
-        "x": 0,
+        "x": 1536,
         "y": 1536,
         "w": 128,
         "h": 128
@@ -3770,294 +4058,6 @@
     },
     "market_03_A_dst.png": {
       "frame": {
-        "x": 128,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "market_03_B.png": {
-      "frame": {
-        "x": 256,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "market_03_B_cst.png": {
-      "frame": {
-        "x": 384,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "market_03_B_dst.png": {
-      "frame": {
-        "x": 512,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_01_A.png": {
-      "frame": {
-        "x": 640,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_01_A_cst.png": {
-      "frame": {
-        "x": 768,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_01_A_dst.png": {
-      "frame": {
-        "x": 896,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_01_B.png": {
-      "frame": {
-        "x": 1024,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_01_B_cst.png": {
-      "frame": {
-        "x": 1152,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_01_B_dst.png": {
-      "frame": {
-        "x": 1280,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_02_A.png": {
-      "frame": {
-        "x": 1408,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_02_A_dst.png": {
-      "frame": {
-        "x": 1536,
-        "y": 1536,
-        "w": 128,
-        "h": 128
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 128
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 128
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "house_02_B.png": {
-      "frame": {
         "x": 1664,
         "y": 0,
         "w": 128,
@@ -4080,7 +4080,7 @@
         "y": 0.5
       }
     },
-    "house_03_A.png": {
+    "market_03_B.png": {
       "frame": {
         "x": 1664,
         "y": 128,
@@ -4104,7 +4104,7 @@
         "y": 0.5
       }
     },
-    "house_03_A_cst.png": {
+    "market_03_B_cst.png": {
       "frame": {
         "x": 1664,
         "y": 256,
@@ -4128,7 +4128,7 @@
         "y": 0.5
       }
     },
-    "house_03_A_dst.png": {
+    "market_03_B_dst.png": {
       "frame": {
         "x": 1664,
         "y": 384,
@@ -4152,7 +4152,7 @@
         "y": 0.5
       }
     },
-    "house_03_B.png": {
+    "house_01_A.png": {
       "frame": {
         "x": 1664,
         "y": 512,
@@ -4176,7 +4176,7 @@
         "y": 0.5
       }
     },
-    "house_03_B_cst.png": {
+    "house_01_A_cst.png": {
       "frame": {
         "x": 1664,
         "y": 640,
@@ -4200,7 +4200,7 @@
         "y": 0.5
       }
     },
-    "house_03_B_dst.png": {
+    "house_01_A_dst.png": {
       "frame": {
         "x": 1664,
         "y": 768,
@@ -4224,7 +4224,7 @@
         "y": 0.5
       }
     },
-    "cityhall_01_A.png": {
+    "house_01_B.png": {
       "frame": {
         "x": 1664,
         "y": 896,
@@ -4248,7 +4248,7 @@
         "y": 0.5
       }
     },
-    "cityhall_02_A.png": {
+    "house_01_B_cst.png": {
       "frame": {
         "x": 1664,
         "y": 1024,
@@ -4272,7 +4272,7 @@
         "y": 0.5
       }
     },
-    "cityhall_03_A.png": {
+    "house_01_B_dst.png": {
       "frame": {
         "x": 1664,
         "y": 1152,
@@ -4296,7 +4296,7 @@
         "y": 0.5
       }
     },
-    "primary_01_A.png": {
+    "house_02_A.png": {
       "frame": {
         "x": 1664,
         "y": 1280,
@@ -4320,7 +4320,7 @@
         "y": 0.5
       }
     },
-    "primary_02_A.png": {
+    "house_02_A_dst.png": {
       "frame": {
         "x": 1664,
         "y": 1408,
@@ -4344,7 +4344,7 @@
         "y": 0.5
       }
     },
-    "primary_03_A.png": {
+    "house_02_B.png": {
       "frame": {
         "x": 1664,
         "y": 1536,
@@ -4368,7 +4368,7 @@
         "y": 0.5
       }
     },
-    "firestation_01_A.png": {
+    "house_03_A.png": {
       "frame": {
         "x": 0,
         "y": 1664,
@@ -4392,7 +4392,7 @@
         "y": 0.5
       }
     },
-    "firestation_02_A.png": {
+    "house_03_A_cst.png": {
       "frame": {
         "x": 128,
         "y": 1664,
@@ -4416,7 +4416,7 @@
         "y": 0.5
       }
     },
-    "firestation_03_A.png": {
+    "house_03_A_dst.png": {
       "frame": {
         "x": 256,
         "y": 1664,
@@ -4440,7 +4440,7 @@
         "y": 0.5
       }
     },
-    "hospial_03_A.png": {
+    "house_03_B.png": {
       "frame": {
         "x": 384,
         "y": 1664,
@@ -4464,7 +4464,7 @@
         "y": 0.5
       }
     },
-    "hospital_01_A.png": {
+    "house_03_B_cst.png": {
       "frame": {
         "x": 512,
         "y": 1664,
@@ -4488,7 +4488,7 @@
         "y": 0.5
       }
     },
-    "hospital_02_A.png": {
+    "house_03_B_dst.png": {
       "frame": {
         "x": 640,
         "y": 1664,
@@ -4512,7 +4512,7 @@
         "y": 0.5
       }
     },
-    "square_01_A.png": {
+    "cityhall_01_A.png": {
       "frame": {
         "x": 768,
         "y": 1664,
@@ -4536,7 +4536,7 @@
         "y": 0.5
       }
     },
-    "square_01_B.png": {
+    "cityhall_02_A.png": {
       "frame": {
         "x": 896,
         "y": 1664,
@@ -4560,7 +4560,7 @@
         "y": 0.5
       }
     },
-    "square_02_A.png": {
+    "cityhall_03_A.png": {
       "frame": {
         "x": 1024,
         "y": 1664,
@@ -4584,7 +4584,7 @@
         "y": 0.5
       }
     },
-    "square_02_B.png": {
+    "primary_01_A.png": {
       "frame": {
         "x": 1152,
         "y": 1664,
@@ -4608,7 +4608,7 @@
         "y": 0.5
       }
     },
-    "police_01_A.png": {
+    "primary_02_A.png": {
       "frame": {
         "x": 1280,
         "y": 1664,
@@ -4632,7 +4632,7 @@
         "y": 0.5
       }
     },
-    "police_02_A.png": {
+    "primary_03_A.png": {
       "frame": {
         "x": 1408,
         "y": 1664,
@@ -4656,7 +4656,7 @@
         "y": 0.5
       }
     },
-    "police_03_A.png": {
+    "firestation_01_A.png": {
       "frame": {
         "x": 1536,
         "y": 1664,
@@ -4680,7 +4680,7 @@
         "y": 0.5
       }
     },
-    "pharmacy_A.png": {
+    "firestation_02_A.png": {
       "frame": {
         "x": 1664,
         "y": 1664,
@@ -4704,7 +4704,7 @@
         "y": 0.5
       }
     },
-    "pharmacy_B.png": {
+    "firestation_03_A.png": {
       "frame": {
         "x": 1792,
         "y": 0,
@@ -4728,7 +4728,7 @@
         "y": 0.5
       }
     },
-    "restaurant_A.png": {
+    "hospial_03_A.png": {
       "frame": {
         "x": 1792,
         "y": 128,
@@ -4752,7 +4752,7 @@
         "y": 0.5
       }
     },
-    "restaurant_B.png": {
+    "hospital_01_A.png": {
       "frame": {
         "x": 1792,
         "y": 256,
@@ -4776,7 +4776,7 @@
         "y": 0.5
       }
     },
-    "water_pum_01.png": {
+    "hospital_02_A.png": {
       "frame": {
         "x": 1792,
         "y": 384,
@@ -4800,7 +4800,7 @@
         "y": 0.5
       }
     },
-    "water_pum_02.png": {
+    "square_01_A.png": {
       "frame": {
         "x": 1792,
         "y": 512,
@@ -4824,7 +4824,7 @@
         "y": 0.5
       }
     },
-    "water_pum_03.png": {
+    "square_01_B.png": {
       "frame": {
         "x": 1792,
         "y": 640,
@@ -4848,10 +4848,298 @@
         "y": 0.5
       }
     },
-    "stade01.png": {
+    "square_02_A.png": {
       "frame": {
         "x": 1792,
         "y": 768,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "square_02_B.png": {
+      "frame": {
+        "x": 1792,
+        "y": 896,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "police_01_A.png": {
+      "frame": {
+        "x": 1792,
+        "y": 1024,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "police_02_A.png": {
+      "frame": {
+        "x": 1792,
+        "y": 1152,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "police_03_A.png": {
+      "frame": {
+        "x": 1792,
+        "y": 1280,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "pharmacy_A.png": {
+      "frame": {
+        "x": 1792,
+        "y": 1408,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "pharmacy_B.png": {
+      "frame": {
+        "x": 1792,
+        "y": 1536,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "restaurant_A.png": {
+      "frame": {
+        "x": 1792,
+        "y": 1664,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "restaurant_B.png": {
+      "frame": {
+        "x": 0,
+        "y": 1792,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "water_pum_01.png": {
+      "frame": {
+        "x": 128,
+        "y": 1792,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "water_pum_02.png": {
+      "frame": {
+        "x": 256,
+        "y": 1792,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "water_pum_03.png": {
+      "frame": {
+        "x": 384,
+        "y": 1792,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 128
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "stade01.png": {
+      "frame": {
+        "x": 512,
+        "y": 1792,
         "w": 116,
         "h": 56
       },

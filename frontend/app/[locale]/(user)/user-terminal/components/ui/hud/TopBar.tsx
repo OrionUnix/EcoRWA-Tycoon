@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { useAccount } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 import { useTranslations } from 'next-intl';
 import { FaucetButton } from '../web3/FaucetButton';
 import { useGameMusic } from '../../../hooks/audio/useGameMusic';
 import { CityStats, PlayerResources } from '../../../engine/types';
 import { formatNumber } from './GameWidgets';
 import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
+import { getGameEngine } from '../../../engine/GameEngine';
 
 interface TopBarProps {
     speed: number;
@@ -22,10 +23,32 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTogglePause, stats, resources, onOpenPanel }) => {
-    const { isConnected } = useAccount();
+    const { isConnected, address } = useAccount();
+    const { disconnect } = useDisconnect();
     const { isPlaying, volume, togglePlay, nextTrack, setVolume } = useGameMusic();
     const t = useTranslations('TopBar');
     const [isBudgetOpen, setIsBudgetOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSafeDisconnect = async () => {
+        if (!address) {
+            disconnect();
+            return;
+        }
+
+        console.log("📤 Sauvegarde finale avant déconnexion...");
+        setIsSaving(true);
+        try {
+            const engine = getGameEngine();
+            await engine.saveCity(address);
+            console.log("✅ Ville enregistrée avant déconnexion");
+        } catch (e) {
+            console.error("❌ Échec sauvegarde finale", e);
+        } finally {
+            setIsSaving(false);
+            disconnect();
+        }
+    };
     const population = stats?.population || 0;
     const happiness = stats?.happiness || 0;
     const income = stats?.budget?.income || 0;
@@ -189,6 +212,13 @@ export const TopBar: React.FC<TopBarProps> = ({ speed, paused, onSetSpeed, onTog
                                                 className="bg-orange-500 text-white font-black uppercase tracking-widest border-4 border-black shadow-[4px_4px_0_0_#000] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none px-4 h-[50px] hover:bg-orange-600 transition-none rounded-none text-xs lg:text-sm flex items-center"
                                             >
                                                 {account.displayName}{account.displayBalance ? ` (${account.displayBalance})` : ''}
+                                            </button>
+                                            <button
+                                                onClick={handleSafeDisconnect}
+                                                disabled={isSaving}
+                                                className="win95-button bg-[#c3c7cb] text-black font-bold border-4 border-black px-4 h-[50px] flex items-center hover:bg-slate-300 disabled:opacity-50"
+                                            >
+                                                {isSaving ? 'SAVING...' : 'LOGOUT'}
                                             </button>
                                         </div>
                                     );

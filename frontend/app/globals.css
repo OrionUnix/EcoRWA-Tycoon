@@ -167,6 +167,30 @@ textarea,
     line-height: 0.85;
     text-transform: uppercase;
   }
+
+  .win95-window {
+    @apply bg-[#c3c7cb] border-4 border-t-white border-l-white border-b-[#424242] border-r-[#424242] shadow-[4px_4px_0_0_#000];
+  }
+
+  /* L'effet biseauté vers l'extérieur (boutons, onglets) */
+  .win95-outset {
+    @apply bg-[#c3c7cb] border-2 border-t-white border-l-white border-b-[#424242] border-r-[#424242];
+  }
+
+  /* L'effet biseauté vers l'intérieur (zones de texte, cadres photo) */
+  .win95-inset {
+    @apply bg-white border-2 border-t-[#868a8e] border-l-[#868a8e] border-b-white border-r-white shadow-[inset_1px_1px_0_0_#000];
+  }
+
+  /* Le bouton classique qui s'enfonce au clic */
+  .win95-button {
+    @apply bg-[#c3c7cb] border-2 border-t-white border-l-white border-b-[#424242] border-r-[#424242] px-4 py-1 text-black active:border-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 select-none;
+  }
+
+  /* La barre de titre bleue */
+  .win95-title-bar {
+    @apply bg-[#000080] p-1 flex items-center justify-between text-white font-bold text-sm select-none;
+  }
 }
 
 @keyframes bounce-slow {

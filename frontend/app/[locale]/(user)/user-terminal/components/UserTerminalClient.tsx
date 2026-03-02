@@ -31,6 +31,8 @@ import { SimCityLoader } from './ui/overlay/SimCityLoader';
 import { JordanPitchModal } from './ui/npcs/JordanPitchModal';
 import { AlertSystem } from '../engine/systems/AlertSystem';
 import { NpcAlertOverlay } from './ui/widgets/NpcAlertOverlay';
+import { useGameSave } from '../hooks/useGameSave';
+import { SaveIndicator } from './ui/hud/SaveIndicator';
 
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
@@ -53,38 +55,14 @@ export default function UserTerminalClient() {
     const [assetsLoaded, setAssetsLoaded] = useState(false);
     const { loginAndLoadSave, isAuthenticating } = useFirebaseWeb3Auth();
 
-    // ✅ Déconnexion : On sauvegarde la partie en cours sur le Cloud (plus en Local)
+    // ✅ Système de Sauvegarde Automatique & Session
+    useGameSave(address, assetsLoaded);
+
+    // ✅ Gestion du status wallet (Dirty flag / Connection state)
     useEffect(() => {
-        if (prevIsConnectedRef.current && !isConnected && assetsLoaded && address) {
-            console.log("🔌 Déconnexion détectée. Sauvegarde Cloud forcée...");
-            SaveSystem.saveToCloud(getGameEngine().map, address).then(() => {
-                SaveSystem.clearDirty();
-            });
-            setIsSavingDisconnect(true);
-            setTimeout(() => {
-                setIsSavingDisconnect(false);
-            }, 2000); // Animation de 2s
-        }
         SaveSystem.setWalletConnected(isConnected);
         prevIsConnectedRef.current = isConnected;
-    }, [isConnected, assetsLoaded, address]);
-
-    // ✅ Auto-Save Périodique (Mode Production)
-    // Sauvegarde automatiquement sur le cloud toutes les 120 secondes si la partie a été modifiée
-    useEffect(() => {
-        if (!isConnected || !address || !assetsLoaded || isDemoMode) return;
-
-        const interval = setInterval(() => {
-            if (SaveSystem.isDirty) {
-                console.log("⏱️ Auto-Save Cloud en cours...");
-                SaveSystem.saveToCloud(getGameEngine().map, address).then(() => {
-                    SaveSystem.clearDirty();
-                });
-            }
-        }, 120000); // 120 secondes (2 minutes)
-
-        return () => clearInterval(interval);
-    }, [isConnected, address, assetsLoaded, isDemoMode]);
+    }, [isConnected]);
 
     // 2. ÉTATS DE JEU
     const [isReloading, setIsReloading] = useState(false);
@@ -330,6 +308,7 @@ export default function UserTerminalClient() {
                             onOpenRWA={() => setShowOnboarding(true)}
                         />
                         <ChunkExpandOverlay viewportRef={viewportRef} isReady={isReady} />
+                        <SaveIndicator />
                     </div>
                 )}
             </div>

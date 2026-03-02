@@ -8,7 +8,6 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
 import { useTypewriterWithSound } from '../../../hooks/useTypewriterWithSound';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
-import { ServicePanel } from '../Panel/ServicePanel';
 
 interface RWAChoice {
     id: number;
@@ -38,201 +37,282 @@ export const RWAMasterPanel: React.FC<RWAMasterPanelProps> = ({ isOpen, onClose,
     const t = useTranslations('rwa');
     const { isConnected } = useAccount();
     const [showHelp, setShowHelp] = useState(false);
-
-    // Always use the advisor message, but help content is static or can be typewritten too
     const { displayedText, isTyping } = useTypewriterWithSound(isOpen && !showHelp ? t('advisor_msg') : "", 25);
 
-    if (!isOpen) return null;
-
     return (
-        <ServicePanel
-            title={
-                <div className="flex items-center gap-2">
-                    <span className="text-xl">🏛️</span>
-                    <span className="text-lg font-black uppercase tracking-tighter">{t('title')}</span>
-                </div>
-            }
-            onClose={onClose}
-            width="w-[95vw] max-w-[1000px]"
-            icon=""
-            color="#000080"
-        >
-            <div className="flex flex-col bg-[#c3c7cb] border-4 border-black p-1 shadow-[8px_8px_0_0_#000] min-h-[500px]">
-
-                {/* SUB-HEADER / ACTIONS / HELP TOGGLE */}
-                <div className="p-2 flex justify-between items-center bg-[#c3c7cb] border-b-4 border-black">
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setShowHelp(!showHelp)}
-                            className={`win95-btn px-4 py-1 text-xs font-bold uppercase transition-none ${showHelp ? 'active-win95' : ''}`}
-                        >
-                            {showHelp ? t('back_btn') : t('help_btn')}
-                        </button>
-                    </div>
-                    <div className="flex gap-2">
-                        <button onClick={onFaucet} className="win95-btn px-4 py-1 text-xs font-bold uppercase transition-none">{t('faucet')}</button>
-                        <button onClick={onGrant} className="win95-btn px-4 py-1 text-xs font-bold uppercase transition-none">{t('grant')}</button>
-                    </div>
-                </div>
-
-                <AnimatePresence mode="wait">
-                    {!showHelp ? (
-                        <motion.div
-                            key="investment-view"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="flex flex-col gap-4 p-4 flex-1"
-                        >
-                            {/* ADVISOR SECTION */}
-                            <div className="flex gap-3 bg-slate-100 border-4 border-black p-3 items-center shrink-0 shadow-[4px_4px_0_0_#000]">
-                                <div className="w-16 h-16 border-2 border-black overflow-hidden bg-slate-300 shrink-0 shadow-[2px_2px_0_0_#000]">
-                                    <AnimatedAvatar character="jordan" isTalking={isTyping} />
-                                </div>
-                                <div className="flex-1 bg-white border-2 border-black p-3 shadow-[inset_2px_2px_0_0_rgba(0,0,0,0.1)] h-16 flex items-center">
-                                    <p className="text-[14px] leading-tight font-bold text-[#000080]">
-                                        <span className="italic">"{displayedText}"</span>
-                                    </p>
-                                </div>
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    key="rwa-modal-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[500] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 font-sans select-none pointer-events-auto"
+                >
+                    {/* WINDOW CONTAINER - NATIVE WIN95 */}
+                    <motion.div
+                        key="win95-container"
+                        initial={{ scale: 0.95 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0.95 }}
+                        className="w-full max-w-5xl bg-[#c3c7cb] border-2 border-t-white border-left-white border-b-[#424242] border-r-[#424242] shadow-[4px_4px_10px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden"
+                    >
+                        {/* BLUE TITLE BAR */}
+                        <div className="bg-[#000080] p-1 flex items-center justify-between h-8 shrink-0">
+                            <div className="flex items-center gap-2 px-2">
+                                <span className="text-white font-bold text-[16px] tracking-wide flex items-center gap-2">
+                                    🏛️ {t('title')}
+                                </span>
                             </div>
+                            <div className="flex items-center gap-1 pr-1">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onClose(); }}
+                                    className="win95-title-btn"
+                                >
+                                    <span className="text-black font-black text-sm leading-none flex items-center justify-center h-full pb-0.5">×</span>
+                                </button>
+                            </div>
+                        </div>
 
-                            {/* GRID */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {RWA_CHOICES.map((rwa) => (
-                                    <div key={`rwa-choice-${rwa.id}`} className="bg-white border-4 border-black p-4 flex flex-col gap-4 shadow-[4px_4px_0_0_#000] group">
-                                        <div className="flex justify-between items-start border-b-2 border-slate-200 pb-2">
-                                            <div className="w-14 h-14 bg-slate-100 border-2 border-black overflow-hidden p-1 shadow-[2px_2px_0_0_#000]">
-                                                <img
-                                                    src={withBasePath(`/assets/isometric/Spritesheet/Buildings/RWA/${rwa.imageName}.png`)}
-                                                    className="w-full h-full object-contain pixelated"
-                                                    alt={rwa.key}
-                                                />
+                        {/* SUB-HEADER / FAUCET & HELP */}
+                        <div className="p-1 px-2 flex justify-between bg-[#c3c7cb] border-b border-[#868a8e] shrink-0 h-10 items-center">
+                            <div className="flex gap-1 h-full py-1">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setShowHelp(!showHelp); }}
+                                    className={`win95-btn px-3 text-[14px] font-bold h-full ${showHelp ? 'win95-btn-active' : ''}`}
+                                >
+                                    {showHelp ? t('back_btn') : t('help_btn')}
+                                </button>
+                            </div>
+                            <div className="flex gap-1 h-full py-1">
+                                <button onClick={(e) => { e.stopPropagation(); onFaucet(); }} className="win95-btn px-4 text-[14px] font-bold h-full">{t('faucet')}</button>
+                                <button onClick={(e) => { e.stopPropagation(); onGrant(); }} className="win95-btn px-4 text-[14px] font-bold h-full">{t('grant')}</button>
+                            </div>
+                        </div>
+
+                        {/* MAIN CONTENT AREA */}
+                        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-win95-scrollbar">
+                            <AnimatePresence mode="wait">
+                                {!showHelp ? (
+                                    <motion.div
+                                        key="investment-main-view"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="flex flex-col gap-6"
+                                    >
+                                        {/* ADVISOR SECTION - FLOATING LOOK */}
+                                        <div className="flex gap-4 items-center px-2">
+                                            <div className="w-16 h-16 shrink-0 flex items-center justify-center pointer-events-none">
+                                                <AnimatedAvatar character="jordan" isTalking={isTyping} />
                                             </div>
-                                            <div className="text-right">
-                                                <div className="text-[10px] font-black text-slate-500 uppercase">{t('yield')}</div>
-                                                <div className="text-2xl font-black text-green-600 leading-none">{rwa.apy}</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex-1">
-                                            <h3 className="font-black text-slate-800 uppercase text-sm leading-tight mb-1">{t(`choices.${rwa.key}.name`)}</h3>
-                                            <p className="text-[12px] text-slate-600 font-bold leading-none">📍 {rwa.location} • {t(`choices.${rwa.key}.desc`)}</p>
-                                        </div>
-
-                                        <div className="bg-slate-100 p-2 border-2 border-black text-[13px] font-bold">
-                                            <div className="flex justify-between items-center">
-                                                <span className="uppercase text-slate-500 text-[10px]">{t('cost')}</span>
-                                                <span className="text-slate-900">{rwa.cost} USDC</span>
+                                            {/* FULL WIDTH BEVELED INSET TEXT AREA */}
+                                            <div className="flex-1 border-2 border-b-white border-r-white border-t-[#868a8e] border-l-[#868a8e] bg-white p-3 min-h-[64px] flex items-center">
+                                                <p className="font-bold text-[#000080] text-[16px] leading-snug italic">
+                                                    "{displayedText}"
+                                                </p>
                                             </div>
                                         </div>
 
-                                        {isConnected ? (
-                                            <button
-                                                onClick={() => onInvest(rwa)}
-                                                className="win95-btn w-full py-2 bg-blue-600 text-white font-black uppercase text-xs"
-                                            >
-                                                {t('invest')}
-                                            </button>
-                                        ) : (
-                                            <ConnectButton.Custom>
-                                                {({ openConnectModal }) => (
-                                                    <button
-                                                        onClick={openConnectModal}
-                                                        className="win95-btn w-full py-2 bg-red-600 text-white font-black uppercase text-xs"
-                                                    >
-                                                        {t('connect')}
-                                                    </button>
-                                                )}
-                                            </ConnectButton.Custom>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="help-view"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="p-6 flex flex-col gap-6 overflow-y-auto max-h-[600px] flex-1 bg-slate-50"
-                        >
-                            <div className="border-b-4 border-black pb-2">
-                                <h2 className="text-2xl font-black text-[#000080] uppercase">{t('help.title')}</h2>
-                            </div>
+                                        {/* INVESTMENT GRID */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {RWA_CHOICES.map((rwa) => (
+                                                <div key={`rwa-card-${rwa.id}`} className="win95-group-box p-[2px]">
+                                                    <div className="h-full border border-t-[#868a8e] border-l-[#868a8e] border-b-white border-r-white p-4 flex flex-col gap-4 bg-[#c3c7cb]">
+                                                        {/* IMAGE - 50% BIGGER & CENTERED */}
+                                                        <div className="h-44 flex items-center justify-center pointer-events-none">
+                                                            <img
+                                                                src={withBasePath(`/assets/isometric/Spritesheet/Buildings/RWA/${rwa.imageName}.png`)}
+                                                                className="h-full w-auto object-contain scale-125 pixelated"
+                                                                alt={rwa.key}
+                                                            />
+                                                        </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                    <div className="bg-white border-2 border-black p-4 shadow-[4px_4px_0_0_#000]">
-                                        <h3 className="font-black text-lg text-blue-800 border-b border-blue-200 mb-2">Real World Assets (RWA)</h3>
-                                        <p className="text-sm font-bold text-slate-700 leading-relaxed">{t('help.rwa_def')}</p>
-                                    </div>
-                                    <div className="bg-white border-2 border-black p-4 shadow-[4px_4px_0_0_#000]">
-                                        <h3 className="font-black text-lg text-blue-800 border-b border-blue-200 mb-2">Tokenization</h3>
-                                        <p className="text-sm font-bold text-slate-700 leading-relaxed">{t('help.token_def')}</p>
-                                    </div>
-                                </div>
+                                                        {/* INFO SECTION */}
+                                                        <div className="space-y-1">
+                                                            <h3 className="font-black text-black text-[18px] uppercase tracking-tight leading-none">
+                                                                {t(`choices.${rwa.key}.name`)}
+                                                            </h3>
+                                                            <p className="text-[14px] text-[#424242] font-bold italic">
+                                                                📍 {rwa.location} • {t(`choices.${rwa.key}.desc`)}
+                                                            </p>
+                                                        </div>
 
-                                <div className="space-y-4">
-                                    <div className="bg-green-50 border-2 border-green-800 p-4 shadow-[4px_4px_0_0_rgba(22,101,52,1)]">
-                                        <h3 className="font-black text-lg text-green-800 flex items-center gap-2 mb-2">
-                                            ✅ {t('help.pros_title')}
-                                        </h3>
-                                        <ul className="text-xs font-bold text-green-900 space-y-2">
-                                            {t.raw('help.pros').map((pro: string, idx: number) => (
-                                                <li key={`pro-${idx}`} className="flex gap-2"><span>•</span> {pro}</li>
+                                                        {/* STATS AREA */}
+                                                        <div className="border-t border-[#868a8e] pt-3 flex flex-col gap-2">
+                                                            <div className="flex justify-between items-baseline">
+                                                                <span className="text-[14px] font-bold text-[#868a8e] uppercase tracking-tighter">{t('yield')}</span>
+                                                                <span className="text-[24px] font-black text-black leading-none">{rwa.apy}</span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[14px] font-bold text-[#424242]">
+                                                                <span className="uppercase tracking-tighter">{t('cost')}</span>
+                                                                <span className="text-black">{rwa.cost} USDC</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* LARGE ACTION BUTTONS */}
+                                                        <div className="mt-auto pt-2">
+                                                            {isConnected ? (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); onInvest(rwa); }}
+                                                                    className="win95-btn w-full py-3 font-bold text-[18px] uppercase tracking-widest text-black"
+                                                                >
+                                                                    {t('invest')}
+                                                                </button>
+                                                            ) : (
+                                                                <ConnectButton.Custom>
+                                                                    {({ openConnectModal }) => (
+                                                                        <button
+                                                                            onClick={(e) => { e.stopPropagation(); openConnectModal(); }}
+                                                                            className="win95-btn w-full py-3 bg-[#aa0000] text-white font-bold text-[16px] uppercase tracking-widest border-t-red-200 border-l-red-200"
+                                                                        >
+                                                                            {t('connect')}
+                                                                        </button>
+                                                                    )}
+                                                                </ConnectButton.Custom>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             ))}
-                                        </ul>
-                                    </div>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="investment-help-view"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="p-4 flex flex-col gap-6"
+                                    >
+                                        <div className="border-b-2 border-[#868a8e] pb-1">
+                                            <h2 className="text-[20px] font-black text-[#000080] uppercase tracking-tight">{t('help.title')}</h2>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <div className="win95-group-box p-3 space-y-2">
+                                                    <h4 className="text-[16px] font-black text-black underline">Real World Assets (RWA)</h4>
+                                                    <p className="text-[14px] font-bold text-[#424242] leading-tight">{t('help.rwa_def')}</p>
+                                                </div>
+                                                <div className="win95-group-box p-3 space-y-2">
+                                                    <h4 className="text-[16px] font-black text-black underline">Tokenization</h4>
+                                                    <p className="text-[14px] font-bold text-[#424242] leading-tight">{t('help.token_def')}</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="win95-group-box p-3 bg-green-50/10">
+                                                    <h4 className="text-[16px] font-black text-green-800 uppercase mb-2">✅ {t('help.pros_title')}</h4>
+                                                    <ul className="text-[13px] font-bold space-y-1 text-black">
+                                                        {t.raw('help.pros').map((item: string, i: number) => (
+                                                            <li key={`pro-${i}`}>• {item}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="win95-group-box p-3 bg-red-50/10">
+                                                    <h4 className="text-[16px] font-black text-red-800 uppercase mb-2">⚠️ {t('help.cons_title')}</h4>
+                                                    <ul className="text-[13px] font-bold space-y-1 text-black">
+                                                        {t.raw('help.cons').map((item: string, i: number) => (
+                                                            <li key={`con-${i}`}>• {item}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
-                                    <div className="bg-red-50 border-2 border-red-800 p-4 shadow-[4px_4px_0_0_rgba(153,27,27,1)]">
-                                        <h3 className="font-black text-lg text-red-800 flex items-center gap-2 mb-2">
-                                            ⚠️ {t('help.cons_title')}
-                                        </h3>
-                                        <ul className="text-xs font-bold text-red-900 space-y-2">
-                                            {t.raw('help.cons').map((con: string, idx: number) => (
-                                                <li key={`con-${idx}`} className="flex gap-2"><span>•</span> {con}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
+                        {/* STATUS BAR */}
+                        <div className="bg-[#c3c7cb] border-t border-t-[#868a8e] px-2 py-0.5 flex justify-between h-7 shrink-0 text-[12px] font-bold text-black uppercase">
+                            <div className="win95-status-inset flex-1 px-2 flex items-center truncate">
+                                {t('network')}
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            <div className="win95-status-inset w-40 px-2 flex items-center justify-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-600' : 'bg-red-600 animate-pulse'}`}></span>
+                                {isConnected ? 'ONLINE' : 'OFFLINE'}
+                            </div>
+                            <div className="win95-status-inset w-24 px-2 flex items-center justify-end">
+                                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        </div>
+                    </motion.div>
 
-                {/* FOOTER BAR */}
-                <div className="bg-slate-800 text-white px-4 py-2 flex justify-between items-center text-[11px] font-black uppercase tracking-wider shrink-0">
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        {t('network')}
-                    </div>
-                    <div className="bg-slate-700 border-l border-slate-600 pl-4">
-                        STATUS: <span className={isConnected ? "text-green-400" : "text-red-400"}>{isConnected ? "ONLINE" : "OFFLINE"}</span>
-                    </div>
-                </div>
-            </div>
-
-            <style jsx>{`
-                .win95-btn {
-                    background: #c3c7cb;
-                    border: 2px solid;
-                    border-top-color: #fff;
-                    border-left-color: #fff;
-                    border-right-color: #424242;
-                    border-bottom-color: #424242;
-                    box-shadow: 1px 1px 0 0 #000;
-                    color: black;
-                }
-                .win95-btn:active, .active-win95 {
-                    border-top-color: #424242;
-                    border-left-color: #424242;
-                    border-right-color: #fff;
-                    border-bottom-color: #fff;
-                    box-shadow: inset 1px 1px 0 0 #000;
-                    transform: translate(1px, 1px);
-                }
-            `}</style>
-        </ServicePanel>
+                    <style jsx>{`
+                        .win95-btn {
+                            background: #c3c7cb;
+                            border: 2px solid;
+                            border-top-color: #fff;
+                            border-left-color: #fff;
+                            border-right-color: #424242;
+                            border-bottom-color: #424242;
+                            box-shadow: 1px 1px 0 0 #000;
+                            color: black;
+                            transition: none;
+                        }
+                        .win95-btn:active, .win95-btn-active {
+                            border-top-color: #424242;
+                            border-left-color: #424242;
+                            border-right-color: #fff;
+                            border-bottom-color: #fff;
+                            box-shadow: inset 1px 1px 0 0 #000;
+                            transform: translate(1px, 1px);
+                        }
+                        .win95-title-btn {
+                            width: 20px;
+                            height: 20px;
+                            background: #c3c7cb;
+                            border: 1px solid;
+                            border-top-color: #fff;
+                            border-left-color: #fff;
+                            border-bottom-color: #424242;
+                            border-right-color: #424242;
+                            box-shadow: 0.5px 0.5px 0 0 #000;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        .win95-title-btn:active {
+                            border-top-color: #424242;
+                            border-left-color: #424242;
+                            border-right-color: #fff;
+                            border-bottom-color: #fff;
+                            box-shadow: none;
+                        }
+                        .win95-group-box {
+                            border: 1px solid;
+                            border-top-color: #868a8e;
+                            border-left-color: #868a8e;
+                            border-right-color: #fff;
+                            border-bottom-color: #fff;
+                        }
+                        .win95-status-inset {
+                            border: 1px solid;
+                            border-top-color: #868a8e;
+                            border-left-color: #868a8e;
+                            border-right-color: #fff;
+                            border-bottom-color: #fff;
+                            margin: 2px 1px;
+                        }
+                        .custom-win95-scrollbar::-webkit-scrollbar {
+                            width: 16px;
+                        }
+                        .custom-win95-scrollbar::-webkit-scrollbar-track {
+                            background: #c3c7cb;
+                            border-left: 1px solid #868a8e;
+                        }
+                        .custom-win95-scrollbar::-webkit-scrollbar-thumb {
+                            background: #c3c7cb;
+                            border: 2px solid;
+                            border-top-color: #fff;
+                            border-left-color: #fff;
+                            border-right-color: #424242;
+                            border-bottom-color: #424242;
+                            box-shadow: 1px 1px 0 0 #000;
+                        }
+                    `}</style>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };

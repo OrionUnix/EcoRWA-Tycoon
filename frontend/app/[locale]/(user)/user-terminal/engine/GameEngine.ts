@@ -245,6 +245,20 @@ export class GameEngine {
     public spawnTraffic() {
         TrafficSystem.spawnVehicle(this.map);
     }
+
+    /**
+     * Sauvegarde la ville sur le Cloud (Firestore)
+     * @param address Adresse du wallet du joueur
+     */
+    public async saveCity(address: string) {
+        if (!address) return;
+        console.log("💾 [GameEngine] Sauvegarde manuelle demandée...");
+        const result = await SaveSystem.saveToCloud(this.map, address);
+        if (result) {
+            SaveSystem.clearDirty();
+        }
+        return result;
+    }
 }
 
 export function getGameEngine(): GameEngine {
