@@ -31,9 +31,8 @@ export const useGameSave = (
                 const engine = getGameEngine();
                 const payload = PersistenceManager.serializeGame(engine.map);
 
-                // On tente une sauvegarde ultime via Beacon vers l'API interne
-                const blob = new Blob([JSON.stringify({ address, payload })], { type: 'application/json' });
-                navigator.sendBeacon('/api/emergency-save', blob);
+                // On tente une sauvegarde ultime via PersistenceManager (Beacon API)
+                PersistenceManager.sendBeaconSave(engine.map, address);
             }
         };
 

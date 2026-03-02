@@ -27,7 +27,7 @@ export class PersistenceManager {
         const unemployed = Math.max(0, totalPop - totalJobs);
 
         return {
-            v: 5, // SAVE_VERSION
+            v: 6, // SAVE_VERSION
             ts: Date.now(),
             b: SaveUtils.packBuildings(engine.buildingLayer),
             r: SaveUtils.packRoads(engine.roadLayer),
@@ -101,6 +101,24 @@ export class PersistenceManager {
                 this.showSaveIndicator(false);
             }, 2000);
         }
+    }
+
+    /**
+     * Sauvegarde de dernier recours (Beacon API)
+     * Utilisé lors de la fermeture de l'onglet pour garantir l'envoi des données.
+     */
+    public static sendBeaconSave(engine: MapEngine, walletAddress: string) {
+        if (!walletAddress) return;
+        const saveData = this.serializeGame(engine);
+        const blob = new Blob([JSON.stringify({
+            data: saveData,
+            wallet: walletAddress,
+            ts: Date.now()
+        })], { type: 'application/json' });
+
+        // Note: L'URL doit pointer vers une serverless function qui accepte POST
+        navigator.sendBeacon('/api/save-beacon', blob);
+        console.log("📡 [PersistenceManager] Beacon save dispatched.");
     }
 
     /**

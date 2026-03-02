@@ -24,12 +24,12 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
             {/* Backdrop */}
             <div className="fixed inset-0 -z-10" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose} />
 
-            <div className="bg-slate-300 border-4 border-black shadow-[8px_8px_0_0_#000] rounded-none p-0 overflow-hidden max-h-[80vh] flex flex-col">
+            <div className="win95-window p-0 overflow-hidden max-h-[80vh] flex flex-col">
                 <div className={`flex flex-col ${width} max-h-[80vh]`}>
 
                     {/* ═══ HEADER ═══ */}
                     <div
-                        className="flex items-center gap-3 px-4 py-3 border-b-4 border-black bg-slate-400"
+                        className="win95-title-bar px-4 py-3"
                     >
                         <div
                             className="w-10 h-10 border-2 border-black shadow-[2px_2px_0_0_#000] flex items-center justify-center text-white text-lg flex-shrink-0 rounded-none"
@@ -42,7 +42,7 @@ export const ServicePanel: React.FC<ServicePanelProps> = ({ title, icon, color, 
                         </h2>
                         <button
                             onClick={onClose}
-                            className="w-8 h-8 flex items-center justify-center text-white font-bold bg-red-500 border-2 border-black shadow-[4px_4px_0_0_#000] hover:bg-red-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none rounded-none transition-none"
+                            className="win95-button !px-2 !py-0 font-black"
                         >
                             ✕
                         </button>

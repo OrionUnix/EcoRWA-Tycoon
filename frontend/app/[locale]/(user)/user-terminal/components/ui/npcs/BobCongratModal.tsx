@@ -44,13 +44,9 @@ export const BobCongratModal: React.FC<BobCongratModalProps> = ({
                         <div className="flex-1 bg-white border-2 border-yellow-500 p-3 shadow-[inset_2px_2px_0_0_rgba(0,0,0,0.1)] relative pr-8 flex flex-col justify-center">
                             <button
                                 onClick={onClose}
-                                className="absolute top-1 right-1 w-6 h-6 hover:scale-110 active:scale-95 transition-transform"
+                                className="absolute top-1 right-1 win95-button !px-1.5 !py-0 font-black text-xs"
                             >
-                                <img
-                                    src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')}
-                                    alt="Close"
-                                    className="w-full h-full pixelated"
-                                />
+                                ✕
                             </button>
 
                             <div className="flex justify-between items-end border-b border-yellow-500 pb-0.5 mb-1 w-max">

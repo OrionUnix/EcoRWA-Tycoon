@@ -58,13 +58,9 @@ export const BobWarningModal: React.FC = () => {
                             {/* Close Button */}
                             <button
                                 onClick={() => setVisible(false)}
-                                className="absolute top-1 right-1 w-6 h-6 hover:scale-110 active:scale-95 transition-transform"
+                                className="absolute top-1 right-1 win95-button !px-1.5 !py-0 font-black text-xs"
                             >
-                                <img
-                                    src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')}
-                                    alt="Close"
-                                    className="w-full h-full pixelated"
-                                />
+                                ✕
                             </button>
 
                             <p className="text-[14px] leading-tight font-medium text-black">

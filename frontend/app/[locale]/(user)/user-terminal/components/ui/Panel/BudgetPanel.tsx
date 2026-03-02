@@ -79,7 +79,7 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ stats, resources, onCl
             width="w-[95vw] max-w-[1000px]"
             icon="" color="#111"
         >
-            <div className="flex flex-col bg-[#c3c7cb] border-4 border-black p-1 shadow-[8px_8px_0_0_#000]">
+            <div className="flex flex-col bg-[#c3c7cb] p-1">
 
                 {/* TOP: JORDAN ADVISOR (Compact Row) */}
                 <div className="flex gap-2 bg-slate-100 border-b-4 border-black p-2 items-center shrink-0">

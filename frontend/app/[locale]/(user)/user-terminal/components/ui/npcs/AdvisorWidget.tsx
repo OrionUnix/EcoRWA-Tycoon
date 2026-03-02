@@ -62,16 +62,11 @@ export const AdvisorWidget: React.FC<AdvisorWidgetProps> = ({ isVisible }) => {
 
                             {/* RIGHT: Speech Bubble */}
                             <div className="flex-1 bg-white border-2 border-black p-3 shadow-[inset_2px_2px_0_0_rgba(0,0,0,0.1)] relative pr-8 min-h-[80px] flex flex-col justify-center">
-                                {/* Close Button */}
                                 <button
                                     onClick={() => setIsClosed(true)}
-                                    className="absolute top-1 right-1 w-6 h-6 hover:scale-110 active:scale-95 transition-transform"
+                                    className="absolute top-1 right-1 win95-button !px-1.5 !py-0 font-black text-xs"
                                 >
-                                    <img
-                                        src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')}
-                                        alt="Close"
-                                        className="w-full h-full pixelated"
-                                    />
+                                    ✕
                                 </button>
 
                                 <p className="text-[16px] leading-tight font-medium text-black">

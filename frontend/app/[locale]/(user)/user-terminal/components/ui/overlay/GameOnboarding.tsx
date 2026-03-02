@@ -147,8 +147,8 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                             <button onClick={() => setShowHelp(!showHelp)} className="hover:scale-110 active:translate-y-1 transition-all">
                                 <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/help.png')} alt="Aide" className="w-10 h-10 pixelated shadow-[2px_2px_0_black]" />
                             </button>
-                            <button onClick={onClose} className="hover:scale-110 active:translate-y-1 transition-all">
-                                <img src={withBasePath('/assets/isometric/Spritesheet/IU/bouttons/close.png')} alt="Fermer" className="w-10 h-10 pixelated shadow-[2px_2px_0_black]" />
+                            <button onClick={onClose} className="win95-button !px-2 !py-0 font-black text-xl bg-[#c0c0c0]">
+                                ✕
                             </button>
                         </div>
 
