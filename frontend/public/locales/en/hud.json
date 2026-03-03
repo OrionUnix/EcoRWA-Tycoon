@@ -1,0 +1,23 @@
+{
+    "TopBar": {
+        "money": "Treasury",
+        "population": "Population",
+        "happiness": "Happiness",
+        "budget_title": "Open City Budget",
+        "jobs_title": "Open Jobs Panel",
+        "pause": "Pause",
+        "speed": "Speed",
+        "rwa_market": "RWA MARKET",
+        "faucet": "FAUCET",
+        "no_gas": "NO GAS",
+        "connect": "CONNECT",
+        "wrong_network": "WRONG NETWORK",
+        "connect_wallet": "CONNECT WALLET",
+        "claim_usdc": "{amount} USDC",
+        "error_mayor_title": "⚠️ Error — City Hall",
+        "low_avax_message": "Mayor, your municipal coffers have no more energy (AVAX) to sign the papers!",
+        "low_avax_detail": "You need at least 0.02 AVAX to cover network fees. Go to the Core Hub to get free testnet grants.",
+        "cancel": "Cancel",
+        "get_avax": "Get AVAX"
+    }
+}

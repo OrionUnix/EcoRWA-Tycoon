@@ -1,0 +1,23 @@
+{
+    "TopBar": {
+        "money": "Trésorerie",
+        "population": "Population",
+        "happiness": "Bonheur",
+        "budget_title": "Ouvrir le budget de la ville",
+        "jobs_title": "Ouvrir le panneau des emplois",
+        "pause": "Pause",
+        "speed": "Vitesse",
+        "rwa_market": "MARCHÉ RWA",
+        "faucet": "ROBINET",
+        "no_gas": "PAS DE GAZ",
+        "connect": "CONNECTER",
+        "wrong_network": "MAUVAIS RÉSEAU",
+        "connect_wallet": "CONNECTER WALLET",
+        "claim_usdc": "{amount} USDC",
+        "error_mayor_title": "⚠️ Erreur — Mairie",
+        "low_avax_message": "Maire, vos caisses municipales n'ont plus d'énergie (AVAX) pour signer les papiers !",
+        "low_avax_detail": "Vous avez besoin d'au moins 0.02 AVAX pour couvrir les frais de réseau. Rendez-vous au Core Hub pour obtenir des subventions testnet gratuites.",
+        "cancel": "Annuler",
+        "get_avax": "Obtenir des AVAX"
+    }
+}

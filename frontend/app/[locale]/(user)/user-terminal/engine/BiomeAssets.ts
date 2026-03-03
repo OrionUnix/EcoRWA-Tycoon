@@ -3,47 +3,154 @@ import { ProceduralTiles } from './ProceduralTiles';
 import { BiomeType } from './types';
 import { TILE_WIDTH, TILE_HEIGHT, TILE_DEPTH } from './config';
 
+// ═══════════════════════════════════════════════════════════
+// Cache des textures procédurales (fallback)
+// ═══════════════════════════════════════════════════════════
 const texturesCache = new Map<number, PIXI.Texture[]>();
 
-// ═══════════════════════════════════════════════════════
-// Procédural Biome Mapping configuration
-// ═══════════════════════════════════════════════════════
-const BIOME_ATLAS_MAP: Record<number, string[]> = {
-    [BiomeType.PLAINS]: ['grass.png'],
-    [BiomeType.FOREST]: ['forest.png'],
-    [BiomeType.DESERT]: ['desert.png'],
-    [BiomeType.BEACH]: ['bleach.png'],  // "bleach" dans l'atlas = beach/sable
-    [BiomeType.MOUNTAIN]: ['mountain.png'],
-    [BiomeType.SNOW]: ['snow.png'],
-    [BiomeType.OCEAN]: ['ocean.png'],
-    [BiomeType.DEEP_OCEAN]: ['deepwalter.png'],  // "deepwalter" dans l'atlas
+// ═══════════════════════════════════════════════════════════
+// Cache des textures PNG réelles (ground system)
+// ═══════════════════════════════════════════════════════════
+const groundTexturesCache = new Map<number, PIXI.Texture[]>();
+let groundTexturesLoaded = false;
+let groundTexturesLoading = false;
+
+// Chemin base des assets ground
+const GROUND_BASE = '/assets/isometric/Spritesheet/ground/';
+
+/**
+ * Mapping Biome → variantes PNG
+ * On utilise les noms exacts du dossier public/assets/isometric/Spritesheet/ground/
+ */
+const BIOME_PNG_MAP: Record<number, string[]> = {
+    [BiomeType.PLAINS]: ['gras.png'],
+    [BiomeType.FOREST]: ['dirt.png'],                   // ✅ Sous-bois : terre marron uniquement
+    [BiomeType.DESERT]: ['sand.png'],
+    [BiomeType.BEACH]: ['sand.png'],
+    [BiomeType.MOUNTAIN]: ['dirt.png'],
+    [BiomeType.SNOW]: ['sand_B.png'],                             // sable clair = neige (fallback)
+    [BiomeType.OCEAN]: ['walter.png'],
+    [BiomeType.DEEP_OCEAN]: ['walter_B.png'],
 };
 
-export function clearBiomeTextures() {
-    console.log("🧹 Clearing Biome Textures Cache...");
-    // Ne détruire que les textures procédurales (pas les atlas)
-    texturesCache.forEach(textures => {
-        textures.forEach(t => {
-            // Sécurité: ne pas détruire les textures atlas (elles appartiennent au Spritesheet)
-            if (t && !t.destroyed) {
-                // On ne détruit plus les textures ici pour éviter de casser les refs atlas
-            }
+// ═══════════════════════════════════════════════════════════
+// LOADER PNG Ground
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Charge toutes les textures PNG ground via PIXI.Assets.
+ * Idempotent (ne charge qu'une fois). Retourne une Promise résolue
+ * quand toutes les textures sont disponibles dans le cache.
+ */
+export async function loadGroundTextures(): Promise<boolean> {
+    if (groundTexturesLoaded) return true;
+    if (groundTexturesLoading) {
+        // Attendre la fin du chargement en cours
+        return new Promise(resolve => {
+            const check = setInterval(() => {
+                if (groundTexturesLoaded) {
+                    clearInterval(check);
+                    resolve(true);
+                }
+            }, 50);
         });
-    });
+    }
+
+    groundTexturesLoading = true;
+    console.log('🌱 BiomeAssets: Chargement des textures PNG ground...');
+
+    // Collecter toutes les URLs uniques
+    const allUrls = new Set<string>();
+    for (const variants of Object.values(BIOME_PNG_MAP)) {
+        for (const file of variants) {
+            allUrls.add(GROUND_BASE + file);
+        }
+    }
+
+    try {
+        // Charger en parallèle
+        await PIXI.Assets.load(Array.from(allUrls));
+
+        // Peupler le cache
+        for (const [biomeKey, variants] of Object.entries(BIOME_PNG_MAP)) {
+            const biomeId = Number(biomeKey);
+            const textures: PIXI.Texture[] = [];
+            for (const file of variants) {
+                const url = GROUND_BASE + file;
+                const tex = PIXI.Assets.get<PIXI.Texture>(url);
+                if (tex && !tex.destroyed) {
+                    // ✅ REPEAT mode requis pour le seamless via UV matrix (Pixi v8+)
+                    if (tex.source) {
+                        tex.source.style.addressModeU = 'repeat';
+                        tex.source.style.addressModeV = 'repeat';
+
+                        // Optionnels mais recommandés pour les textures au sol
+                        tex.source.style.minFilter = 'linear';
+                        tex.source.style.magFilter = 'linear';
+                        (tex.source.style as any).anisotropicLevel = 8;
+
+                        tex.source.update();
+                    }
+                    textures.push(tex);
+                } else {
+                    console.warn(`⚠️ BiomeAssets: Texture manquante → ${url}`);
+                }
+            }
+            if (textures.length > 0) {
+                groundTexturesCache.set(biomeId, textures);
+            }
+        }
+
+        groundTexturesLoaded = true;
+        groundTexturesLoading = false;
+        console.log(`✅ BiomeAssets: ${groundTexturesCache.size} biomes chargés avec textures PNG.`);
+        return true;
+
+    } catch (err) {
+        console.error('❌ BiomeAssets: Échec chargement textures PNG ground:', err);
+        groundTexturesLoading = false;
+        return false;
+    }
+}
+
+/**
+ * Retourne une texture PNG pour un biome donné.
+ * Sélection déterministe basée sur (x, y) → pas de flickering.
+ * Retourne null si les textures ne sont pas encore chargées.
+ */
+export function getGroundTexture(biome: number, x: number, y: number): PIXI.Texture | null {
+    const frames = groundTexturesCache.get(biome);
+    if (!frames || frames.length === 0) return null;
+    const idx = Math.abs((x * 7 + y * 13)) % frames.length;
+    return frames[idx];
+}
+
+/** Indique si les textures PNG sont prêtes */
+export function isGroundTexturesReady(): boolean {
+    return groundTexturesLoaded;
+}
+
+/** Réinitialise le cache des textures ground (ex: changement de monde) */
+export function clearGroundTextures(): void {
+    // On ne DÉTRUIT pas les textures PIXI.Assets — elles sont gérées par le loader global
+    groundTexturesCache.clear();
+    groundTexturesLoaded = false;
+    groundTexturesLoading = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FALLBACK PROCÉDURAL (conservé intact)
+// ═══════════════════════════════════════════════════════════
+
+export function clearBiomeTextures() {
+    console.log('🧹 Clearing Biome Textures Cache...');
     texturesCache.clear();
 }
 
 export async function loadBiomeTextures(app: PIXI.Application) {
     if (texturesCache.size > 0) return true;
 
-    // ═══════════════════════════════════════
-    // GÉNÉRATION PROCÉDURALE
-    // ═══════════════════════════════════════
-
-    // ═══════════════════════════════════════
-    // FALLBACK: Génération procédurale (ancien système)
-    // ═══════════════════════════════════════
-    console.log("🔄 BiomeAssets: Génération textures procédurales...");
+    console.log('🔄 BiomeAssets: Génération textures procédurales...');
 
     const DEPTH = TILE_DEPTH;
     const VARIATIONS = 3;
@@ -77,7 +184,7 @@ export async function loadBiomeTextures(app: PIXI.Application) {
     createBiomeSet(BiomeType.FOREST, cForest, cDirt);
     createBiomeSet(BiomeType.BEACH, cSand, cSand);
 
-    console.log(`✅ BiomeAssets: Textures procédurales générées.`);
+    console.log('✅ BiomeAssets: Textures procédurales générées.');
     return true;
 }
 

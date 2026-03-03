@@ -66,6 +66,10 @@ export function usePixiApp(containerRef: React.RefObject<HTMLDivElement | null>)
             viewportRef.current = viewport;
             stageRef.current = app.stage;
 
+            // Expose globalement pour les renderers (TerrainPass culling, etc.)
+            (globalThis as any).__pixiApp = app;
+            (globalThis as any).__pixiViewport = viewport;
+
             // 🔑 FIX BUG 2: Centrage de la caméra sur le centre de la carte isometrique.
             // La grille isometrique s'étend de:
             //   X: -(GRID_SIZE*TILE_WIDTH/2) à +(GRID_SIZE*TILE_WIDTH/2)

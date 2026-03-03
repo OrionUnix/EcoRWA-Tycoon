@@ -1,92 +1,60 @@
 import * as PIXI from 'pixi.js';
 import { MapEngine } from '../engine/MapEngine';
-import { GRID_SIZE, TILE_WIDTH, TILE_HEIGHT } from '../engine/config';
-import { getBiomeTexture } from '../engine/BiomeAssets';
-import { ChunkManager } from '../engine/ChunkManager';
+import { groundChunkRenderer } from './renderers/GroundChunkRenderer';
 
-// Taille native des tuiles dans l'atlas (32x32 px)
-const ATLAS_TILE_SIZE = 32;
+// ═══════════════════════════════════════════════════════════
+// TERRAIN TILEMAP (v2 — Chunk-based)
+// ═══════════════════════════════════════════════════════════
+// Remplace l'ancien système qui recréait 9 216 sprites par frame.
+// Délègue tout le travail au GroundChunkRenderer :
+//   - Construction des chunks (build-once)
+//   - Culling AABB des chunks hors écran
+//   - Gestion mémoire propre lors du reset
+// ═══════════════════════════════════════════════════════════
 
 export class TerrainTilemap {
     private container: PIXI.Container;
-    private initialized: boolean = false;
-    private spriteCache: PIXI.Sprite[] = [];
+
     constructor() {
         this.container = new PIXI.Container();
+        this.container.label = 'terrainTilemap';
         this.container.sortableChildren = true;
-        this.initialized = true;
     }
 
     getContainer(): PIXI.Container {
         return this.container;
     }
 
+    /**
+     * Appel chaque frame depuis TerrainPass.
+     * @param engine      État du monde
+     * @param viewMode    Mode de vue courant (non utilisé pour le sol, réservé)
+     * @param viewBounds  Viewport en coordonnées monde (pour le culling)
+     */
+    render(engine: MapEngine, viewMode: string, viewBounds?: PIXI.Rectangle): void {
+        if (!engine.biomes) return;
 
-    render(engine: MapEngine, viewMode: string) {
-        if (!this.initialized || !engine.biomes) return;
+        // Viewport par défaut très large si non fourni (pas de culling = tout visible)
+        const bounds = viewBounds ?? new PIXI.Rectangle(-999999, -999999, 1999998, 1999998);
 
-        // Reset complet (méthode simple et robuste)
-        this.container.removeChildren();
-        this.spriteCache.forEach(s => s.destroy());
-        this.spriteCache = [];
-
-        // ✅ Échelle adaptative (Atlas = 32px, Procédural = 64px)
-        const scaleFromAtlas = TILE_WIDTH / ATLAS_TILE_SIZE; // 2
-        const scaleFromProcedural = 1.0; // Déjà à la bonne taille
-
-        // ✅ Pas de grille = demi-largeur / demi-hauteur
-        const stepX = TILE_WIDTH / 2;
-        const stepY = TILE_HEIGHT / 2;
-
-        for (let y = 0; y < GRID_SIZE; y++) {
-            for (let x = 0; x < GRID_SIZE; x++) {
-                // ✅ CHUNK: Détection verrouillé pour teinte grise (SimCity style)
-                const isLocked = !ChunkManager.isTileUnlocked(x, y);
-
-                const i = y * GRID_SIZE + x;
-                const biome = engine.biomes[i];
-                const texture = getBiomeTexture(biome, x, y);
-
-                if (texture && !texture.source?.destroyed && !texture.destroyed) {
-                    const sprite = new PIXI.Sprite(texture);
-
-                    // détection du type de texture (Atlas vs Procédural)
-                    const isAtlas = texture.width <= 32;
-
-                    // 1. Échelle
-                    sprite.scale.set(isAtlas ? scaleFromAtlas : scaleFromProcedural);
-
-                    // 2. Ancrage Isométrique
-                    if (isAtlas) {
-                        sprite.anchor.set(0.5, 0.25);
-                    } else {
-                        sprite.anchor.set(0.5, (TILE_HEIGHT / 2) / texture.height);
-                    }
-
-                    // 3. Positionnement
-                    sprite.x = (x - y) * stepX;
-                    sprite.y = (x + y) * stepY;
-
-                    // 4. Tri d'affichage (Depth Sorting)
-                    sprite.zIndex = x + y;
-
-                    // 5. ✅ TEINTE GRISE pour chunks verrouillés (SimCity border style)
-                    sprite.tint = isLocked ? 0x555555 : 0xFFFFFF;
-
-                    this.container.addChild(sprite);
-                    this.spriteCache.push(sprite);
-                }
-            }
-        }
+        groundChunkRenderer.update(engine, this.container, bounds);
     }
 
-    clear() {
-        this.container.removeChildren();
-        this.spriteCache.forEach(s => s.destroy());
-        this.spriteCache = [];
+    /**
+     * Mise à jour de teinte d'un chunk (ex: après déblocage de parcelle).
+     * Appel léger — ne reconstruit rien.
+     */
+    refreshChunkTint(cx: number, cy: number): void {
+        groundChunkRenderer.refreshChunkTint(cx, cy);
     }
 
-    destroy() {
+    /** Reset complet (régénération de monde) */
+    clear(): void {
+        groundChunkRenderer.destroyAll();
+
+    }
+
+    destroy(): void {
         this.clear();
         this.container.destroy({ children: true });
     }
