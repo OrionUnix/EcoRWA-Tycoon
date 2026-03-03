@@ -15,41 +15,22 @@ export class BuildingTextureResolver {
         let texture: PIXI.Texture | undefined;
         const lvl = building.level || 1;
         let overrideBaseName: string | undefined = undefined;
-        let forceNormal = false;
+        // 1. DÉTERMINATION DE L'ÉTAT VISUEL
+        const stateToUse = isRuined ? 'destruction' : isConstState ? 'construction' : 'normal';
 
-        // 1. DÉTECTION DYNAMIQUE DES MINES
-        if (building.type === 'MINE' && index !== undefined) {
-            // ✅ On vérifie globalThis ET window pour être sûr de trouver le moteur
-            const engine = (globalThis as any).mapEngine || (window as any).mapEngine;
-
-            if (engine && engine.resourceMaps) {
-                const r = {
-                    iron: engine.resourceMaps.iron?.[index] || 0,
-                    coal: engine.resourceMaps.coal?.[index] || 0,
-                    gold: engine.resourceMaps.gold?.[index] || 0,
-                    stone: engine.resourceMaps.stone?.[index] || 0
-                };
-
-                // On trie par la valeur la plus forte
-                const stats = [
-                    { id: 'ironmine', val: r.iron },
-                    { id: 'coalmine', val: r.coal },
-                    { id: 'goldmine', val: r.gold },
-                    { id: 'stonemine', val: r.stone }
-                ].sort((a, b) => b.val - a.val);
-
-                if (stats[0].val > 0.05) {
-                    overrideBaseName = stats[0].id;
-                    forceNormal = true;
-                    // On ne log que si nécessaire pour ne pas saturer la console
+        // 2. DÉTECTION DYNAMIQUE DES MINES
+        if (building.type === 'MINE') {
+            // Pour les états de construction et destruction, on veut le préfixe générique (mine_)
+            // On n'applique le préfixe spécifique que dans l'état normal.
+            if (stateToUse === 'normal' && building.mining?.resource) {
+                switch (building.mining.resource) {
+                    case 'IRON': overrideBaseName = 'ironmine'; break;
+                    case 'COAL': overrideBaseName = 'coalmine'; break;
+                    case 'GOLD': overrideBaseName = 'goldmine'; break;
+                    case 'STONE': overrideBaseName = 'stonemine'; break;
                 }
             }
-            // ❌ Pas de log d'erreur ici : si le moteur n'est pas prêt, on reste silencieux
-            // pour éviter de spammer la console 60 fois par seconde.
         }
-
-        // 2. DÉTERMINATION DE L'ÉTAT VISUEL
-        const stateToUse = isRuined ? 'destruction' : (isConstState && !forceNormal) ? 'construction' : 'normal';
 
         // 3. PRIORITÉ 0 : Texture RWA (Load Asynchrone)
         if (building.rwaTexture) {
