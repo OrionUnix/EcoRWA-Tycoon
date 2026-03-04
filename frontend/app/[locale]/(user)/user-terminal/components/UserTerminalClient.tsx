@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
 import { useTranslations } from 'next-intl';
 import { useAccount } from 'wagmi';
@@ -27,6 +27,7 @@ import { AdvisorWidget } from './ui/npcs/AdvisorWidget';
 import { GameOnboarding } from './ui/overlay/GameOnboarding';
 import { BobWarningModal } from './ui/npcs/BobWarningModal';
 import { useFirebaseWeb3Auth } from '../hooks/web3/useFirebaseWeb3Auth';
+import { GameLoader } from './ui/overlay/GameLoader';
 import { SoftWelcomeModal } from './ui/overlay/SoftWelcomeModal';
 import { SimCityLoader } from './ui/overlay/SimCityLoader';
 import { JordanPitchModal } from './ui/npcs/JordanPitchModal';
@@ -112,24 +113,27 @@ export default function UserTerminalClient() {
     const previewPathRef = useRef<number[]>([]);
     const isValidBuildRef = useRef(true);
 
-    // 3. CHARGEMENT INITIAL DES ASSETS (Délégué à AssetLoader)
+    // 3. PRÉCHARGEMENT DES ASSETS (Délégué à AssetLoader, contrôlé par useGameBoot)
+    const preloadAssetsCb = useCallback(async () => {
+        if (!appRef.current || !viewportRef.current) throw new Error("PixiJS n'est pas prêt");
+        await AssetLoader.initAssets(
+            appRef.current,
+            viewportRef.current,
+            terrainContainerRef.current,
+            address,
+            setAssetsLoaded,
+            setIsReloading,
+            setSummary
+        );
+    }, [address, isReady]);
+
+    // Cleanup des assets à la destruction du composant
     useEffect(() => {
-        if (isReady && appRef.current && viewportRef.current) {
-            AssetLoader.initAssets(
-                appRef.current,
-                viewportRef.current,
-                terrainContainerRef.current,
-                address,
-                setAssetsLoaded,
-                setIsReloading,
-                setSummary
-            );
-        }
         return () => {
             setAssetsLoaded(false);
             AssetLoader.cleanup();
         };
-    }, [isReady]);
+    }, []);
 
     // 4. CONFIGURATION DES CALQUES PIXI (Délégué à PixiStageSetup)
     useEffect(() => {
@@ -150,9 +154,12 @@ export default function UserTerminalClient() {
     }, [isReady, assetsLoaded]);
 
     // 5. 🔒 BOOT FLOW VERROUILLÉ — useGameBoot garantit l'ordre séquentiel :
-    //    A(Wallet) → B(loadSave) → C(seed) → D(inject) → E(generateWorld) → F(isReady)
+    //    A(Wallet) → B(loadSave) → C(seed) → D(preload) → E(generateWorld) → F(isReady)
     //    Le moteur graphique ne dessine AUCUN pixel avant que bootState.isReady soit true.
-    const bootState = useGameBoot(isConnected && address ? address : undefined);
+    const bootState = useGameBoot(
+        isConnected && address ? address : undefined,
+        isReady ? preloadAssetsCb : undefined // Ne démarre le boot complet que si PixiJS est prêt !
+    );
 
     // Sync du mode démo avec l'état du boot
     useEffect(() => {
@@ -268,18 +275,9 @@ export default function UserTerminalClient() {
             <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#000', overflow: 'hidden' }}>
                 <div ref={containerRef} style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
 
-                {/* 🔒 Écran de chargement : affiché JUSQU'À ce que le boot soit 100% complet */}
+                {/* 🔒 Écran de chargement : plein écran, affiché JUSQU'À ce que le boot soit 100% complet */}
                 {(!assetsLoaded || !bootState.isReady) && (
-                    <div style={{ position: 'absolute', inset: 0, zIndex: 50, backgroundColor: '#111', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
-                        <div className="loader"></div>
-                        <h1 style={{ marginTop: '20px' }}>
-                            {bootState.phase === 'loading_save' && 'Chargement de la sauvegarde...'}
-                            {bootState.phase === 'generating' && 'Génération du territoire...'}
-                            {bootState.phase === 'restoring' && 'Restauration de votre ville...'}
-                            {(bootState.phase === 'idle' || !assetsLoaded) && 'Initialisation...'}
-                            {bootState.phase === 'error' && `❌ Erreur : ${bootState.error}`}
-                        </h1>
-                    </div>
+                    <GameLoader phase={bootState.phase} error={bootState.error} />
                 )}
 
                 <SimCityLoader visible={isAuthenticating} />

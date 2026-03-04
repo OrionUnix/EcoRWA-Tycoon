@@ -128,6 +128,7 @@ export interface PlayerResources {
     food: number; energy: number; water: number;
     stone: number; silver: number; gold: number;
     undergroundWater: number;
+    electricity: number;
 }
 
 export interface CityStats {

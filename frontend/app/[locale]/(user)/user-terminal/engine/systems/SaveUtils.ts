@@ -34,19 +34,19 @@ export class SaveUtils {
             const b = layer[i];
             if (!b) continue;
             const packed: (number | string)[] = [
-                BUILDING_TYPE_LIST.indexOf(b.type as BuildingType),
-                b.x, b.y,
-                b.level ?? 1,
-                this._stateToIdx(b.state ?? 'ACTIVE'),
+                BUILDING_TYPE_LIST.indexOf(b.type as BuildingType), // [0] typeIdx
+                b.x,                                                // [1]
+                b.y,                                                // [2]
+                b.level ?? 1,                                       // [3]
+                this._stateToIdx(b.state ?? 'ACTIVE'),              // [4] stateIdx
+                b.rwaTexture ?? '',                                 // [5] rwaTexture
+                b.rwaId ?? 0,                                       // [6] rwaId
+                b.lastYieldClaim ?? 0,                              // [7] lastYieldClaim
+                // ✅ FIX Mine: stocker le type de ressource sous-jacent
+                b.mining?.resource ?? '',                           // [8] miningResource
+                // ✅ FIX Workers: stocker les travailleurs assignés
+                b.jobsAssigned ?? 0,                               // [9] jobsAssigned
             ];
-
-            // Texture RWA si applicable, pour le fallback visuel
-            if (b.rwaTexture) packed.push(b.rwaTexture);
-
-            // ✅ NOUVEAU: Données RWA pour le rendement
-            if (b.rwaId) packed.push(b.rwaId);
-            if (b.lastYieldClaim) packed.push(b.lastYieldClaim);
-
             result.push(packed);
         }
         return JSON.stringify(result);
@@ -127,17 +127,31 @@ export class SaveUtils {
             const level = arr[3] as number;
             const stateIdx = arr[4] as number;
             const state = stateIdx === 2 ? 'ABANDONED' : 'ACTIVE';
-            const rwaTexture = arr[5] as string | undefined;
-            const rwaId = arr[6] as number | undefined;
-            const lastYieldClaim = arr[7] as number | undefined;
+
+            // Champs v4 (RWA) — valeurs vides/nulles tolérées
+            const rwaTexture = (arr[5] as string) || undefined;
+            const rwaId = (arr[6] as number) || undefined;
+            const lastYieldClaim = (arr[7] as number) || undefined;
+
+            // ✅ FIX v5: Ressource de la mine (ex: 'GOLD', 'IRON'...)
+            const miningResource = (arr[8] as string) || undefined;
+
+            // ✅ FIX v5: Travailleurs assignés sauvegardés
+            const jobsAssigned = (arr[9] as number) || 0;
 
             layer[y * GRID_SIZE + x] = {
                 type, x, y, level, state,
                 variant: 0, constructionTimer: 0, pollution: 0,
-                happiness: 100, statusFlags: 0, stability: 100, jobsAssigned: 0,
+                happiness: 100, statusFlags: 0, stability: 100,
+                // ✅ Restaurer travailleurs
+                jobsAssigned,
                 ...(rwaTexture ? { rwaTexture } : {}),
                 ...(rwaId ? { rwaId } : {}),
                 ...(lastYieldClaim ? { lastYieldClaim } : {}),
+                // ✅ Restaurer la ressource de la mine (critique pour le bon sprite)
+                ...(type === 'MINE' && miningResource ? {
+                    mining: { resource: miningResource as any, amount: 0 }
+                } : {}),
             };
         }
         return layer;

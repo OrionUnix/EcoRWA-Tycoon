@@ -26,8 +26,9 @@ import { getGameEngine } from '../engine/GameEngine';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type BootPhase =
-    | 'idle'            // Avant tout (pas de wallet)
+    | 'idle'            // Avant tout (pas de wallet et/ou pas de Pixi)
     | 'loading_save'    // Chargement de la sauvegarde cloud en cours
+    | 'preloading_assets' // Chargement des textures lourdes 512x512 et atlas
     | 'generating'      // Génération du monde avec la seed correcte
     | 'restoring'       // Injection des bâtiments/routes/chunks sauvegardés
     | 'ready'           // ✅ Jeu prêt à être rendu
@@ -47,19 +48,22 @@ export interface BootState {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * @param walletAddress  - Adresse wallet depuis wagmi (`useAccount().address`)
- *                         Peut être `undefined` si le wallet n'est pas connecté.
+ * @param walletAddress  - Adresse wallet depuis wagmi (`useAccount().address`). Peut être `undefined`.
+ * @param preloadAssets  - Fonction fournie par UserTerminalClient, exécutant AssetLoader.initAssets.
  */
-export function useGameBoot(walletAddress: string | undefined): BootState {
+export function useGameBoot(
+    walletAddress: string | undefined,
+    preloadAssets?: () => Promise<void>
+): BootState {
     const [phase, setPhase] = useState<BootPhase>('idle');
     const [error, setError] = useState<string | null>(null);
     const [isNewGame, setIsNewGame] = useState(false);
 
-    // Évite les doubles exécutions en StrictMode React et les re-renders
+    // Évite les doubles exécutions en StrictMode React (Le Mutex ! 🛡️) et les re-renders
     const hasBootedRef = useRef(false);
     const currentWalletRef = useRef<string | undefined>(undefined);
 
-    const boot = useCallback(async (wallet: string) => {
+    const boot = useCallback(async (wallet: string, preloader: () => Promise<void>) => {
         // Guard : si déjà démarré pour ce wallet, ne pas rebooter
         if (hasBootedRef.current && currentWalletRef.current === wallet) {
             console.log(`🔒 [useGameBoot] Boot déjà effectué pour ${wallet.substring(0, 8)}...`);
@@ -127,6 +131,14 @@ export function useGameBoot(walletAddress: string | undefined): BootState {
             const engine = getMapEngine();
             engine.mapSeed = resolvedSeed; // ← Injection atomique
 
+            // ─────────────────────────────────────────────────────────────
+            // ÉTAPE D : PRÉCHARGEMENT EXPLICITE DES TEXTURES (PIXI.Assets)
+            // ─────────────────────────────────────────────────────────────
+            setPhase('preloading_assets');
+            console.log(`🖼️ [useGameBoot] Démarrage du préchargement lourd des assets...`);
+            await preloader();
+            console.log(`🖼️ [useGameBoot] Préchargement terminé !`);
+
             console.log(`🌍 [useGameBoot] Génération du monde avec seed : "${resolvedSeed.substring(0, 20)}..."`);
 
             // ─────────────────────────────────────────────────────────────
@@ -175,38 +187,44 @@ export function useGameBoot(walletAddress: string | undefined): BootState {
     // Déclencheur : réagir à la connexion/déconnexion du wallet
     // ─────────────────────────────────────────────────────────────────────────
     useEffect(() => {
+        // 🛑 ON BLOQUE TOUT TANT QUE PIXI N'EST PAS MONTÉ (preloadAssets undefined)
+        if (!preloadAssets) return;
+
         if (walletAddress) {
-            // WALLET CONNECTÉ → Démarrer le flux de boot séquentiel complet (Firebase + sauvegarde)
-            boot(walletAddress);
+            // WALLET CONNECTÉ → Démarrer le flux de boot séquentiel complet
+            boot(walletAddress, preloadAssets);
         } else {
-            // PAS DE WALLET → Mode Démo : génération avec seed fixe, sans Firebase
-            // Conforme au design doc : pas de hard-gate, le jeu démarre toujours.
+            // PAS DE WALLET → Mode Démo : génération sans Firebase
             if (!hasBootedRef.current) {
                 hasBootedRef.current = true;
                 currentWalletRef.current = 'DEMO';
                 setIsNewGame(true);
 
                 const engine = getMapEngine();
-                // Seed fixe "DEMO" → la map de démonstration est toujours la même
                 engine.mapSeed = 'DEMO_MAP_FIXED_SEED';
-                setPhase('generating');
 
-                try {
-                    engine.generateWorld('DEMO');
-                    getGameEngine(); // Initialiser le GameEngine singleton
-                    setPhase('ready');
-                    console.log('🎮 [useGameBoot] Mode Démo prêt.');
-                } catch (e) {
-                    setError(String(e));
-                    setPhase('error');
-                }
+                // Exécution séquentielle pour le mode démo (Async wrapper)
+                (async () => {
+                    try {
+                        setPhase('preloading_assets');
+                        await preloadAssets();
+
+                        setPhase('generating');
+                        engine.generateWorld('DEMO');
+                        getGameEngine(); // Initialiser le GameEngine singleton
+                        setPhase('ready');
+                        console.log('🎮 [useGameBoot] Mode Démo prêt.');
+                    } catch (e) {
+                        setError(String(e));
+                        setPhase('error');
+                    }
+                })();
             } else if (phase === 'ready') {
-                // Déconnexion après une session → désactiver l'auto-save mais garder le jeu visible
                 SaveSystem.setWalletConnected(false);
                 console.log('👋 [useGameBoot] Wallet déconnecté — auto-save désactivé.');
             }
         }
-    }, [walletAddress, boot]);
+    }, [walletAddress, boot, preloadAssets]);
 
     return {
         phase,

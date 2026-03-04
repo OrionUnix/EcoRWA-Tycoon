@@ -97,5 +97,14 @@ export const PixiStageSetup = {
                 getGameEngine().saveCameraState(center.x, center.y, viewport.scaled);
             });
         }
+
+        // ✅ [FIX MATH/PIXEL-PERFECT] = Anti-Sliding & Anti-Tearing
+        // Intercepter TOUS les mouvements de caméra (pan/zoom)
+        // et forcer webGL à dessiner sur des pixels entiers au lieu de fractions.
+        // This handler is added regardless of whether camera state was restored or initialized.
+        viewport.on('moved', () => {
+            viewport.x = Math.round(viewport.x);
+            viewport.y = Math.round(viewport.y);
+        });
     }
 };

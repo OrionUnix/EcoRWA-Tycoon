@@ -26,7 +26,7 @@ const RWA_CHOICES: RWAChoice[] = [
 
 export const RWAMasterPanel: React.FC<{ isOpen: boolean; onClose: () => void; onInvest: (rwa: RWAChoice) => void; onFaucet: () => void; onGrant: () => void; }> = ({ isOpen, onClose, onInvest, onFaucet, onGrant }) => {
     const t = useTranslations('rwa');
-    const { isConnected } = useAccount();
+    const { isConnected, chain } = useAccount();
     const { displayedText, isTyping } = useTypewriterWithSound(isOpen ? t('advisor_msg') : "", 25);
 
     if (!isOpen) return null;
@@ -44,10 +44,17 @@ export const RWAMasterPanel: React.FC<{ isOpen: boolean; onClose: () => void; on
                     <button onClick={onClose} className="win95-button !px-2 !py-0 font-black">X</button>
                 </div>
 
-                {/* SUB-HEADER / FAUCET */}
-                <div className="p-3 flex justify-end gap-3 bg-[#c3c7cb] border-b-2 border-[#868a8e]">
-                    <button onClick={onFaucet} className="win95-button text-sm font-bold">{t('faucet')}</button>
-                    <button onClick={onGrant} className="win95-button text-sm font-bold">{t('grant')}</button>
+                {/* SUB-HEADER / ACTIONS (FAUCET + INFO) */}
+                <div className="p-3 flex justify-between gap-3 bg-[#c3c7cb] border-b-2 border-[#868a8e]">
+                    <div className="flex gap-2">
+                        <button onClick={() => window.open('https://www.avalanche.network/rwas', '_blank')} className="win95-button text-sm font-bold text-[#000080]">
+                            [ ? ] What is a RWA
+                        </button>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                        <button onClick={onFaucet} className="win95-button text-sm font-bold">{t('faucet')}</button>
+                        <button onClick={onGrant} className="win95-button text-sm font-bold">{t('grant')}</button>
+                    </div>
                 </div>
 
                 {/* ADVISOR - STYLE CITY BUDGET */}
@@ -98,27 +105,32 @@ export const RWAMasterPanel: React.FC<{ isOpen: boolean; onClose: () => void; on
                                 </p>
                             </div>
 
-                            {/* Action Button */}
-                            {isConnected ? (
-                                <button onClick={() => onInvest(rwa)} className="win95-button w-full py-4 text-lg font-black bg-[#008080] text-white uppercase">
-                                    {t('invest')}
+                            {/* Action Buttons (Invest & Details) */}
+                            <div className="flex flex-col gap-2 mt-auto">
+                                <button className="win95-button !border-gray-500 !bg-gray-200 text-gray-700 w-full py-2 text-sm font-black uppercase">
+                                    DETAILS
                                 </button>
-                            ) : (
-                                <ConnectButton.Custom>
-                                    {({ openConnectModal }) => (
-                                        <button onClick={openConnectModal} className="win95-button w-full py-4 text-lg font-black bg-red-600 text-white uppercase">
-                                            {t('connect')}
-                                        </button>
-                                    )}
-                                </ConnectButton.Custom>
-                            )}
+                                {isConnected ? (
+                                    <button onClick={() => onInvest(rwa)} className="win95-button w-full py-4 text-lg font-black bg-[#008080] text-white uppercase">
+                                        {t('invest')}
+                                    </button>
+                                ) : (
+                                    <ConnectButton.Custom>
+                                        {({ openConnectModal }) => (
+                                            <button onClick={openConnectModal} className="win95-button w-full py-4 text-lg font-black bg-red-600 text-white uppercase">
+                                                {t('connect')}
+                                            </button>
+                                        )}
+                                    </ConnectButton.Custom>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
 
                 {/* STATUS BAR */}
                 <div className="bg-[#c3c7cb] border-t-2 border-[#868a8e] px-4 py-2 flex justify-between text-xs font-bold text-[#424242] uppercase">
-                    <span>{t('network_label')}: <span className="text-[#000080]">EcoChain Testnet</span></span>
+                    <span>{t('network_label')}: <span className="text-[#000080]">{chain?.name || 'Avalanche Fuji (Testnet)'}</span></span>
                     <span>{t('status_label')}: <span className={isConnected ? "text-green-700" : "text-red-700"}>{isConnected ? t('connected') : t('disconnected')}</span></span>
                 </div>
             </motion.div>

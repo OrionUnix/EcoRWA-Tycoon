@@ -130,7 +130,9 @@ export class SaveSystem {
                 concrete: engine.resources.concrete || 0,
                 glass: engine.resources.glass || 0,
                 steel: engine.resources.steel || 0,
-                undergroundWater: engine.resources.undergroundWater || 0
+                undergroundWater: engine.resources.undergroundWater || 0,
+                electricity: engine.resources.electricity || 0,
+                water: engine.resources.water || 0
             },
             flags: {
                 hasClaimedGrant: engine.flags.hasClaimedGrant,
@@ -230,6 +232,8 @@ export class SaveSystem {
                 engine.resources.glass = inv.glass || 0;
                 engine.resources.steel = inv.steel || 0;
                 engine.resources.undergroundWater = inv.undergroundWater || 0;
+                engine.resources.electricity = inv.electricity || 0;
+                engine.resources.water = inv.water || 0;
                 console.log("📦 Inventaire chargé avec succès !", inv);
             }
 

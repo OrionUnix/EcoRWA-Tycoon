@@ -78,9 +78,10 @@ export class MapEngine {
 
         // Valeurs par défaut stats
         this.resources = {
-            money: 50000, wood: 500, concrete: 200, glass: 100, steel: 50,
-            stone: 100, coal: 0, iron: 0, oil: 0, food: 0,
-            energy: 0, water: 0,
+            money: 100000,
+            wood: 50, concrete: 20, glass: 10, steel: 5, stone: 0,
+            coal: 0, iron: 0, oil: 0,
+            food: 100, energy: 0, water: 0, electricity: 0,
             silver: 0, gold: 0, undergroundWater: 0
         };
         this.stats = {
