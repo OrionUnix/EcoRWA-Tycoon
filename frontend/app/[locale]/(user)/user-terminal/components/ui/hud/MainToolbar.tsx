@@ -51,11 +51,18 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
 
             <div
                 className="fixed z-50 pointer-events-auto"
-                style={{ bottom: 48, left: '50%', transform: 'translateX(-50%)', fontFamily: "'Inter','Segoe UI',sans-serif" }}
+                style={{ bottom: 64, left: '50%', transform: 'translateX(-50%)', fontFamily: "'Inter','Segoe UI',sans-serif" }}
             >
-                {/* Barre principale : Modern Borderless */}
+                {/* 🌊 Dock flottant : Glassmorphism */}
                 <div
-                    className="flex items-center h-[72px] px-6 gap-4 bg-transparent"
+                    className="flex items-center h-[68px] px-4 gap-3 rounded-2xl"
+                    style={{
+                        background: 'rgba(13, 13, 26, 0.75)',
+                        backdropFilter: 'blur(16px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                    }}
                 >
                     {TOOLBAR_CATEGORIES.map(cat => (
                         <div key={cat.id} className="relative z-50 flex items-center justify-center">

@@ -11,6 +11,7 @@ interface ResourceBarProps {
     stats?: CityStats | null;
     resources?: PlayerResources | null;
     onOpenPanel?: (panel: string) => void;
+    hoverInfo?: any;
 }
 
 // 🧱 Sous-composant mis à jour avec la propriété "tooltipName"
@@ -37,7 +38,7 @@ const ResourceBlock = ({
     </button>
 );
 
-export const ResourceBar: React.FC<ResourceBarProps> = ({ stats, resources, onOpenPanel }) => {
+export const ResourceBar: React.FC<ResourceBarProps> = ({ stats, resources, onOpenPanel, hoverInfo }) => {
     const t = useTranslations('InfoBar');
 
     const population = stats?.population || 0;
@@ -46,7 +47,7 @@ export const ResourceBar: React.FC<ResourceBarProps> = ({ stats, resources, onOp
 
     const res = resources as any;
     const food = res?.food || 0;
-    const wood = res?.wood || 500; // J'ai laissé 500 pour que tu testes
+    const wood = res?.wood || 0;
     const stone = res?.stone || 0;
     const coal = res?.coal || 0;
     const iron = res?.iron || 0;
@@ -55,57 +56,50 @@ export const ResourceBar: React.FC<ResourceBarProps> = ({ stats, resources, onOp
     const oil = res?.oil || 0;
     const rwa = res?.rwa || 0;
 
-    // 🧠 LOGIQUE DYNAMIQUE DE LA CONSEILLÈRE
+    // 🧠 LOGIQUE ADVISOR CONTEXTUELLE (hoverInfo prioritaire sur les messages génériques)
     let advisorMessage = t('msg_stable');
-    if (population === 0 && wood === 500) {
-        advisorMessage = t('msg_welcome'); // Début de partie
+    let advisorTalking = false;
+
+    if (hoverInfo?.resource && hoverInfo.resource !== 'NONE') {
+        const amount = hoverInfo.resourceAmount || 0;
+        const biome = hoverInfo.biome || 'cette zone';
+        const resource = hoverInfo.resource;
+        const resourceLabels: Record<string, string> = {
+            GOLD: 'or', IRON: 'minerai de fer', COAL: 'charbon',
+            STONE: 'pierre', SILVER: 'argent', OIL: 'pétrole', WOOD: 'bois'
+        };
+        const label = resourceLabels[resource] || resource.toLowerCase();
+        advisorMessage = `Maire, ce ${biome.toLowerCase()} contient ${Math.round(amount)} t. de ${label}. C’est un excellent emplacement !`;
+        advisorTalking = true;
+    } else if (hoverInfo?.altitude) {
+        advisorMessage = `Altitude : ${hoverInfo.altitude.toFixed(0)}m • ${hoverInfo.biome || ''}`;
+    } else if (population === 0) {
+        advisorMessage = t('msg_welcome');
     } else if (waterBalance < 0 || powerBalance < 0) {
-        advisorMessage = t('msg_warning'); // Problème dans la ville
+        advisorMessage = t('msg_warning');
     }
 
     return (
-        <div className="fixed bottom-0 w-full h-[60px] bg-[#c3c7cb] text-black z-50 flex justify-between items-stretch border-t-4 border-black shadow-[0_-4px_0_0_#000] pointer-events-auto font-sans rounded-none select-none overflow-hidden">
+        // ℹ️ Footer sombre et opaque, bien distinct du Dock flottant
+        <div className="fixed bottom-0 w-full h-[56px] bg-[#0d0d1a] text-white z-50 flex justify-between items-stretch border-t-2 border-[#3a3a5c] shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pointer-events-auto select-none overflow-hidden">
 
-            <div className="hidden lg:block lg:flex-1"></div>
+            <div className="hidden lg:block lg:flex-1" />
 
             {/* 🎯 CENTRE : L'INVENTAIRE */}
-            <div className="flex shrink-0 border-l-4 border-black bg-[#c3c7cb] max-w-full overflow-x-auto scrollbar-hide">
-                <ResourceBlock icon={GAME_ICONS.water} value={waterBalance > 0 ? `+${waterBalance}` : waterBalance} tooltipName={t('res_water')} valueColor={waterBalance < 0 ? "text-red-600" : "text-blue-700"} onClick={() => onOpenPanel?.('WATER')} />
-                <ResourceBlock icon={GAME_ICONS.power} value={powerBalance > 0 ? `+${powerBalance}` : powerBalance} tooltipName={t('res_power')} valueColor={powerBalance < 0 ? "text-red-600" : "text-orange-600"} onClick={() => onOpenPanel?.('POWER')} />
-
+            <div className="flex shrink-0 border-l border-[#3a3a5c] max-w-full overflow-x-auto scrollbar-hide">
+                <ResourceBlock icon={GAME_ICONS.h2o} value={waterBalance > 0 ? `+${waterBalance}` : waterBalance} tooltipName={t('res_water')} valueColor={waterBalance < 0 ? "text-red-400" : "text-blue-400"} onClick={() => onOpenPanel?.('WATER')} />
+                <ResourceBlock icon={GAME_ICONS.power} value={powerBalance > 0 ? `+${powerBalance}` : powerBalance} tooltipName={t('res_power')} valueColor={powerBalance < 0 ? "text-red-400" : "text-orange-400"} onClick={() => onOpenPanel?.('POWER')} />
                 <ResourceBlock icon={GAME_ICONS.food || GAME_ICONS.commercial} value={formatNumber(food)} tooltipName={t('res_food')} />
-                <ResourceBlock icon={GAME_ICONS.wood || GAME_ICONS.industrial} value={formatNumber(wood)} tooltipName={t('res_wood')} valueColor="text-amber-800" />
-                <ResourceBlock icon={GAME_ICONS.stone || GAME_ICONS.industrial} value={formatNumber(stone)} tooltipName={t('res_stone')} valueColor="text-gray-600" />
-                <ResourceBlock icon={GAME_ICONS.coal || GAME_ICONS.mine} value={formatNumber(coal)} tooltipName={t('res_coal')} valueColor="text-stone-800" />
-                <ResourceBlock icon={GAME_ICONS.iron || GAME_ICONS.mine} value={formatNumber(iron)} tooltipName={t('res_iron')} valueColor="text-slate-600" />
-                <ResourceBlock icon={GAME_ICONS.silver || GAME_ICONS.mine} value={formatNumber(silver)} tooltipName={t('res_silver')} valueColor="text-slate-400" />
-                <ResourceBlock icon={GAME_ICONS.gold || GAME_ICONS.mine} value={formatNumber(gold)} tooltipName={t('res_gold')} valueColor="text-yellow-600" />
-                <ResourceBlock icon={GAME_ICONS.oil || GAME_ICONS.industrial} value={formatNumber(oil)} tooltipName={t('res_oil')} valueColor="text-zinc-900" />
-
-                <ResourceBlock icon={GAME_ICONS.rwa} value={formatNumber(rwa)} tooltipName={t('res_rwa')} valueColor="text-purple-700" />
+                <ResourceBlock icon={GAME_ICONS.wood || GAME_ICONS.industrial} value={formatNumber(wood)} tooltipName={t('res_wood')} valueColor="text-amber-500" />
+                <ResourceBlock icon={GAME_ICONS.stone || GAME_ICONS.industrial} value={formatNumber(stone)} tooltipName={t('res_stone')} valueColor="text-gray-400" />
+                <ResourceBlock icon={GAME_ICONS.coal || GAME_ICONS.mine} value={formatNumber(coal)} tooltipName={t('res_coal')} valueColor="text-stone-400" />
+                <ResourceBlock icon={GAME_ICONS.iron || GAME_ICONS.mine} value={formatNumber(iron)} tooltipName={t('res_iron')} valueColor="text-slate-400" />
+                <ResourceBlock icon={GAME_ICONS.silver || GAME_ICONS.mine} value={formatNumber(silver)} tooltipName={t('res_silver')} valueColor="text-slate-300" />
+                <ResourceBlock icon={GAME_ICONS.gold || GAME_ICONS.mine} value={formatNumber(gold)} tooltipName={t('res_gold')} valueColor="text-yellow-400" />
+                <ResourceBlock icon={GAME_ICONS.oil || GAME_ICONS.industrial} value={formatNumber(oil)} tooltipName={t('res_oil')} valueColor="text-zinc-400" />
+                <ResourceBlock icon={GAME_ICONS.rwa} value={formatNumber(rwa)} tooltipName={t('res_rwa')} valueColor="text-purple-400" />
             </div>
 
-            {/* ➡️ DROITE : LE PANNEAU ADVISOR */}
-            <div className="flex-1 flex justify-end bg-[#c3c7cb]">
-                <div className="flex items-center border-l-4 border-black bg-[#000080] text-white px-2 shrink-0 relative min-w-[220px] justify-between h-full">
-
-                    <div className="flex flex-col h-full justify-center px-2 flex-1">
-                        <span className="text-[10px] font-black tracking-widest uppercase text-yellow-400 font-mono mb-1">
-                            {t('advisor_title')}
-                        </span>
-                        <span className="text-[11px] font-bold leading-tight text-white pixel-font">
-                            {advisorMessage}
-                        </span>
-                    </div>
-
-                    {/* 🟢 Avatar libéré ! Plus de fond, plus de bordures carrées */}
-                    <div className="w-[52px] h-[52px] flex items-end justify-center overflow-hidden shrink-0">
-                        <div className="w-[52px] h-[52px]">
-                            <AnimatedAvatar character="nancy" isTalking={false} />
-                        </div>
-                    </div>
-                </div>
-            </div>
 
         </div>
     );

@@ -12,6 +12,9 @@ export const GAME_ICONS = {
     eolien: "/assets/isometric/Spritesheet/IU/icones/wind.png",
     solar: "/assets/isometric/Spritesheet/IU/icones/solar.png",
     water: "/assets/isometric/Spritesheet/IU/icones/water.png",
+    h2o: "/assets/isometric/Spritesheet/IU/icones/h2o.png",
+
+
     no_water: "/assets/isometric/Spritesheet/IU/icones/no_water.png",
     rwa: "/assets/isometric/Spritesheet/IU/icones/rwa_property.png",
     police: "/assets/isometric/Spritesheet/IU/icones/police.png",

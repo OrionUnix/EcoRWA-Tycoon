@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { RoadType, ZoneType, BuildingType, PlayerResources, CityStats, ResourceSummary, BuildingCategory, BUILDING_SPECS } from '../engine/types';
 import {
     ROADS, LAYERS, formatNumber,
-    ResourceItem, ToolButton, ResourceCard, GameTooltip, NeedsDisplay
+    ResourceItem, ToolButton, ResourceCard, NeedsDisplay
 } from './ui/hud/GameWidgets';
 import { BuildingInspector } from './ui/BuildingInspector';
 import { getGameEngine } from '../engine/GameEngine';
@@ -206,7 +206,7 @@ export default function GameUI({
                 </div>
             )}
 
-            <GameTooltip hoverInfo={hoverInfo} cursorPos={cursorPos} />
+            {/* GameTooltip supprimé : les infos de tuile sont dans l'Advisor (ResourceBar) */}
 
             <ActiveToolHUD
                 viewMode={viewMode}
@@ -220,6 +220,7 @@ export default function GameUI({
                 stats={stats}
                 resources={resources}
                 onOpenPanel={setActivePanel}
+                hoverInfo={hoverInfo}
             />
 
             <MainToolbar
