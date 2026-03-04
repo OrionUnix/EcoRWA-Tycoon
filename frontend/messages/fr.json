@@ -395,6 +395,10 @@
         "name": "Université",
         "desc": "Enseignement supérieur."
       },
+      "PHARMACY": {
+        "name": "Pharmacie",
+        "desc": "Soins médicaux de proximité."
+      },
       "BANK": {
         "name": "Banque",
         "desc": "Institution financière."

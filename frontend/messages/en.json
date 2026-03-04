@@ -404,6 +404,10 @@
         "name": "University",
         "desc": "Higher education."
       },
+      "PHARMACY": {
+        "name": "Pharmacy",
+        "desc": "Nearby medical care."
+      },
       "BANK": {
         "name": "Bank",
         "desc": "Financial institution."

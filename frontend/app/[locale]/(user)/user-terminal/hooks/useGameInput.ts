@@ -235,14 +235,18 @@ export function useGameInput(
         };
 
         // ✅ Écoute du CustomEvent "building_clicked" posté par le Sprite Pixi (pointertap)
+        // NOTE CRITIQUE : Fonctionne dans TOUS les modes. Un clic sur un bâtiment annule
+        // l'outil actif pour prioritiser l'inspection du bâtiment.
         const onBuildingClicked = (e: Event) => {
             const customEvent = e as CustomEvent;
-            if (viewMode === 'ALL') {
-                const idx = customEvent.detail.index;
-                if (engine.map.buildingLayer[idx]) {
-                    console.log("Selected building at:", idx);
-                    setSelectedBuildingId(idx);
+            const idx = customEvent.detail.index;
+
+            if (engine.map.buildingLayer[idx]) {
+                // Si on était en train de construire/zoner, on retire l'outil
+                if (viewMode !== 'ALL') {
+                    setViewMode('ALL');
                 }
+                setSelectedBuildingId(idx);
             }
         };
 
