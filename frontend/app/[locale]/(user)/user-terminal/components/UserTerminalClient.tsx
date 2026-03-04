@@ -34,7 +34,6 @@ import { JordanPitchModal } from './ui/npcs/JordanPitchModal';
 import { AlertSystem } from '../engine/systems/AlertSystem';
 import { NpcAlertOverlay } from './ui/widgets/NpcAlertOverlay';
 import { useGameSave } from '../hooks/useGameSave';
-import { useGameVisibility } from '../hooks/useGameVisibility';
 import { SaveIndicator } from './ui/hud/SaveIndicator';
 
 export default function UserTerminalClient() {
@@ -59,9 +58,8 @@ export default function UserTerminalClient() {
     // useFirebaseWeb3Auth reste pour l'indicateur d'authentification UI (SimCityLoader)
     const { isAuthenticating } = useFirebaseWeb3Auth();
 
-    // ✅ Système de Sauvegarde Automatique & Session
+    // ✅ Système de Sauvegarde Automatique, Session & Battery Saver
     useGameSave(address, assetsLoaded);
-    useGameVisibility(address, assetsLoaded);
 
     // ✅ Gestion du status wallet (Dirty flag / Connection state)
     useEffect(() => {
