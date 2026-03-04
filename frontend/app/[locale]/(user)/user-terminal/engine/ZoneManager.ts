@@ -67,8 +67,8 @@ export class ZoneManager {
             return { success: false, message: check.reason };
         }
 
-        // Coût du zonage
-        const cost = 10;
+        // Coût du zonage (GRATUIT en early game)
+        const cost = 0;
         if (engine.resources.money < cost) {
             console.log(`❌ ZoneManager: Fonds insuffisants (${engine.resources.money}$ < ${cost}$)`);
             return { success: false, message: `Fonds insuffisants (coût: ${cost}$)` };

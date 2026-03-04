@@ -58,7 +58,7 @@ export function RibbonItem({ active, onClick, icon, label, cost, color: _color, 
                 <span
                     className="text-[10px] flex items-center gap-1 flex-wrap justify-center mt-0.5 leading-tight font-bold bg-black/60 text-white px-1.5 rounded-full shadow-lg"
                 >
-                    ${cost}
+                    {cost > 0 ? `$${cost}` : 'GRATUIT'}
                     {resourceCost && Object.entries(resourceCost).map(([res, amt]) => (
                         <span key={res} className="flex items-center gap-0.5">
                             | {amt}{RES_ICONS[res] && RES_ICONS[res].startsWith('/') ? <img src={RES_ICONS[res]} className="w-3 h-3 pixelated" alt={res} /> : RES_ICONS[res]}

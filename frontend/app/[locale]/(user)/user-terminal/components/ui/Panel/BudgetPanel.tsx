@@ -113,7 +113,7 @@ export const BudgetPanel: React.FC<BudgetPanelProps> = ({ stats, resources, onCl
                                 <BudgetRow label={t('categories.police')} expense={maint['POLICE'] || 0} icon={GAME_ICONS.police} />
                                 <BudgetRow label={t('categories.health')} expense={maint['CIVIC'] || 0} icon={GAME_ICONS.medical} />
                                 <BudgetRow label={t('categories.government')} expense={maint['GOVERNMENT'] || 420} icon={GAME_ICONS.administration} />
-                                <BudgetRow label={t('categories.exports')} income={tradeExport} icon={GAME_ICONS.export} />
+                                <BudgetRow label={t('categories.exports')} expense={maint['EXPORT'] || 0} income={tradeExport} icon={GAME_ICONS.export} />
                                 {/* RWA Row Removed as per instruction: "gain rwa x2 revenues et ne se met pas dans ce tableau" */}
                             </tbody>
                         </table>

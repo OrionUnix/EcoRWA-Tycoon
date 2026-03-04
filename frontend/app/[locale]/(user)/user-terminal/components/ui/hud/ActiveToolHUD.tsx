@@ -126,8 +126,8 @@ export const ActiveToolHUD: React.FC<ActiveToolHUDProps> = ({
                     <span className="text-[14px] font-black uppercase tracking-tight text-black">
                         {info.label}
                     </span>
-                    <span className="text-[12px] font-mono font-bold text-gray-700">
-                        {info.cost > 0 ? `$${info.cost} ${info.costLabel}` : info.costLabel}
+                    <span className="text-[12px] font-mono font-bold text-gray-700 uppercase">
+                        {info.cost > 0 ? `$${info.cost} ${info.costLabel}` : 'GRATUIT'}
                     </span>
                 </div>
 

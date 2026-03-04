@@ -95,8 +95,12 @@ export class EconomySystem {
                     maintenanceCost += cost;
 
                     const cat = specs.category as string;
-                    if (!maintenanceDetail[cat]) maintenanceDetail[cat] = 0;
-                    maintenanceDetail[cat] += cost;
+                    // ✅ NOUVEAU: Si le bâtiment a un taux d'export, on place ses dépenses sous "EXPORT" pour l'UI
+                    const isExportBuilding = !!EconomySystem.RESOURCE_EXPORT_RATES[building.type];
+                    const uiCat = isExportBuilding ? 'EXPORT' : cat;
+
+                    if (!maintenanceDetail[uiCat]) maintenanceDetail[uiCat] = 0;
+                    maintenanceDetail[uiCat] += cost;
                 }
             }
 

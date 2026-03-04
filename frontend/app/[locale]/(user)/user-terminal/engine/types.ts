@@ -297,7 +297,7 @@ export interface RoadSpecs {
 
 export const ROAD_SPECS: Record<RoadType, RoadSpecs> = {
     [RoadType.DIRT]: {
-        type: RoadType.DIRT, speed: 0.5, capacity: 10, lanes: 1, cost: 5,
+        type: RoadType.DIRT, speed: 0.5, capacity: 10, lanes: 1, cost: 0,
         width: 6, color: 0x8D6E63
     },
     [RoadType.SMALL]: {

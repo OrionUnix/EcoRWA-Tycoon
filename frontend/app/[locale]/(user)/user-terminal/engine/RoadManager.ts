@@ -15,7 +15,8 @@ export class RoadManager {
         const isWater = waterDepth > 0.3;
 
         // Si type est null (ex: bulldozer), le coût de base est 0, sinon on prend le coût de la route
-        let baseCost = type ? (ROAD_SPECS[type]?.cost || 10) : 0;
+        // On utilise ?? au lieu de || car le coût peut être 0 (gratuit)
+        let baseCost = type ? (ROAD_SPECS[type]?.cost ?? 10) : 0;
         let isBridge = false;
 
         if (isWater) {
