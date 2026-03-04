@@ -1,4 +1,4 @@
-import { MapEngine } from './MapEngine';
+import { MapEngine, getMapEngine, resetMapEngine } from './MapEngine';
 import { TrafficSystem } from './systems/TrafficSystem';
 import { BuildingSystem } from './systems/BuildingSystem';
 import { PopulationManager } from './systems/PopulationManager';
@@ -10,14 +10,16 @@ import { EconomySystem } from './systems/EconomySystem';
 import { HappinessSystem } from './systems/HappinessSystem';
 import { RWABuildingSpawner } from './RWABuildingSpawner'; // ✅ Bridge React↔PixiJS
 import { SaveSystem } from './systems/SaveSystem';         // ✅ Sauvegarde persistante
-import { FAKE_WALLET_ADDRESS } from './constants';
 import { BUILDING_SPECS, BuildingType } from './types';
 
 // Singleton pour éviter les re-créations lors du Hot Reload
 const globalForGame = globalThis as unknown as { gameEngine: GameEngine | undefined };
 
 export class GameEngine {
-    public map: MapEngine;
+    // ✅ [FIX ARCHITECTUREL] map est un GETTER DYNAMIQUE, pas une propriété stockée.
+    // Toujours lire depuis le singleton getMapEngine() pour garantir que le renderer
+    // voit la même instance que useGameBoot, même après un resetMapEngine().
+    public get map(): MapEngine { return getMapEngine(); }
     public isPaused: boolean = false;
     public speed: number = 1; // 1x, 2x, 4x
     private tickCount: number = 0;
@@ -29,22 +31,24 @@ export class GameEngine {
 
     constructor() {
         console.log("🚀 GameEngine: Démarrage...");
-        this.map = new MapEngine();
-        this.map.generateWorld(FAKE_WALLET_ADDRESS);
+        // ✅ NE PAS créer de new MapEngine() ici.
+        // La carte est gérée par le singleton getMapEngine() + useGameBoot.
+        // Le getter `map` ci-dessus garantit l'accès à la bonne instance.
 
-        // Initialize population tracking
-        PopulationManager.initialize(this.map);
+        // Initialiser les systèmes qui dépendent de la map
+        // (ils liront getMapEngine() au moment où ils en auront besoin)
+        PopulationManager.initialize(getMapEngine());
 
         // ✅ Bridge React↔PixiJS : écoute les achats RWA pour spawner sur la map
         if (typeof window !== 'undefined') {
-            RWABuildingSpawner.initialize(this.map);
+            RWABuildingSpawner.initialize(getMapEngine());
 
             // ═════════════════════════════════════════════════════════════════════
             // L'initialisation se fait désormais via le bouton "Jouer" (SIWE Auth)
             // dans UserTerminalClient.tsx. On ne charge plus automatiquement le local.
             // ═════════════════════════════════════════════════════════════════════
             // Initialize save system map reference
-            SaveSystem.initialize(this.map);
+            SaveSystem.initialize(getMapEngine());
         }
     }
 
@@ -265,14 +269,16 @@ export class GameEngine {
      */
     public resetGame() {
         console.log("🧹 [GameEngine] Réinitialisation du jeu...");
-        this.map = new MapEngine();
         this.tickCount = 0;
 
+        // Réinitialiser le singleton MapEngine (useGameBoot en créera un nouveau lors du prochain login)
+        resetMapEngine();
+
         // Ré-initialiser les systèmes dépendants
-        PopulationManager.initialize(this.map);
-        SaveSystem.initialize(this.map);
+        PopulationManager.initialize(getMapEngine());
+        SaveSystem.initialize(getMapEngine());
         if (typeof window !== 'undefined') {
-            RWABuildingSpawner.initialize(this.map);
+            RWABuildingSpawner.initialize(getMapEngine());
         }
 
         console.log("✨ [GameEngine] Jeu réinitialisé avec succès.");
