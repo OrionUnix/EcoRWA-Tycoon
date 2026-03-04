@@ -21,7 +21,7 @@ export const SC_COLORS: Record<string, string> = {
 export const TOOLBAR_CATEGORIES = [
     { id: 'ROADS', icon: GAME_ICONS.road_asphalt, label: 'Routes', color: SC_COLORS.ROADS },
     { id: 'ZONES', icon: GAME_ICONS.residential, label: 'Zones', color: SC_COLORS.ZONES },
-    { id: BuildingCategory.POWER, icon: GAME_ICONS.power, label: 'Énergie', color: SC_COLORS.POWER },
+    { id: BuildingCategory.POWER, icon: GAME_ICONS.electricity, label: 'Énergie', color: SC_COLORS.POWER },
     { id: BuildingCategory.WATER, icon: GAME_ICONS.water, label: 'Eau', color: SC_COLORS.WATER },
     { id: BuildingCategory.FOOD, icon: GAME_ICONS.food, label: 'Nourriture', color: SC_COLORS.FOOD },
     { id: BuildingCategory.EXTRACTION, icon: GAME_ICONS.iron, label: 'Industrie', color: SC_COLORS.EXTRACTION },

@@ -39,7 +39,7 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({ funds, net, population, 
                 className="flex items-center gap-2 border-r-2 border-slate-400 px-3 cursor-pointer hover:bg-slate-300 active:translate-y-px transition-none"
                 title={t('TopBar.jobs_title')}
             >
-                <img src={GAME_ICONS.residential} alt="Population" className="w-8 h-8 object-contain" style={{ imageRendering: 'pixelated' }} />
+                <img src={GAME_ICONS.population} alt="Population" className="w-8 h-8 object-contain" style={{ imageRendering: 'pixelated' }} />
                 <span className="font-black text-base md:text-lg font-mono tracking-tighter text-[#000] leading-tight">{formatNumber(population)}</span>
             </button>
 
@@ -48,8 +48,20 @@ export const MetricsBar: React.FC<MetricsBarProps> = ({ funds, net, population, 
                 onClick={() => onOpenPanel?.('JOBS')}
                 className="flex items-center gap-2 cursor-pointer hover:bg-slate-300 active:translate-y-px transition-none pl-3 pr-2"
             >
-                <img src={happiness > 50 ? (GAME_ICONS as any).happy : (GAME_ICONS as any).malade} alt="Happiness" className="w-8 h-8 object-contain" style={{ imageRendering: 'pixelated' }} />
-                <span className="font-black text-base md:text-lg font-mono tracking-tighter leading-tight" style={{ color: happiness > 70 ? '#10b981' : happiness > 40 ? '#f59e0b' : '#ef4444' }}>
+                {/* Logique d'icône dynamique selon les paliers définis */}
+                <img src={
+                    (() => {
+                        if (happiness >= 80) return (GAME_ICONS as any).happy;
+                        if (happiness >= 60) return (GAME_ICONS as any).neutral;
+                        if (happiness >= 40) return (GAME_ICONS as any).sad;
+                        if (happiness >= 20) return (GAME_ICONS as any).angry;
+                        if (happiness >= 1) return (GAME_ICONS as any).malade;
+                        return (GAME_ICONS as any).death; // 0%
+                    })()
+                } alt="Happiness" className="w-8 h-8 object-contain" style={{ imageRendering: 'pixelated' }} />
+
+                <span className="font-black text-base md:text-lg font-mono tracking-tighter leading-tight"
+                    style={{ color: happiness >= 60 ? '#10b981' : happiness >= 40 ? '#f59e0b' : '#ef4444' }}>
                     {happiness}%
                 </span>
             </button>

@@ -65,7 +65,7 @@ export class BuildingMath {
     }
 
     /**
-     * Vérifie si l'index est adjacent (N, S, E, O) à une route
+     * Vérifie si l'index est adjacent (N, S, E, O) à une route CONNECTÉE AU RÉSEAU PRINCIPAL
      */
     static isNextToRoad(engine: MapEngine, index: number): boolean {
         const x = index % GRID_SIZE;
@@ -78,7 +78,13 @@ export class BuildingMath {
             (x > 0) ? y * GRID_SIZE + (x - 1) : -1
         ];
 
-        return neighbors.some(nIdx => nIdx !== -1 && engine.roadLayer[nIdx] !== null);
+        return neighbors.some(nIdx => {
+            if (nIdx !== -1) {
+                const road = engine.roadLayer[nIdx];
+                return road !== null && road.isConnectedToMain === true;
+            }
+            return false;
+        });
     }
 
     /**
@@ -126,8 +132,8 @@ export class BuildingMath {
 
         const hasRoad = this.isNextToRoad(engine, index);
         if (!hasRoad) {
-            advisorStore.triggerAdvice("Impossible de bâtir ici, Maire ! Il faut absolument coller le bâtiment à une route pour qu'il soit relié aux services.", true);
-            return { valid: false, reason: "Doit être adjacent à une route" };
+            advisorStore.triggerAdvice("Maire ! Ce bâtiment n'est pas relié au réseau routier principal de la région. Tirez une route jusqu'à une autoroute existante !", true);
+            return { valid: false, reason: "Doit être relié au réseau routier principal" };
         }
 
         return { valid: true };

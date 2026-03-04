@@ -37,7 +37,8 @@ export class RoadManager {
             lanes: specs.lanes,
             isBridge,
             isTunnel,
-            connections: { n: false, s: false, e: false, w: false } // Sera mis à jour par updateConnections
+            connections: { n: false, s: false, e: false, w: false }, // Sera mis à jour par updateConnections
+            isConnectedToMain: false // Par défaut, non connecté
         };
     }
 
@@ -108,6 +109,9 @@ export class RoadManager {
                 }
             }
         });
+
+        // ✅ Lancement de l'algorithme BFS pour mettre à jour l'accès au réseau
+        this.updateRoadNetwork(engine);
     }
 
     /**
@@ -148,6 +152,55 @@ export class RoadManager {
         const speed = specs ? specs.speed : 1.0;
 
         engine.roadGraph.addNode(index, connections, speed);
+    }
+
+    /**
+     * ✅ ALGORITHME BFS DE CONNEXION AU RÉSEAU PRINCIPAL
+     * Parcourt toutes les routes depuis les bords de la carte pour définir isConnectedToMain
+     */
+    static updateRoadNetwork(engine: MapEngine) {
+        const size = engine.config.size;
+        const total = engine.config.totalCells;
+
+        // 1. Initialiser toutes les routes à isConnectedToMain = false
+        for (let i = 0; i < total; i++) {
+            if (engine.roadLayer[i]) {
+                engine.roadLayer[i]!.isConnectedToMain = false;
+            }
+        }
+
+        const queue: number[] = [];
+        const visited = new Set<number>();
+
+        // 2. Trouver toutes les routes sur les bords (Autoroute procédurale)
+        for (let i = 0; i < total; i++) {
+            if (engine.roadLayer[i]) {
+                const x = i % size;
+                const y = Math.floor(i / size);
+
+                // Si la route est sur un bord = point de départ du BFS
+                if (x === 0 || x === size - 1 || y === 0 || y === size - 1) {
+                    queue.push(i);
+                    visited.add(i);
+                    engine.roadLayer[i]!.isConnectedToMain = true;
+                }
+            }
+        }
+
+        // 3. Propagation (BFS Breadth-First Search)
+        while (queue.length > 0) {
+            const current = queue.shift()!;
+            const neighbors = this.getNeighbors(current);
+
+            for (const nIdx of neighbors) {
+                // Si c'est un voisin valide, sur la carte, pas encore visité, et que c'est une route
+                if (nIdx !== -1 && !visited.has(nIdx) && engine.roadLayer[nIdx]) {
+                    visited.add(nIdx);
+                    engine.roadLayer[nIdx]!.isConnectedToMain = true;
+                    queue.push(nIdx);
+                }
+            }
+        }
     }
 
 

@@ -229,11 +229,16 @@ export class InteractionSystem {
             }
             console.log(`✅ Zone ${type} créée avec succès!`);
         } else {
-            console.warn(`❌ Zonage impossible: ${result.message}`);
+            // ✅ Nettoyage des erreurs : On remonte proprement le message adapté à l'Advisor
+            let advisorMessage = result.message || "Impossible de développer cette zone ici.";
+            if (result.message === "Doit être relié au réseau routier principal") {
+                advisorMessage = "Maire, les nouveaux habitants refuseront de s'installer si cette zone n'est pas reliée au réseau routier principal !";
+            }
+
             window.dispatchEvent(new CustomEvent('show_bob_warning', {
                 detail: {
                     title: "Zonage Impossible !",
-                    message: "M. le Maire (Bob) : Vous devez placer ce bâtiment à côté d'une route pour qu'il soit accessible !"
+                    message: advisorMessage
                 }
             }));
         }
@@ -305,7 +310,21 @@ export class InteractionSystem {
             // ✅ RETOUR SUCCÈS POUR AUTO-DESELECT
             return { success: true, placedType: buildingType };
         } else {
-            console.error(`❌ Construction impossible: ${result.message}`);
+            // ✅ PLUS DE console.error NI DE throw POUR ÉVITER LE CRASH DE NEXT.JS
+            // On délègue le message d'erreur à l'interface utilisateur (Bob / Advisor)
+
+            let advisorMessage = result.message || "Impossible de construire ici.";
+            if (result.message === "Doit être relié au réseau routier principal") {
+                advisorMessage = "Attention Maire ! Ce bâtiment doit impérativement être relié à l'autoroute principale pour fonctionner.";
+            }
+
+            window.dispatchEvent(new CustomEvent('show_bob_warning', {
+                detail: {
+                    title: "Construction Impossible !",
+                    message: advisorMessage
+                }
+            }));
+
             return { success: false };
         }
     }

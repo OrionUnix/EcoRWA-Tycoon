@@ -175,6 +175,7 @@ export interface RoadData {
     isTunnel: boolean;
     isBridge: boolean;
     connections: { n: boolean, s: boolean, e: boolean, w: boolean }; // Typage précis
+    isConnectedToMain?: boolean; // ✅ Géré par le BFS Routier
 }
 
 // ✅ TYPES DE VÉHICULES
