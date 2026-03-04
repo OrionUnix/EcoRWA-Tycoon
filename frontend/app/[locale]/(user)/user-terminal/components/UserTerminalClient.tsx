@@ -9,6 +9,7 @@ import { useAccount } from 'wagmi';
 import { usePixiApp } from '../hooks/usePixiApp';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGameInput } from '../hooks/useGameInput';
+import { useGameBoot } from '../hooks/useGameBoot';
 import { getGameEngine } from '../engine/GameEngine';
 import { RoadType, ZoneType, BuildingType } from '../engine/types';
 import { AssetLoader } from '../engine/core/AssetLoader';
@@ -53,7 +54,8 @@ export default function UserTerminalClient() {
     const [showJordanPitch, setShowJordanPitch] = useState(false);
 
     const [assetsLoaded, setAssetsLoaded] = useState(false);
-    const { loginAndLoadSave, isAuthenticating } = useFirebaseWeb3Auth();
+    // useFirebaseWeb3Auth reste pour l'indicateur d'authentification UI (SimCityLoader)
+    const { isAuthenticating } = useFirebaseWeb3Auth();
 
     // ✅ Système de Sauvegarde Automatique & Session
     useGameSave(address, assetsLoaded);
@@ -147,53 +149,25 @@ export default function UserTerminalClient() {
         }
     }, [isReady, assetsLoaded]);
 
-    // 5. RÉGÉNÉRATION DU BIOME SUR ATTENTE
-    // Actuellement on génère le monde directement ou charge la save si connecté.
-    const lastGeneratedAddress = useRef<string | null>(null);
+    // 5. 🔒 BOOT FLOW VERROUILLÉ — useGameBoot garantit l'ordre séquentiel :
+    //    A(Wallet) → B(loadSave) → C(seed) → D(inject) → E(generateWorld) → F(isReady)
+    //    Le moteur graphique ne dessine AUCUN pixel avant que bootState.isReady soit true.
+    const bootState = useGameBoot(isConnected && address ? address : undefined);
 
+    // Sync du mode démo avec l'état du boot
     useEffect(() => {
-        const initGame = async () => {
-            if (!assetsLoaded || !isReady || !viewportRef.current) return;
+        setIsDemoMode(!isConnected);
+    }, [isConnected]);
 
-            const currentTarget = isConnected && address ? address : "0xDEMO";
-            if (lastGeneratedAddress.current === currentTarget) return;
-
+    // Déclenche le calcul du résumé et le premier rendu dès que le boot est complet
+    useEffect(() => {
+        if (bootState.isReady && assetsLoaded) {
             const engine = getGameEngine();
-
-            if (isConnected && address) {
-                // IMPORTANT : Si isAuthenticating est en cours, la restoration est couverte par le loader.
-                const saveData = await loginAndLoadSave();
-
-                if (saveData) {
-                    // On a une sauvegarde, on génère d'abord puis on restaure par dessus
-                    engine.map.generateWorld(address);
-                    const restored = SaveSystem.restoreIntoEngine(engine.map, saveData);
-                    if (restored) {
-                        require('../engine/systems/PopulationManager').PopulationManager.initialize(engine.map);
-                        SaveSystem.clearDirty();
-                    }
-                } else {
-                    // Aucune sauvegarde: Monde 100% Neuf
-                    engine.map.generateWorld(address);
-                }
-                setIsDemoMode(false);
-            } else {
-                engine.map.generateWorld("0xDEMO");
-                setIsDemoMode(true);
-            }
-
             engine.map.calculateSummary();
             setSummary(engine.map.currentSummary);
             engine.map.revision++;
-            setViewMode(prev => prev);
-            lastGeneratedAddress.current = currentTarget;
-        };
-
-        // Bloquer initGame TANT QUE 'isAuthenticating' est true, pour laisser le loader affiché
-        if (!isAuthenticating && !isSavingDisconnect) {
-            initGame();
         }
-    }, [assetsLoaded, isReady, isConnected, address, isAuthenticating, isSavingDisconnect, loginAndLoadSave]);
+    }, [bootState.isReady, assetsLoaded]);
 
     // 6. SAUVEGARDE DE LA CAMÉRA
     useEffect(() => {
@@ -231,9 +205,12 @@ export default function UserTerminalClient() {
         if (viewMode !== 'ALL') setSelectedBuildingId(null);
     }, [viewMode]);
 
+    // ✅ La boucle de rendu ne démarre que si PixiJS est prêt ET le boot est complet
+    const gameIsFullyReady = isReady && assetsLoaded && bootState.isReady;
+
     useGameLoop(
         appRef, terrainContainerRef, staticGRef, uiGRef,
-        isReady && assetsLoaded, isReloading, viewMode, cursorPos,
+        gameIsFullyReady, isReloading, viewMode, cursorPos,
         previewPathRef, isValidBuildRef, setFps, setResources, setStats,
         selectedBuildingTypeRef, updateECS, activeResourceLayer
     );
@@ -267,7 +244,7 @@ export default function UserTerminalClient() {
     }, [isDemoMode, isConnected]);
 
     useGameInput(
-        viewportRef, appRef, isReady && assetsLoaded,
+        viewportRef, appRef, gameIsFullyReady,
         viewMode, setViewMode, selectedRoad, selectedZone, selectedBuilding,
         setCursorPos, setHoverInfo, setTotalCost, setIsValidBuild,
         previewPathRef, isValidBuildRef, setSelectedBuildingId
@@ -291,10 +268,17 @@ export default function UserTerminalClient() {
             <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#000', overflow: 'hidden' }}>
                 <div ref={containerRef} style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
 
-                {!assetsLoaded && (
+                {/* 🔒 Écran de chargement : affiché JUSQU'À ce que le boot soit 100% complet */}
+                {(!assetsLoaded || !bootState.isReady) && (
                     <div style={{ position: 'absolute', inset: 0, zIndex: 50, backgroundColor: '#111', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
                         <div className="loader"></div>
-                        <h1 style={{ marginTop: '20px' }}>Génération du territoire...</h1>
+                        <h1 style={{ marginTop: '20px' }}>
+                            {bootState.phase === 'loading_save' && 'Chargement de la sauvegarde...'}
+                            {bootState.phase === 'generating' && 'Génération du territoire...'}
+                            {bootState.phase === 'restoring' && 'Restauration de votre ville...'}
+                            {(bootState.phase === 'idle' || !assetsLoaded) && 'Initialisation...'}
+                            {bootState.phase === 'error' && `❌ Erreur : ${bootState.error}`}
+                        </h1>
                     </div>
                 )}
 

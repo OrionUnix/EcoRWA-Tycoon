@@ -57,17 +57,12 @@ export const AssetLoader = {
 
             console.log("✅ AssetLoader: Tous les assets sont chargés.");
 
-            const engine = getGameEngine();
-            const walletToUse = userWallet || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
-
-            if (engine.map.revision === 0) {
-                engine.map.generateWorld(walletToUse);
-                engine.map.calculateSummary();
-            }
-
-            setSummary(engine.map.currentSummary);
+            // ✅ [FIX RACE CONDITION] AssetLoader NE génère PLUS le monde.
+            // La génération est la responsabilité exclusive de useGameBoot,
+            // qui s'assure que le mapSeed est injecté AVANT tout appel à generateWorld().
+            // AssetLoader signale juste que les textures sont prêtes.
+            setSummary(null); // Le résumé sera calculé par useGameBoot après la génération.
             setAssetsLoaded(true);
-            engine.map.revision++;
             setIsReloading(false);
 
         } catch (err) {

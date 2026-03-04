@@ -5,6 +5,7 @@ import { LayerType, BiomeType, RoadType } from '../types';
 import { BIOME_SIGNATURES, ResourceRule } from '../data/biomeData';
 import { RoadManager } from '../RoadManager';
 import { ChunkManager } from '../ChunkManager';
+import { SeededRandom, ResourceSalt } from '../SeededRandom';
 
 export class MapGenerator {
 
@@ -45,43 +46,39 @@ export class MapGenerator {
     }
     */
 
-    // Un algorithme simple (Mulberry32) pour générer des nombres aléatoires à partir d'une graine
-    private static createSeededRandom(seedStr: string): () => number {
-        let seed = 0;
-        for (let i = 0; i < seedStr.length; i++) {
-            // Hash simple pour transformer "0x..." en nombre
-            seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
-            seed |= 0; // Force en entier 32bit
-        }
-        // Mulberry32 (Générateur pseudo-aléatoire rapide)
-        return () => {
-            let t = seed += 0x6D2B79F5;
-            t = Math.imul(t ^ t >>> 15, t | 1);
-            t ^= t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-        };
-    }
-
     static generate(engine: MapEngine, walletAddress?: string) {
         console.log("🌱 MapGenerator: Démarrage de la génération...");
 
-        // 🔑 GARANTIE DU SEED: On utilise engine.mapSeed si présent, 
-        // sinon on utilise wallet pour la première fois, sinon du random.
+        // 🔑 GARANTIE DU SEED: On utilise engine.mapSeed si présent,
+        // sinon on utilise wallet pour la première fois, sinon un UUID stable.
+        // ⚠️ Math.random() est INTERDIT ici — la seed doit TOUJOURS être déterministe.
         if (!engine.mapSeed) {
-            engine.mapSeed = walletAddress || Math.random().toString(36).substring(7);
-            console.log(`✨ Nouvelle graine générée : ${engine.mapSeed}`);
+            if (walletAddress) {
+                engine.mapSeed = walletAddress;
+                console.log(`✨ Seed depuis wallet : ${engine.mapSeed}`);
+            } else {
+                // Fallback sans wallet : seed basée sur timestamp (fixée une seule fois)
+                // Elle sera remplacée dès que le wallet se connecte et charge la sauvegarde.
+                engine.mapSeed = `default_${Date.now().toString(36)}`;
+                console.warn(`⚠️ Aucune seed fournie — seed temporaire : ${engine.mapSeed}`);
+            }
         }
 
-        const rng = this.createSeededRandom(engine.mapSeed);
+        // 🎯 DOUBLE RNG :
+        // - seqRng : Sequential (pour initier les fonctions createNoise2D — usage unique)
+        // - tileRng : Per-tile hash (sans état, 100% déterministe par coordonnée)
+        const seededRandom = new SeededRandom(engine.mapSeed);
+        const seqRng = seededRandom.createSequentialRng();
+        const tileRng = seededRandom; // Alias sémantique
         console.log(`🎲 World Seed: ${engine.mapSeed}`);
 
-        // Création des générateurs de bruit
-        // createNoise2D attend une fonction () => number. rng est compatible.
-        const terrainNoise = createNoise2D(rng);
-        const moistureNoise = createNoise2D(rng);
-        const riverNoise = createNoise2D(rng);
-        const resNoise = createNoise2D(rng); // Not used explicitly but good practice
-        const undergroundNoise = createNoise2D(rng); // ✅ Bruit pour l'eau souterraine
+        // Création des générateurs de bruit (Perlin/Simplex)
+        // createNoise2D est initié UNE seule fois avec seqRng.
+        const terrainNoise = createNoise2D(seqRng);
+        const moistureNoise = createNoise2D(seqRng);
+        const riverNoise = createNoise2D(seqRng);
+        const resNoise = createNoise2D(seqRng);
+        const undergroundNoise = createNoise2D(seqRng); // ✅ Bruit pour l'eau souterraine
 
         // Reset des layers
         engine.biomes.fill(0);
@@ -101,9 +98,10 @@ export class MapGenerator {
         const scale = 0.18;
         const riverScale = 0.3;
 
-        // ✅ CRUCIAL: Utiliser rng() pour les offsets, sinon c'est toujours pareil ou aléatoire non-contrôlé
-        const offsetX = rng() * 10000;
-        const offsetY = rng() * 10000;
+        // ✅ OFFSETS : utilisent seqRng (appelé UNE SEULE FOIS avant la boucle tuile)
+        // Ces offsets sont constants pour une seed donnée.
+        const offsetX = seqRng() * 10000;
+        const offsetY = seqRng() * 10000;
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -144,31 +142,35 @@ export class MapGenerator {
                 // --- GÉNÉRATION RESSOURCES ---
                 const rule = BIOME_SIGNATURES[biome] || BIOME_SIGNATURES[BiomeType.PLAINS];
 
-                const applyRes = (targetMap: Float32Array | undefined, r: ResourceRule | undefined, noiseOffset: number, resourceType?: string) => {
+                // ✅ FIX CORE : applyRes est maintenant SANS ÉTAT.
+                // Le salt garantit un espace de valeurs isolé pour chaque ressource.
+                // tileRng.at(x, y, salt) retourne TOUJOURS la même valeur pour (seed, x, y, salt).
+                const applyRes = (targetMap: Float32Array | undefined, r: ResourceRule | undefined, noiseOffset: number, salt: number) => {
                     if (!targetMap || !r || r.chance <= 0) return;
                     if (r.minHeight && h < r.minHeight) return;
                     if (r.maxHeight && h > r.maxHeight) return;
 
-                    // Bruit spécifique pour cette ressource
+                    // 1. Présence de la ressource : décidée par le bruit de Perlin (déterministe par (x,y))
                     const n = resNoise(x * 0.1 + noiseOffset, y * 0.1 + noiseOffset);
                     if (n > (1 - r.chance)) {
-                        let amount = r.intensity;
-                        // Variation aléatoire + ou - 20%
-                        amount *= (0.8 + rng() * 0.4);
-                        targetMap[i] = amount;
+                        // 2. Variation d'intensité : ✅ hash par coordonnées (SANS ÉTAT)
+                        //    tileRng.at() ne dépend pas de l'ordre d'exécution.
+                        const variation = 0.8 + tileRng.at(x, y, salt) * 0.4; // ±20%
+                        targetMap[i] = r.intensity * variation;
                     }
                 };
 
-                applyRes(engine.resourceMaps.oil, rule.oil, 0, 'oil');
-                applyRes(engine.resourceMaps.coal, rule.coal, 100, 'coal');
-                applyRes(engine.resourceMaps.iron, rule.iron, 200, 'iron');
-                applyRes(engine.resourceMaps.wood, rule.wood, 300, 'wood');
-                applyRes(engine.resourceMaps.animals, rule.animals, 400);
-                applyRes(engine.resourceMaps.fish, rule.fish, 500);
+                // ✅ Chaque ressource passe son salt unique depuis ResourceSalt
+                applyRes(engine.resourceMaps.oil, rule.oil, 0, ResourceSalt.OIL);
+                applyRes(engine.resourceMaps.coal, rule.coal, 100, ResourceSalt.COAL);
+                applyRes(engine.resourceMaps.iron, rule.iron, 200, ResourceSalt.IRON);
+                applyRes(engine.resourceMaps.wood, rule.wood, 300, ResourceSalt.WOOD);
+                applyRes(engine.resourceMaps.animals, rule.animals, 400, ResourceSalt.ANIMALS);
+                applyRes(engine.resourceMaps.fish, rule.fish, 500, ResourceSalt.FISH);
 
-                applyRes(engine.resourceMaps.gold, rule.gold, 600);
-                applyRes(engine.resourceMaps.silver, rule.silver, 700);
-                applyRes(engine.resourceMaps.stone, rule.stone, 800);
+                applyRes(engine.resourceMaps.gold, rule.gold, 600, ResourceSalt.GOLD);
+                applyRes(engine.resourceMaps.silver, rule.silver, 700, ResourceSalt.SILVER);
+                applyRes(engine.resourceMaps.stone, rule.stone, 800, ResourceSalt.STONE);
 
                 // ✅ NAPPES PHRÉATIQUES INDÉPENDANTES (Eau Souterraine)
                 // Échelle plus douce (0.025) et grand offset (+1000) pour détacher totalement le bruit de la surface
@@ -188,11 +190,14 @@ export class MapGenerator {
 
         // --- POST-PROCESSING ---
         // 4. ✅ GÉNÉRATION DES RIVIÈRES CONTINUES (Random Walk)
-        this.generateRivers(engine, rng, 2); // Génère 2 rivières principales
+        // Les rivières utilisent seqRng car leur algorithme est un Random Walk séquentiel
+        // (chaque pas dépend du précédent). Le résultat global reste déterministe
+        // car seqRng a été initialisé avec la même seed, dans le même ordre d'appels.
+        this.generateRivers(engine, seqRng, 2);
         // 5. ✅ GÉNÉRATION DES PLAGES DE FAÇON COHÉRENTE
         this.generateBeaches(engine);
-        // 6. ✅ GÉNÉRATION DE L'AUTOROUTE RÉGIONALE (M2 & M3)
-        this.generateHighway(engine, rng);
+        // 6. ✅ GÉNÉRATION DE L'AUTOROUTE RÉGIONALE
+        this.generateHighway(engine, seqRng);
     }
 
     // 🌊 ALGORITHME DES RIVAGES (Plages)
@@ -250,11 +255,9 @@ export class MapGenerator {
             while (x < width && y >= 0 && y < height) {
                 const index = y * width + x;
 
-                // 1. On force le biome en EAU (Ocean/River)
                 engine.biomes[index] = BiomeType.OCEAN;
                 engine.getLayer(LayerType.WATER)[index] = 0.6;
 
-                // 2. On supprime les ressources générées par erreur sous l'eau (arbres, minerais)
                 if (engine.resourceMaps.wood) engine.resourceMaps.wood[index] = 0;
                 if (engine.resourceMaps.animals) engine.resourceMaps.animals[index] = 0;
                 if (engine.resourceMaps.stone) engine.resourceMaps.stone[index] = 0;

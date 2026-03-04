@@ -111,8 +111,18 @@ export class MapEngine {
             stone: 0, silver: 0, gold: 0, undergroundWater: 0
         };
 
-        // 2. Génération immédiate
-        this.generateWorld();
+        // ✅ [RACE CONDITION FIX]
+        // generateWorld() N'EST PLUS APPELÉ ICI.
+        // Le constructeur crée uniquement les structures de données vides (Float32Arrays).
+        //
+        // Le flux correct est :
+        // 1. new MapEngine()            → Allocations mémoire (O(n) mais CPU-free)
+        // 2. PersistenceManager.load()  → Récupère la sauvegarde + le mapSeed
+        // 3. engine.mapSeed = seed      → Injection du seed
+        // 4. engine.generateWorld()     → Génération déterministe
+        //
+        // Ce flux est garanti par le hook `useGameBoot`.
+        console.log("🗺️ MapEngine: Mémoire allouée. En attente de seed pour la génération.");
     }
 
     // Accesseur sécurisé
@@ -185,11 +195,16 @@ export class MapEngine {
 }
 
 // Singleton Robuste
+// ✅ getMapEngine() crée le moteur MAIS NE GÉNÈRE PAS LE MONDE.
+// La génération est déclenchée par useGameBoot après chargement de la sauvegarde.
 const globalForMap = globalThis as unknown as { mapEngine: MapEngine | undefined };
 export function getMapEngine(): MapEngine {
     if (!globalForMap.mapEngine) {
         globalForMap.mapEngine = new MapEngine();
     }
     return globalForMap.mapEngine;
+}
+export function resetMapEngine(): void {
+    globalForMap.mapEngine = undefined;
 }
 export function regenerateWorld() { if (globalForMap.mapEngine) globalForMap.mapEngine.generateWorld(); }

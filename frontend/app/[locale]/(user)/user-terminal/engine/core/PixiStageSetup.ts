@@ -49,11 +49,35 @@ export const PixiStageSetup = {
     positionCamera(viewport: Viewport) {
         const engine = getGameEngine();
 
-        if (engine.lastCameraPosition) {
-            console.log("🔄 Restauration de la caméra...", engine.lastCameraPosition);
-            viewport.moveCenter(engine.lastCameraPosition.x, engine.lastCameraPosition.y);
-            viewport.setZoom(engine.lastZoom);
+        // ✅ BLINDÉ : Vérification stricte avant d'appliquer les données de caméra
+        // Si une coordonnée est NaN ou undefined, le viewport PixiJS s'effondre silencieusement.
+        const cam = engine.lastCameraPosition;
+        const zoom = engine.lastZoom;
+        const cameraIsValid =
+            cam !== null &&
+            cam !== undefined &&
+            typeof cam.x === 'number' && !isNaN(cam.x) && isFinite(cam.x) &&
+            typeof cam.y === 'number' && !isNaN(cam.y) && isFinite(cam.y) &&
+            typeof zoom === 'number' && !isNaN(zoom) && zoom > 0;
+
+        if (cameraIsValid) {
+            console.log("🔄 Restauration de la caméra...", cam);
+            try {
+                viewport.moveCenter(cam!.x, cam!.y);
+                viewport.setZoom(zoom);
+            } catch (e) {
+                console.warn("⚠️ Erreur lors de la restauration de caméra, retour au centre.", e);
+                // Laisse le bloc else s'exécuter pour le centrage par défaut
+                engine.lastCameraPosition = null;
+                PixiStageSetup.positionCamera(viewport); // Rappel récursif (une seule fois car lastCameraPosition = null)
+                return;
+            }
         } else {
+            if (cam !== null && cam !== undefined) {
+                console.warn("⚠️ Données caméra invalides (NaN détecté), ignorées.", cam);
+                engine.lastCameraPosition = null; // Purge pour ne pas recommencer
+            }
+
             viewport.resize(window.innerWidth, window.innerHeight);
 
             const midTileX = GRID_SIZE / 2;
