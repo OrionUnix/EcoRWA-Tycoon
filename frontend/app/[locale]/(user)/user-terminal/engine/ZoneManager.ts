@@ -23,30 +23,13 @@ export class ZoneManager {
             (x > 0) ? y * GRID_SIZE + (x - 1) : -1              // W
         ];
 
-        // Debug neighbors
-        neighbors.forEach((nVal, i) => {
-            if (nVal !== -1) {
-                const hasRoad = engine.roadLayer[nVal] !== null;
-                // console.log(`Neighbor ${i} (idx ${nVal}): Road=${hasRoad ? 'YES' : 'NO'}`);
+        return neighbors.some(nIdx => {
+            if (nIdx !== -1) {
+                const road = engine.roadLayer[nIdx];
+                return road !== null && road.isConnectedToMain === true;
             }
+            return false;
         });
-
-        // Console log seulement si pas de route trouvée pour ne pas spammer, ou sur demande
-
-        neighbors.forEach((nVal, i) => {
-            if (nVal !== -1) {
-                // console.log(`Neighbor ${i} (idx ${nVal}): Road=${engine.roadLayer[nVal] ? 'YES' : 'NO'}`);
-            }
-        });
-
-        // VRAI DEBUG
-        const valid = neighbors.some(nIdx => nIdx !== -1 && engine.roadLayer[nIdx] !== null);
-        if (!valid) {
-            console.log(`🛣️ ZoneManager Check: Index ${index} (x:${x}, y:${y}). Neighbors: ${neighbors.map(n => n === -1 ? 'OUT' : `${n}(${engine.roadLayer[n] ? 'R' : '_'})`).join(', ')}`);
-        }
-        return valid;
-
-        return neighbors.some(nIdx => nIdx !== -1 && engine.roadLayer[nIdx] !== null);
     }
 
     /**
@@ -92,9 +75,9 @@ export class ZoneManager {
         const hasRoad = this.isNextToRoad(engine, index);
         console.log(`🛣️ Validation: hasAdjacentRoad=${hasRoad}`);
         if (!hasRoad) {
-            console.log('❌ Validation: Pas de route adjacente');
-            advisorStore.triggerAdvice("Impossible de bâtir ici, Maire ! Il faut absolument coller le bâtiment à une route pour qu'il soit relié aux services.", true);
-            return { valid: false, reason: "Doit être adjacent à une route" };
+            console.log('❌ Validation: Pas de route adjacente ou réseau principal non connecté');
+            // Trigger retiré d'ici pour laisser InteractionSystem s'en charger 
+            return { valid: false, reason: "Doit être relié au réseau routier principal" };
         }
 
         console.log('✅ Validation: SUCCÈS - zonage autorisé');
