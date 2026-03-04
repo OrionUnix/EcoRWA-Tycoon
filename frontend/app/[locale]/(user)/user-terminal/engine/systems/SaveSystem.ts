@@ -244,7 +244,7 @@ export class SaveSystem {
                 engine.flags.lastFaucetClaim = data.flags.lastFaucetClaim || 0;
             }
 
-            // ── ✅ Restaurer Seed et Balances RWA ────────────────────────────
+            // ── ✅ Seed et Balances RWA ───────────────────────────────────────
             if (data.seed) engine.mapSeed = data.seed;
             if (data.rwa_balances) engine.rwaBalances = data.rwa_balances;
 
@@ -255,43 +255,7 @@ export class SaveSystem {
                 const deltaHours = deltaMs / (1000 * 60 * 60);
 
                 if (deltaHours > 0.01) { // Plus de 36 secondes d'absence
-                    console.log(`⏳ [SaveSystem] Calcul de la progression hors-ligne (${deltaHours.toFixed(2)}h)...`);
-
-                    let offlineMoney = 0;
-
-                    // 1. Taxes (10$/h par habitant)
-                    const population = data.eco?.totalPopulation ?? 0;
-                    const taxIncome = population * 10 * deltaHours;
-                    offlineMoney += taxIncome;
-
-                    // 2. Yields RWA
-                    let rwaYields = 0;
-                    engine.buildingLayer.forEach(b => {
-                        if (b && b.rwaId) {
-                            // On simule une récolte automatique ou on stocke le "pending"
-                            // Pour simplifier ici, on ajoute au compte : 5$/h par RWA de base (test local)
-                            rwaYields += 5 * deltaHours;
-                            b.lastYieldClaim = now; // On "consomme" le yield
-                        }
-                    });
-                    offlineMoney += rwaYields;
-
-                    if (offlineMoney > 0) {
-                        engine.resources.money += Math.floor(offlineMoney);
-                        console.log(`💰 [SaveSystem] Gain hors-ligne : $${Math.floor(offlineMoney)} (Taxes: $${Math.floor(taxIncome)}, RWA: $${Math.floor(rwaYields)})`);
-
-                        // ✅ Notification UI
-                        if (typeof window !== 'undefined') {
-                            window.dispatchEvent(new CustomEvent('offline_gains', {
-                                detail: {
-                                    total: Math.floor(offlineMoney),
-                                    taxes: Math.floor(taxIncome),
-                                    rwa: Math.floor(rwaYields),
-                                    hours: deltaHours
-                                }
-                            }));
-                        }
-                    }
+                    SaveSystem.processOfflineGains(engine, deltaHours, data.eco?.totalPopulation ?? 0);
                 }
             }
 
@@ -313,6 +277,51 @@ export class SaveSystem {
         } catch (e) {
             console.error('[SaveSystem] Erreur restauration Cloud:', e);
             return false;
+        }
+    }
+
+    /**
+     * Traite les gains "idle" basés sur un écart de temps (en heures)
+     * Peut être appelé au chargement de la sauvegarde, ou lors du retour de l'utilisateur sur la page
+     */
+    public static processOfflineGains(engine: MapEngine, deltaHours: number, fallbackPopulation?: number): void {
+        console.log(`⏳ [SaveSystem] Calcul de la progression idle (${deltaHours.toFixed(4)}h)...`);
+
+        let offlineMoney = 0;
+
+        // 1. Taxes (10$/h par habitant)
+        // Utilise la pop actuelle dans le moteur, ou un fallback venant de la sauvegarde brute
+        const population = PopulationManager.getTotalPopulation() || fallbackPopulation || 0;
+        const taxIncome = population * 10 * deltaHours;
+        offlineMoney += taxIncome;
+
+        // 2. Yields RWA
+        let rwaYields = 0;
+        const now = Date.now();
+        engine.buildingLayer.forEach(b => {
+            if (b && b.rwaId) {
+                // Yield basique pour test
+                rwaYields += 5 * deltaHours;
+                b.lastYieldClaim = now;
+            }
+        });
+        offlineMoney += rwaYields;
+
+        if (offlineMoney > 0) {
+            engine.resources.money += Math.floor(offlineMoney);
+            console.log(`💰 [SaveSystem] Gain Idle : $${Math.floor(offlineMoney)} (Taxes: $${Math.floor(taxIncome)}, RWA: $${Math.floor(rwaYields)})`);
+
+            // Notifie l'UI
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('offline_gains', {
+                    detail: {
+                        total: Math.floor(offlineMoney),
+                        taxes: Math.floor(taxIncome),
+                        rwa: Math.floor(rwaYields),
+                        hours: deltaHours
+                    }
+                }));
+            }
         }
     }
 }

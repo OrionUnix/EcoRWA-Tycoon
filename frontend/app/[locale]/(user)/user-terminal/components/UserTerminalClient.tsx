@@ -34,6 +34,7 @@ import { JordanPitchModal } from './ui/npcs/JordanPitchModal';
 import { AlertSystem } from '../engine/systems/AlertSystem';
 import { NpcAlertOverlay } from './ui/widgets/NpcAlertOverlay';
 import { useGameSave } from '../hooks/useGameSave';
+import { useGameVisibility } from '../hooks/useGameVisibility';
 import { SaveIndicator } from './ui/hud/SaveIndicator';
 
 export default function UserTerminalClient() {
@@ -60,6 +61,7 @@ export default function UserTerminalClient() {
 
     // ✅ Système de Sauvegarde Automatique & Session
     useGameSave(address, assetsLoaded);
+    useGameVisibility(address, assetsLoaded);
 
     // ✅ Gestion du status wallet (Dirty flag / Connection state)
     useEffect(() => {

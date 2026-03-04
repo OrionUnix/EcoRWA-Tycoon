@@ -11,7 +11,7 @@ export const useGameSave = (
     isAssetsLoaded: boolean
 ) => {
     const { isConnected } = useAccount();
-    const SAVE_INTERVAL = 120 * 1000; // 2 minutes
+    const SAVE_INTERVAL = 60 * 1000; // 1 minute (Batching Firebase optimisé)
 
     // 1. Sauvegarde automatique périodique via PersistenceManager
     useEffect(() => {
