@@ -1,0 +1,17 @@
+{
+    "nancy": {
+        "zone_needs": "Mayor, this zone will evolve automatically once its citizens are satisfied. Right now, they need: {needs}.",
+        "zone_ok": "Excellent! All services are provided. This zone will upgrade through natural growth!",
+        "zone_max": "Mayor, this zone has reached its maximum potential. It's thriving!",
+        "infra_max": "Mayor, this building has reached its full potential. It's running perfectly!",
+        "infra_no_workers": "Warning! This facility is only running at {ratio}% capacity. We need more citizens to staff it!",
+        "infra_no_money": "To upgrade this structure to level {next}, we need {cost}$. The treasury isn't ready yet!",
+        "infra_no_resources": "To reach level {next}, we're missing: {missing}. Keep your industries running!",
+        "infra_ready": "Everything is in order! Click 'Upgrade' to reach level {next} and boost our output!",
+        "infra_default": "I'm keeping a close eye on this building, Mayor.",
+        "need_water": "Water",
+        "need_electricity": "Electricity",
+        "need_food": "Food",
+        "need_jobs": "Jobs"
+    }
+}

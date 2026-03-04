@@ -65,26 +65,40 @@ export class BuildingMath {
     }
 
     /**
-     * Vérifie si l'index est adjacent (N, S, E, O) à une route CONNECTÉE AU RÉSEAU PRINCIPAL
+     * Vérifie si UN BÂTIMENT (en tenant compte de sa taille) est adjacent
+     * à une route connectée au réseau principal.
+     * 
+     * On boucle sur toutes les tuiles du périmètre (de x à x+w-1, y à y+h-1)
+     * et on cherche une route isConnectedToMain voisine.
      */
-    static isNextToRoad(engine: MapEngine, index: number): boolean {
-        const x = index % GRID_SIZE;
-        const y = Math.floor(index / GRID_SIZE);
+    static isNextToRoad(engine: MapEngine, index: number, width = 1, height = 1): boolean {
+        const originX = index % GRID_SIZE;
+        const originY = Math.floor(index / GRID_SIZE);
 
-        const neighbors = [
-            (y > 0) ? (y - 1) * GRID_SIZE + x : -1,
-            (y < GRID_SIZE - 1) ? (y + 1) * GRID_SIZE + x : -1,
-            (x < GRID_SIZE - 1) ? y * GRID_SIZE + (x + 1) : -1,
-            (x > 0) ? y * GRID_SIZE + (x - 1) : -1
-        ];
+        for (let dy = 0; dy < height; dy++) {
+            for (let dx = 0; dx < width; dx++) {
+                const tx = originX + dx;
+                const ty = originY + dy;
+                if (tx >= GRID_SIZE || ty >= GRID_SIZE) continue;
 
-        return neighbors.some(nIdx => {
-            if (nIdx !== -1) {
-                const road = engine.roadLayer[nIdx];
-                return road !== null && road.isConnectedToMain === true;
+                // Quatre voisins cardinaux de cette tuile
+                const neighbors = [
+                    ty > 0 ? (ty - 1) * GRID_SIZE + tx : -1, // N
+                    ty < GRID_SIZE - 1 ? (ty + 1) * GRID_SIZE + tx : -1, // S
+                    tx < GRID_SIZE - 1 ? ty * GRID_SIZE + (tx + 1) : -1, // E
+                    tx > 0 ? ty * GRID_SIZE + (tx - 1) : -1, // W
+                ];
+
+                const found = neighbors.some(nIdx => {
+                    if (nIdx === -1) return false;
+                    const road = engine.roadLayer[nIdx];
+                    return road !== null && road.isConnectedToMain === true;
+                });
+
+                if (found) return true; // Dès qu'une tuile du bâtiment trouve une route, c'est valide
             }
-            return false;
-        });
+        }
+        return false;
     }
 
     /**
@@ -130,7 +144,8 @@ export class BuildingMath {
             return { valid: false, reason: `Fonds insuffisants (coût: ${specs.cost}$)` };
         }
 
-        const hasRoad = this.isNextToRoad(engine, index);
+        // Vérification de la route en tenant compte de la taille réelle du bâtiment
+        const hasRoad = this.isNextToRoad(engine, index, specs.width || 1, specs.height || 1);
         if (!hasRoad) {
             advisorStore.triggerAdvice("Maire ! Ce bâtiment n'est pas relié au réseau routier principal de la région. Tirez une route jusqu'à une autoroute existante !", true);
             return { valid: false, reason: "Doit être relié au réseau routier principal" };

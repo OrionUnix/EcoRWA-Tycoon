@@ -1,16 +1,18 @@
 'use client';
 import React, { useMemo, useState } from 'react';
-import { BuildingData, BUILDING_SPECS, BuildingType, CityStats, BuildingStatus, PlayerResources } from '../../engine/types';
+import { useTranslations } from 'next-intl';
+import { BuildingData, BUILDING_SPECS, BuildingType, CityStats, BuildingStatus } from '../../engine/types';
 import { BuildingManager } from '../../engine/BuildingManager';
 import { formatNumber } from './hud/GameWidgets';
 import { MapEngine } from '../../engine/MapEngine';
 import { EconomySystem } from '../../engine/systems/EconomySystem';
 import { AnimatedAvatar } from './npcs/AnimatedAvatar';
 import { TypewriterTextWithSound } from '../TypewriterTextWithSound';
+import { withBasePath } from '../../utils/assetUtils';
 
 // ═══════════════════════════════════════
 // Win95 / SimCity 3000 Style — BUILDING INSPECTOR
-// Nancy (Advisor) integrated
+// Nancy (Advisor) integrated — fully i18n
 // ═══════════════════════════════════════
 
 interface BuildingInspectorProps {
@@ -22,79 +24,130 @@ interface BuildingInspectorProps {
     onUpgrade: () => void;
 }
 
-// ───────────────────────────────────────────────
-// Helper: Logic de conseil de Nancy
-// ───────────────────────────────────────────────
-const RES_ICONS: Record<string, string> = {
-    money: '$', wood: '🪵', stone: '🪨', iron: '⛏️', coal: '⚫',
-    oil: '🛢️', glass: '🪟', concrete: '🧱', steel: '🏗️', gold: '🪙', silver: '🥈'
+// ── Icônes PNG pour les ressources (depuis les assets du jeu) ──
+const RES_ICON_SRC: Record<string, string> = {
+    wood: '/assets/isometric/Spritesheet/icons/wood.png',
+    stone: '/assets/isometric/Spritesheet/icons/stone.png',
+    iron: '/assets/isometric/Spritesheet/icons/iron.png',
+    coal: '/assets/isometric/Spritesheet/icons/coal.png',
+    oil: '/assets/isometric/Spritesheet/icons/oil.png',
+    gold: '/assets/isometric/Spritesheet/icons/gold.png',
+    silver: '/assets/isometric/Spritesheet/icons/silver.png',
+    glass: '/assets/isometric/Spritesheet/icons/glass.png',
+    concrete: '/assets/isometric/Spritesheet/icons/concrete.png',
+    steel: '/assets/isometric/Spritesheet/icons/steel.png',
+};
+const RES_EMOJI: Record<string, string> = {
+    wood: '🪵', stone: '🪨', iron: '⛏️', coal: '⚫',
+    oil: '🛢️', glass: '🪟', concrete: '🧱', steel: '🏗️', gold: '🪙', silver: '🥈',
 };
 
+function ResIcon({ res, size = 14 }: { res: string; size?: number }) {
+    const src = RES_ICON_SRC[res];
+    if (src) {
+        return (
+            <img
+                src={withBasePath(src)}
+                alt={res}
+                width={size}
+                height={size}
+                style={{ imageRendering: 'pixelated', display: 'inline-block', verticalAlign: 'middle' }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
+        );
+    }
+    return <span title={res}>{RES_EMOJI[res] ?? res.charAt(0).toUpperCase()}</span>;
+}
+
+// ── Nancy advice logic (pure fn — prend t() en paramètre) ──
 function getNancyAdvice(
     building: BuildingData,
-    specs: ReturnType<typeof Object.values<typeof BUILDING_SPECS[BuildingType]>>[number],
+    specs: any,
     engine: MapEngine,
     canAffordMoney: boolean,
     canAffordResources: boolean,
+    t: (key: string, opts?: Record<string, string | number>) => string,
     resourceUpgradeCost?: Record<string, number>
 ): string {
     const maxLevel = specs.maxLevel || 1;
     const isMaxLevel = building.level >= maxLevel;
+    const isZone = building.type === BuildingType.RESIDENTIAL
+        || building.type === BuildingType.COMMERCIAL
+        || building.type === BuildingType.INDUSTRIAL;
 
-    // 1. Niveau maximum
-    if (isMaxLevel) {
-        return "Maire, ce bâtiment a atteint son plein potentiel. Il fonctionne à merveille ! Continuez sur cette lancée.";
+    // ── ZONES : évolution automatique ──
+    if (isZone) {
+        if (isMaxLevel) return t('zone_max');
+
+        // ✅ Vérifie STRICTEMENT chaque besoin via === 0
+        const hasWater = (building.statusFlags & BuildingStatus.NO_WATER) === 0;
+        const hasPower = (building.statusFlags & BuildingStatus.NO_POWER) === 0;
+        const hasFood = (building.statusFlags & BuildingStatus.NO_FOOD) === 0;
+        const hasJobs = (building.statusFlags & BuildingStatus.NO_JOBS) === 0;
+
+        const missingNeeds: string[] = [];
+        if (!hasWater) missingNeeds.push(t('need_water') + ' 💧');
+        if (!hasPower) missingNeeds.push(t('need_electricity') + ' ⚡');
+        if (!hasFood) missingNeeds.push(t('need_food') + ' 🍎');
+        if (!hasJobs) missingNeeds.push(t('need_jobs') + ' 💼');
+
+        if (missingNeeds.length > 0) {
+            return t('zone_needs', { needs: missingNeeds.join(', ') });
+        }
+        // Tous les 4 services sont VRAIMENT comblés avant d'annoncer "Excellent"
+        return t('zone_ok');
     }
 
-    // 2. Manque de travailleurs (pour bâtiments avec maxWorkers)
+    // ── INFRASTRUCTURES : upgrade manuel ──
+    if (isMaxLevel) return t('infra_max');
+
     const maxWorkers = specs.maxWorkers;
     if (maxWorkers && building.jobsAssigned < maxWorkers) {
-        return `Attention ! Cette installation ne tourne qu'à ${Math.round((building.jobsAssigned / maxWorkers) * 100)}% de capacité. Nous manquons de citoyens pour la faire tourner à plein régime !`;
+        const ratio = Math.round((building.jobsAssigned / maxWorkers) * 100);
+        return t('infra_no_workers', { ratio });
     }
-
-    // 3. Manque d'argent pour améliorer
     if (!canAffordMoney) {
         const upgradeCost = (specs.upgradeCost || 0) * building.level;
-        return `Pour améliorer cette structure au niveau ${building.level + 1}, il nous faut ${formatNumber(upgradeCost)} $. La caisse municipale doit encore grossir !`;
+        return t('infra_no_money', { next: building.level + 1, cost: formatNumber(upgradeCost) });
     }
-
-    // 4. Manque de ressources matérielles
     if (resourceUpgradeCost && !canAffordResources) {
         const missing = Object.entries(resourceUpgradeCost)
             .filter(([res, amt]) => ((engine.resources as any)[res] || 0) < (amt as number))
-            .map(([res, amt]) => `${res} (${amt})`)
+            .map(([res, amt]) => `${RES_EMOJI[res] ?? res} ×${amt}`)
             .join(', ');
-        return `Pour passer au niveau ${building.level + 1}, il nous manque : ${missing}. Faites tourner vos industries !`;
+        return t('infra_no_resources', { next: building.level + 1, missing });
     }
-
-    // 5. Prêt à améliorer
-    if (canAffordMoney && canAffordResources) {
-        return `Tout est prêt ! Cliquez sur "Améliorer" pour passer au niveau ${building.level + 1} et augmenter notre rendement !`;
-    }
-
-    return "Je surveille attentivement l'état de ce bâtiment, Monsieur le Maire.";
+    return t('infra_ready', { next: building.level + 1 });
 }
 
-// ───────────────────────────────────────────────
-// Sub-components
-// ───────────────────────────────────────────────
+// ── Sub-components ──
+function SectionTitle({ label }: { label: string }) {
+    return (
+        <div className="text-[9px] font-bold uppercase tracking-wider border-b border-[#808080] pb-1 mb-1.5" style={{ color: '#444' }}>
+            {label}
+        </div>
+    );
+}
+
 function InspectorRow({ label, value, color = '#222' }: { label: string; value: string; color?: string }) {
     return (
         <div className="flex justify-between items-center py-0.5">
-            <span className="text-[11px] font-bold" style={{ color: '#555' }}>{label}</span>
+            <span className="text-[11px]" style={{ color: '#555' }}>{label}</span>
             <span className="text-[11px] font-bold font-mono" style={{ color }}>{value}</span>
         </div>
     );
 }
 
-function StatusBadge({ icon, label, active }: { icon: string; label: string; active: boolean }) {
+function StatusBadge({ icon, label, active }: { icon: React.ReactNode; label: string; active: boolean }) {
     return (
         <span
-            className="flex items-center gap-1 px-1.5 py-0.5 border-2 text-[10px] font-bold"
+            className="flex items-center gap-1 px-2 py-1 border-2 text-[10px] font-bold rounded-none"
             style={{
                 borderColor: active ? '#008000' : '#800000',
-                color: active ? '#005000' : '#800000',
-                background: active ? '#d4edda' : '#f8d7da'
+                color: active ? '#004400' : '#800000',
+                background: active ? '#d4edda' : '#f8d7da',
+                minWidth: 60,
+                justifyContent: 'center',
             }}
         >
             {icon} {label}
@@ -102,20 +155,20 @@ function StatusBadge({ icon, label, active }: { icon: string; label: string; act
     );
 }
 
-// ───────────────────────────────────────────────
-// Main Component
-// ───────────────────────────────────────────────
+// ── Main Component ──
 export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
     engine, building, index, stats, onClose, onUpgrade
 }) => {
+    const t = useTranslations('nancy');
+
     const specs = useMemo(() => BUILDING_SPECS[building.type] || {
         type: building.type,
         name: building.type.replace(/_/g, ' '),
-        description: 'Fonctionne normalement',
+        description: '',
         cost: 0, maintenance: 0, maxLevel: 1
     }, [building.type]);
 
-    // Display name override for Mine subtypes
+    // Mine subtype display name
     let displayName = specs.name;
     if (building.type === BuildingType.MINE && building.mining) {
         const r = building.mining.resource;
@@ -131,7 +184,6 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
     const upgradeCost = (specs.upgradeCost || 0) * building.level;
     const canAffordMoney = engine.resources.money >= upgradeCost;
 
-    // Resource cost for upgrade
     const resourceUpgradeCost = specs.resourceCost
         ? Object.fromEntries(Object.entries(specs.resourceCost).map(([k, v]) => [k, (v as number) * building.level]))
         : undefined;
@@ -157,18 +209,17 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
     const isCommercial = building.type === BuildingType.COMMERCIAL;
     const isIndustrial = building.type === BuildingType.INDUSTRIAL;
     const isZone = isResidential || isCommercial || isIndustrial;
-
     const satisfaction = stats?.happiness || 0;
 
-    // Nancy advice
+    // Nancy advice — recomputed when statusFlags or resources change
     const nancyText = useMemo(() => getNancyAdvice(
-        building, specs as any, engine, canAffordMoney, canAffordResources, resourceUpgradeCost
-    ), [building, canAffordMoney, canAffordResources, resourceUpgradeCost]);
+        building, specs, engine, canAffordMoney, canAffordResources, t, resourceUpgradeCost
+    ), [building, building.statusFlags, canAffordMoney, canAffordResources]);
 
-    // isTalking: true quand le Typewriter anime, false quand il a terminé
+    // Nancy talks while typewriter is running
     const [isTalking, setIsTalking] = useState(true);
 
-    // Export / Mine financials
+    // Export financials
     let exportRev = 0, opsCost = 0, profit = 0;
     const hasExport = !!EconomySystem.RESOURCE_EXPORT_RATES[building.type];
     if (hasExport) {
@@ -185,14 +236,13 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
         profit = exportRev - opsCost;
     }
 
-    // Worker ratio for production buildings
     const maxWorkers = specs.maxWorkers;
     const workerRatio = maxWorkers ? Math.round((building.jobsAssigned / maxWorkers) * 100) : 100;
 
     return (
         <div
-            className="fixed right-4 top-20 z-[55] pointer-events-auto"
-            style={{ animation: 'panelSlideIn 0.2s ease-out', width: '340px' }}
+            className="fixed right-2 top-20 z-[55] pointer-events-auto"
+            style={{ animation: 'panelSlideIn 0.2s ease-out', width: 'clamp(300px, 28vw, 420px)' }}
         >
             <div className="win95-window p-[2px]">
 
@@ -201,13 +251,13 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
                     <span className="text-sm flex-shrink-0">
                         {isResidential ? '🏠' : isCommercial ? '🏢' : isIndustrial ? '🏭' : '🏗️'}
                     </span>
-                    <span className="flex-1 text-[11px] font-bold text-white truncate">
+                    <span className="flex-1 text-[12px] font-bold text-white truncate">
                         {displayName}
-                        <span className="opacity-70 font-normal ml-1">Niv. {building.level}/{maxLevel}</span>
+                        <span className="opacity-70 font-normal ml-2 text-[10px]">Niv. {building.level}/{maxLevel}</span>
                     </span>
                     <button
                         onClick={onClose}
-                        className="win95-button px-2 py-0 h-[20px] text-[11px] font-bold leading-none flex-shrink-0"
+                        className="win95-button px-2 py-0 h-[20px] text-[12px] font-bold leading-none flex-shrink-0"
                         aria-label="Fermer"
                     >
                         ✕
@@ -217,35 +267,46 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
                 <div className="p-2 space-y-2">
 
                     {/* ══ ZONE ADVISOR NANCY ══ */}
-                    <div className="flex gap-2 items-start">
-                        {/* Portrait animé Nancy — switching sprite quand elle parle */}
-                        <div className="win95-inset flex-shrink-0 p-0.5" style={{ width: 58, height: 58 }}>
+                    <div
+                        className="flex gap-2 items-stretch"
+                        style={{ minHeight: 90 }}
+                    >
+                        {/* Portrait animé Nancy */}
+                        <div
+                            className="win95-inset flex-shrink-0 flex items-center justify-center"
+                            style={{ width: 72, minHeight: 72, background: '#c8c8c8', padding: 3 }}
+                        >
                             <AnimatedAvatar character="nancy" isTalking={isTalking} />
                         </div>
-                        {/* Bulle de dialogue avec l'effet machine à écrire */}
+
+                        {/* Bulle de dialogue */}
                         <div
-                            className="win95-inset flex-1 p-2"
-                            style={{ background: 'white', minHeight: 58, position: 'relative' }}
+                            className="win95-inset flex-1 flex flex-col justify-between p-2"
+                            style={{ background: '#fffff0', border: '2px solid #808080', minHeight: 72 }}
                         >
-                            <p className="text-[10px] italic leading-snug" style={{ color: '#333' }}>
+                            <p
+                                className="text-[11px] leading-snug"
+                                style={{ color: '#111', fontStyle: 'italic', fontFamily: 'serif', lineHeight: 1.45 }}
+                            >
                                 &ldquo;<TypewriterTextWithSound
                                     key={nancyText}
                                     text={nancyText}
-                                    speed={22}
+                                    speed={20}
                                     onFinished={() => setIsTalking(false)}
                                 />&rdquo;
                             </p>
-                            <span className="text-[9px] font-bold not-italic" style={{ color: '#0000aa' }}>
+                            <span
+                                className="text-[10px] font-bold not-italic mt-1"
+                                style={{ color: '#00008b', fontFamily: 'sans-serif', letterSpacing: '0.02em' }}
+                            >
                                 — Nancy, Conseillère Municipale
                             </span>
                         </div>
                     </div>
 
                     {/* ══ ÉTAT GÉNÉRAL ══ */}
-                    <div className="win95-inset p-2 bg-[#c0c0c0]">
-                        <div className="text-[9px] font-bold uppercase tracking-wider border-b border-[#808080] pb-1 mb-1">
-                            État du Bâtiment
-                        </div>
+                    <div className="win95-inset p-2" style={{ background: '#c0c0c0' }}>
+                        <SectionTitle label="État du Bâtiment" />
                         <InspectorRow
                             label="État"
                             value={building.state === 'CONSTRUCTION' ? '🔧 En construction' : building.state === 'ABANDONED' ? '🏚️ Abandonné' : '✅ Actif'}
@@ -263,9 +324,6 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
                                 color={workerRatio >= 80 ? '#005000' : workerRatio >= 50 ? '#c06000' : '#800000'}
                             />
                         )}
-                        {specs.workersNeeded && !maxWorkers && (
-                            <InspectorRow label="Travailleurs requis" value={`${specs.workersNeeded}`} />
-                        )}
                         {specs.maintenance && (
                             <InspectorRow
                                 label="Entretien"
@@ -277,10 +335,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
 
                     {/* ══ PRODUCTION / EXPORT ══ */}
                     {(specs.production || hasExport) && (
-                        <div className="win95-inset p-2 bg-[#c0c0c0]">
-                            <div className="text-[9px] font-bold uppercase tracking-wider border-b border-[#808080] pb-1 mb-1">
-                                Bilan Financier
-                            </div>
+                        <div className="win95-inset p-2" style={{ background: '#c0c0c0' }}>
+                            <SectionTitle label="Bilan Financier" />
                             {hasExport && (
                                 <>
                                     <InspectorRow label="🔴 Coût exploitation" value={`-$${formatNumber(opsCost)}/h`} color="#800000" />
@@ -313,13 +369,11 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
                         </div>
                     )}
 
-                    {/* ══ SERVICES (zones résidentielles / commerciales) ══ */}
+                    {/* ══ SERVICES ══ */}
                     {(isResidential || isCommercial) && (
-                        <div className="win95-inset p-2 bg-[#c0c0c0]">
-                            <div className="text-[9px] font-bold uppercase tracking-wider border-b border-[#808080] pb-1 mb-1">
-                                Services
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-1">
+                        <div className="win95-inset p-2" style={{ background: '#c0c0c0' }}>
+                            <SectionTitle label="Services" />
+                            <div className="flex flex-wrap gap-1.5 mt-1">
                                 <StatusBadge icon="💧" label="Eau" active={(building.statusFlags & BuildingStatus.NO_WATER) === 0} />
                                 <StatusBadge icon="⚡" label="Électricité" active={(building.statusFlags & BuildingStatus.NO_POWER) === 0} />
                                 <StatusBadge icon="🍎" label="Nourriture" active={(building.statusFlags & BuildingStatus.NO_FOOD) === 0} />
@@ -328,15 +382,13 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
                         </div>
                     )}
 
-                    {/* ══ STATISTIQUES RÉSIDENTIELLES ══ */}
+                    {/* ══ RÉSIDENTS ══ */}
                     {isResidential && (() => {
                         const pop = 5 + (building.level - 1) * 3;
                         const taxes = pop * 10;
                         return (
-                            <div className="win95-inset p-2 bg-[#c0c0c0]">
-                                <div className="text-[9px] font-bold uppercase tracking-wider border-b border-[#808080] pb-1 mb-1">
-                                    Résidents
-                                </div>
+                            <div className="win95-inset p-2" style={{ background: '#c0c0c0' }}>
+                                <SectionTitle label="Résidents" />
                                 <InspectorRow label="Habitants" value={`${pop}`} color="#005000" />
                                 <InspectorRow label="Taxes perçues" value={`$${formatNumber(taxes)}/h`} color="#0000aa" />
                                 <InspectorRow label="Satisfaction" value={`${satisfaction}%`}
@@ -347,10 +399,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
 
                     {/* ══ CONTRATS ══ */}
                     {building.activeContracts && building.activeContracts.length > 0 && (
-                        <div className="win95-inset p-2 bg-[#c0c0c0]">
-                            <div className="text-[9px] font-bold uppercase tracking-wider border-b border-[#808080] pb-1 mb-1">
-                                Contrats Actifs
-                            </div>
+                        <div className="win95-inset p-2" style={{ background: '#c0c0c0' }}>
+                            <SectionTitle label="Contrats Actifs" />
                             {building.activeContracts.map((c, i) => (
                                 <InspectorRow
                                     key={i}
@@ -365,11 +415,11 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
                     {/* ══ UPGRADE ══ */}
                     <div>
                         {isMaxLevel ? (
-                            <div className="win95-inset p-2 text-center text-[10px] font-bold bg-[#c0c0c0]">
+                            <div className="win95-inset p-2 text-center text-[11px] font-bold" style={{ background: '#c0c0c0' }}>
                                 ✨ Niveau Maximum Atteint
                             </div>
                         ) : isZone ? (
-                            <div className="win95-inset p-2 text-center text-[10px] font-bold bg-[#c0c0c0]">
+                            <div className="win95-inset p-2 text-center text-[11px] font-bold" style={{ background: '#c0c0c0' }}>
                                 {!basicNeedsMet
                                     ? <span style={{ color: '#800000' }}>⚠️ Attente Eau / Électricité</span>
                                     : <span style={{ color: '#c06000' }}>⚠️ Évolution automatique en cours…</span>}
@@ -386,21 +436,22 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
                                     <span className="flex items-center gap-1 flex-wrap">
                                         ${formatNumber(upgradeCost)}
                                         {resourceUpgradeCost && Object.entries(resourceUpgradeCost).map(([res, amt]) => (
-                                            <span key={res} title={res} className="ml-0.5">
-                                                {amt}{RES_ICONS[res] || ''}
+                                            <span key={res} className="flex items-center gap-0.5 ml-0.5">
+                                                <ResIcon res={res} size={12} />
+                                                <span>{amt}</span>
                                             </span>
                                         ))}
                                     </span>
                                 </div>
                                 {!basicNeedsMet && (
                                     <div className="text-[9px] font-bold text-center mt-0.5" style={{ color: '#800000' }}>
-                                        ⚠️ Eau & Électricité requises pour améliorer
+                                        ⚠️ Eau &amp; Électricité requises
                                     </div>
                                 )}
                             </button>
                         ) : (
-                            <div className="win95-inset p-2 text-center text-[10px] font-bold bg-[#c0c0c0]">
-                                Pas d'amélioration disponible
+                            <div className="win95-inset p-2 text-center text-[11px]" style={{ background: '#c0c0c0', color: '#555' }}>
+                                Pas d&apos;amélioration disponible
                             </div>
                         )}
                     </div>
@@ -417,5 +468,3 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({
         </div>
     );
 };
-
-export default React.memo(BuildingInspector);

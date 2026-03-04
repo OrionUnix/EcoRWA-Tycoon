@@ -21,6 +21,7 @@ export default getRequestConfig(async ({ locale }) => {
   const rwaMessages = (await import(`../messages/${activeLocale}_rwa.json`)).default;
   const hudMessages = (await import(`../messages/${activeLocale}_hud.json`)).default;
   const advisorMessages = (await import(`../messages/${activeLocale}_advisor.json`)).default;
+  const inspectorMessages = (await import(`../messages/${activeLocale}_inspector.json`)).default;
 
   return {
     locale: activeLocale,
@@ -36,6 +37,7 @@ export default getRequestConfig(async ({ locale }) => {
       rwa: rwaMessages,
       hud: hudMessages,
       advisor: advisorMessages,
+      nancy: inspectorMessages.nancy,
       ...infobarMessages
     },
     onError(error) {

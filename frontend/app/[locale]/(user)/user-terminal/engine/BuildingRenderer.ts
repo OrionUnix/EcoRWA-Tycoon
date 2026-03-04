@@ -132,12 +132,20 @@ export class BuildingRenderer {
             }
             sprite.scale.set(currentScale);
 
-            // HitArea Polygon (Isométrique pur)
-            const hw = (TILE_WIDTH / 2) / currentScale;
-            const hh = (TILE_HEIGHT / 2) / currentScale;
+            // HitArea Losange Isométrique — en coordonnées LOCALES du sprite (avant scale)
+            // anchor est (0.5, 1.0) : x=0 est au centre horizontal, y=0 est au bas du sprite
+            // Le losange de base de la tuile (TILE_WIDTH×TILE_HEIGHT) :
+            //   Centre-Bas  : (0, 0)
+            //   Droite      : (+TILE_WIDTH/2, -TILE_HEIGHT/2)
+            //   Centre-Haut : (0, -TILE_HEIGHT)
+            //   Gauche      : (-TILE_WIDTH/2, -TILE_HEIGHT/2)
+            const hw = TILE_WIDTH / 2;   // demi-largeur de la tuile en px
+            const hh = TILE_HEIGHT / 2;  // demi-hauteur de la tuile en px
             sprite.hitArea = new PIXI.Polygon([
-                new PIXI.Point(0, 0), new PIXI.Point(hw, -hh),
-                new PIXI.Point(0, -hh * 2), new PIXI.Point(-hw, -hh)
+                new PIXI.Point(0, 0),    // Bas (ancre)
+                new PIXI.Point(hw, -hh),  // Droite
+                new PIXI.Point(0, -TILE_HEIGHT), // Haut
+                new PIXI.Point(-hw, -hh),  // Gauche
             ]);
 
             this.updateEmote(container, emoteText, building, isLow, -(TILE_HEIGHT - 20));

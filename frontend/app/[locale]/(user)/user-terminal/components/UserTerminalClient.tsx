@@ -209,7 +209,13 @@ export default function UserTerminalClient() {
     }, [selectedBuilding]);
 
     useEffect(() => {
-        if (viewMode !== 'ALL') setSelectedBuildingId(null);
+        // On n'efface la sélection que si le mode change VERS un mode de construction
+        // et non depuis un mode de construction (ce qui serait le cas après un clic bâtiment)
+        if (viewMode !== 'ALL') {
+            // Délai pour éviter la race condition avec onBuildingClicked qui
+            // appelle setViewMode('ALL') + setSelectedBuildingId(idx) au même moment
+            setTimeout(() => setSelectedBuildingId(null), 0);
+        }
     }, [viewMode]);
 
     // ✅ La boucle de rendu ne démarre que si PixiJS est prêt ET le boot est complet

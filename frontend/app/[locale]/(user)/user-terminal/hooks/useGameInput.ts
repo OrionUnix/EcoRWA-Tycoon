@@ -105,15 +105,16 @@ export function useGameInput(
         // On se concentre sur les clics de jeu.
 
         const getGridPos = (globalX: number, globalY: number) => {
-            // Pour être sûr, on prend le point global client et on le convertit dans le monde (viewport)
-            // viewport.toLocal gère la transformation (zoom/pan)
             const rect = app.canvas.getBoundingClientRect();
-            // Coordonnées relatives au canvas
+            // globalX/Y : pixels CSS (client coords)
+            // getBoundingClientRect() : pixels CSS aussi → soustraction OK
             const canvasX = globalX - rect.left;
             const canvasY = globalY - rect.top;
 
-            // Transformation vers le monde
-            const worldPos = viewport.toLocal({ x: canvasX, y: canvasY });
+            // viewport.toLocal() prend des coords en pixels RENDERER (= CSS × DPR)
+            // car le canvas est rendu en haute résolution (autoDensity: true)
+            const dpr = window.devicePixelRatio || 1;
+            const worldPos = viewport.toLocal({ x: canvasX * dpr, y: canvasY * dpr });
             return screenToGrid(worldPos.x, worldPos.y);
         };
 
@@ -208,11 +209,19 @@ export function useGameInput(
                     setViewMode('ALL');
                 }
             }
-            // ✅ MODE SÉLECTION (Terrain vide ou construction, pas les bâtiments qui sont gérés par CustomEvent)
+            // ✅ MODE SÉLECTION
             else if (viewMode === 'ALL') {
-                setSelectedBuildingId(null);
-                // Permettre d'ouvrir l'achat de terrain même en mode sélection
-                engine.handleInteraction(idx, 'ALL', null, null);
+                // Vérification directe : y a-t-il un bâtiment sur cette case ?
+                const building = engine.map.buildingLayer[idx];
+                if (building) {
+                    // Sélection directe — ne pas dépendre du pointertap PixiJS
+                    // qui peut être avalé par pixi-viewport en mode drag
+                    setSelectedBuildingId(idx);
+                } else {
+                    // Case vide : désélectionner et ouvrir le menu terrain
+                    setSelectedBuildingId(null);
+                    engine.handleInteraction(idx, 'ALL', null, null);
+                }
             }
         };
 

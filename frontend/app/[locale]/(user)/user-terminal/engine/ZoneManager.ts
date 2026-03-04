@@ -36,51 +36,23 @@ export class ZoneManager {
      * Vérifie si le zonage est possible sur cette case
      */
     static checkZoneValidity(engine: MapEngine, index: number, type: ZoneType): { valid: boolean, reason?: string } {
-        console.log(`🔍 ZoneManager: Vérification zonage ${type} à index ${index}`);
-
-        // 1. Validité de l'index
-        if (index < 0 || index >= engine.config.totalCells) {
-            console.log('❌ Validation: Hors carte');
+        if (index < 0 || index >= engine.config.totalCells)
             return { valid: false, reason: "Hors carte" };
-        }
-
-        // 2. Case déjà occupée par un bâtiment ?
-        if (engine.buildingLayer[index]) {
-            console.log('❌ Validation: Bâtiment existant');
+        if (engine.buildingLayer[index])
             return { valid: false, reason: "Occupé par un bâtiment" };
-        }
-
-        // 3. Case déjà occupée par une route ?
-        if (engine.roadLayer[index]) {
-            console.log('❌ Validation: Route existante');
+        if (engine.roadLayer[index])
             return { valid: false, reason: "Impossible de zoner sur la route" };
-        }
-
-        // 4. Case déjà zonée ?
-        if (engine.zoningLayer[index] !== null) {
-            console.log('❌ Validation: Zone existante:', engine.zoningLayer[index]);
+        if (engine.zoningLayer[index] !== null)
             return { valid: false, reason: "Une zone est déjà placée ici" };
-        }
 
-        // 5. AUCUNE zone sur l'eau (règle stricte)
-        const waterLevel = engine.getLayer(1)[index];
-        const isWater = waterLevel > 0.3;
-        console.log(`🌊 Validation: waterLevel=${waterLevel.toFixed(2)}, isWater=${isWater}`);
-        if (isWater) {
-            console.log('❌ Validation: Sur l\'eau');
+        const isWater = engine.getLayer(1)[index] > 0.3;
+        if (isWater)
             return { valid: false, reason: "Impossible de zoner sur l'eau" };
-        }
 
-        // 6. TOUTES LES ZONES DOIVENT ÊTRE ADJACENTES À UNE ROUTE (règle stricte)
         const hasRoad = this.isNextToRoad(engine, index);
-        console.log(`🛣️ Validation: hasAdjacentRoad=${hasRoad}`);
-        if (!hasRoad) {
-            console.log('❌ Validation: Pas de route adjacente ou réseau principal non connecté');
-            // Trigger retiré d'ici pour laisser InteractionSystem s'en charger 
+        if (!hasRoad)
             return { valid: false, reason: "Doit être relié au réseau routier principal" };
-        }
 
-        console.log('✅ Validation: SUCCÈS - zonage autorisé');
         return { valid: true };
     }
 

@@ -1,0 +1,17 @@
+{
+    "nancy": {
+        "zone_needs": "Maire, cette zone évoluera toute seule une fois les besoins des habitants comblés. Pour l'instant, ils réclament : {needs}.",
+        "zone_ok": "Excellent ! Tous les services sont fournis. Cette zone va progresser naturellement !",
+        "zone_max": "Maire, cette zone a atteint son potentiel maximum. Elle est florissante !",
+        "infra_max": "Maire, ce bâtiment a atteint son plein potentiel. Il fonctionne à merveille !",
+        "infra_no_workers": "Attention ! Cette installation ne tourne qu'à {ratio}% de capacité. Nous manquons de citoyens pour la faire tourner à plein régime !",
+        "infra_no_money": "Pour améliorer cette structure au niveau {next}, il nous faut {cost} $. La caisse municipale doit encore grossir !",
+        "infra_no_resources": "Pour passer au niveau {next}, il nous manque : {missing}. Faites tourner vos industries !",
+        "infra_ready": "Tout est prêt ! Cliquez sur « Améliorer » pour passer au niveau {next} et booster notre rendement !",
+        "infra_default": "Je surveille attentivement ce bâtiment, Monsieur le Maire.",
+        "need_water": "Eau",
+        "need_electricity": "Électricité",
+        "need_food": "Nourriture",
+        "need_jobs": "Emplois"
+    }
+}
