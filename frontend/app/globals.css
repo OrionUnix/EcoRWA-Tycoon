@@ -16,6 +16,9 @@
 
 body {
   font-family: 'Jersey10', sans-serif;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: pixelated;
 }
 
 button,
@@ -194,12 +197,45 @@ textarea,
 
   /* Le bouton classique qui s'enfonce au clic */
   .win95-button {
-    @apply bg-[#c3c7cb] border-2 border-t-white border-l-white border-b-[#424242] border-r-[#424242] px-4 py-1 text-black active:border-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 select-none;
+    @apply bg-[#c3c7cb] border-2 border-t-white border-l-white border-b-[#424242] border-r-[#424242] px-4 py-1 text-black select-none outline-none;
+  }
+
+  .win95-button:active:not(:disabled) {
+    @apply border-t-[#424242] border-l-[#424242] border-b-white border-r-white;
+    /* On décale légèrement le texte vers le bas et la droite pour renforcer l'illusion */
+    padding-top: calc(0.25rem + 1px);
+    padding-bottom: calc(0.25rem - 1px);
+    padding-left: calc(1rem + 1px);
+    padding-right: calc(1rem - 1px);
   }
 
   /* La barre de titre bleue */
   .win95-title-bar {
     @apply bg-[#000080] p-1 flex items-center justify-between text-white font-bold text-sm select-none;
+  }
+
+  /* --- Win95 Scrollbar --- */
+  ::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #dfdfdf;
+    border-left: 1px solid #808080;
+    border-top: 1px solid #808080;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c3c7cb;
+    border-top: 2px solid white;
+    border-left: 2px solid white;
+    border-bottom: 2px solid #424242;
+    border-right: 2px solid #424242;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: #dfdfdf;
   }
 }
 

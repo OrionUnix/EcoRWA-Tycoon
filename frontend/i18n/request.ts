@@ -20,6 +20,7 @@ export default getRequestConfig(async ({ locale }) => {
   const territoryMessages = (await import(`../messages/${activeLocale}_territory.json`)).default;
   const rwaMessages = (await import(`../messages/${activeLocale}_rwa.json`)).default;
   const hudMessages = (await import(`../messages/${activeLocale}_hud.json`)).default;
+  const advisorMessages = (await import(`../messages/${activeLocale}_advisor.json`)).default;
 
   return {
     locale: activeLocale,
@@ -34,6 +35,7 @@ export default getRequestConfig(async ({ locale }) => {
       territory: territoryMessages,
       rwa: rwaMessages,
       hud: hudMessages,
+      advisor: advisorMessages,
       ...infobarMessages
     },
     onError(error) {

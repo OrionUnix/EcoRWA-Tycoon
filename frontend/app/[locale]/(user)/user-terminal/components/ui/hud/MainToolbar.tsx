@@ -50,78 +50,66 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             `}</style>
 
             <div
-                className="fixed z-50 pointer-events-auto"
-                style={{ bottom: 64, left: '50%', transform: 'translateX(-50%)', fontFamily: "'Inter','Segoe UI',sans-serif" }}
+                className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 win95-outset bg-[#c0c0c0] z-50 pointer-events-auto"
+                style={{ fontFamily: "'Inter','Segoe UI',sans-serif" }}
             >
-                {/* 🌊 Dock flottant : Glassmorphism */}
-                <div
-                    className="flex items-center h-[68px] px-4 gap-3 rounded-2xl"
-                    style={{
-                        background: 'rgba(13, 13, 26, 0.75)',
-                        backdropFilter: 'blur(16px) saturate(180%)',
-                        WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                        border: '1px solid rgba(255,255,255,0.12)',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset',
-                    }}
-                >
-                    {TOOLBAR_CATEGORIES.map(cat => (
-                        <div key={cat.id} className="relative z-50 flex items-center justify-center">
-                            {/* Sub-menu or Data Layers Panel */}
-                            {activeCategory === cat.id && cat.id !== 'DATA' && (
-                                <SubMenu
-                                    category={cat.id}
-                                    viewMode={viewMode}
-                                    setViewMode={setViewMode}
-                                    selectedRoadType={selectedRoadType}
-                                    setSelectedRoadType={setSelectedRoadType}
-                                    selectedZoneType={selectedZoneType}
-                                    setSelectedZoneType={setSelectedZoneType}
-                                    setSelectedBuildingType={setSelectedBuildingType}
-                                    onClose={() => setActiveCategory(null)}
-                                    onOpenRWA={onOpenRWA}
-                                />
-                            )}
-                            {activeCategory === cat.id && cat.id === 'DATA' && (
-                                <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2">
-                                    <DataLayersPanel
-                                        activeLayer={activeDataLayer}
-                                        onSelectLayer={setActiveDataLayer}
-                                        onSetViewMode={setViewMode}
-                                        onClose={() => { setActiveCategory(null); setViewMode('ALL'); setActiveDataLayer(null); }}
-                                    />
-                                </div>
-                            )}
-
-                            <MainBtn
-                                id={cat.id}
-                                icon={cat.icon}
-                                label={t(`categories.${cat.id.toLowerCase()}` as any)} // ✅ Correct key
-                                color={cat.color}
-                                active={activeCategory === cat.id}
-                                onClick={() => toggle(cat.id)}
+                {TOOLBAR_CATEGORIES.map(cat => (
+                    <div key={cat.id} className="relative z-50 flex items-center justify-center">
+                        {/* Sub-menu or Data Layers Panel */}
+                        {activeCategory === cat.id && cat.id !== 'DATA' && (
+                            <SubMenu
+                                category={cat.id}
+                                viewMode={viewMode}
+                                setViewMode={setViewMode}
+                                selectedRoadType={selectedRoadType}
+                                setSelectedRoadType={setSelectedRoadType}
+                                selectedZoneType={selectedZoneType}
+                                setSelectedZoneType={setSelectedZoneType}
+                                setSelectedBuildingType={setSelectedBuildingType}
+                                onClose={() => setActiveCategory(null)}
+                                onOpenRWA={onOpenRWA}
                             />
-                        </div>
-                    ))}
+                        )}
+                        {activeCategory === cat.id && cat.id === 'DATA' && (
+                            <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2">
+                                <DataLayersPanel
+                                    activeLayer={activeDataLayer}
+                                    onSelectLayer={setActiveDataLayer}
+                                    onSetViewMode={setViewMode}
+                                    onClose={() => { setActiveCategory(null); setViewMode('ALL'); setActiveDataLayer(null); }}
+                                />
+                            </div>
+                        )}
 
-                    {/* Bulldozer */}
-                    <div className="relative flex items-center justify-center">
                         <MainBtn
-                            id="BULLDOZER" icon={GAME_ICONS.stone} label={t('categories.bulldozer')}
-                            color={SC_COLORS.BULLDOZER}
-                            active={viewMode === 'BULLDOZER'}
-                            onClick={() => { setViewMode('BULLDOZER'); setActiveCategory(null); }}
+                            id={cat.id}
+                            icon={cat.icon}
+                            label={t(`categories.${cat.id.toLowerCase()}` as any)} // ✅ Correct key
+                            color={cat.color}
+                            active={activeCategory === cat.id}
+                            onClick={() => toggle(cat.id)}
                         />
                     </div>
+                ))}
 
-                    {/* Settings */}
-                    <div className="relative flex items-center justify-center">
-                        <MainBtn
-                            id="SETTINGS" icon={GAME_ICONS.administration} label={t('categories.settings')}
-                            color={SC_COLORS.SETTINGS}
-                            active={activeCategory === 'SETTINGS'}
-                            onClick={() => toggle('SETTINGS')}
-                        />
-                    </div>
+                {/* Bulldozer */}
+                <div className="relative flex items-center justify-center">
+                    <MainBtn
+                        id="BULLDOZER" icon={GAME_ICONS.bulldozer} label={t('categories.bulldozer')}
+                        color={SC_COLORS.BULLDOZER}
+                        active={viewMode === 'BULLDOZER'}
+                        onClick={() => { setViewMode('BULLDOZER'); setActiveCategory(null); }}
+                    />
+                </div>
+
+                {/* Settings */}
+                <div className="relative flex items-center justify-center">
+                    <MainBtn
+                        id="SETTINGS" icon={GAME_ICONS.administration} label={t('categories.settings')}
+                        color={SC_COLORS.SETTINGS}
+                        active={activeCategory === 'SETTINGS'}
+                        onClick={() => toggle('SETTINGS')}
+                    />
                 </div>
             </div>
         </>

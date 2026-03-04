@@ -40,6 +40,7 @@ const ResourceBlock = ({
 
 export const ResourceBar: React.FC<ResourceBarProps> = ({ stats, resources, onOpenPanel, hoverInfo }) => {
     const t = useTranslations('InfoBar');
+    const tAdvisor = useTranslations('advisor');
 
     const population = stats?.population || 0;
     const waterBalance = (stats?.water?.produced || 0) - (stats?.water?.consumed || 0);
@@ -56,37 +57,50 @@ export const ResourceBar: React.FC<ResourceBarProps> = ({ stats, resources, onOp
     const oil = res?.oil || 0;
     const rwa = res?.rwa || 0;
 
-    // 🧠 LOGIQUE ADVISOR CONTEXTUELLE (hoverInfo prioritaire sur les messages génériques)
-    let advisorMessage = t('msg_stable');
-    let advisorTalking = false;
 
-    if (hoverInfo?.resource && hoverInfo.resource !== 'NONE') {
-        const amount = hoverInfo.resourceAmount || 0;
-        const biome = hoverInfo.biome || 'cette zone';
-        const resource = hoverInfo.resource;
-        const resourceLabels: Record<string, string> = {
-            GOLD: 'or', IRON: 'minerai de fer', COAL: 'charbon',
-            STONE: 'pierre', SILVER: 'argent', OIL: 'pétrole', WOOD: 'bois'
-        };
-        const label = resourceLabels[resource] || resource.toLowerCase();
-        advisorMessage = `Maire, ce ${biome.toLowerCase()} contient ${Math.round(amount)} t. de ${label}. C’est un excellent emplacement !`;
-        advisorTalking = true;
-    } else if (hoverInfo?.altitude) {
-        advisorMessage = `Altitude : ${hoverInfo.altitude.toFixed(0)}m • ${hoverInfo.biome || ''}`;
-    } else if (population === 0) {
-        advisorMessage = t('msg_welcome');
-    } else if (waterBalance < 0 || powerBalance < 0) {
-        advisorMessage = t('msg_warning');
-    }
+
+    // 📍 Traduction dynamique des ressources
+    const getResourceTranslated = (rawRes: string) => {
+        try {
+            return tAdvisor(rawRes.toLowerCase() + '_name') || rawRes;
+        } catch {
+            return rawRes;
+        }
+    };
+
+    console.log("Hovered Tile:", hoverInfo);
 
     return (
-        // ℹ️ Footer sombre et opaque, bien distinct du Dock flottant
-        <div className="fixed bottom-0 w-full h-[56px] bg-[#0d0d1a] text-white z-50 flex justify-between items-stretch border-t-2 border-[#3a3a5c] shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pointer-events-auto select-none overflow-hidden">
+        // ℹ️ InfoBar classique Win95
+        <div className="fixed bottom-0 w-full h-[56px] bg-[#c0c0c0] text-black border-2 border-t-white border-l-white border-b-gray-800 border-r-gray-800 rounded-none z-50 flex items-center pointer-events-auto select-none overflow-hidden px-2 gap-2">
 
-            <div className="hidden lg:block lg:flex-1" />
+            {/* 📍 Partie Gauche : STATUS BAR (Infos Tuile Win95) */}
+            <div className="w-1/3 min-w-[300px] max-w-[500px] shrink-0">
+                <div className="win95-inset w-full h-[40px] bg-white flex items-center px-4 py-1 text-lg font-bold font-mono tracking-tight text-black truncate shadow-[inset_1px_1px_0_0_#000]">
+                    {hoverInfo && hoverInfo.biome ? (
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span>{hoverInfo.biome}</span>
+                            <span className="text-gray-400">|</span>
+                            <span>Alt: {Math.round(hoverInfo.elevation || hoverInfo.altitude || 0)}m</span>
+                            {hoverInfo.resources && Object.keys(hoverInfo.resources).length > 0 && (
+                                <>
+                                    <span className="text-gray-400">|</span>
+                                    <span className="text-blue-800 flex items-center gap-1">
+                                        {Object.entries(hoverInfo.resources).map(([res, amount]) => (
+                                            <span key={res}>⛏️ {getResourceTranslated(res)} : {formatNumber(amount as number)} t</span>
+                                        ))}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    ) : (
+                        <span className="text-gray-500">Prêt.</span>
+                    )}
+                </div>
+            </div>
 
-            {/* 🎯 CENTRE : L'INVENTAIRE */}
-            <div className="flex shrink-0 border-l border-[#3a3a5c] max-w-full overflow-x-auto scrollbar-hide">
+            {/* 🎯 Partie Droite : L'INVENTAIRE (Ressources centrees) */}
+            <div className="flex-1 flex justify-center items-center gap-4 overflow-x-auto scrollbar-hide py-1">
                 <ResourceBlock icon={GAME_ICONS.h2o} value={waterBalance > 0 ? `+${waterBalance}` : waterBalance} tooltipName={t('res_water')} valueColor={waterBalance < 0 ? "text-red-400" : "text-blue-400"} onClick={() => onOpenPanel?.('WATER')} />
                 <ResourceBlock icon={GAME_ICONS.power} value={powerBalance > 0 ? `+${powerBalance}` : powerBalance} tooltipName={t('res_power')} valueColor={powerBalance < 0 ? "text-red-400" : "text-orange-400"} onClick={() => onOpenPanel?.('POWER')} />
                 <ResourceBlock icon={GAME_ICONS.food || GAME_ICONS.commercial} value={formatNumber(food)} tooltipName={t('res_food')} />
@@ -99,7 +113,6 @@ export const ResourceBar: React.FC<ResourceBarProps> = ({ stats, resources, onOp
                 <ResourceBlock icon={GAME_ICONS.oil || GAME_ICONS.industrial} value={formatNumber(oil)} tooltipName={t('res_oil')} valueColor="text-zinc-400" />
                 <ResourceBlock icon={GAME_ICONS.rwa} value={formatNumber(rwa)} tooltipName={t('res_rwa')} valueColor="text-purple-400" />
             </div>
-
 
         </div>
     );
