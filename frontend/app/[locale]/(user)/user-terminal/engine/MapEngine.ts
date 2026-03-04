@@ -78,10 +78,11 @@ export class MapEngine {
 
         // Valeurs par défaut stats
         this.resources = {
-            money: 100000,
-            wood: 50, concrete: 20, glass: 10, steel: 5, stone: 0,
+            // ✅ MISSION 1 : HARD RESET — Économie de départ équilibrée
+            money: 2000,
+            wood: 50, concrete: 0, glass: 0, steel: 0, stone: 0,
             coal: 0, iron: 0, oil: 0,
-            food: 100, energy: 0, water: 0, electricity: 0,
+            food: 50, energy: 0, water: 0, electricity: 0,
             silver: 0, gold: 0, undergroundWater: 0
         };
         this.stats = {

@@ -255,7 +255,14 @@ export class InteractionSystem {
         if (specs.resourceCost) {
             for (const [res, amount] of Object.entries(specs.resourceCost)) {
                 if (((map.resources as any)[res] || 0) < amount) {
-                    console.error(`❌ Construction impossible: Pas assez de ${res}`);
+                    if (res === 'money') {
+                        // ✅ MISSION 2 : Remplacer l'erreur native par le système d'Advisor (Nancy)
+                        window.dispatchEvent(new CustomEvent('advisor-message', {
+                            detail: { id: 'insufficient_funds' }
+                        }));
+                    } else {
+                        console.warn(`❌ Construction impossible: Pas assez de ${res}`);
+                    }
                     return { success: false };
                 }
             }

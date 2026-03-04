@@ -2,13 +2,11 @@ import React from 'react';
 import { BuildingData, BUILDING_SPECS, BuildingType, CityStats, BuildingStatus } from '../../engine/types';
 import { BuildingManager } from '../../engine/BuildingManager';
 import { formatNumber } from './hud/GameWidgets';
-import { GlassPanel } from './Panel/GlassPanel';
 import { MapEngine } from '../../engine/MapEngine';
 import { EconomySystem } from '../../engine/systems/EconomySystem';
 
 // ═══════════════════════════════════════
-// SimCity 2013 — BUILDING INSPECTOR
-// Light glass style, comprehensive info
+// Win95 Style — BUILDING INSPECTOR
 // ═══════════════════════════════════════
 
 interface BuildingInspectorProps {
@@ -111,34 +109,32 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
     const taxesPaid = isResidential ? Math.round(50 * building.level) : isCommercial ? Math.round(80 * building.level) : Math.round(120 * building.level);
 
     return (
-        <div className="fixed right-4 top-20 z-[55] pointer-events-auto" style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif", animation: 'panelSlideIn 0.2s ease-out' }}>
-            <GlassPanel variant="sub" className="p-0 overflow-hidden">
+        <div className="fixed right-4 top-20 z-[55] pointer-events-auto" style={{ animation: 'panelSlideIn 0.2s ease-out' }}>
+            <div className="win95-window p-[2px]">
                 <div style={{ width: '320px' }}>
 
                     {/* ═══ HEADER ═══ */}
-                    <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg shadow-md flex-shrink-0"
+                    <div className="flex items-center gap-2 win95-title-bar mb-2">
+                        <div className="w-6 h-6 flex items-center justify-center text-sm flex-shrink-0"
                             style={{ background: headerColor }}>
                             {isResidential ? '🏠' : isCommercial ? '🏢' : isIndustrial ? '🏭' : '🏗️'}
                         </div>
-                        <div className="flex-1">
-                            <h3 className="text-[14px] font-bold" style={{ color: '#2C2C2C' }}>{displayName}</h3>
-                            <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: headerColor }}>
-                                Niveau {building.level} / {maxLevel}
-                            </div>
+                        <div className="flex-1 overflow-hidden">
+                            <h3 className="text-[12px] font-bold text-white leading-tight truncate px-1">
+                                {displayName} <span className="opacity-80 font-normal">({building.level}/{maxLevel})</span>
+                            </h3>
                         </div>
-                        <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                            style={{ background: 'rgba(0,0,0,0.06)', color: '#999', fontSize: '12px' }}>
-                            ✕
+                        <button onClick={onClose} className="win95-button px-2 py-0 h-[22px] flex items-center justify-center font-bold pb-1" aria-label="Close">
+                            x
                         </button>
                     </div>
 
-                    <div className="px-4 py-3 space-y-3">
+                    <div className="px-2 pb-2 space-y-2">
 
                         {/* ═══ WEALTH & DENSITY (Résidentiel/Commercial/Industriel) ═══ */}
                         {(isResidential || isCommercial || isIndustrial) && (
-                            <div>
-                                <div className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                            <div className="win95-inset p-2 bg-[#dfdfdf]">
+                                <div className="text-[10px] font-bold uppercase mb-1 border-b border-[#808080] pb-1">
                                     Caractéristiques
                                 </div>
                                 <InspectorRow label="Richesse" value={wealthLevel} color={headerColor} />
@@ -150,8 +146,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
 
                         {/* ═══ SERVICES REÇUS ═══ */}
                         {(isResidential || isCommercial) && (
-                            <div>
-                                <div className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                            <div className="win95-inset p-2 bg-[#dfdfdf]">
+                                <div className="text-[10px] font-bold uppercase mb-1 border-b border-[#808080] pb-1">
                                     Services Reçus
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
@@ -179,8 +175,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
 
                         {/* ═══ EMPLOYMENT (Residential) ═══ */}
                         {isResidential && (
-                            <div>
-                                <div className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                            <div className="win95-inset p-2 bg-[#dfdfdf]">
+                                <div className="text-[10px] font-bold uppercase mb-1 border-b border-[#808080] pb-1">
                                     Emploi du Foyer
                                 </div>
                                 <InspectorRow label="Habitants actifs" value={`${building.level * 4}`} />
@@ -191,8 +187,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
 
                         {/* ═══ PRODUCTION (Service/Industrial buildings) ═══ */}
                         {specs.production && (
-                            <div>
-                                <div className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                            <div className="win95-inset p-2 bg-[#dfdfdf]">
+                                <div className="text-[10px] font-bold uppercase mb-1 border-b border-[#808080] pb-1">
                                     Production
                                 </div>
                                 <InspectorRow
@@ -224,8 +220,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                             const isProfitable = profit >= 0;
 
                             return (
-                                <div className="mt-2 p-2 rounded-lg bg-green-50 border border-green-200">
-                                    <div className="text-[9px] font-bold uppercase tracking-wider mb-2 text-green-700">
+                                <div className="win95-inset p-2 bg-[#c0c0c0]">
+                                    <div className="text-[10px] font-bold uppercase mb-1 border-b border-[#808080] pb-1">
                                         Bilan Financier (Export)
                                     </div>
                                     <div className="space-y-1 mb-2 pb-1 border-b border-green-200/50">
@@ -256,8 +252,8 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
 
                         {/* ═══ CONTRACTS ═══ */}
                         {building.activeContracts && building.activeContracts.length > 0 && (
-                            <div>
-                                <div className="text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                            <div className="win95-inset p-2 bg-[#dfdfdf]">
+                                <div className="text-[10px] font-bold uppercase mb-1 border-b border-[#808080] pb-1">
                                     Contrats Commerciaux
                                 </div>
                                 {building.activeContracts.map((c, i) => (
@@ -270,9 +266,9 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                         )}
 
                         {/* ═══ UPGRADE / EVOLUTION ═══ */}
-                        <div className="pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                        <div className="pt-2">
                             {isZone ? (
-                                <div className="w-full py-2.5 px-4 rounded-xl text-center text-[10px] font-bold flex flex-col items-center justify-center gap-1" style={{ background: 'rgba(0,0,0,0.04)', color: '#bbb' }}>
+                                <div className="win95-inset p-2 text-center text-[10px] font-bold flex flex-col items-center justify-center gap-1 bg-[#dfdfdf]">
                                     {isMaxLevel ? (
                                         <span>✨ Niveau Maximum Atteint</span>
                                     ) : (
@@ -289,17 +285,15 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                                     <button
                                         onClick={handleUpgrade}
                                         disabled={!canUpgrade}
-                                        className="w-full py-2.5 px-4 rounded-xl font-bold text-[12px] flex flex-col justify-center items-center transition-all hover:scale-[1.02]"
+                                        className="win95-button w-full py-2 px-4 flex flex-col justify-center items-center"
                                         style={{
-                                            background: canUpgrade ? headerColor : 'rgba(0,0,0,0.06)',
-                                            color: canUpgrade ? 'white' : '#999',
-                                            boxShadow: canUpgrade ? `0 3px 10px ${headerColor}40` : 'none',
-                                            cursor: canUpgrade ? 'pointer' : 'not-allowed'
+                                            cursor: canUpgrade ? 'pointer' : 'not-allowed',
+                                            opacity: canUpgrade ? 1 : 0.6
                                         }}
                                     >
-                                        <div className="w-full flex justify-between items-center">
+                                        <div className="w-full flex justify-between items-center font-bold text-[12px]">
                                             <span>⬆️ Améliorer (Niv. {building.level + 1})</span>
-                                            <span className="px-2 py-0.5 rounded-lg flex items-center gap-1 flex-wrap" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                                            <span className="flex items-center gap-1 flex-wrap">
                                                 ${formatNumber(upgradeCost)}
                                                 {resourceUpgradeCost && Object.entries(resourceUpgradeCost).map(([res, amt]) => {
                                                     const RES_ICONS: Record<string, string> = { wood: '🪵', iron: '⛏️', oil: '🛢️', coal: '⚫', stone: '🪨', glass: '🪟', concrete: '🧱', steel: '🏗️', gold: '🪙', silver: '🥈' };
@@ -312,13 +306,13 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                                             </span>
                                         </div>
                                         {!basicNeedsMet && (
-                                            <div className="text-[10px] mt-1.5 font-bold text-[#D0021B] text-center w-full">
+                                            <div className="text-[10px] mt-1 font-bold text-[#D0021B] text-center w-full">
                                                 ⚠️ Eau & Électricité requises
                                             </div>
                                         )}
                                     </button>
                                 ) : (
-                                    <div className="w-full py-2.5 px-4 rounded-xl text-center text-[11px] font-bold" style={{ background: 'rgba(0,0,0,0.04)', color: '#bbb' }}>
+                                    <div className="win95-inset p-2 text-center text-[11px] font-bold bg-[#dfdfdf]">
                                         {isMaxLevel ? "✨ Niveau Maximum Atteint" : "Pas d'amélioration disponible"}
                                     </div>
                                 )
@@ -326,7 +320,7 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
                         </div>
                     </div>
                 </div>
-            </GlassPanel>
+            </div>
 
             <style>{`
                 @keyframes panelSlideIn {
@@ -336,4 +330,6 @@ export const BuildingInspector: React.FC<BuildingInspectorProps> = ({ engine, bu
             `}</style>
         </div>
     );
-};
+}
+
+export default React.memo(BuildingInspector);

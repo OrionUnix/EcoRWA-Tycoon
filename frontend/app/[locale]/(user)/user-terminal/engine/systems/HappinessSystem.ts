@@ -12,6 +12,19 @@ export class HappinessSystem {
         const width = map.config.size;
 
         // 1. GLOBAL STATE CHECK
+
+        // ✅ MISSION 1 : Logique du Bonheur (Ville fantôme)
+        if (map.stats.population <= 0) {
+            map.stats.happiness = 0; // Forcer stats globales
+            for (let i = 0; i < grid.length; i++) {
+                const building = grid[i];
+                if (building && (building.type === BuildingType.RESIDENTIAL || building.type === BuildingType.COMMERCIAL)) {
+                    building.happiness = 0;
+                }
+            }
+            return; // On arrête le calcul ici
+        }
+
         // Est-ce qu'on a de l'industrie ou un marché pour les commerces ?
         // On scanne rapidement la ville
         let hasIndustryOrMarket = false;

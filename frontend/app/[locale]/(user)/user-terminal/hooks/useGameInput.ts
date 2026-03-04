@@ -199,35 +199,20 @@ export function useGameInput(
                     // Reset vers mode sélection
                     engine.currentRwaPayload = null;
                     setViewMode('ALL');
-
-                    // Optionnel : particules
-                    // const { x, y } = gridToScreen(gridPos.x, gridPos.y);
-                    // ParticleSystem.spawnPlacementDust(x, y);
                 }
             } else if (viewMode.startsWith('BUILD_')) {
                 const result = engine.handleInteraction(idx, viewMode, null, selectedBuilding);
-                const { x, y } = gridToScreen(gridPos.x, gridPos.y);
 
                 // ✅ AUTO-DESELECT (Si construction réussie)
                 if (result && result.success) {
-                    // Reset vers mode sélection
-                    // (Sauf si Shift enfoncé - feature future)
                     setViewMode('ALL');
                 }
-                // ParticleSystem.spawnPlacementDust(x, y);
             }
-            // ✅ MODE SÉLECTION (Nouveauté)
+            // ✅ MODE SÉLECTION (Terrain vide ou construction, pas les bâtiments qui sont gérés par CustomEvent)
             else if (viewMode === 'ALL') {
-                // Si on clique sur un bâtiment, on le sélectionne
-                if (engine.map.buildingLayer[idx]) {
-                    console.log("Selected building at:", idx);
-                    setSelectedBuildingId(idx);
-                    // TODO: Play select sound?
-                } else {
-                    setSelectedBuildingId(null);
-                    // ✅ AJOUT: Permettre d'ouvrir l'achat de terrain même en mode sélection
-                    engine.handleInteraction(idx, 'ALL', null, null);
-                }
+                setSelectedBuildingId(null);
+                // Permettre d'ouvrir l'achat de terrain même en mode sélection
+                engine.handleInteraction(idx, 'ALL', null, null);
             }
         };
 
@@ -238,12 +223,6 @@ export function useGameInput(
                 const path = previewPathRef.current;
                 if (path.length > 0 && isValidBuildRef.current) {
                     engine.handleInteraction(0, 'BUILD_ROAD', path, selectedRoad);
-                    // part-effect sur le dernier point
-                    // const lastIdx = path[path.length - 1];
-                    // const gx = lastIdx % engine.map.config.size;
-                    // const gy = Math.floor(lastIdx / engine.map.config.size);
-                    // const { x, y } = gridToScreen(gx, gy);
-                    // ParticleSystem.spawnPlacementDust(x, y);
                 }
             }
 
@@ -255,6 +234,18 @@ export function useGameInput(
             setTotalCost(0);
         };
 
+        // ✅ Écoute du CustomEvent "building_clicked" posté par le Sprite Pixi (pointertap)
+        const onBuildingClicked = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            if (viewMode === 'ALL') {
+                const idx = customEvent.detail.index;
+                if (engine.map.buildingLayer[idx]) {
+                    console.log("Selected building at:", idx);
+                    setSelectedBuildingId(idx);
+                }
+            }
+        };
+
         // Attach Events
         const canvas = app.canvas;
         // On écoute sur canvas pour down, mais window pour move/up (drag fiable)
@@ -263,12 +254,14 @@ export function useGameInput(
         window.addEventListener('pointerup', onPointerUp);
         // Context menu bloqué
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        window.addEventListener('building_clicked', onBuildingClicked);
 
         return () => {
             canvas.removeEventListener('pointerdown', onPointerDown);
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);
             canvas.removeEventListener('contextmenu', (e) => e.preventDefault());
+            window.removeEventListener('building_clicked', onBuildingClicked);
         };
-    }, [isReady, viewMode, selectedRoad, selectedZone, selectedBuilding]);
+    }, [isReady, viewMode, selectedRoad, selectedZone, selectedBuilding, setCursorPos, setHoverInfo, setTotalCost, setIsValidBuild, setSelectedBuildingId]);
 }

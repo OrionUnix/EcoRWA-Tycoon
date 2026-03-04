@@ -19,11 +19,15 @@ export class PopulationManager {
     /**
      * Population per zone level for residential zones
      */
+    /**
+     * ✅ MISSION 2 : Formule stricte Housing = 5 + (level - 1) * 3
+     * Niveau 1 → 5 habitants, Niveau 2 → 8, Niveau 3 → 11, Niveau 4 → 14
+     */
     private static readonly POPULATION_BY_LEVEL: Record<number, number> = {
-        1: 4,  // Level 1: 4 Inhabitants -> 40$/h
-        2: 10, // Level 2: 10 Inhabitants -> 100$/h
-        3: 25, // Level 3: 25 Inhabitants -> 250$/h
-        4: 60  // Level 4/High: 60 Inhabitants -> 600$/h
+        1: 5,  // 5 + (1-1)*3 = 5  → 50$/h
+        2: 8,  // 5 + (2-1)*3 = 8  → 80$/h
+        3: 11, // 5 + (3-1)*3 = 11 → 110$/h
+        4: 14  // 5 + (4-1)*3 = 14 → 140$/h
     };
 
     /**

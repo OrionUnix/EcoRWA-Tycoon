@@ -118,7 +118,7 @@ export class EconomySystem {
                 });
             }
 
-            // ✅ NOUVEAU: Exportations directes (Mines, Puits, Bûcheron...)
+            // ✅ MISSION 4 : Exportations directes avec Ratio Travailleurs
             if (building.state === 'ACTIVE') {
                 let exportRate = EconomySystem.RESOURCE_EXPORT_RATES[building.type];
 
@@ -131,9 +131,16 @@ export class EconomySystem {
                 }
 
                 if (exportRate) {
-                    // Le niveau du bâtiment multiplie le revenu généré
                     const levelMultiplier = building.level || 1;
-                    exportIncome += exportRate * levelMultiplier;
+
+                    // ✅ MISSION 4 : Ratio de production basé sur maxWorkers
+                    const specs = BUILDING_SPECS[building.type];
+                    const maxWorkers = specs?.maxWorkers;
+                    const workerRatio = (maxWorkers && maxWorkers > 0)
+                        ? Math.min(1, (building.jobsAssigned || 0) / maxWorkers)
+                        : 1; // Les bâtiments sans maxWorkers (services) tournent à 100%
+
+                    exportIncome += exportRate * levelMultiplier * workerRatio;
                 }
             }
         });

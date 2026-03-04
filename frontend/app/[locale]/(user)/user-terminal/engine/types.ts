@@ -358,8 +358,17 @@ export interface BuildingSpecs {
     color: number; // ✅ Unique
     requiresRoad: boolean;
     category: BuildingCategory; // ✅ NOUVEAU: Catégorie pour l'UI
-    workersNeeded?: number; // ✅ NOUVEAU : Nombre de travailleurs requis
-    maintenance?: number; // ✅ NOUVEAU : Coût d'entretien hebdomadaire
+    workersNeeded?: number; // Travailleurs requis pour les bâtiments de SERVICE (Police, École...)
+    /**
+     * ✅ MISSION 3 : Travailleurs requis pour les bâtiments de PRODUCTION
+     * (Bûcheron, Chasseur, Pêcheur, Mines, Puits...)
+     * La production est proportionnelle à (jobsAssigned / maxWorkers).
+     *
+     * @debt HACKATHON: L'affectation est en FIFO (ordre de construction).
+     * Prochaine étape : prioriser FOOD > WOOD > MINING ou distribution proportionnelle.
+     */
+    maxWorkers?: number;
+    maintenance?: number; // Coût d'entretien hebdomadaire
     production?: {
         type: 'WATER' | 'ENERGY' | 'FOOD' | 'WOOD';
         amount: number;
@@ -428,19 +437,19 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     },
     [BuildingType.MINE]: {
         type: BuildingType.MINE, cost: 2000, name: "Mine",
-        description: "Extrait des ressources selon le sol.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maintenance: 500,
+        description: "Extrait des ressources selon le sol.", width: 2, height: 2, color: 0x607D8B, requiresRoad: true, workersNeeded: 12, maxWorkers: 6, maintenance: 500,
         category: BuildingCategory.EXTRACTION,
         influenceRadius: 6, influenceScore: -30,
         upgradeCost: 2000, maxLevel: 3
     },
     [BuildingType.OIL_RIG]: {
         type: BuildingType.OIL_RIG, cost: 99999, name: "Plateforme Pétrolière (Mer)",
-        description: "Extrait du pétrole en mer.", width: 2, height: 2, color: 0x424242, requiresRoad: false, workersNeeded: 0, maintenance: 1000,
+        description: "Extrait du pétrole en mer.", width: 2, height: 2, color: 0x424242, requiresRoad: false, workersNeeded: 0, maxWorkers: 6, maintenance: 1000,
         category: BuildingCategory.EXTRACTION
     },
     [BuildingType.OIL_PUMP]: {
         type: BuildingType.OIL_PUMP, cost: 3000, name: "Puits de Pétrole",
-        description: "Extrait du pétrole terrestre.", width: 1, height: 1, color: 0x263238, requiresRoad: true, workersNeeded: 5, maintenance: 800,
+        description: "Extrait du pétrole terrestre.", width: 1, height: 1, color: 0x263238, requiresRoad: true, workersNeeded: 5, maxWorkers: 6, maintenance: 800,
         category: BuildingCategory.EXTRACTION,
         influenceRadius: 8, influenceScore: -40
     },
@@ -466,21 +475,21 @@ export const BUILDING_SPECS: Record<BuildingType, BuildingSpecs> = {
     },
     [BuildingType.FISHERMAN]: {
         type: BuildingType.FISHERMAN, cost: 300, name: "Cabane de Pêcheur",
-        description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2, maintenance: 100,
+        description: "Produit de la nourriture (Poisson).", width: 1, height: 1, color: 0x03A9F4, requiresRoad: true, workersNeeded: 2, maxWorkers: 3, maintenance: 100,
         category: BuildingCategory.FOOD,
         production: { type: 'FOOD', amount: 50 },
         upgradeCost: 200, maxLevel: 3
     },
     [BuildingType.HUNTER_HUT]: {
         type: BuildingType.HUNTER_HUT, cost: 350, name: "Cabane de Chasseur",
-        description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2, maintenance: 100,
+        description: "Produit de la nourriture (Gibier).", width: 1, height: 1, color: 0x795548, requiresRoad: true, workersNeeded: 2, maxWorkers: 3, maintenance: 100,
         category: BuildingCategory.FOOD,
         production: { type: 'FOOD', amount: 40 },
         upgradeCost: 250, maxLevel: 3
     },
     [BuildingType.LUMBER_HUT]: {
         type: BuildingType.LUMBER_HUT, cost: 150, name: "Cabane de Bûcheron",
-        description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2, maintenance: 200,
+        description: "Produit du bois (Forêt requise).", width: 1, height: 1, color: 0x5D4037, requiresRoad: true, workersNeeded: 2, maxWorkers: 3, maintenance: 200,
         category: BuildingCategory.EXTRACTION,
         production: { type: 'WOOD', amount: 40 },
         upgradeCost: 150, maxLevel: 4

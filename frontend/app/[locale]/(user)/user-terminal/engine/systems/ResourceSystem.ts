@@ -1,5 +1,5 @@
 import { MapEngine } from '../MapEngine';
-import { BuildingType, BuildingStatus, PlayerResources } from '../types';
+import { BuildingType, BuildingStatus, PlayerResources, BUILDING_SPECS } from '../types';
 
 /**
  * Système de gestion de la production de ressources (Mines, Puits, etc.)
@@ -31,10 +31,15 @@ export class ResourceSystem {
             const miningData = building.mining;
             const index = building.y * engine.config.size + building.x;
 
-            // ✅ RÈGLE UTILISATEUR: EXTRACTION DE 5 TONNES
-            // On multiplie par le niveau du bâtiment pour récompenser l'upgrade
+            // ✅ MISSION 4 : Ratio de Production Dynamique
+            // extractionAmount = BASE * level * (jobsAssigned / maxWorkers)
             const BASE_EXTRACTION = 5;
-            const extractionAmount = BASE_EXTRACTION * building.level;
+            const specs = BUILDING_SPECS[building.type];
+            const maxWorkers = specs?.maxWorkers || 1;
+            const workerRatio = maxWorkers > 0 ? Math.min(1, building.jobsAssigned / maxWorkers) : 0;
+            const extractionAmount = BASE_EXTRACTION * building.level * workerRatio;
+
+            if (extractionAmount <= 0) continue; // Pas de travailleurs = pas d'extraction
 
             // On identifie la ressource sur la carte
             let mapResourceAmount = 0;

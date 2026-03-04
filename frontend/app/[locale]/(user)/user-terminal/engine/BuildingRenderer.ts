@@ -96,7 +96,16 @@ export class BuildingRenderer {
             if (!sprite) {
                 sprite = new PIXI.Sprite(texture);
                 sprite.anchor.set(0.5, 1.0);
+                // ✅ MISSION 3 : Rendre le sprite interactif avec un curseur clair
                 sprite.eventMode = 'static';
+                sprite.cursor = 'pointer';
+
+                // Gestion du clic direct sur le sprite (évite les soucis de drag et Z-sorting 3D)
+                sprite.on('pointertap', (e) => {
+                    e.stopPropagation(); // Évite que le clic ne se propage derrière la tuile
+                    window.dispatchEvent(new CustomEvent('building_clicked', { detail: { index: i } }));
+                });
+
                 container.addChild(sprite);
 
                 emoteText = new PIXI.Text({ text: '', style: { fontSize: 24, fontWeight: 'bold', stroke: { color: 0x000000, width: 2 } } });
