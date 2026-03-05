@@ -37,6 +37,7 @@ import { SaveIndicator } from './ui/hud/SaveIndicator';
 
 // --- IMPORTS TUTORIEL DORA ---
 import { DoraTutorialModal } from './ui/npcs/DoraTutorialModal';
+import { useTutorialStore } from '../hooks/useTutorialStore';
 
 // --- IMPORTS START SCREEN ---
 import { useSaveStore } from '@/hooks/useSaveStore';
@@ -203,6 +204,7 @@ export default function UserTerminalClient() {
 
             // Lancer le tuto de Dora 1 seconde après le chargement de la carte pour l'exemple
             setTimeout(() => {
+                useTutorialStore.getState().startTutorial();
                 setShowDoraTuto(true);
             }, 1000);
         }

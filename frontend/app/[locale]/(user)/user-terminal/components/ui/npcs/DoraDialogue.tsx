@@ -24,11 +24,6 @@ export const DoraDialogue: React.FC<DoraDialogueProps> = ({ message, iconUrl, on
             )}
 
             <div className="flex-1">
-                {/* Flèche clignotante en bas à droite pour indiquer la continuité (optionnel) */}
-                <div className="absolute bottom-2 right-3 animate-pulse text-[16px] font-black text-gray-400">
-                    ▼
-                </div>
-
                 <p className="text-[17px] leading-snug font-medium text-black">
                     <TypewriterTextWithSound
                         text={message}

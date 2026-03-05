@@ -1,6 +1,6 @@
 import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
 
-export type TutorialAction = 'SELECT_ROAD_TOOL' | 'BUILD_ROAD' | 'SELECT_RESIDENTIAL' | 'BUILD_RESIDENTIAL' | 'OPEN_RWA_PANEL';
+export type TutorialAction = 'SELECT_ROAD_TOOL' | 'BUILD_ROAD' | 'SELECT_ZONE_TOOL' | 'BUILD_ZONE' | 'SELECT_RESIDENTIAL' | 'BUILD_RESIDENTIAL' | 'OPEN_RWA_PANEL';
 
 export interface TutorialStep {
     id: string;
@@ -30,6 +30,17 @@ export const DORA_TUTORIAL_STEPS: TutorialStep[] = [
         id: "step_build_road",
         textKey: "step_build_road",
         waitForAction: 'BUILD_ROAD'
+    },
+    {
+        id: "step_select_zone",
+        textKey: "step_select_zone",
+        iconName: "residential",
+        waitForAction: 'SELECT_ZONE_TOOL'
+    },
+    {
+        id: "step_build_zone",
+        textKey: "step_build_zone",
+        waitForAction: 'BUILD_ZONE'
     },
     {
         id: "step_finish",

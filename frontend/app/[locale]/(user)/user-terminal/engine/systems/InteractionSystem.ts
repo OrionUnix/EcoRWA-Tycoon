@@ -13,6 +13,8 @@ import { globalWorld } from '../ecs/world';
 import { addEntity, addComponent, removeEntity } from 'bitecs';
 import { Building } from '../ecs/components/Building';
 import { Position } from '../ecs/components/Position';
+import { useTutorialStore } from '../../hooks/useTutorialStore';
+import { DORA_TUTORIAL_STEPS } from '../../components/ui/npcs/TutorialScript';
 
 export class InteractionSystem {
     /**
@@ -64,6 +66,9 @@ export class InteractionSystem {
 
         // --- CONSTRUCTION ROUTE (Drag & Drop) ---
         if (mode === 'BUILD_ROAD' && path && path.length > 0) {
+            // Signal au tutoriel que l'outil est bien utilisé (pour le masquer si besoin)
+            useTutorialStore.getState().advanceTutorial('SELECT_ROAD_TOOL');
+
             this.handleRoadConstruction(map, path, type);
             return { success: true, placedType: 'ROAD' };
         }
@@ -76,6 +81,7 @@ export class InteractionSystem {
 
         // --- ZONAGE ---
         else if (mode === 'ZONE') {
+            useTutorialStore.getState().advanceTutorial('SELECT_ZONE_TOOL');
             this.handleZoning(map, index, type);
             return { success: true, placedType: 'ZONE' };
         }
@@ -89,6 +95,32 @@ export class InteractionSystem {
     }
 
     private static handleRoadConstruction(map: MapEngine, path: number[], type: any) {
+        // --- LOGIQUE TUTORIEL ROAD ADJACENCY ---
+        const tutorial = useTutorialStore.getState();
+        if (tutorial.isActive) {
+            const currentStep = DORA_TUTORIAL_STEPS[tutorial.currentStepIndex];
+            if (currentStep.waitForAction === 'BUILD_ROAD') {
+                // Vérifier si AU MOINS UNE tuile du tracé touche une route existante
+                let isConnected = false;
+                for (const idx of path) {
+                    const neighbors = RoadManager.getNeighbors(idx);
+                    for (const nIdx of neighbors) {
+                        if (map.roadLayer[nIdx]) {
+                            isConnected = true;
+                            break;
+                        }
+                    }
+                    if (isConnected) break;
+                }
+
+                if (!isConnected) {
+                    // ÉCHEC : Dora réapparaît avec erreur
+                    tutorial.failAction('error_road_isolated');
+                    return;
+                }
+            }
+        }
+
         const { cost, valid } = RoadManager.calculateCost(map, path, type);
 
         // Vérification Argent
@@ -124,6 +156,11 @@ export class InteractionSystem {
                     RoadManager.updateConnections(map, idx);
                 }
             });
+
+            // SUCCÈS TUTORIEL : On avance
+            if (tutorial.isActive) {
+                tutorial.advanceTutorial('BUILD_ROAD');
+            }
 
             map.calculateSummary();
             map.revision++;
@@ -228,6 +265,9 @@ export class InteractionSystem {
                 PopulationManager.onZonePlaced(result.zoneData);
             }
             console.log(`✅ Zone ${type} créée avec succès!`);
+
+            // Succès Tutoriel
+            useTutorialStore.getState().advanceTutorial('BUILD_ZONE');
         } else {
             // ✅ Nettoyage des erreurs : On remonte proprement le message adapté à l'Advisor
             let advisorMessage = result.message || "Impossible de développer cette zone ici.";

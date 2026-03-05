@@ -4,5 +4,8 @@
     "step_population": "Here is the population tool.",
     "step_select_road": "Let's begin. Select the Road tool in your building bar.",
     "step_build_road": "Perfect! Now connect the town hall to the main road.",
-    "step_finish": "Excellent work, Mayor! You are ready to manage the city."
+    "step_finish": "Excellent work, Mayor! You are ready to manage the city.",
+    "step_select_zone": "Good! Now, let's select the Residential Zoning tool to attract residents.",
+    "step_build_zone": "Now place some residential zones along the road you just built.",
+    "error_road_isolated": "Attention Mayor! This road is isolated. You must connect it to the existing main road!"
 }

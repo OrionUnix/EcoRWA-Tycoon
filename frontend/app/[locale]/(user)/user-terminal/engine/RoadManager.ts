@@ -118,7 +118,7 @@ export class RoadManager {
     /**
      * Retourne les index des voisins [N, S, E, W]
      */
-    private static getNeighbors(index: number): number[] {
+    public static getNeighbors(index: number): number[] {
         const x = index % GRID_SIZE;
         const y = Math.floor(index / GRID_SIZE);
         return [

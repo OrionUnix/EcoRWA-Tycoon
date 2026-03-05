@@ -4,5 +4,8 @@
     "step_population": "Voici l'outil de population.",
     "step_select_road": "Commençons. Sélectionnez l'outil Route dans votre barre de construction.",
     "step_build_road": "Parfait ! Reliez maintenant la mairie à la route principale.",
-    "step_finish": "Excellent travail, Maire ! Vous êtes prêt à gérer la ville."
+    "step_finish": "Excellent travail, Maire ! Vous êtes prêt à gérer la ville.",
+    "step_select_zone": "Bien ! Maintenant, sélectionnons l'outil de Zonage Résidentiel pour attirer des habitants.",
+    "step_build_zone": "Posez maintenant quelques zones résidentielles le long de la route que vous venez de construire.",
+    "error_road_isolated": "Attention Maire ! Cette route est isolée. Vous devez absolument la relier à la route principale existante !"
 }

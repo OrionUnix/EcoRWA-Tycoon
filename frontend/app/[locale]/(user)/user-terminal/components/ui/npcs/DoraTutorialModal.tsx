@@ -14,10 +14,12 @@ interface DoraTutorialModalProps {
 
 export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose }) => {
     const t = useTranslations('doratuto');
-    const { currentStepIndex, nextStep, stopTutorial } = useTutorialStore();
+    const { currentStepIndex, nextStep, stopTutorial, isActive, isVisible, errorKey } = useTutorialStore();
 
     const [isTyping, setIsTyping] = useState(true);
     const [showNextButton, setShowNextButton] = useState(false);
+
+    if (!isActive || !isVisible) return null;
 
     const currentStep = DORA_TUTORIAL_STEPS[currentStepIndex];
 
@@ -63,7 +65,7 @@ export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose })
 
                 {/* Content Area */}
                 <div className="p-4 bg-[#c3c7cb]">
-                    <div className="flex gap-3">
+                    <div className="flex gap-4 items-center">
                         {/* Avatar */}
                         <div className="w-20 h-20 shrink-0 relative flex items-center justify-center">
                             {/* Le personnage 'bob' est utilisé comme fallback si 'dora' n'a pas encore de sprites, à changer si besoin */}
@@ -78,10 +80,10 @@ export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose })
                                 </span>
                             </div>
 
-                            {/* Clef de re-rendu pour forcer le reset machine à écrire au changement d'étape */}
-                            <div key={currentStepIndex}>
+                            {/* Clef de re-rendu pour forcer le reset machine à écrire au changement d'étape ou ERREUR */}
+                            <div key={errorKey ? `error-${errorKey}` : currentStepIndex}>
                                 <DoraDialogue
-                                    message={t(currentStep.textKey as any)}
+                                    message={errorKey ? t(errorKey as any) : t(currentStep.textKey as any)}
                                     iconUrl={currentStep.iconName ? GAME_ICONS[currentStep.iconName] : undefined}
                                     onComplete={handleDialogueComplete}
                                 />
