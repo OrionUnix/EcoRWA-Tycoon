@@ -107,6 +107,9 @@ export default function GameUI({
         ChunkManager.unlockChunk(cx, cy);
         engine.map.revision++;
 
+        // ✅ Signal mutation pour l'Auto-Save
+        window.dispatchEvent(new Event('city_mutated'));
+
         setIsLandModalOpen(false);
         console.log(`🔓 Chunk [${cx}, ${cy}] purchased!`);
     };

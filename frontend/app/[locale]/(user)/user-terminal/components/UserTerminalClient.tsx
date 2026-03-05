@@ -71,8 +71,7 @@ export default function UserTerminalClient() {
     const [isDemoMode, setIsDemoMode] = useState(false);
     const [showJordanPitch, setShowJordanPitch] = useState(false);
 
-    // État temporaire pour faire spawn Dora au chargement du jeu (Exemple d'intégration)
-    const [showDoraTuto, setShowDoraTuto] = useState(false);
+
 
     const [assetsLoaded, setAssetsLoaded] = useState(false);
     // useFirebaseWeb3Auth reste pour l'indicateur d'authentification UI (SimCityLoader)
@@ -202,10 +201,12 @@ export default function UserTerminalClient() {
             setSummary(engine.map.currentSummary);
             engine.map.revision++;
 
-            // Lancer le tuto de Dora 1 seconde après le chargement de la carte pour l'exemple
+            // Lancer le tuto de Dora 1 seconde après le chargement de la carte
             setTimeout(() => {
-                useTutorialStore.getState().startTutorial();
-                setShowDoraTuto(true);
+                const tutorial = useTutorialStore.getState();
+                if (!tutorial.isActive) {
+                    tutorial.startTutorial();
+                }
             }, 1000);
         }
     }, [bootState.isReady, assetsLoaded]);
@@ -224,6 +225,8 @@ export default function UserTerminalClient() {
     useEffect(() => {
         if (!assetsLoaded || isDemoMode || !isConnected) return;
         const interval = setInterval(() => {
+            if (document.hidden) return; // 🛑 FinOps: Stop computation when tab is hidden
+
             const engine = getGameEngine();
             if (!engine.isPaused && engine.map.stats) {
                 AlertSystem.checkMetrics(engine.map, (npc, messageKey) => {
@@ -308,8 +311,8 @@ export default function UserTerminalClient() {
             <BobWarningModal />
             {showOnboarding && <GameOnboarding onComplete={() => setShowOnboarding(false)} onClose={() => setShowOnboarding(false)} />}
 
-            {/* 👩‍🏫 MODALE TUTORIEL DORA (Exemple) */}
-            {showDoraTuto && <DoraTutorialModal onClose={() => setShowDoraTuto(false)} />}
+            {/* 👩‍🏫 MODALE TUTORIEL DORA */}
+            <DoraTutorialModal viewMode={viewMode} onClose={() => { }} />
 
             <NpcAlertOverlay
                 npc={currentAlert?.npc || null}

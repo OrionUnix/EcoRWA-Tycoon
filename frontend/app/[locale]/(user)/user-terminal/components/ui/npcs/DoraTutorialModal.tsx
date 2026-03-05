@@ -9,19 +9,41 @@ import { DORA_TUTORIAL_STEPS } from './TutorialScript';
 import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
 
 interface DoraTutorialModalProps {
+    viewMode: string;
     onClose: () => void;
 }
 
-export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose }) => {
+export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ viewMode, onClose }) => {
     const t = useTranslations('doratuto');
     const { currentStepIndex, nextStep, stopTutorial, isActive, isVisible, errorKey } = useTutorialStore();
 
     const [isTyping, setIsTyping] = useState(true);
     const [showNextButton, setShowNextButton] = useState(false);
 
-    if (!isActive || !isVisible) return null;
+    // ✅ FIX : Hook useEffect doit être appelé AVANT tout return conditionnel
+    // Si le dialogue en cours change depuis l'extérieur (ex: advanceTutorial appelé), on reset
+    React.useEffect(() => {
+        setIsTyping(true);
+        setShowNextButton(false);
+    }, [currentStepIndex]);
+
+    if (!isActive) return null;
 
     const currentStep = DORA_TUTORIAL_STEPS[currentStepIndex];
+
+    // ✅ MISSION 1 : Masquer Dora si le bon outil est sélectionné
+    // (Mais on la garde visible en cas d'erreur pour que le joueur voie le message)
+    let shouldBeHidden = false;
+    if (isVisible && !errorKey && currentStep.waitForAction) {
+        if (currentStep.waitForAction === 'SELECT_ROAD_TOOL' && viewMode === 'BUILD_ROAD') shouldBeHidden = true;
+        if (currentStep.waitForAction === 'BUILD_ROAD_CONNECTED' && viewMode === 'BUILD_ROAD') shouldBeHidden = true;
+        if (currentStep.waitForAction === 'SELECT_ZONE_TOOL' && viewMode === 'ZONE') shouldBeHidden = true;
+        if (currentStep.waitForAction === 'BUILD_ZONE' && viewMode === 'ZONE') shouldBeHidden = true;
+        if (currentStep.waitForAction === 'BUILD_BASIC_RESOURCES' && modeIsResourceBuilding(viewMode)) shouldBeHidden = true;
+    }
+
+    // Si le store dit caché (!isVisible), on respecte
+    if (!isVisible) shouldBeHidden = true;
 
     const handleDialogueComplete = () => {
         setIsTyping(false);
@@ -31,25 +53,29 @@ export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose })
         }
     };
 
+    /** Helper pour savoir si on construit une ressource de base */
+    function modeIsResourceBuilding(mode: string) {
+        return mode === 'BUILD_LUMBER_HUT' || mode === 'BUILD_MINE' || mode === 'BUILD_STONE_QUARRY';
+    }
+
     const handleNext = () => {
         if (currentStepIndex < DORA_TUTORIAL_STEPS.length - 1) {
             nextStep();
-            setIsTyping(true);
-            setShowNextButton(false);
+            // L'effet useEffect ci-dessus gérera le reset de isTyping/showNextButton
         } else {
             stopTutorial();
             onClose();
         }
     };
 
-    // Si le dialogue en cours change depuis l'extérieur (ex: advanceTutorial appelé), on reset
-    React.useEffect(() => {
-        setIsTyping(true);
-        setShowNextButton(false);
-    }, [currentStepIndex]);
-
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none">
+        <div
+            className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none transition-all duration-500 ease-in-out"
+            style={{
+                opacity: shouldBeHidden ? 0 : 1,
+                transform: shouldBeHidden ? 'translateY(20px)' : 'translateY(0)'
+            }}
+        >
             {/* Win95 Modal Wrapper */}
             <div className="w-[450px] max-w-[95vw] win95-window shadow-[8px_8px_0_0_#000] pointer-events-auto">
                 {/* Title Bar */}

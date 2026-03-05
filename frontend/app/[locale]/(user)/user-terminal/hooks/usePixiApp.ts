@@ -104,6 +104,7 @@ export function usePixiApp(containerRef: React.RefObject<HTMLDivElement | null>)
             setIsReady(false);
             if (appRef.current) {
                 appRef.current.destroy(true, { children: true });
+                (globalThis as any).__pixiApp = null;
                 appRef.current = null;
                 viewportRef.current = null;
             }

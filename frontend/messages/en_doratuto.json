@@ -2,10 +2,12 @@
     "step1": "Hello Mayor! My name is Dora and I will guide you through your first steps.",
     "step_welcome": "Welcome Mayor! Look at this counter at the top.",
     "step_population": "Here is the population tool.",
-    "step_select_road": "Let's begin. Select the Road tool in your building bar.",
-    "step_build_road": "Perfect! Now connect the town hall to the main road.",
-    "step_finish": "Excellent work, Mayor! You are ready to manage the city.",
-    "step_select_zone": "Good! Now, let's select the Residential Zoning tool to attract residents.",
+    "step_select_road": "Let's start with the foundations! Select the Road tool in your building bar.",
+    "step_connect_road": "Perfect. Now, connect a new road to the existing main road (the big road at the edge of the map).",
+    "step_resources": "Excellent! To develop the city, we need materials. Build a Lumber Hut (Wood) and a Mine (Stone/Iron).",
+    "step_water_explain": "Look at the Water Pump in the menu. Is it greyed out? That's normal! Drinkable water requires solid infrastructure. You first need to accumulate enough Stone and Iron from your mine to build it.",
+    "step_select_zone": "Good! Now that we have solid foundations, let's select the Residential Zoning tool to attract residents.",
     "step_build_zone": "Now place some residential zones along the road you just built.",
-    "error_road_isolated": "Attention Mayor! This road is isolated. You must connect it to the existing main road!"
+    "step_finish": "Excellent work, Mayor! You've mastered the basics of production chains. You are ready to manage the city!",
+    "error_road_isolated": "Attention Mayor! This road is isolated. For citizens to use it, it must be connected to the main road."
 }

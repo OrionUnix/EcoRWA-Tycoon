@@ -62,6 +62,11 @@ export class BuildingUpgradeSystem {
         // 5. Mise à jour de la population/jobs
         PopulationManager.onBuildingUpgraded(specs, oldLevel, building.level);
 
+        // ✅ Signal mutation pour l'Auto-Save
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('city_mutated'));
+        }
+
         console.log(`🆙 UpgradeSystem: ${specs.name} L${oldLevel} -> L${building.level} (Cost: ${cost}$)`);
         return { success: true, message: `Amélioration réussie ! (Niveau ${building.level})` };
     }

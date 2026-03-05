@@ -158,8 +158,11 @@ export function useGameLoop(
                     VehicleRenderer.drawVehicles(objectLayer, mapData, currentZoom);
                     WorkerRenderer.render(objectLayer);
 
-                    // ✅ Tri Isométrique Strict (O(N log N) chaque frame) sur TOUT le calque
-                    if (objectLayer.children) {
+                    // ✅ Tri Isométrique Conditionnel (Z-Sort)
+                    // On ne trie QUE si la carte a changé (bâtiments) ou s'il y a du mouvement (TODO: flag précis)
+                    const needsResort = mapData.revision !== lastRevRef.current;
+
+                    if (objectLayer.children && needsResort) {
                         objectLayer.children.sort((a, b) => {
                             return a.zIndex - b.zIndex || (a.y + a.x / 100) - (b.y + b.x / 100);
                         });

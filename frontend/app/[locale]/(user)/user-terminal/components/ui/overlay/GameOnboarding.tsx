@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount, useWriteContract } from 'wagmi';
 import { parseAbi } from 'viem';
 import { getGameEngine } from '../../../engine/GameEngine';
+import { SaveSystem } from '../../../engine/systems/SaveSystem';
 import { withBasePath } from '@/app/[locale]/(user)/user-terminal/utils/assetUtils';
 import { useTranslations } from 'next-intl';
 import { AnimatedAvatar } from '../npcs/AnimatedAvatar';
@@ -112,6 +113,8 @@ export const GameOnboarding: React.FC<GameOnboardingProps> = ({ onComplete, onCl
                     buildingType: selectedData.type,
                 }
             }));
+
+            SaveSystem.markAsDirty(); // 💾 Marquer pour sauvegarde cloud après achat RWA
 
             // 🎉 Bob Congrat Modal — afficher une seule fois (1ÈRE EXPÉRIENCE)
             const engine = getGameEngine();

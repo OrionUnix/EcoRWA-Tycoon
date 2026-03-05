@@ -27,7 +27,9 @@ export const useGameSave = (
         const startInterval = () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
             intervalRef.current = setInterval(() => {
-                PersistenceManager.autoSave(engine.map, address);
+                if (SaveSystem.isDirty) {
+                    PersistenceManager.autoSave(engine.map, address);
+                }
             }, SAVE_INTERVAL);
         };
 

@@ -1,6 +1,6 @@
 import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
 
-export type TutorialAction = 'SELECT_ROAD_TOOL' | 'BUILD_ROAD' | 'SELECT_ZONE_TOOL' | 'BUILD_ZONE' | 'SELECT_RESIDENTIAL' | 'BUILD_RESIDENTIAL' | 'OPEN_RWA_PANEL';
+export type TutorialAction = 'SELECT_ROAD_TOOL' | 'BUILD_ROAD' | 'BUILD_ROAD_CONNECTED' | 'SELECT_ZONE_TOOL' | 'BUILD_ZONE' | 'SELECT_RESIDENTIAL' | 'BUILD_RESIDENTIAL' | 'OPEN_RWA_PANEL' | 'BUILD_BASIC_RESOURCES';
 
 export interface TutorialStep {
     id: string;
@@ -24,12 +24,23 @@ export const DORA_TUTORIAL_STEPS: TutorialStep[] = [
         id: "step_select_road",
         textKey: "step_select_road",
         iconName: "road_dirt",
-        waitForAction: 'SELECT_ROAD_TOOL' // App needs to call advanceTutorial('SELECT_ROAD_TOOL')
+        waitForAction: 'SELECT_ROAD_TOOL'
     },
     {
-        id: "step_build_road",
-        textKey: "step_build_road",
-        waitForAction: 'BUILD_ROAD'
+        id: "step_connect_road",
+        textKey: "step_connect_road",
+        waitForAction: 'BUILD_ROAD_CONNECTED'
+    },
+    {
+        id: "step_resources",
+        textKey: "step_resources",
+        iconName: "stone",
+        waitForAction: 'BUILD_BASIC_RESOURCES'
+    },
+    {
+        id: "step_water_explain",
+        textKey: "step_water_explain",
+        iconName: "water"
     },
     {
         id: "step_select_zone",

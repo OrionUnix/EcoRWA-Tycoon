@@ -72,12 +72,17 @@ export class PersistenceManager {
     public static async autoSave(engine: MapEngine, walletAddress: string, force: boolean = false) {
         if (this.isSaving || !walletAddress) return;
 
+        // ✅ FinOps Optimization: Ne pas même stringifier si rien n'a changé
+        if (!force && !SaveSystem.isDirty) {
+            return;
+        }
+
         const saveData = this.serializeGame(engine);
         const currentHash = this.getHash(JSON.stringify(saveData));
 
-        // Dirty Checking
+        // Double check avec le hash pour être sûr (optionnel mais robuste)
         if (!force && currentHash === this.lastHash) {
-            // console.log("✨ [PersistenceManager] Aucun changement détecté, skip auto-save.");
+            SaveSystem.clearDirty();
             return;
         }
 

@@ -3,6 +3,7 @@ import { BuildingType } from './types';
 import { GRID_SIZE } from './config';
 import { ChunkManager } from './ChunkManager';
 import { EconomySystem } from './systems/EconomySystem';
+import { SaveSystem } from './systems/SaveSystem';
 
 /**
  * RWABuildingSpawner — Bridge React↔GameEngine
@@ -93,6 +94,8 @@ export class RWABuildingSpawner {
         engine.revision++;
         EconomySystem.activateRWABonus();
         placedRWAIds.add(rwaId);
+
+        SaveSystem.markAsDirty(); // 💾 Marquer pour sauvegarde
 
         console.log(`✅ [RWABuildingSpawner] RWA #${rwaId} placé manuellement en [${x}, ${y}]. Bonus x2 actif.`);
         return true;

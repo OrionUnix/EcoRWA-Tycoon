@@ -114,16 +114,7 @@ export class MapEngine {
         };
 
         // ✅ [RACE CONDITION FIX]
-        // generateWorld() N'EST PLUS APPELÉ ICI.
-        // Le constructeur crée uniquement les structures de données vides (Float32Arrays).
-        //
-        // Le flux correct est :
-        // 1. new MapEngine()            → Allocations mémoire (O(n) mais CPU-free)
-        // 2. PersistenceManager.load()  → Récupère la sauvegarde + le mapSeed
-        // 3. engine.mapSeed = seed      → Injection du seed
-        // 4. engine.generateWorld()     → Génération déterministe
-        //
-        // Ce flux est garanti par le hook `useGameBoot`.
+
         console.log("🗺️ MapEngine: Mémoire allouée. En attente de seed pour la génération.");
     }
 
@@ -191,9 +182,43 @@ export class MapEngine {
             window.dispatchEvent(new Event('city_mutated'));
         }
     }
-    public removeRoad(idx: number) { this.roadLayer[idx] = null; this.revision++; }
-    public setZone(idx: number, zoneData: ZoneData) { this.zoningLayer[idx] = zoneData; this.revision++; }
-    public removeZone(idx: number) { this.zoningLayer[idx] = null; this.revision++; }
+    public removeRoad(idx: number) {
+        this.roadLayer[idx] = null;
+        this.revision++;
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('city_mutated'));
+    }
+    public setZone(idx: number, zoneData: ZoneData) {
+        this.zoningLayer[idx] = zoneData;
+        this.revision++;
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('city_mutated'));
+    }
+    public removeZone(idx: number) {
+        this.zoningLayer[idx] = null;
+        this.revision++;
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('city_mutated'));
+    }
+
+    /**
+     * ✅ MISSION 2 : Vérification mathématique d'adjacence (Manhattan)
+     * Vérifie si une coordonnée est orthogonale à une route existante.
+     */
+    public checkRoadAdjacency(idx: number): boolean {
+        const x = idx % this.config.size;
+        const y = Math.floor(idx / this.config.size);
+
+        const neighbors = [
+            { x, y: y - 1 }, // Nord
+            { x, y: y + 1 }, // Sud
+            { x: x + 1, y }, // Est
+            { x: x - 1, y }  // Ouest
+        ];
+
+        return neighbors.some(n => {
+            if (n.x < 0 || n.x >= this.config.size || n.y < 0 || n.y >= this.config.size) return false;
+            const nIdx = n.y * this.config.size + n.x;
+            return !!this.roadLayer[nIdx];
+        });
+    }
 }
 
 // Singleton Robuste

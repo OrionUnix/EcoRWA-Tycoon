@@ -57,9 +57,8 @@ export class SaveSystem {
         }
     }
 
-    static markDirty(): void { this._onMutation(); }
-
     public static get isDirty(): boolean { return this._isDirty; }
+    public static markAsDirty(): void { this._isDirty = true; }
     public static clearDirty(): void { this._isDirty = false; }
 
     static hasSave(): boolean { return false; } // LocalStorage disabled. Cloud managed.

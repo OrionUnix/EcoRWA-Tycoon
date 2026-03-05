@@ -15,6 +15,7 @@ import { Building } from '../ecs/components/Building';
 import { Position } from '../ecs/components/Position';
 import { useTutorialStore } from '../../hooks/useTutorialStore';
 import { DORA_TUTORIAL_STEPS } from '../../components/ui/npcs/TutorialScript';
+import { SaveSystem } from '../systems/SaveSystem';
 
 export class InteractionSystem {
     /**
@@ -99,18 +100,14 @@ export class InteractionSystem {
         const tutorial = useTutorialStore.getState();
         if (tutorial.isActive) {
             const currentStep = DORA_TUTORIAL_STEPS[tutorial.currentStepIndex];
-            if (currentStep.waitForAction === 'BUILD_ROAD') {
-                // Vérifier si AU MOINS UNE tuile du tracé touche une route existante
+            if (currentStep.waitForAction === 'BUILD_ROAD_CONNECTED') {
+                // Vérifier si AU MOINS UNE tuile du tracé touche une route existante via MapEngine.checkRoadAdjacency
                 let isConnected = false;
                 for (const idx of path) {
-                    const neighbors = RoadManager.getNeighbors(idx);
-                    for (const nIdx of neighbors) {
-                        if (map.roadLayer[nIdx]) {
-                            isConnected = true;
-                            break;
-                        }
+                    if (map.checkRoadAdjacency(idx)) {
+                        isConnected = true;
+                        break;
                     }
-                    if (isConnected) break;
                 }
 
                 if (!isConnected) {
@@ -157,13 +154,16 @@ export class InteractionSystem {
                 }
             });
 
-            // SUCCÈS TUTORIEL : On avance
             if (tutorial.isActive) {
-                tutorial.advanceTutorial('BUILD_ROAD');
+                const currentStep = DORA_TUTORIAL_STEPS[tutorial.currentStepIndex];
+                if (currentStep.waitForAction === 'BUILD_ROAD_CONNECTED') {
+                    tutorial.advanceTutorial('BUILD_ROAD_CONNECTED');
+                }
             }
 
             map.calculateSummary();
             map.revision++;
+            SaveSystem.markAsDirty(); // 💾 Marquer pour sauvegarde cloud
         }
     }
 
@@ -254,6 +254,7 @@ export class InteractionSystem {
 
             // Forcer une passe système de rafraîchissement global
             map.revision++;
+            SaveSystem.markAsDirty(); // 💾 Marquer pour sauvegarde cloud
         }
     }
 
@@ -268,6 +269,7 @@ export class InteractionSystem {
 
             // Succès Tutoriel
             useTutorialStore.getState().advanceTutorial('BUILD_ZONE');
+            SaveSystem.markAsDirty(); // 💾 Marquer pour sauvegarde cloud
         } else {
             // ✅ Nettoyage des erreurs : On remonte proprement le message adapté à l'Advisor
             let advisorMessage = result.message || "Impossible de développer cette zone ici.";
@@ -347,7 +349,28 @@ export class InteractionSystem {
 
             console.log(`⚙️ ECS Entity ${eid} created for Building.`);
 
+            // ✅ MISSION 3 : Vérification tutoriel pour ressources de base (Bois + Mine)
+            const tutorial = useTutorialStore.getState();
+            if (tutorial.isActive) {
+                const currentStep = DORA_TUTORIAL_STEPS[tutorial.currentStepIndex];
+                if (currentStep.waitForAction === 'BUILD_BASIC_RESOURCES') {
+                    // On vérifie si on a au moins une mine et un camp de bûcherons
+                    let hasMine = false;
+                    let hasLumber = false;
+                    map.buildingLayer.forEach(b => {
+                        if (!b) return;
+                        if (b.type === BuildingType.MINE) hasMine = true;
+                        if (b.type === BuildingType.LUMBER_HUT) hasLumber = true;
+                    });
+
+                    if (hasMine && hasLumber) {
+                        tutorial.advanceTutorial('BUILD_BASIC_RESOURCES');
+                    }
+                }
+            }
+
             // ✅ RETOUR SUCCÈS POUR AUTO-DESELECT
+            SaveSystem.markAsDirty(); // 💾 Marquer pour sauvegarde cloud
             return { success: true, placedType: buildingType };
         } else {
             // ✅ PLUS DE console.error NI DE throw POUR ÉVITER LE CRASH DE NEXT.JS
