@@ -24,6 +24,10 @@ export class GameEngine {
     public speed: number = 1; // 1x, 2x, 4x
     private tickCount: number = 0;
 
+    // ✅ NOUVEAU : Timer d'économie basé sur le temps réel
+    public economyTimer: number = 0;
+    public readonly REAL_SECONDS_PER_GAME_HOUR = 10; // 10 secondes réelles = 1 heure de jeu = 1 versement
+
     // ✅ NOUVEAU : Persistance de la caméra
     public lastCameraPosition: { x: number, y: number } | null = null;
     public lastZoom: number = 1.0;
@@ -66,10 +70,7 @@ export class GameEngine {
         // 1. TRAFIC (Vite)
         TrafficSystem.update(this.map);
 
-        // 2. ECONOMY (Every 60 ticks - ~1 sec at 1x)
-        if (this.tickCount % 60 === 0) {
-            EconomySystem.update(this.map);
-        }
+        // (Economy est maintenant gérée dans tick() de façon tempo-réelle indépendante du frame rate)
 
         // 3. POPULATION & NEEDS (Every 30 ticks)
         if (this.tickCount % 30 === 0) {
@@ -119,9 +120,19 @@ export class GameEngine {
         this.tickCount++;
     }
 
-    public tick() {
+    public tick(deltaSec: number = 0) {
         if (this.isPaused) return;
 
+        // ✅ GESTION ÉCONOMIQUE SUR LE TEMPS RÉEL
+        // Le temps avance proportionnellement à la vitesse du jeu
+        this.economyTimer += deltaSec * this.speed;
+
+        if (this.economyTimer >= this.REAL_SECONDS_PER_GAME_HOUR) {
+            EconomySystem.update(this.map);
+            this.economyTimer -= this.REAL_SECONDS_PER_GAME_HOUR;
+        }
+
+        // ✅ SIMULATION DES AUTRES SYSTÈMES (Trafic, Évolution...)
         // On exécute la boucle X fois selon la vitesse
         for (let i = 0; i < this.speed; i++) {
             this.simulationStep();

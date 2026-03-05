@@ -36,6 +36,10 @@ import { NpcAlertOverlay } from './ui/widgets/NpcAlertOverlay';
 import { useGameSave } from '../hooks/useGameSave';
 import { SaveIndicator } from './ui/hud/SaveIndicator';
 
+// --- IMPORTS START SCREEN ---
+import { useSaveStore } from '@/hooks/useSaveStore';
+import { StartScreen } from './StartScreen';
+
 export default function UserTerminalClient() {
     // 1. LIENS ET REFS
     const containerRef = useRef<HTMLDivElement>(null);
@@ -48,6 +52,16 @@ export default function UserTerminalClient() {
     const uiGRef = useRef<PIXI.Graphics | null>(null);
 
     const { isConnected, address } = useAccount();
+
+    const { saveMode, userId, setSaveMode, setUserId } = useSaveStore();
+
+    // Auto-skip StartScreen if wallet is already connected via Wagmi (page reload)
+    useEffect(() => {
+        if (isConnected && address && saveMode === null) {
+            setSaveMode('web3');
+            setUserId(address);
+        }
+    }, [isConnected, address, saveMode, setSaveMode, setUserId]);
 
     const prevIsConnectedRef = useRef(isConnected);
     const [isSavingDisconnect, setIsSavingDisconnect] = useState(false);
@@ -156,8 +170,16 @@ export default function UserTerminalClient() {
     // 5. 🔒 BOOT FLOW VERROUILLÉ — useGameBoot garantit l'ordre séquentiel :
     //    A(Wallet) → B(loadSave) → C(seed) → D(preload) → E(generateWorld) → F(isReady)
     //    Le moteur graphique ne dessine AUCUN pixel avant que bootState.isReady soit true.
+
+    const getBootId = () => {
+        if (saveMode === null) return null; // BOOT EN PAUSE TANT QUE LE JOUEUR N'A PAS CHOISI
+        if (saveMode === 'none') return undefined; // MODE DEMO SANS SAUVEGARDE
+        if (saveMode === 'web3') return address; // PRIORITÉ AU WALLET WAGMI SI DISPO
+        return userId; // MODE WEB2 (CODE MAIRE)
+    };
+
     const bootState = useGameBoot(
-        isConnected && address ? address : undefined,
+        getBootId(),
         isReady ? preloadAssetsCb : undefined // Ne démarre le boot complet que si PixiJS est prêt !
     );
 
@@ -268,6 +290,9 @@ export default function UserTerminalClient() {
 
     return (
         <>
+            {/* 🖥️ ÉCRAN DE DÉMARRAGE HYBRIDE WEB2 / WEB3 / DEMO */}
+            {saveMode === null && <StartScreen />}
+
             <AdvisorWidget isVisible={!isConnected} />
             <BobWarningModal />
             {showOnboarding && <GameOnboarding onComplete={() => setShowOnboarding(false)} onClose={() => setShowOnboarding(false)} />}
@@ -282,7 +307,8 @@ export default function UserTerminalClient() {
                 <div ref={containerRef} style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
 
                 {/* 🔒 Écran de chargement : plein écran, affiché JUSQU'À ce que le boot soit 100% complet */}
-                {(!assetsLoaded || !bootState.isReady) && (
+                {/* On le cache explicitement si on est sur l'écran d'accueil (saveMode === null) */}
+                {saveMode !== null && (!assetsLoaded || !bootState.isReady) && (
                     <GameLoader phase={bootState.phase} error={bootState.error} />
                 )}
 

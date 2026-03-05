@@ -101,7 +101,8 @@ export function useGameLoop(
             }
 
             // 1. LOGIQUE DU MOTEUR (Trafic, Economy, etc.)
-            if (engine['tick']) (engine as any).tick();
+            const deltaSec = ticker.deltaMS / 1000; // Temps réel écoulé entre 2 frames
+            if (engine['tick']) (engine as any).tick(deltaSec);
 
             // 2. RENDU
             const currentZoom = staticGRef.current.parent?.scale.x || 1.0;

@@ -52,7 +52,7 @@ export interface BootState {
  * @param preloadAssets  - Fonction fournie par UserTerminalClient, exécutant AssetLoader.initAssets.
  */
 export function useGameBoot(
-    walletAddress: string | undefined,
+    walletAddress: string | undefined | null,
     preloadAssets?: () => Promise<void>
 ): BootState {
     const [phase, setPhase] = useState<BootPhase>('idle');
@@ -61,7 +61,7 @@ export function useGameBoot(
 
     // Évite les doubles exécutions en StrictMode React (Le Mutex ! 🛡️) et les re-renders
     const hasBootedRef = useRef(false);
-    const currentWalletRef = useRef<string | undefined>(undefined);
+    const currentWalletRef = useRef<string | undefined | null>(undefined);
 
     const boot = useCallback(async (wallet: string, preloader: () => Promise<void>) => {
         // Guard : si déjà démarré pour ce wallet, ne pas rebooter
@@ -118,7 +118,7 @@ export function useGameBoot(
                 // L'adresse wallet est unique et déterministe pour ce joueur.
                 resolvedSeed = wallet.toLowerCase();
                 setIsNewGame(true);
-                console.log(`✨ [useGameBoot] Nouvelle partie — Seed depuis wallet : ${resolvedSeed.substring(0, 20)}...`);
+                console.log(`✨ [useGameBoot] Nouvelle partie — Seed depuis identifiant : ${resolvedSeed.substring(0, 20)}...`);
             }
 
             // ─────────────────────────────────────────────────────────────
@@ -190,6 +190,9 @@ export function useGameBoot(
         // 🛑 ON BLOQUE TOUT TANT QUE PIXI N'EST PAS MONTÉ (preloadAssets undefined)
         if (!preloadAssets) return;
 
+        // 🛑 ON BLOQUE SI L'IDENTIFIANT EST EXPLICITEMENT NULL (Start Screen en cours)
+        if (walletAddress === null) return;
+
         if (walletAddress) {
             // WALLET CONNECTÉ → Démarrer le flux de boot séquentiel complet
             boot(walletAddress, preloadAssets);
@@ -197,7 +200,7 @@ export function useGameBoot(
             // PAS DE WALLET → Mode Démo : génération sans Firebase
             if (!hasBootedRef.current) {
                 hasBootedRef.current = true;
-                currentWalletRef.current = 'DEMO';
+                currentWalletRef.current = undefined; // undefined = demo
                 setIsNewGame(true);
 
                 const engine = getMapEngine();
@@ -221,7 +224,7 @@ export function useGameBoot(
                 })();
             } else if (phase === 'ready') {
                 SaveSystem.setWalletConnected(false);
-                console.log('👋 [useGameBoot] Wallet déconnecté — auto-save désactivé.');
+                console.log('👋 [useGameBoot] Mode démo sans sauvegarde — auto-save désactivé.');
             }
         }
     }, [walletAddress, boot, preloadAssets]);

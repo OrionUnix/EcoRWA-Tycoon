@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { BuildingData } from './types';
 import { MapEngine } from './MapEngine';
 import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE } from './config';
+import { gridToScreen } from './isometric'; // ✅ PILIER 1 : Source de vérité
 import { FXRenderer } from './FXRenderer';
 import { BuildingEmoteSystem } from './renderers/buildings/BuildingEmoteSystem';
 import { BuildingTextureResolver } from './renderers/buildings/BuildingTextureResolver';
@@ -49,10 +50,11 @@ export class BuildingRenderer {
         }
 
         // 2. Position et Z-Sorting (Rigoureux)
+        parentContainer.sortableChildren = true; // ✅ PILIER 3 : Garantit l'Ordre Naturel
         container.visible = true;
         container.x = pos.x;
         container.y = pos.y;
-        container.zIndex = x + y + 0.5;
+        container.zIndex = x + y + 0.5; // ✅ PILIER 3 : zIndex = gridX + gridY
 
         const lvl = building.level || 0;
         let isConstState = building.state === 'CONSTRUCTION' || lvl === 0;
@@ -132,17 +134,12 @@ export class BuildingRenderer {
             }
             sprite.scale.set(currentScale);
 
-            // HitArea Losange Isométrique — en coordonnées LOCALES du sprite (avant scale)
-            // anchor est (0.5, 1.0) : x=0 est au centre horizontal, y=0 est au bas du sprite
-            // Le losange de base de la tuile (TILE_WIDTH×TILE_HEIGHT) :
-            //   Centre-Bas  : (0, 0)
-            //   Droite      : (+TILE_WIDTH/2, -TILE_HEIGHT/2)
-            //   Centre-Haut : (0, -TILE_HEIGHT)
-            //   Gauche      : (-TILE_WIDTH/2, -TILE_HEIGHT/2)
-            const hw = TILE_WIDTH / 2;   // demi-largeur de la tuile en px
-            const hh = TILE_HEIGHT / 2;  // demi-hauteur de la tuile en px
+            // ✅ PILIER 2 : Bouclier Anti-Clic Fantôme
+            // HitArea Losange Isométrique exact (base = TILE_WIDTH x TILE_HEIGHT)
+            const hw = TILE_WIDTH / 2;
+            const hh = TILE_HEIGHT / 2;
             sprite.hitArea = new PIXI.Polygon([
-                new PIXI.Point(0, 0),    // Bas (ancre)
+                new PIXI.Point(0, 0),    // Bas (ancre à 0.5, 1.0)
                 new PIXI.Point(hw, -hh),  // Droite
                 new PIXI.Point(0, -TILE_HEIGHT), // Haut
                 new PIXI.Point(-hw, -hh),  // Gauche
@@ -214,9 +211,10 @@ export class BuildingRenderer {
             zIndex = cachedContainer.zIndex + 0.1;
         } else {
             const gridX = index % GRID_SIZE, gridY = Math.floor(index / GRID_SIZE);
-            targetX = (gridX - gridY) * (TILE_WIDTH / 2);
-            targetY = (gridX + gridY) * (TILE_HEIGHT / 2) + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET;
-            zIndex = gridX + gridY + 0.5;
+            const iso = gridToScreen(gridX, gridY); // ✅ PILIER 1 : Appel à la source de vérité
+            targetX = iso.x;
+            targetY = iso.y + (TILE_HEIGHT / 2) + SURFACE_Y_OFFSET;
+            zIndex = gridX + gridY + 0.5; // ✅ PILIER 3
             for (const [_, c] of buildingCache.entries()) {
                 if (c.parent) { parentContainer = c.parent; break; }
             }
