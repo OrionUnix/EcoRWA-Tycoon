@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AnimatedAvatar } from './AnimatedAvatar';
 import { DoraDialogue } from './DoraDialogue';
+import { useTutorialStore } from '../../../hooks/useTutorialStore';
+import { DORA_TUTORIAL_STEPS } from './TutorialScript';
+import { GAME_ICONS } from '@/hooks/ui/useGameIcons';
 
 interface DoraTutorialModalProps {
     onClose: () => void;
@@ -11,32 +14,42 @@ interface DoraTutorialModalProps {
 
 export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose }) => {
     const t = useTranslations('doratuto');
+    const { currentStepIndex, nextStep, stopTutorial } = useTutorialStore();
+
     const [isTyping, setIsTyping] = useState(true);
     const [showNextButton, setShowNextButton] = useState(false);
 
-    // Pour l'instant, on n'a qu'une étape, mais c'est prêt pour être étendu.
-    const steps = ['step1'];
-    const [currentStepIndex, setCurrentStepIndex] = useState(0);
+    const currentStep = DORA_TUTORIAL_STEPS[currentStepIndex];
 
     const handleDialogueComplete = () => {
         setIsTyping(false);
-        setShowNextButton(true);
+        // On n'affiche le bouton "Suivant" QUE si l'étape n'attend pas d'action du joueur
+        if (!currentStep.waitForAction) {
+            setShowNextButton(true);
+        }
     };
 
     const handleNext = () => {
-        if (currentStepIndex < steps.length - 1) {
-            setCurrentStepIndex(currentStepIndex + 1);
+        if (currentStepIndex < DORA_TUTORIAL_STEPS.length - 1) {
+            nextStep();
             setIsTyping(true);
             setShowNextButton(false);
         } else {
+            stopTutorial();
             onClose();
         }
     };
 
+    // Si le dialogue en cours change depuis l'extérieur (ex: advanceTutorial appelé), on reset
+    React.useEffect(() => {
+        setIsTyping(true);
+        setShowNextButton(false);
+    }, [currentStepIndex]);
+
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none">
             {/* Win95 Modal Wrapper */}
-            <div className="w-[450px] max-w-[95vw] win95-window shadow-[8px_8px_0_0_#000]">
+            <div className="w-[450px] max-w-[95vw] win95-window shadow-[8px_8px_0_0_#000] pointer-events-auto">
                 {/* Title Bar */}
                 <div className="win95-title-bar px-2">
                     <span>Assistant(e) - Dora</span>
@@ -52,20 +65,24 @@ export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose })
                 <div className="p-4 bg-[#c3c7cb]">
                     <div className="flex gap-3">
                         {/* Avatar */}
-                        <div className="w-20 h-20 shrink-0 relative flex items-center justify-center border-2 border-[#808080] shadow-[2px_2px_0_0_#000] bg-slate-300">
+                        <div className="w-20 h-20 shrink-0 relative flex items-center justify-center">
                             {/* Le personnage 'bob' est utilisé comme fallback si 'dora' n'a pas encore de sprites, à changer si besoin */}
                             <AnimatedAvatar character="dora" isTalking={isTyping} />
                         </div>
 
                         {/* Dialogue Box */}
                         <div className="flex-1">
-                            <span className="font-black uppercase text-xs pb-0.5 mb-1 block w-max border-b border-black">
-                                Guide Tutoriel
-                            </span>
+                            <div className="border-b border-black mb-1 pb-0.5">
+                                <span className="font-black uppercase text-xs block w-max">
+                                    Guide Tutoriel
+                                </span>
+                            </div>
+
                             {/* Clef de re-rendu pour forcer le reset machine à écrire au changement d'étape */}
                             <div key={currentStepIndex}>
                                 <DoraDialogue
-                                    message={t(steps[currentStepIndex] as any)}
+                                    message={t(currentStep.textKey as any)}
+                                    iconUrl={currentStep.iconName ? GAME_ICONS[currentStep.iconName] : undefined}
                                     onComplete={handleDialogueComplete}
                                 />
                             </div>
@@ -74,12 +91,12 @@ export const DoraTutorialModal: React.FC<DoraTutorialModalProps> = ({ onClose })
 
                     {/* Footer / Actions */}
                     <div className="mt-4 flex justify-end h-8">
-                        {showNextButton && (
+                        {showNextButton && !currentStep.waitForAction && (
                             <button
                                 onClick={handleNext}
                                 className="win95-button px-6 font-bold text-sm"
                             >
-                                {currentStepIndex < steps.length - 1 ? 'Suivant >' : 'Terminer'}
+                                {currentStepIndex < DORA_TUTORIAL_STEPS.length - 1 ? 'Suivant >' : 'Terminer'}
                             </button>
                         )}
                     </div>

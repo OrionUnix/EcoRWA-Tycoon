@@ -1,3 +1,8 @@
 {
-    "step1": "Bonjour Maire ! Je m'appelle Dora et je vais vous guider dans vos premiers pas."
+    "step1": "Bonjour Maire ! Je m'appelle Dora et je vais vous guider dans vos premiers pas.",
+    "step_welcome": "Bienvenue Maire ! Regardez ce compteur en haut.",
+    "step_population": "Voici l'outil de population.",
+    "step_select_road": "Commençons. Sélectionnez l'outil Route dans votre barre de construction.",
+    "step_build_road": "Parfait ! Reliez maintenant la mairie à la route principale.",
+    "step_finish": "Excellent travail, Maire ! Vous êtes prêt à gérer la ville."
 }
