@@ -20,26 +20,41 @@ export const useTypewriterWithSound = (text: string, speed: number = 30) => {
         audio.loop = true;
 
         let i = 0;
+        let isCancelled = false;
+        let p = audio.play().catch(e => console.warn('Audio play prevented:', e));
+
         setDisplayedText("");
         setIsTyping(true);
 
-        // Auto-play might be blocked by browser policy without interaction
-        audio.play().catch(e => console.warn('Audio play prevented:', e));
+        const typeNextChar = () => {
+            if (isCancelled) return;
 
-        const timer = setInterval(() => {
             if (i < text.length) {
                 setDisplayedText(text.slice(0, i + 1));
+                const char = text[i];
                 i++;
+
+                // Calcul du délai dynamique
+                let delay = speed;
+                if (['.', '!', '?'].includes(char)) {
+                    delay = speed + 400 + Math.random() * 200; // Pause longue
+                } else if ([',', ':', ';'].includes(char)) {
+                    delay = speed + 200 + Math.random() * 100; // Pause courte
+                }
+
+                setTimeout(typeNextChar, delay);
             } else {
-                clearInterval(timer);
                 setIsTyping(false);
                 audio.pause();
                 audio.currentTime = 0;
             }
-        }, speed);
+        };
+
+        // Démarrage de la boucle de frappe
+        setTimeout(typeNextChar, speed);
 
         return () => {
-            clearInterval(timer);
+            isCancelled = true;
             setIsTyping(false);
             audio.pause();
             audio.currentTime = 0;

@@ -22,6 +22,7 @@ export default getRequestConfig(async ({ locale }) => {
   const hudMessages = (await import(`../messages/${activeLocale}_hud.json`)).default;
   const advisorMessages = (await import(`../messages/${activeLocale}_advisor.json`)).default;
   const inspectorMessages = (await import(`../messages/${activeLocale}_inspector.json`)).default;
+  const doratutoMessages = (await import(`../messages/${activeLocale}_doratuto.json`)).default;
 
   return {
     locale: activeLocale,
@@ -38,6 +39,7 @@ export default getRequestConfig(async ({ locale }) => {
       hud: hudMessages,
       advisor: advisorMessages,
       nancy: inspectorMessages.nancy,
+      doratuto: doratutoMessages,
       ...infobarMessages
     },
     onError(error) {

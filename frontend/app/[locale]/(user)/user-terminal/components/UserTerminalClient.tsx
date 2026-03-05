@@ -20,7 +20,6 @@ import { SaveSystem } from '../engine/systems/SaveSystem';
 
 // --- IMPORTS UI ---
 import GameUI from '../components/GameUI';
-import ChunkExpandOverlay from './ui/overlay/ChunkExpandOverlay';
 import { useECS } from '../hooks/useECS';
 import { TopBar } from './ui/hud/TopBar';
 import { AdvisorWidget } from './ui/npcs/AdvisorWidget';
@@ -35,6 +34,9 @@ import { AlertSystem } from '../engine/systems/AlertSystem';
 import { NpcAlertOverlay } from './ui/widgets/NpcAlertOverlay';
 import { useGameSave } from '../hooks/useGameSave';
 import { SaveIndicator } from './ui/hud/SaveIndicator';
+
+// --- IMPORTS TUTORIEL DORA ---
+import { DoraTutorialModal } from './ui/npcs/DoraTutorialModal';
 
 // --- IMPORTS START SCREEN ---
 import { useSaveStore } from '@/hooks/useSaveStore';
@@ -67,6 +69,9 @@ export default function UserTerminalClient() {
     const [isSavingDisconnect, setIsSavingDisconnect] = useState(false);
     const [isDemoMode, setIsDemoMode] = useState(false);
     const [showJordanPitch, setShowJordanPitch] = useState(false);
+
+    // État temporaire pour faire spawn Dora au chargement du jeu (Exemple d'intégration)
+    const [showDoraTuto, setShowDoraTuto] = useState(false);
 
     const [assetsLoaded, setAssetsLoaded] = useState(false);
     // useFirebaseWeb3Auth reste pour l'indicateur d'authentification UI (SimCityLoader)
@@ -195,6 +200,11 @@ export default function UserTerminalClient() {
             engine.map.calculateSummary();
             setSummary(engine.map.currentSummary);
             engine.map.revision++;
+
+            // Lancer le tuto de Dora 1 seconde après le chargement de la carte pour l'exemple
+            setTimeout(() => {
+                setShowDoraTuto(true);
+            }, 1000);
         }
     }, [bootState.isReady, assetsLoaded]);
 
@@ -293,9 +303,11 @@ export default function UserTerminalClient() {
             {/* 🖥️ ÉCRAN DE DÉMARRAGE HYBRIDE WEB2 / WEB3 / DEMO */}
             {saveMode === null && <StartScreen />}
 
-            <AdvisorWidget isVisible={!isConnected} />
             <BobWarningModal />
             {showOnboarding && <GameOnboarding onComplete={() => setShowOnboarding(false)} onClose={() => setShowOnboarding(false)} />}
+
+            {/* 👩‍🏫 MODALE TUTORIEL DORA (Exemple) */}
+            {showDoraTuto && <DoraTutorialModal onClose={() => setShowDoraTuto(false)} />}
 
             <NpcAlertOverlay
                 npc={currentAlert?.npc || null}
@@ -340,7 +352,6 @@ export default function UserTerminalClient() {
                             selectedBuildingId={selectedBuildingId} setSelectedBuildingId={setSelectedBuildingId}
                             onOpenRWA={() => setShowOnboarding(true)}
                         />
-                        <ChunkExpandOverlay viewportRef={viewportRef} isReady={isReady} />
                         <SaveIndicator />
                     </div>
                 )}
